@@ -1,0 +1,22 @@
+{
+  "slug": "creative",
+  "name": "Creative",
+  "category": "creative",
+  "description": "Vivid colors and modern typography.",
+  "is_premium": true,
+  "is_system": true,
+  "sort_order": 6,
+  "schema_version": "1.0",
+  "json_content": {
+    "schema_version": "1.0",
+    "meta": { "created_at": "1970-01-01T00:00:00Z", "updated_at": "1970-01-01T00:00:00Z", "editor_version": "1.0.0" },
+    "canvas": { "width": 560, "background_color": "#fefce8", "font_family": "Trebuchet MS, sans-serif", "font_size": 13, "text_color": "#0f172a", "link_color": "#a21caf" },
+    "layout": { "type": "table", "columns": 1, "gap": 8, "padding": { "top": 8, "right": 8, "bottom": 8, "left": 8 } },
+    "blocks": [
+      { "id": "name", "type": "text", "grid": { "col": 1, "row": 1 }, "content": "<strong>{{name}}</strong>", "style": { "font_size": 20, "font_weight": 700, "color": "#a21caf" } },
+      { "id": "tagline", "type": "text", "grid": { "col": 1, "row": 2 }, "content": "{{tagline}}", "style": { "font_style": "italic", "color": "#475569" } },
+      { "id": "social", "type": "social_icons", "grid": { "col": 1, "row": 3 }, "networks": [ { "name": "instagram", "url": "{{instagram}}" }, { "name": "behance", "url": "{{behance}}" }, { "name": "dribbble", "url": "{{dribbble}}" } ], "size": 20, "gap": 6, "color": "#a21caf", "style": "circle_filled" }
+    ],
+    "variables": { "name": "Robin Lee", "tagline": "Designing things people enjoy.", "instagram": "https://instagram.com/r", "behance": "https://behance.net/r", "dribbble": "https://dribbble.com/r" }
+  }
+}

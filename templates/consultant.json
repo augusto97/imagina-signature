@@ -1,0 +1,23 @@
+{
+  "slug": "consultant",
+  "name": "Consultant",
+  "category": "consulting",
+  "description": "Photo, credentials, prominent LinkedIn.",
+  "is_premium": false,
+  "is_system": true,
+  "sort_order": 9,
+  "schema_version": "1.0",
+  "json_content": {
+    "schema_version": "1.0",
+    "meta": { "created_at": "1970-01-01T00:00:00Z", "updated_at": "1970-01-01T00:00:00Z", "editor_version": "1.0.0" },
+    "canvas": { "width": 580, "background_color": "#ffffff", "font_family": "Georgia, serif", "font_size": 13, "text_color": "#1e293b", "link_color": "#0a66c2" },
+    "layout": { "type": "table", "columns": 2, "gap": 12, "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 } },
+    "blocks": [
+      { "id": "photo", "type": "image", "grid": { "col": 1, "row": 1 }, "src": "https://via.placeholder.com/96", "alt": "Photo", "width": 96, "border_radius": "4px" },
+      { "id": "name", "type": "text", "grid": { "col": 2, "row": 1 }, "content": "<strong>{{name}}</strong>", "style": { "font_size": 18 } },
+      { "id": "creds", "type": "text", "grid": { "col": 2, "row": 2 }, "content": "{{role}} · {{credentials}}", "style": { "color": "#475569", "font_style": "italic" } },
+      { "id": "linkedin", "type": "social_icons", "grid": { "col": 2, "row": 3 }, "networks": [ { "name": "linkedin", "url": "{{linkedin}}" } ], "size": 22, "gap": 0, "color": "#0a66c2", "style": "rounded_filled" }
+    ],
+    "variables": { "name": "Morgan Hale", "role": "Senior Consultant", "credentials": "MBA, PMP", "linkedin": "https://linkedin.com/in/morgan" }
+  }
+}

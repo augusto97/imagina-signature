@@ -1,0 +1,22 @@
+{
+  "slug": "sales-active",
+  "name": "Sales Active",
+  "category": "sales",
+  "description": "CTA-driven layout with promotional banner.",
+  "is_premium": false,
+  "is_system": true,
+  "sort_order": 3,
+  "schema_version": "1.0",
+  "json_content": {
+    "schema_version": "1.0",
+    "meta": { "created_at": "1970-01-01T00:00:00Z", "updated_at": "1970-01-01T00:00:00Z", "editor_version": "1.0.0" },
+    "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Arial, Helvetica, sans-serif", "font_size": 13, "text_color": "#1a1a1a", "link_color": "#dc2626" },
+    "layout": { "type": "table", "columns": 1, "gap": 12, "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 } },
+    "blocks": [
+      { "id": "name", "type": "text", "grid": { "col": 1, "row": 1 }, "content": "<strong>{{name}}</strong> — {{role}}", "style": { "font_size": 16 } },
+      { "id": "company", "type": "text", "grid": { "col": 1, "row": 2 }, "content": "{{company}}", "style": { "color": "#555" } },
+      { "id": "cta", "type": "button_cta", "grid": { "col": 1, "row": 3 }, "text": "{{cta_label}}", "url": "{{cta_url}}", "background_color": "#dc2626", "text_color": "#ffffff", "border_radius": "4px", "padding": { "top": 10, "right": 16, "bottom": 10, "left": 16 }, "font_size": 14, "font_weight": 600 }
+    ],
+    "variables": { "name": "Sam Ray", "role": "Account Manager", "company": "Acme", "cta_label": "Book a demo", "cta_url": "https://acme.com/demo" }
+  }
+}

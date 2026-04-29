@@ -1,0 +1,23 @@
+{
+  "slug": "minimal-modern",
+  "name": "Minimal Modern",
+  "category": "minimal",
+  "description": "Clean one-column layout with generous spacing.",
+  "is_premium": false,
+  "is_system": true,
+  "sort_order": 2,
+  "schema_version": "1.0",
+  "json_content": {
+    "schema_version": "1.0",
+    "meta": { "created_at": "1970-01-01T00:00:00Z", "updated_at": "1970-01-01T00:00:00Z", "editor_version": "1.0.0" },
+    "canvas": { "width": 520, "background_color": "#ffffff", "font_family": "Tahoma, Verdana, sans-serif", "font_size": 13, "text_color": "#111111", "link_color": "#000000" },
+    "layout": { "type": "table", "columns": 1, "gap": 8, "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 } },
+    "blocks": [
+      { "id": "name", "type": "text", "grid": { "col": 1, "row": 1 }, "content": "<strong>{{name}}</strong>", "style": { "font_size": 16, "font_weight": 600 } },
+      { "id": "tag", "type": "text", "grid": { "col": 1, "row": 2 }, "content": "{{role}}", "style": { "color": "#666" } },
+      { "id": "div", "type": "divider", "grid": { "col": 1, "row": 3 }, "color": "#dddddd", "thickness": 1, "style": "solid" },
+      { "id": "contact", "type": "contact_row", "grid": { "col": 1, "row": 4 }, "items": [ { "type": "email", "value": "{{email}}" }, { "type": "website", "value": "{{website}}" } ], "layout": "inline", "icon": false, "icon_color": "#000", "text_style": { "font_size": 12 } }
+    ],
+    "variables": { "name": "Jane Doe", "role": "Designer", "email": "jane@example.com", "website": "https://janedoe.design" }
+  }
+}

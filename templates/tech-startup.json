@@ -1,0 +1,22 @@
+{
+  "slug": "tech-startup",
+  "name": "Tech Startup",
+  "category": "tech",
+  "description": "Big logo, simple, link to product.",
+  "is_premium": false,
+  "is_system": true,
+  "sort_order": 8,
+  "schema_version": "1.0",
+  "json_content": {
+    "schema_version": "1.0",
+    "meta": { "created_at": "1970-01-01T00:00:00Z", "updated_at": "1970-01-01T00:00:00Z", "editor_version": "1.0.0" },
+    "canvas": { "width": 580, "background_color": "#ffffff", "font_family": "Arial, Helvetica, sans-serif", "font_size": 13, "text_color": "#0f172a", "link_color": "#2563eb" },
+    "layout": { "type": "table", "columns": 1, "gap": 6, "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 } },
+    "blocks": [
+      { "id": "logo", "type": "image", "grid": { "col": 1, "row": 1 }, "src": "{{logo_url}}", "alt": "{{company}} logo", "width": 140, "link": "{{website}}" },
+      { "id": "name", "type": "text", "grid": { "col": 1, "row": 2 }, "content": "<strong>{{name}}</strong> — {{role}}", "style": { "font_size": 14 } },
+      { "id": "product", "type": "button_cta", "grid": { "col": 1, "row": 3 }, "text": "{{cta_label}}", "url": "{{cta_url}}", "background_color": "#2563eb", "text_color": "#ffffff", "border_radius": "6px", "padding": { "top": 8, "right": 14, "bottom": 8, "left": 14 }, "font_size": 13, "font_weight": 500 }
+    ],
+    "variables": { "logo_url": "https://via.placeholder.com/140x40", "company": "Acme", "website": "https://acme.com", "name": "Sky", "role": "Product", "cta_label": "Try the product", "cta_url": "https://acme.com/signup" }
+  }
+}

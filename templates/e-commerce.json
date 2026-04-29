@@ -1,0 +1,23 @@
+{
+  "slug": "e-commerce",
+  "name": "E-commerce",
+  "category": "retail",
+  "description": "Logo + link to products + social.",
+  "is_premium": true,
+  "is_system": true,
+  "sort_order": 10,
+  "schema_version": "1.0",
+  "json_content": {
+    "schema_version": "1.0",
+    "meta": { "created_at": "1970-01-01T00:00:00Z", "updated_at": "1970-01-01T00:00:00Z", "editor_version": "1.0.0" },
+    "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Arial, Helvetica, sans-serif", "font_size": 13, "text_color": "#1e293b", "link_color": "#ea580c" },
+    "layout": { "type": "table", "columns": 1, "gap": 8, "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 } },
+    "blocks": [
+      { "id": "logo", "type": "image", "grid": { "col": 1, "row": 1 }, "src": "{{logo_url}}", "alt": "{{store}}", "width": 160, "link": "{{shop_url}}" },
+      { "id": "name", "type": "text", "grid": { "col": 1, "row": 2 }, "content": "<strong>{{name}}</strong> — {{role}}", "style": { "font_size": 14 } },
+      { "id": "cta", "type": "button_cta", "grid": { "col": 1, "row": 3 }, "text": "Shop our latest drop", "url": "{{shop_url}}", "background_color": "#ea580c", "text_color": "#ffffff", "border_radius": "20px", "padding": { "top": 10, "right": 18, "bottom": 10, "left": 18 }, "font_size": 13, "font_weight": 600 },
+      { "id": "social", "type": "social_icons", "grid": { "col": 1, "row": 4 }, "networks": [ { "name": "instagram", "url": "{{instagram}}" }, { "name": "tiktok", "url": "{{tiktok}}" }, { "name": "facebook", "url": "{{facebook}}" } ], "size": 18, "gap": 4, "color": "#ea580c", "style": "rounded" }
+    ],
+    "variables": { "logo_url": "https://via.placeholder.com/160x40", "store": "Acme Shop", "shop_url": "https://shop.example", "name": "Sam", "role": "Owner", "instagram": "https://instagram.com/shop", "tiktok": "https://tiktok.com/@shop", "facebook": "https://facebook.com/shop" }
+  }
+}

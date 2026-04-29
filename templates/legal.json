@@ -1,0 +1,23 @@
+{
+  "slug": "legal",
+  "name": "Legal",
+  "category": "legal",
+  "description": "Long disclaimer block, traditional law-firm layout.",
+  "is_premium": true,
+  "is_system": true,
+  "sort_order": 5,
+  "schema_version": "1.0",
+  "json_content": {
+    "schema_version": "1.0",
+    "meta": { "created_at": "1970-01-01T00:00:00Z", "updated_at": "1970-01-01T00:00:00Z", "editor_version": "1.0.0" },
+    "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Times New Roman, serif", "font_size": 13, "text_color": "#1f2937", "link_color": "#1d4ed8" },
+    "layout": { "type": "table", "columns": 1, "gap": 6, "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 } },
+    "blocks": [
+      { "id": "name", "type": "text", "grid": { "col": 1, "row": 1 }, "content": "<strong>{{name}}, Esq.</strong>", "style": { "font_size": 16 } },
+      { "id": "firm", "type": "text", "grid": { "col": 1, "row": 2 }, "content": "{{firm}}", "style": { "color": "#374151" } },
+      { "id": "contact", "type": "contact_row", "grid": { "col": 1, "row": 3 }, "items": [ { "type": "email", "value": "{{email}}" }, { "type": "phone", "value": "{{phone}}" } ], "layout": "stacked", "icon": false, "icon_color": "#1d4ed8", "text_style": { "font_size": 12 } },
+      { "id": "disclaimer", "type": "disclaimer", "grid": { "col": 1, "row": 4 }, "content": "CONFIDENTIALITY NOTICE: This e-mail message and any attachments are for the sole use of the intended recipient(s) and may contain confidential and privileged information protected by attorney-client privilege.", "style": { "font_size": 10, "color": "#9ca3af" } }
+    ],
+    "variables": { "name": "Pat Reyes", "firm": "Reyes & Co. Attorneys", "email": "pat@reyeslaw.example", "phone": "+1 555 0144" }
+  }
+}

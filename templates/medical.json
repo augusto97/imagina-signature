@@ -1,0 +1,23 @@
+{
+  "slug": "medical",
+  "name": "Medical",
+  "category": "medical",
+  "description": "Professional layout with license info.",
+  "is_premium": false,
+  "is_system": true,
+  "sort_order": 4,
+  "schema_version": "1.0",
+  "json_content": {
+    "schema_version": "1.0",
+    "meta": { "created_at": "1970-01-01T00:00:00Z", "updated_at": "1970-01-01T00:00:00Z", "editor_version": "1.0.0" },
+    "canvas": { "width": 580, "background_color": "#ffffff", "font_family": "Georgia, serif", "font_size": 13, "text_color": "#0f172a", "link_color": "#0369a1" },
+    "layout": { "type": "table", "columns": 1, "gap": 6, "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 } },
+    "blocks": [
+      { "id": "name", "type": "text", "grid": { "col": 1, "row": 1 }, "content": "<strong>Dr. {{name}}</strong>", "style": { "font_size": 16, "font_weight": 700 } },
+      { "id": "spec", "type": "text", "grid": { "col": 1, "row": 2 }, "content": "{{specialty}} · License #{{license}}", "style": { "color": "#475569", "font_size": 12 } },
+      { "id": "contact", "type": "contact_row", "grid": { "col": 1, "row": 3 }, "items": [ { "type": "email", "value": "{{email}}" }, { "type": "phone", "value": "{{phone}}" }, { "type": "address", "value": "{{address}}" } ], "layout": "stacked", "icon": false, "icon_color": "#0369a1", "text_style": { "font_size": 12 } },
+      { "id": "disclaimer", "type": "disclaimer", "grid": { "col": 1, "row": 4 }, "content": "This email and any attachments may contain confidential or privileged health information.", "style": { "font_size": 10, "color": "#94a3b8" } }
+    ],
+    "variables": { "name": "Alex Kim", "specialty": "Family Medicine", "license": "12345", "email": "alex@clinic.example", "phone": "+1 555 0123", "address": "123 Main St, City" }
+  }
+}

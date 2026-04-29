@@ -1,0 +1,23 @@
+{
+  "slug": "corporate-classic",
+  "name": "Corporate Classic",
+  "category": "corporate",
+  "description": "Photo + name + role + company + contact + social.",
+  "is_premium": false,
+  "is_system": true,
+  "sort_order": 1,
+  "schema_version": "1.0",
+  "json_content": {
+    "schema_version": "1.0",
+    "meta": { "created_at": "1970-01-01T00:00:00Z", "updated_at": "1970-01-01T00:00:00Z", "editor_version": "1.0.0" },
+    "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Arial, Helvetica, sans-serif", "font_size": 13, "text_color": "#222222", "link_color": "#1a73e8" },
+    "layout": { "type": "table", "columns": 2, "gap": 16, "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 } },
+    "blocks": [
+      { "id": "avatar", "type": "image", "grid": { "col": 1, "row": 1 }, "src": "https://via.placeholder.com/100", "alt": "Avatar", "width": 100, "border_radius": "50%" },
+      { "id": "name", "type": "text", "grid": { "col": 2, "row": 1 }, "content": "<strong>{{name}}</strong>", "style": { "font_size": 18, "font_weight": 700 } },
+      { "id": "role", "type": "text", "grid": { "col": 2, "row": 2 }, "content": "{{role}} · {{company}}", "style": { "color": "#666666" } },
+      { "id": "contact", "type": "contact_row", "grid": { "col": 2, "row": 3 }, "items": [ { "type": "email", "value": "{{email}}" }, { "type": "phone", "value": "{{phone}}" }, { "type": "website", "value": "{{website}}" } ], "layout": "stacked", "icon": false, "icon_color": "#1a73e8", "text_style": { "font_size": 12 } }
+    ],
+    "variables": { "name": "Jane Doe", "role": "Account Executive", "company": "Acme Inc.", "email": "jane@acme.com", "phone": "+1 555 0100", "website": "https://acme.com" }
+  }
+}

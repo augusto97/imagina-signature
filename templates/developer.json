@@ -1,0 +1,22 @@
+{
+  "slug": "developer",
+  "name": "Developer",
+  "category": "tech",
+  "description": "GitHub icon, tech stack, code-friendly typography.",
+  "is_premium": false,
+  "is_system": true,
+  "sort_order": 7,
+  "schema_version": "1.0",
+  "json_content": {
+    "schema_version": "1.0",
+    "meta": { "created_at": "1970-01-01T00:00:00Z", "updated_at": "1970-01-01T00:00:00Z", "editor_version": "1.0.0" },
+    "canvas": { "width": 560, "background_color": "#ffffff", "font_family": "Courier New, monospace", "font_size": 13, "text_color": "#0f172a", "link_color": "#16a34a" },
+    "layout": { "type": "table", "columns": 1, "gap": 4, "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 } },
+    "blocks": [
+      { "id": "name", "type": "text", "grid": { "col": 1, "row": 1 }, "content": "$ whoami → <strong>{{name}}</strong>", "style": { "font_size": 14 } },
+      { "id": "stack", "type": "text", "grid": { "col": 1, "row": 2 }, "content": "stack: {{stack}}", "style": { "color": "#64748b" } },
+      { "id": "social", "type": "social_icons", "grid": { "col": 1, "row": 3 }, "networks": [ { "name": "github", "url": "{{github}}" }, { "name": "linkedin", "url": "{{linkedin}}" } ], "size": 18, "gap": 6, "color": "#16a34a", "style": "rounded" }
+    ],
+    "variables": { "name": "alex", "stack": "TypeScript · Go · Postgres", "github": "https://github.com/alex", "linkedin": "https://linkedin.com/in/alex" }
+  }
+}
