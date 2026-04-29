@@ -102,6 +102,7 @@ final class Plugin {
 			if ( $this->container->has( '\\ImaginaSignatures\\Admin\\UserHardening' ) ) {
 				$this->container->make( '\\ImaginaSignatures\\Admin\\UserHardening' )->register();
 			}
+			add_action( 'admin_init', [ $this, 'maybe_redirect_to_setup' ] );
 		}
 
 		if ( $this->container->has( '\\ImaginaSignatures\\Api\\RestRouter' ) ) {
@@ -130,6 +131,35 @@ final class Plugin {
 	 */
 	private function register_services(): void {
 		( new ServiceProvider() )->register( $this->container );
+	}
+
+	/**
+	 * Redirects the admin to the setup wizard once after activation.
+	 *
+	 * Triggered by the transient set in `Activator::activate()`. The transient
+	 * is consumed regardless of whether the redirect actually happens, so we
+	 * never attempt to redirect on every page load.
+	 *
+	 * @since 1.0.0
+	 */
+	public function maybe_redirect_to_setup(): void {
+		if ( ! get_transient( 'imgsig_redirect_to_setup' ) ) {
+			return;
+		}
+		delete_transient( 'imgsig_redirect_to_setup' );
+
+		if ( wp_doing_ajax() || ! current_user_can( 'imgsig_admin' ) ) {
+			return;
+		}
+		// Don't bounce the user if they're already on a plugin screen.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( (string) $_GET['page'] ) ) : '';
+		if ( '' !== $page && false !== strpos( $page, 'imagina-signatures' ) ) {
+			return;
+		}
+
+		wp_safe_redirect( admin_url( 'admin.php?page=imagina-signatures-setup' ) );
+		exit;
 	}
 
 	/**

@@ -41,25 +41,40 @@ final class AdminMenu {
 	 * @return void
 	 */
 	public function add_menu(): void {
-		if ( ! current_user_can( 'imgsig_read_own_signatures' ) && ! current_user_can( 'imgsig_admin' ) ) {
+		// Site administrators always see the menu — even if the plugin caps
+		// haven't been granted yet (e.g. a half-completed activation). The
+		// per-page capability checks below still prevent unauthorized access.
+		$is_admin = current_user_can( 'manage_options' )
+			|| current_user_can( 'imgsig_admin' );
+		if ( ! $is_admin && ! current_user_can( 'imgsig_read_own_signatures' ) ) {
 			return;
 		}
+
+		// Use the most permissive available cap so the menu shows up even
+		// when only `manage_options` is set on the current user.
+		$dashboard_cap = current_user_can( 'imgsig_read_own_signatures' )
+			? 'imgsig_read_own_signatures'
+			: 'manage_options';
 
 		add_menu_page(
 			__( 'Imagina Signatures', 'imagina-signatures' ),
 			__( 'Signatures', 'imagina-signatures' ),
-			'imgsig_read_own_signatures',
+			$dashboard_cap,
 			self::PARENT_SLUG,
 			[ $this, 'render_dashboard' ],
 			'dashicons-email-alt',
 			65
 		);
 
+		$read_cap   = current_user_can( 'imgsig_read_own_signatures' ) ? 'imgsig_read_own_signatures' : 'manage_options';
+		$create_cap = current_user_can( 'imgsig_create_signatures' ) ? 'imgsig_create_signatures' : 'manage_options';
+		$admin_cap  = current_user_can( 'imgsig_admin' ) ? 'imgsig_admin' : 'manage_options';
+
 		add_submenu_page(
 			self::PARENT_SLUG,
 			__( 'My Signatures', 'imagina-signatures' ),
 			__( 'My Signatures', 'imagina-signatures' ),
-			'imgsig_read_own_signatures',
+			$read_cap,
 			self::PARENT_SLUG,
 			[ $this, 'render_dashboard' ]
 		);
@@ -68,7 +83,7 @@ final class AdminMenu {
 			self::PARENT_SLUG,
 			__( 'Editor', 'imagina-signatures' ),
 			__( 'Editor', 'imagina-signatures' ),
-			'imgsig_create_signatures',
+			$create_cap,
 			'imagina-signatures-editor',
 			[ $this, 'render_editor' ]
 		);
@@ -77,17 +92,21 @@ final class AdminMenu {
 			self::PARENT_SLUG,
 			__( 'Templates', 'imagina-signatures' ),
 			__( 'Templates', 'imagina-signatures' ),
-			'imgsig_read_own_signatures',
+			$read_cap,
 			'imagina-signatures-templates',
 			[ $this, 'render_templates' ]
 		);
 
-		if ( current_user_can( 'imgsig_admin' ) ) {
+		if ( $is_admin ) {
+			$plans_cap    = current_user_can( 'imgsig_manage_plans' ) ? 'imgsig_manage_plans' : 'manage_options';
+			$users_cap    = current_user_can( 'imgsig_manage_users' ) ? 'imgsig_manage_users' : 'manage_options';
+			$storage_cap  = current_user_can( 'imgsig_manage_storage' ) ? 'imgsig_manage_storage' : 'manage_options';
+
 			add_submenu_page(
 				self::PARENT_SLUG,
 				__( 'Plans', 'imagina-signatures' ),
 				__( 'Plans', 'imagina-signatures' ),
-				'imgsig_manage_plans',
+				$plans_cap,
 				'imagina-signatures-plans',
 				[ $this, 'render_plans' ]
 			);
@@ -96,7 +115,7 @@ final class AdminMenu {
 				self::PARENT_SLUG,
 				__( 'Users', 'imagina-signatures' ),
 				__( 'Users', 'imagina-signatures' ),
-				'imgsig_manage_users',
+				$users_cap,
 				'imagina-signatures-users',
 				[ $this, 'render_users' ]
 			);
@@ -105,7 +124,7 @@ final class AdminMenu {
 				self::PARENT_SLUG,
 				__( 'Storage', 'imagina-signatures' ),
 				__( 'Storage', 'imagina-signatures' ),
-				'imgsig_manage_storage',
+				$storage_cap,
 				'imagina-signatures-storage',
 				[ $this, 'render_storage' ]
 			);
@@ -114,21 +133,36 @@ final class AdminMenu {
 				self::PARENT_SLUG,
 				__( 'Settings', 'imagina-signatures' ),
 				__( 'Settings', 'imagina-signatures' ),
-				'imgsig_admin',
+				$admin_cap,
 				'imagina-signatures-settings',
 				[ $this, 'render_settings' ]
 			);
 		}
 
-		// Setup wizard is registered as a hidden page.
-		add_submenu_page(
-			'',
-			__( 'Setup Imagina Signatures', 'imagina-signatures' ),
-			__( 'Setup', 'imagina-signatures' ),
-			'imgsig_admin',
-			'imagina-signatures-setup',
-			[ $this, 'render_setup' ]
-		);
+		// Setup wizard: visible submenu while setup isn't completed, hidden
+		// once it has been (so the menu doesn't carry stale items).
+		$setup_completed = (bool) get_option( 'imgsig_setup_completed', false );
+		if ( current_user_can( 'imgsig_admin' ) ) {
+			if ( $setup_completed ) {
+				add_submenu_page(
+					'options.php',
+					__( 'Setup Imagina Signatures', 'imagina-signatures' ),
+					__( 'Setup', 'imagina-signatures' ),
+					'imgsig_admin',
+					'imagina-signatures-setup',
+					[ $this, 'render_setup' ]
+				);
+			} else {
+				add_submenu_page(
+					self::PARENT_SLUG,
+					__( 'Setup Imagina Signatures', 'imagina-signatures' ),
+					'<span style="color:#f59e0b;">' . esc_html__( 'Setup', 'imagina-signatures' ) . '</span>',
+					'imgsig_admin',
+					'imagina-signatures-setup',
+					[ $this, 'render_setup' ]
+				);
+			}
+		}
 	}
 
 	public function render_dashboard(): void {

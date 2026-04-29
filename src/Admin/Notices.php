@@ -72,15 +72,7 @@ final class Notices {
 
 		if ( current_user_can( 'imgsig_admin' ) && ! get_option( 'imgsig_setup_completed', false ) ) {
 			$url = esc_url( admin_url( 'admin.php?page=imagina-signatures-setup' ) );
-			$this->print_notice(
-				sprintf(
-					/* translators: %s: setup URL. */
-					__( 'Imagina Signatures needs initial configuration. <a href="%s">Run the setup wizard</a>.', 'imagina-signatures' ),
-					$url
-				),
-				'warning',
-				false
-			);
+			$this->print_setup_notice( $url );
 		}
 
 		$this->maybe_render_quota_notice();
@@ -153,5 +145,28 @@ final class Notices {
 			$class .= ' is-dismissible';
 		}
 		echo '<div class="' . esc_attr( $class ) . '"><p>' . wp_kses_post( $message ) . '</p></div>';
+	}
+
+	/**
+	 * Renders the setup-required notice with a prominent action button.
+	 *
+	 * @param string $url Already-escaped URL to the setup wizard.
+	 *
+	 * @return void
+	 */
+	private function print_setup_notice( string $url ): void {
+		?>
+		<div class="notice notice-warning" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px;">
+			<div style="flex:1 1 auto;min-width:240px;">
+				<strong><?php echo esc_html__( 'Imagina Signatures', 'imagina-signatures' ); ?></strong>
+				<span style="margin-left:8px;color:#475569;">
+					<?php echo esc_html__( 'Initial configuration is required before you can create signatures.', 'imagina-signatures' ); ?>
+				</span>
+			</div>
+			<a href="<?php echo esc_url( $url ); ?>" class="button button-primary">
+				<?php echo esc_html__( 'Run the setup wizard', 'imagina-signatures' ); ?>
+			</a>
+		</div>
+		<?php
 	}
 }

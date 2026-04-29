@@ -33,6 +33,33 @@ final class AssetEnqueuer {
 	 */
 	public function register(): void {
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue' ] );
+		add_filter( 'script_loader_tag', [ $this, 'as_module' ], 10, 3 );
+	}
+
+	/**
+	 * Promotes our bundles to ES modules.
+	 *
+	 * Vite outputs ESM that uses `import`, so the script tag must include
+	 * `type="module"` or the browser parses it as a classic script and
+	 * raises a SyntaxError on the first `import`.
+	 *
+	 * @param string $tag    Original script tag.
+	 * @param string $handle Script handle.
+	 * @param string $src    Script src URL.
+	 *
+	 * @return string
+	 */
+	public function as_module( string $tag, string $handle, string $src ): string {
+		if ( self::HANDLE_EDITOR !== $handle && self::HANDLE_ADMIN !== $handle ) {
+			return $tag;
+		}
+		// Replace the existing <script ...> opening with one that has type="module".
+		$tag = preg_replace(
+			'/<script(?![^>]*type=)/',
+			'<script type="module"',
+			$tag
+		);
+		return is_string( $tag ) ? $tag : '';
 	}
 
 	/**
