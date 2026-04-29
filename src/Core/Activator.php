@@ -9,24 +9,22 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Core;
 
-use ImaginaSignatures\Setup\CapabilitiesInstaller;
-use ImaginaSignatures\Setup\SchemaMigrator;
+use ImaginaSignatures\Hooks\Actions;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Runs once when the plugin is activated.
  *
- * Responsibilities:
- *  - Verify the host meets minimum requirements (defensive — the main plugin
- *    file already self-deactivates on unsupported hosts, but
+ * Owns WP-specific lifecycle concerns and delegates the actual install
+ * steps to {@see Installer}. Responsibilities:
+ *
+ *  - Verify the host meets minimum requirements (defensive — the main
+ *    plugin file already self-deactivates on unsupported hosts, but
  *    `register_activation_hook` runs before that bailout, so we re-check).
- *  - Run schema migrations (creates `imgsig_*` tables).
- *  - Install capabilities on the appropriate roles.
- *  - Seed default options (idempotent: only sets values when missing so
- *    re-activation doesn't clobber user configuration).
- *  - Stamp the current plugin version into `imgsig_version`.
+ *  - Delegate persistent-state setup to {@see Installer::install()}.
  *  - Flush rewrite rules so REST routes register cleanly.
+ *  - Fire the `imgsig/plugin/activated` action.
  *
  * Activation runs synchronously _before_ `plugins_loaded`, which means
  * `Plugin::boot()` has not yet run and DI bindings are not available.
@@ -57,17 +55,8 @@ final class Activator {
 			);
 		}
 
-		// Database schema (creates / migrates tables and stamps schema_version).
-		( new SchemaMigrator() )->migrate();
-
-		// Capabilities for native roles (admin, editor, author).
-		( new CapabilitiesInstaller() )->install();
-
-		// Default options — only seeded when missing.
-		self::seed_default_options();
-
-		// Stamp the currently-installed plugin version (always overwritten).
-		update_option( 'imgsig_version', IMGSIG_VERSION );
+		// Run the install steps (schema, capabilities, options, version stamp).
+		( new Installer() )->install();
 
 		// Make sure REST routes are reachable on first request.
 		flush_rewrite_rules();
@@ -77,30 +66,7 @@ final class Activator {
 		 *
 		 * @since 1.0.0
 		 */
-		do_action( 'imgsig/plugin/activated' );
-	}
-
-	/**
-	 * Seeds default options without overwriting existing values.
-	 *
-	 * Mirrors the OPTIONS map in CLAUDE.md §7.3.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return void
-	 */
-	private static function seed_default_options(): void {
-		add_option( 'imgsig_storage_driver', 'media_library' );
-		add_option( 'imgsig_storage_config', '' );
-		add_option(
-			'imgsig_settings',
-			[
-				'enable_logs'           => false,
-				'rate_limit_uploads'    => 10,
-				'rate_limit_signatures' => 30,
-				'auto_compress_images'  => true,
-			]
-		);
+		do_action( Actions::PLUGIN_ACTIVATED );
 	}
 
 	/**
