@@ -37,6 +37,13 @@ final class Plugin {
 	private bool $booted = false;
 
 	/**
+	 * Dependency injection container.
+	 *
+	 * @var Container
+	 */
+	private Container $container;
+
+	/**
 	 * Returns the singleton instance.
 	 *
 	 * @since 1.0.0
@@ -53,7 +60,23 @@ final class Plugin {
 	/**
 	 * Constructor is private to enforce the singleton.
 	 */
-	private function __construct() {}
+	private function __construct() {
+		$this->container = new Container();
+	}
+
+	/**
+	 * Returns the DI container.
+	 *
+	 * Service providers and tests can use this to register or override
+	 * bindings.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return Container
+	 */
+	public function container(): Container {
+		return $this->container;
+	}
 
 	/**
 	 * Boots the plugin.
@@ -74,9 +97,15 @@ final class Plugin {
 		/**
 		 * Fires once the plugin has finished booting.
 		 *
+		 * Service providers can hook in to register additional container
+		 * bindings or WordPress hooks. The container instance is passed as
+		 * the first argument.
+		 *
 		 * @since 1.0.0
+		 *
+		 * @param Container $container The plugin's DI container.
 		 */
-		do_action( 'imgsig/plugin/booted' );
+		do_action( 'imgsig/plugin/booted', $this->container );
 	}
 
 	/**
