@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2026-04-29
+
+### Fixed
+- **Browser-locking infinite loop** when dragging a block onto the
+  canvas. The cycle was:
+  1. GrapesJS fires `component:add` → bridge emits the new schema
+     via `onChange`.
+  2. Parent calls `setSchema(next)` → re-renders `<GrapesEditor>` with
+     a new `schema` prop reference.
+  3. The `useEffect([schema])` saw `schema !== baseSchemaRef.current`
+     and called `setComponents(...)` to "reload".
+  4. `setComponents` fires more `component:add` events → loop.
+
+  Fixes:
+  - Track the schema reference *we just emitted* in a `lastEmittedRef`.
+    Skip the reload when the parent re-passes that exact reference.
+  - Guard the bridge with a `loadingRef` flag so events fired during
+    programmatic loads (`setComponents`) don't bubble back as edits.
+  - Coalesce consecutive editor events (drag-and-drop fires dozens
+    of `component:update` for trait edits) through a 60 ms debounce.
+  - Remove the `component:styleUpdate` listener; style changes
+    triggered by trait handlers also fire `component:update`, so the
+    extra subscription only multiplied the spam.
+  - Forward `onChange` through a ref so the bridge always calls the
+    parent's current closure (avoids stale `name` values when the
+    user renames the signature mid-edit).
+
+  Net effect: dragging a block now fires exactly one `onChange`
+  (debounced 60 ms after the drop), not thousands.
+
 ## [1.1.2] - 2026-04-29
 
 ### Fixed

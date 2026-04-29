@@ -24,7 +24,19 @@ export function GrapesEditor({ schema, onChange, onReady }: Props): JSX.Element 
   const layersRef = useRef<HTMLDivElement>(null);
   const propsRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<Editor | null>(null);
-  const baseSchemaRef = useRef<SignatureSchema>(schema);
+  // Tracks the schema that originated from THIS editor instance — when the
+  // parent re-passes that exact reference, we know it didn't change and we
+  // skip the reload that would otherwise re-emit `component:add` events
+  // and create an infinite loop.
+  const lastEmittedRef = useRef<SignatureSchema | null>(null);
+  // Suppresses event emission during programmatic loads (`setComponents`).
+  const loadingRef = useRef(false);
+  // Holds the latest `onChange` so we always call the parent's current
+  // closure, not the one captured at first mount.
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   // Init once.
   useEffect(() => {
@@ -36,39 +48,55 @@ export function GrapesEditor({ schema, onChange, onReady }: Props): JSX.Element 
       propertiesContainer: propsRef.current,
     });
     editorRef.current = editor;
-    loadSchemaIntoEditor(editor, baseSchemaRef.current);
 
-    // Notify the parent on any change. The bridge is cheap; debounce upstream.
-    const emit = () => {
-      const next = grapesToSchema(editor, baseSchemaRef.current);
-      onChange(next);
+    loadingRef.current = true;
+    loadSchemaIntoEditor(editor, schema);
+    loadingRef.current = false;
+
+    // Coalesce many GrapesJS events fired in the same tick (drag&drop fires
+    // dozens of `component:update` for trait edits) into a single emit.
+    let emitTimer: number | null = null;
+    const scheduleEmit = (): void => {
+      if (loadingRef.current) return;
+      if (emitTimer !== null) return;
+      emitTimer = window.setTimeout(() => {
+        emitTimer = null;
+        const ed = editorRef.current;
+        if (!ed) return;
+        const next = grapesToSchema(ed, lastEmittedRef.current ?? undefined);
+        lastEmittedRef.current = next;
+        onChangeRef.current(next);
+      }, 60);
     };
-    editor.on('component:add', emit);
-    editor.on('component:remove', emit);
-    editor.on('component:update', emit);
-    editor.on('component:styleUpdate', emit);
+
+    editor.on('component:add', scheduleEmit);
+    editor.on('component:remove', scheduleEmit);
+    editor.on('component:update', scheduleEmit);
 
     onReady?.(editor);
 
     return () => {
-      editor.off('component:add', emit);
-      editor.off('component:remove', emit);
-      editor.off('component:update', emit);
-      editor.off('component:styleUpdate', emit);
+      if (emitTimer !== null) window.clearTimeout(emitTimer);
+      editor.off('component:add', scheduleEmit);
+      editor.off('component:remove', scheduleEmit);
+      editor.off('component:update', scheduleEmit);
       editor.destroy();
       editorRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Re-load if the externally-supplied schema id changes (e.g. user opens a
-  // different signature). We compare by reference via baseSchemaRef.
+  // Re-load only when the schema *didn't* originate from this editor — i.e.
+  // the user opened a different signature, or the parent transformed it
+  // outside the change cycle.
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
-    if (schema === baseSchemaRef.current) return;
-    baseSchemaRef.current = schema;
+    if (schema === lastEmittedRef.current) return;
+    loadingRef.current = true;
     loadSchemaIntoEditor(editor, schema);
+    loadingRef.current = false;
+    lastEmittedRef.current = schema;
   }, [schema]);
 
   return (
