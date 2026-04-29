@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Core;
 
+use ImaginaSignatures\Setup\DefaultPlansSeeder;
 use ImaginaSignatures\Setup\RolesInstaller;
 use ImaginaSignatures\Setup\SchemaMigrator;
 
@@ -36,6 +37,7 @@ final class Activator {
 
 		( new SchemaMigrator() )->migrate();
 		( new RolesInstaller() )->install();
+		( new DefaultPlansSeeder() )->seed();
 
 		self::seed_default_options();
 
