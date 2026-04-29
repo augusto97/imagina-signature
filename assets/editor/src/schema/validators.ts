@@ -43,6 +43,17 @@ function isSafeUrl(value: unknown): boolean {
   }
 }
 
+function isSafeImageSrc(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  if (/^data:image\//i.test(value)) return true;
+  try {
+    const parsed = new URL(value, 'https://example.com');
+    return ['http:', 'https:'].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
+
 function validateBlock(block: unknown, path: string, errors: ValidationError[]): void {
   if (typeof block !== 'object' || block === null) {
     errors.push({ path, message: 'Block must be an object' });
@@ -62,8 +73,8 @@ function validateBlock(block: unknown, path: string, errors: ValidationError[]):
     case 'image':
       if (typeof b.src !== 'string') {
         errors.push({ path: `${path}.src`, message: 'Image block requires src' });
-      } else if (!isSafeUrl(b.src)) {
-        errors.push({ path: `${path}.src`, message: 'Image src must be http(s)' });
+      } else if (!isSafeImageSrc(b.src)) {
+        errors.push({ path: `${path}.src`, message: 'Image src must be http(s) or data:image/*' });
       }
       if (typeof b.alt !== 'string') {
         errors.push({ path: `${path}.alt`, message: 'Image block requires alt text' });

@@ -18,11 +18,14 @@ const fallbackSprintf = (format: string, ...args: unknown[]): string => {
   return format.replace(/%[sd]/g, () => String(args[i++] ?? ''));
 };
 
-const i18n: WpI18n = (typeof window !== 'undefined' && window.wp?.i18n) ?? {
+const fallback: WpI18n = {
   __: (text) => text,
   _n: (single, plural, n) => (n === 1 ? single : plural),
   sprintf: fallbackSprintf,
 };
+
+const i18n: WpI18n =
+  typeof window !== 'undefined' && window.wp && window.wp.i18n ? window.wp.i18n : fallback;
 
 export const __ = (text: string): string => i18n.__(text, 'imagina-signatures');
 export const _n = (single: string, plural: string, n: number): string =>

@@ -1,0 +1,874 @@
+# Copyright (C) Imagina WP
+# This file is distributed under the GPL v2 or later license.
+msgid ""
+msgstr ""
+"Project-Id-Version: Imagina Signatures 1.0.0\n"
+"Report-Msgid-Bugs-To: https://imaginawp.com/imagina-signatures\n"
+"POT-Creation-Date: 2026-04-29 12:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en_US\n"
+"X-Domain: imagina-signatures\n"
+
+msgid " from Imagina Signatures users?"
+msgstr ""
+
+msgid " will be permanently removed."
+msgstr ""
+
+msgid "(Copy)"
+msgstr ""
+
+msgid "(leave blank to keep current)"
+msgstr ""
+
+msgid "A horizontal separator line."
+msgstr ""
+
+msgid "A prominent call-to-action button."
+msgstr ""
+
+msgid "A single paragraph of text."
+msgstr ""
+
+msgid "Access key ID"
+msgstr ""
+
+msgid "Account Executive · Acme Inc."
+msgstr ""
+
+msgid "Account ID"
+msgstr ""
+
+msgid "Actions"
+msgstr ""
+
+msgid "Active"
+msgstr ""
+
+msgid "Add item"
+msgstr ""
+
+msgid "Add network"
+msgstr ""
+
+msgid "Address"
+msgstr ""
+
+msgid "Align"
+msgstr ""
+
+msgid "All"
+msgstr ""
+
+msgid "Alt text"
+msgstr ""
+
+msgid "Animations"
+msgstr ""
+
+msgid "Archive"
+msgstr ""
+
+msgid "Archived"
+msgstr ""
+
+msgid "Archived."
+msgstr ""
+
+msgid "Asset not found."
+msgstr ""
+
+msgid "Avatar, logo, or any image."
+msgstr ""
+
+msgid "Back"
+msgstr ""
+
+msgid "Back to signatures"
+msgstr ""
+
+msgid "Background"
+msgstr ""
+
+msgid "Basic plan for individuals."
+msgstr ""
+
+msgid "Blocks"
+msgstr ""
+
+msgid "Bold"
+msgstr ""
+
+msgid "Border radius"
+msgstr ""
+
+msgid "Browse templates"
+msgstr ""
+
+msgid "Bucket configuration is incomplete."
+msgstr ""
+
+msgid "Bucket name"
+msgstr ""
+
+msgid "Bucket reachable and credentials valid."
+msgstr ""
+
+msgid "Bucket returned HTTP %d."
+msgstr ""
+
+msgid "Business"
+msgstr ""
+
+msgid "CTA button"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Canvas"
+msgstr ""
+
+msgid "Center"
+msgstr ""
+
+msgid "Choose where image uploads are stored."
+msgstr ""
+
+msgid "Circle"
+msgstr ""
+
+msgid "Circle filled"
+msgstr ""
+
+msgid "Cloudflare R2, Bunny, Amazon S3, Backblaze B2, DigitalOcean Spaces, Wasabi, MinIO."
+msgstr ""
+
+msgid "Color"
+msgstr ""
+
+msgid "Compiling…"
+msgstr ""
+
+msgid "Contact row"
+msgstr ""
+
+msgid "Content"
+msgstr ""
+
+msgid "Continue"
+msgstr ""
+
+msgid "Copy HTML"
+msgstr ""
+
+msgid "Could not change plan."
+msgstr ""
+
+msgid "Could not copy."
+msgstr ""
+
+msgid "Could not create user."
+msgstr ""
+
+msgid "Could not delete plan."
+msgstr ""
+
+msgid "Could not delete signature."
+msgstr ""
+
+msgid "Could not duplicate signature."
+msgstr ""
+
+msgid "Could not load plans."
+msgstr ""
+
+msgid "Could not load signature."
+msgstr ""
+
+msgid "Could not load signatures."
+msgstr ""
+
+msgid "Could not load storage settings."
+msgstr ""
+
+msgid "Could not load templates."
+msgstr ""
+
+msgid "Could not load users."
+msgstr ""
+
+msgid "Could not load your account info."
+msgstr ""
+
+msgid "Could not remove user."
+msgstr ""
+
+msgid "Could not save plan."
+msgstr ""
+
+msgid "Could not save settings."
+msgstr ""
+
+msgid "Could not save setup."
+msgstr ""
+
+msgid "Could not update signature."
+msgstr ""
+
+msgid "Create"
+msgstr ""
+
+msgid "Create user"
+msgstr ""
+
+msgid "Create, duplicate, archive, and manage your signatures."
+msgstr ""
+
+msgid "Custom"
+msgstr ""
+
+msgid "Custom branding"
+msgstr ""
+
+msgid "Dashed"
+msgstr ""
+
+msgid "Default"
+msgstr ""
+
+msgid "Define quotas and feature flags for the user plans."
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Delete plan "
+msgstr ""
+
+msgid "Delete signature?"
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
+msgid "Disclaimer"
+msgstr ""
+
+msgid "Display name"
+msgstr ""
+
+msgid "Divider"
+msgstr ""
+
+msgid "Dotted"
+msgstr ""
+
+msgid "Draft"
+msgstr ""
+
+msgid "Duplicate"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Edit plan"
+msgstr ""
+
+msgid "Editor"
+msgstr ""
+
+msgid "Editor failed to load"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "Email preview"
+msgstr ""
+
+msgid "Email, phone, address, website."
+msgstr ""
+
+msgid "Endpoint URL"
+msgstr ""
+
+msgid "Export .html"
+msgstr ""
+
+msgid "Finish setup"
+msgstr ""
+
+msgid "Flat"
+msgstr ""
+
+msgid "Font family"
+msgstr ""
+
+msgid "Font size (px)"
+msgstr ""
+
+msgid "For growing teams."
+msgstr ""
+
+msgid "For multiple users (Multi user)"
+msgstr ""
+
+msgid "For organizations."
+msgstr ""
+
+msgid "Forbidden."
+msgstr ""
+
+msgid "Free"
+msgstr ""
+
+msgid "HTML copied to clipboard."
+msgstr ""
+
+msgid "HTML exceeds 102 KB; Gmail will clip the message."
+msgstr ""
+
+msgid "Height (px)"
+msgstr ""
+
+msgid "Hi team — just sharing the latest update."
+msgstr ""
+
+msgid "Hide"
+msgstr ""
+
+msgid "How will you use it?"
+msgstr ""
+
+msgid "Icon color"
+msgstr ""
+
+msgid "Icon size (px)"
+msgstr ""
+
+msgid "Icon style"
+msgstr ""
+
+msgid "Image"
+msgstr ""
+
+msgid "Image is larger than your plan allows."
+msgstr ""
+
+msgid "Image is missing an explicit width."
+msgstr ""
+
+msgid "Image is missing the alt attribute."
+msgstr ""
+
+msgid "Image uploaded."
+msgstr ""
+
+msgid "Images stored under wp-content/uploads. No setup required."
+msgstr ""
+
+msgid "Imagina Signatures"
+msgstr ""
+
+msgid "Imagina Signatures User"
+msgstr ""
+
+msgid "Imagina Signatures needs initial configuration. <a href=\"%s\">Run the setup wizard</a>."
+msgstr ""
+
+msgid "Imagina Signatures requires PHP %s or higher."
+msgstr ""
+
+msgid "Imagina Signatures requires WordPress %s or higher."
+msgstr ""
+
+msgid "Inline"
+msgstr ""
+
+msgid "Invalid status."
+msgstr ""
+
+msgid "Items"
+msgstr ""
+
+msgid "Jane Doe"
+msgstr ""
+
+msgid "Just for me (Single user)"
+msgstr ""
+
+msgid "KB"
+msgstr ""
+
+msgid "Layers"
+msgstr ""
+
+msgid "Layout"
+msgstr ""
+
+msgid "Left"
+msgstr ""
+
+msgid "Lines"
+msgstr ""
+
+msgid "Link (optional)"
+msgstr ""
+
+msgid "Link color"
+msgstr ""
+
+msgid "Link is missing href."
+msgstr ""
+
+msgid "Loading editor…"
+msgstr ""
+
+msgid "Loading…"
+msgstr ""
+
+msgid "Manage Imagina Signatures users and their plan assignments."
+msgstr ""
+
+msgid "Max image size (MB)"
+msgstr ""
+
+msgid "Max signatures"
+msgstr ""
+
+msgid "Max storage (MB)"
+msgstr ""
+
+msgid "Medium"
+msgstr ""
+
+msgid "Move down"
+msgstr ""
+
+msgid "Move up"
+msgstr ""
+
+msgid "Multi user (with plans and quotas)"
+msgstr ""
+
+msgid "Multiple text lines stacked together."
+msgstr ""
+
+msgid "My Signatures"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Name cannot be empty."
+msgstr ""
+
+msgid "Name is required."
+msgstr ""
+
+msgid "Networks"
+msgstr ""
+
+msgid "New plan"
+msgstr ""
+
+msgid "New signature"
+msgstr ""
+
+msgid "New user"
+msgstr ""
+
+msgid "No blocks yet."
+msgstr ""
+
+msgid "No plans defined."
+msgstr ""
+
+msgid "No templates available for your plan yet."
+msgstr ""
+
+msgid "No users yet."
+msgstr ""
+
+msgid "Operating mode"
+msgstr ""
+
+msgid "Page not found"
+msgstr ""
+
+msgid "Phone"
+msgstr ""
+
+msgid "Pick a starting point. You can customize everything in the editor."
+msgstr ""
+
+msgid "Pick a template to get started or create one from scratch."
+msgstr ""
+
+msgid "Plan"
+msgstr ""
+
+msgid "Plan deleted."
+msgstr ""
+
+msgid "Plan saved."
+msgstr ""
+
+msgid "Plan updated."
+msgstr ""
+
+msgid "Plans"
+msgstr ""
+
+msgid "Plugin activation error"
+msgstr ""
+
+msgid "Premium"
+msgstr ""
+
+msgid "Premium templates"
+msgstr ""
+
+msgid "Preview failed: "
+msgstr ""
+
+msgid "Preview not ready yet."
+msgstr ""
+
+msgid "Pro"
+msgstr ""
+
+msgid "Properties"
+msgstr ""
+
+msgid "Provider setup guide ↗"
+msgstr ""
+
+msgid "Public base URL (optional CDN)"
+msgstr ""
+
+msgid "Quick note before the meeting."
+msgstr ""
+
+msgid "Ready"
+msgstr ""
+
+msgid "Region"
+msgstr ""
+
+msgid "Regular"
+msgstr ""
+
+msgid "Reload the page or contact support."
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "Remove "
+msgstr ""
+
+msgid "Replace image"
+msgstr ""
+
+msgid "Restore"
+msgstr ""
+
+msgid "Restored."
+msgstr ""
+
+msgid "Right"
+msgstr ""
+
+msgid "Rounded"
+msgstr ""
+
+msgid "Rounded filled"
+msgstr ""
+
+msgid "Row of social network icons."
+msgstr ""
+
+msgid "S3-compatible bucket (advanced)"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Save failed"
+msgstr ""
+
+msgid "Save settings"
+msgstr ""
+
+msgid "Saved"
+msgstr ""
+
+msgid "Saving…"
+msgstr ""
+
+msgid "Schedule a call"
+msgstr ""
+
+msgid "Search"
+msgstr ""
+
+msgid "Search by name or email…"
+msgstr ""
+
+msgid "Search by name…"
+msgstr ""
+
+msgid "Secret access key"
+msgstr ""
+
+msgid "Semibold"
+msgstr ""
+
+msgid "Send welcome email with login info"
+msgstr ""
+
+msgid "Sent from my Mac."
+msgstr ""
+
+msgid "Set as default"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Settings saved."
+msgstr ""
+
+msgid "Setup"
+msgstr ""
+
+msgid "Setup Imagina Signatures"
+msgstr ""
+
+msgid "Setup complete!"
+msgstr ""
+
+msgid "Shape"
+msgstr ""
+
+msgid "Show"
+msgstr ""
+
+msgid "Signature deleted."
+msgstr ""
+
+msgid "Signature duplicated."
+msgstr ""
+
+msgid "Signature limit reached (%d). Upgrade your plan."
+msgstr ""
+
+msgid "Signature not found."
+msgstr ""
+
+msgid "Signature schema validation failed."
+msgstr ""
+
+msgid "Signatures"
+msgstr ""
+
+msgid "Single user (just me)"
+msgstr ""
+
+msgid "Slug"
+msgstr ""
+
+msgid "Small legal text at the bottom."
+msgstr ""
+
+msgid "Social icons"
+msgstr ""
+
+msgid "Solid"
+msgstr ""
+
+msgid "Something went wrong: "
+msgstr ""
+
+msgid "Sort order"
+msgstr ""
+
+msgid "Spacer"
+msgstr ""
+
+msgid "Spacing (px)"
+msgstr ""
+
+msgid "Square"
+msgstr ""
+
+msgid "Stacked"
+msgstr ""
+
+msgid "Start from scratch"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Storage"
+msgstr ""
+
+msgid "Storage limit would be exceeded."
+msgstr ""
+
+msgid "Storage provider"
+msgstr ""
+
+msgid "Storage settings saved."
+msgstr ""
+
+msgid "Storage upload failed"
+msgstr ""
+
+msgid "Style"
+msgstr ""
+
+msgid "Template not found."
+msgstr ""
+
+msgid "Templates"
+msgstr ""
+
+msgid "Test connection"
+msgstr ""
+
+msgid "Text"
+msgstr ""
+
+msgid "Text color"
+msgstr ""
+
+msgid "Text stack"
+msgstr ""
+
+msgid "The route you tried to open does not exist."
+msgstr ""
+
+msgid "Thickness (px)"
+msgstr ""
+
+msgid "This action cannot be undone. The signature "
+msgstr ""
+
+msgid "This email is intended only for the addressee."
+msgstr ""
+
+msgid "Three quick questions to set up the plugin."
+msgstr ""
+
+msgid "Too many requests. Try again in %d seconds."
+msgstr ""
+
+msgid "URL"
+msgstr ""
+
+msgid "Unknown error"
+msgstr ""
+
+msgid "Unknown route"
+msgstr ""
+
+msgid "Unsaved"
+msgstr ""
+
+msgid "Unsupported file type."
+msgstr ""
+
+msgid "Untitled signature"
+msgstr ""
+
+msgid "Updated"
+msgstr ""
+
+msgid "Upload failed"
+msgstr ""
+
+msgid "Upload image"
+msgstr ""
+
+msgid "Uploads directory is not writable."
+msgstr ""
+
+msgid "Uploads directory is writable."
+msgstr ""
+
+msgid "Use this template"
+msgstr ""
+
+msgid "User created."
+msgstr ""
+
+msgid "User removed."
+msgstr ""
+
+msgid "Users"
+msgstr ""
+
+msgid "Vertical empty space."
+msgstr ""
+
+msgid "Website"
+msgstr ""
+
+msgid "Weight"
+msgstr ""
+
+msgid "Welcome"
+msgstr ""
+
+msgid "Welcome to Imagina Signatures"
+msgstr ""
+
+msgid "Where to store images"
+msgstr ""
+
+msgid "Width (px)"
+msgstr ""
+
+msgid "WordPress Media Library (recommended)"
+msgstr ""
+
+msgid "You alone will create signatures, with no quotas."
+msgstr ""
+
+msgid "You can change this later from Storage Settings."
+msgstr ""
+
+msgid "You don\\"
+msgstr ""
+
+msgid "You have used %1$d of %2$d signatures on your plan."
+msgstr ""
+
+msgid "You will create email signatures with a drag-and-drop editor. Signatures are compiled to inline-styled HTML compatible with Gmail, Outlook, and Apple Mail."
+msgstr ""
+
+msgid "You will create users and assign them plans with quotas."
+msgstr ""
+
+msgid "Your name"
+msgstr ""
+
+msgid "signatures used"
+msgstr ""
+
+msgid "warnings"
+msgstr ""
+
+msgid "— No plan —"
+msgstr ""
+

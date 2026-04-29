@@ -1,48 +1,68 @@
-// Editor SPA entry point.
-//
-// Sprint 8 wires the polish primitives (loading, empty-state, toasts,
-// error boundary) around the placeholder until the GrapesJS-based
-// editor lands in a follow-up release.
+/** @jsxImportSource preact */
 
-import { meApi } from './api/me';
-import { setMe } from './stores/userStore';
+import '../../styles/editor.css';
+
+import { render } from 'preact';
+import { JSX } from 'preact';
+import { Suspense, lazy } from 'preact/compat';
+import { useEffect } from 'preact/hooks';
+import { AppShell } from './components/AppShell';
+import { useRouter, navigate } from './router';
 import { __ } from './i18n/helpers';
-import { createSpinner } from './components/loading';
-import { createEmptyState } from './components/empty-state';
-import { installErrorBoundary } from './components/error-boundary';
-import { toast } from './components/toast';
+import { useUserStore } from './stores/userStore';
 
-async function init(): Promise<void> {
-  const root = document.querySelector<HTMLDivElement>('.imagina-signatures-app');
-  if (!root) return;
+const SignaturesPage = lazy(() => import('./pages/SignaturesPage').then((m) => ({ default: m.SignaturesPage })));
+const EditorPage = lazy(() => import('./pages/EditorPage').then((m) => ({ default: m.EditorPage })));
+const TemplatesPage = lazy(() => import('./pages/TemplatesPage').then((m) => ({ default: m.TemplatesPage })));
 
-  installErrorBoundary(root);
-  root.replaceChildren(createSpinner(__('Loading editor…')));
+function App({ initialRoute }: { initialRoute: string }): JSX.Element {
+  const route = useRouter();
+  const me = useUserStore((state) => state.me);
 
-  try {
-    const me = await meApi.get();
-    setMe(me);
-    root.replaceChildren(
-      createEmptyState({
-        title: __('No signatures yet'),
-        description: __(
-          'The drag-and-drop editor lands in the next release. Use the Templates page in the meantime.',
-        ),
-        ctaLabel: __('Browse templates'),
-        onCta: () => {
-          const path = '../../wp-admin/admin.php?page=imagina-signatures-templates';
-          window.location.href = path;
-        },
-      }),
-    );
-  } catch (error) {
-    toast(__('Could not load user info.'), 'error');
-    throw error;
-  }
+  // First mount: convert WordPress page route into a hash route.
+  useEffect(() => {
+    if (route.path !== '/' || !me) return;
+    const map: Record<string, string> = {
+      dashboard: '/signatures',
+      editor: '/editor',
+      templates: '/templates',
+    };
+    navigate(map[initialRoute] ?? '/signatures');
+  }, [route.path, me, initialRoute]);
+
+  return (
+    <AppShell>
+      <Suspense fallback={<Loading />}>
+        {route.path === '/' && <Loading />}
+        {route.path === '/signatures' && <SignaturesPage />}
+        {route.path === '/editor' && <EditorPage signatureId={Number(route.query.get('id') ?? 0)} />}
+        {route.path === '/templates' && <TemplatesPage />}
+        {!['/', '/signatures', '/editor', '/templates'].includes(route.path) && <NotFound />}
+      </Suspense>
+    </AppShell>
+  );
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
+function Loading(): JSX.Element {
+  return (
+    <div className="is-flex is-items-center is-justify-center is-py-24" role="status" aria-live="polite">
+      <span className="is-inline-block is-w-6 is-h-6 is-rounded-full is-border-2 is-border-brand-600 is-border-t-transparent is-animate-spin" />
+      <span className="is-ml-3 is-text-slate-600">{__('Loading…')}</span>
+    </div>
+  );
+}
+
+function NotFound(): JSX.Element {
+  return (
+    <div className="is-py-24 is-text-center is-text-slate-500">
+      <h2 className="is-text-xl is-font-semibold is-text-slate-700">{__('Page not found')}</h2>
+      <p className="is-mt-2">{__('The route you tried to open does not exist.')}</p>
+    </div>
+  );
+}
+
+const root = document.querySelector<HTMLDivElement>('.imagina-signatures-app');
+if (root) {
+  const initialRoute = root.dataset.route ?? 'dashboard';
+  render(<App initialRoute={initialRoute} />, root);
 }

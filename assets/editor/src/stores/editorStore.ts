@@ -1,34 +1,44 @@
-import { createStore } from './createStore';
+import { create } from 'zustand';
 import type { SignatureSchema } from '@shared/types';
 
 interface EditorState {
   signatureId: number | null;
+  name: string;
   schema: SignatureSchema | null;
+  status: 'draft' | 'ready' | 'archived';
   isDirty: boolean;
   isSaving: boolean;
   lastSavedAt: string | null;
+  setSignature: (id: number | null, name: string, schema: SignatureSchema | null, status?: 'draft' | 'ready' | 'archived') => void;
+  setName: (name: string) => void;
+  setSchema: (schema: SignatureSchema) => void;
+  markSaving: (saving: boolean) => void;
+  markSaved: () => void;
+  reset: () => void;
 }
 
-export const editorStore = createStore<EditorState>({
+export const useEditorStore = create<EditorState>()((set) => ({
   signatureId: null,
+  name: '',
   schema: null,
+  status: 'draft',
   isDirty: false,
   isSaving: false,
   lastSavedAt: null,
-});
-
-export function setEditorSignature(id: number | null, schema: SignatureSchema | null): void {
-  editorStore.setState({ signatureId: id, schema, isDirty: false });
-}
-
-export function markDirty(): void {
-  editorStore.setState({ isDirty: true });
-}
-
-export function markSaving(saving: boolean): void {
-  editorStore.setState({ isSaving: saving });
-}
-
-export function markSaved(): void {
-  editorStore.setState({ isDirty: false, isSaving: false, lastSavedAt: new Date().toISOString() });
-}
+  setSignature: (id, name, schema, status = 'draft') =>
+    set({ signatureId: id, name, schema, status, isDirty: false }),
+  setName: (name) => set({ name, isDirty: true }),
+  setSchema: (schema) => set({ schema, isDirty: true }),
+  markSaving: (isSaving) => set({ isSaving }),
+  markSaved: () => set({ isDirty: false, isSaving: false, lastSavedAt: new Date().toISOString() }),
+  reset: () =>
+    set({
+      signatureId: null,
+      name: '',
+      schema: null,
+      status: 'draft',
+      isDirty: false,
+      isSaving: false,
+      lastSavedAt: null,
+    }),
+}));

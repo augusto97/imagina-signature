@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Scoped reset for the wp-admin host page. Tailwind's `important` selector
+   keeps these rules from leaking into other admin pages. */
+.imagina-signatures-app {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #0f172a;
+  --is-brand: #2563eb;
+}
+.imagina-signatures-app * {
+  box-sizing: border-box;
+}
+.imagina-signatures-app button {
+  font-family: inherit;
+  cursor: pointer;
+}
+.imagina-signatures-app input,
+.imagina-signatures-app select,
+.imagina-signatures-app textarea {
+  font-family: inherit;
+}
+
+/* GrapesJS host wrapper — keep its internal styling intact while sandboxing
+   the rest of the editor chrome. */
+.is-grapes-host .gjs-editor {
+  height: 100%;
+}

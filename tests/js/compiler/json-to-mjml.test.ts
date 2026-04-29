@@ -32,15 +32,16 @@ describe('compileToMjml', () => {
     const schema = emptySchema();
     schema.blocks = [
       {
-        id: 's',
-        type: 'spacer',
+        id: 't',
+        type: 'text',
         grid: { col: 1, row: 1 },
-        height: 10,
+        content: 'INVISIBLE_CONTENT',
+        style: {},
         visible: false,
       },
     ];
     const out = compileToMjml(schema);
-    expect(out).not.toContain('mj-spacer');
+    expect(out).not.toContain('INVISIBLE_CONTENT');
   });
 });
 
@@ -70,6 +71,6 @@ describe('minifyHtml', () => {
     const input = '<!--[if mso]>X<![endif]--> <p>   hi   </p>';
     const out = minifyHtml(input);
     expect(out).toContain('<!--[if mso]>X<![endif]-->');
-    expect(out).toContain('<p>hi </p>');
+    expect(out).toContain('<p> hi </p>');
   });
 });

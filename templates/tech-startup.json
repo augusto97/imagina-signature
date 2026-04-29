@@ -17,6 +17,6 @@
       { "id": "name", "type": "text", "grid": { "col": 1, "row": 2 }, "content": "<strong>{{name}}</strong> — {{role}}", "style": { "font_size": 14 } },
       { "id": "product", "type": "button_cta", "grid": { "col": 1, "row": 3 }, "text": "{{cta_label}}", "url": "{{cta_url}}", "background_color": "#2563eb", "text_color": "#ffffff", "border_radius": "6px", "padding": { "top": 8, "right": 14, "bottom": 8, "left": 14 }, "font_size": 13, "font_weight": 500 }
     ],
-    "variables": { "logo_url": "https://via.placeholder.com/140x40", "company": "Acme", "website": "https://acme.com", "name": "Sky", "role": "Product", "cta_label": "Try the product", "cta_url": "https://acme.com/signup" }
+    "variables": { "logo_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMTIwIDEyMCI+PHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNlMmU4ZjAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk0YTNiOCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiPkltYWdlPC90ZXh0Pjwvc3ZnPg==", "company": "Acme", "website": "https://acme.com", "name": "Sky", "role": "Product", "cta_label": "Try the product", "cta_url": "https://acme.com/signup" }
   }
 }

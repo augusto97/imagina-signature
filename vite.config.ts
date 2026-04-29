@@ -1,13 +1,16 @@
 import { defineConfig } from 'vite';
+import preact from '@preact/preset-vite';
 import { resolve } from 'node:path';
 
 export default defineConfig({
+  plugins: [preact()],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'assets/editor/src'),
       '@shared': resolve(__dirname, 'assets/shared'),
       react: 'preact/compat',
       'react-dom': 'preact/compat',
+      'react/jsx-runtime': 'preact/jsx-runtime',
     },
   },
   build: {
@@ -22,7 +25,7 @@ export default defineConfig({
       output: {
         entryFileNames: '[name].js',
         chunkFileNames: 'chunks/[name]-[hash].js',
-        assetFileNames: '[name].[ext]',
+        assetFileNames: '[name][extname]',
       },
     },
   },
@@ -30,5 +33,6 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     include: ['tests/js/**/*.test.ts', 'tests/js/**/*.test.tsx'],
+    setupFiles: ['./tests/js/setup.ts'],
   },
 });

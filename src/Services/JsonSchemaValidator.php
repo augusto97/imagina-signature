@@ -132,8 +132,8 @@ final class JsonSchemaValidator {
 			case 'image':
 				if ( ! isset( $block['src'] ) || ! is_string( $block['src'] ) ) {
 					$errors[] = [ 'path' => $path . '.src', 'message' => 'Image block requires src' ];
-				} elseif ( ! $this->is_safe_url( $block['src'] ) ) {
-					$errors[] = [ 'path' => $path . '.src', 'message' => 'Image src must be http(s)' ];
+				} elseif ( ! $this->is_safe_image_src( $block['src'] ) ) {
+					$errors[] = [ 'path' => $path . '.src', 'message' => 'Image src must be http(s) or data:image/*' ];
 				}
 				if ( ! isset( $block['alt'] ) || ! is_string( $block['alt'] ) ) {
 					$errors[] = [ 'path' => $path . '.alt', 'message' => 'Image block requires alt text' ];
@@ -171,5 +171,20 @@ final class JsonSchemaValidator {
 	private function is_safe_url( string $url ): bool {
 		$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
 		return in_array( $scheme, [ 'http', 'https', 'mailto', 'tel' ], true );
+	}
+
+	/**
+	 * Image-specific src allow-list (adds `data:image/*` to the safe schemes).
+	 *
+	 * @param string $url Candidate URL.
+	 *
+	 * @return bool
+	 */
+	private function is_safe_image_src( string $url ): bool {
+		if ( 0 === strpos( strtolower( $url ), 'data:image/' ) ) {
+			return true;
+		}
+		$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+		return in_array( $scheme, [ 'http', 'https' ], true );
 	}
 }

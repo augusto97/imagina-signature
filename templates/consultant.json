@@ -13,7 +13,7 @@
     "canvas": { "width": 580, "background_color": "#ffffff", "font_family": "Georgia, serif", "font_size": 13, "text_color": "#1e293b", "link_color": "#0a66c2" },
     "layout": { "type": "table", "columns": 2, "gap": 12, "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 } },
     "blocks": [
-      { "id": "photo", "type": "image", "grid": { "col": 1, "row": 1 }, "src": "https://via.placeholder.com/96", "alt": "Photo", "width": 96, "border_radius": "4px" },
+      { "id": "photo", "type": "image", "grid": { "col": 1, "row": 1 }, "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMTIwIDEyMCI+PHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNlMmU4ZjAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk0YTNiOCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiPkltYWdlPC90ZXh0Pjwvc3ZnPg==", "alt": "Photo", "width": 96, "border_radius": "4px" },
       { "id": "name", "type": "text", "grid": { "col": 2, "row": 1 }, "content": "<strong>{{name}}</strong>", "style": { "font_size": 18 } },
       { "id": "creds", "type": "text", "grid": { "col": 2, "row": 2 }, "content": "{{role}} · {{credentials}}", "style": { "color": "#475569", "font_style": "italic" } },
       { "id": "linkedin", "type": "social_icons", "grid": { "col": 2, "row": 3 }, "networks": [ { "name": "linkedin", "url": "{{linkedin}}" } ], "size": 22, "gap": 0, "color": "#0a66c2", "style": "rounded_filled" }

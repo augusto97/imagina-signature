@@ -47,7 +47,21 @@ final class AssetEnqueuer {
 			return;
 		}
 
-		$is_editor = false !== strpos( $hook_suffix, 'imagina-signatures-editor' );
+		// The dashboard, editor, and templates screens share the editor bundle
+		// (drag-and-drop SPA + signature picker). The plans, users, storage,
+		// settings, and setup screens use the lighter admin bundle.
+		$editor_pages = [ 'imagina-signatures', 'imagina-signatures-editor', 'imagina-signatures-templates' ];
+		$is_editor    = false;
+		foreach ( $editor_pages as $page ) {
+			if ( false !== strpos( $hook_suffix, $page ) && false === strpos( $hook_suffix, 'imagina-signatures-plans' )
+				&& false === strpos( $hook_suffix, 'imagina-signatures-users' )
+				&& false === strpos( $hook_suffix, 'imagina-signatures-storage' )
+				&& false === strpos( $hook_suffix, 'imagina-signatures-settings' )
+				&& false === strpos( $hook_suffix, 'imagina-signatures-setup' ) ) {
+				$is_editor = true;
+				break;
+			}
+		}
 
 		$build_dir = IMGSIG_PLUGIN_DIR . 'build/';
 		$build_url = IMGSIG_PLUGIN_URL . 'build/';

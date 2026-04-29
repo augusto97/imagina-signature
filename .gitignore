@@ -1,8 +1,12 @@
 # Dependencies
 node_modules/
-/vendor-dev/
+# vendor/ contains dev-only deps (PHPUnit, WPCS, Brain Monkey). The plugin's
+# runtime uses a custom PSR-4 autoloader and has no PHP runtime deps.
+# CI installs them via `composer install`; the distribution ZIP can ship a
+# slimmed `--no-dev` vendor/ when needed (see scripts/build-zip.sh).
+vendor/
 
-# Build artifacts (note: /build is COMMITTED for distribution)
+# Build artifacts. /build IS committed for distribution.
 dist/
 *.log
 

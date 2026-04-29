@@ -13,7 +13,7 @@
     "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Arial, Helvetica, sans-serif", "font_size": 13, "text_color": "#222222", "link_color": "#1a73e8" },
     "layout": { "type": "table", "columns": 2, "gap": 16, "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 } },
     "blocks": [
-      { "id": "avatar", "type": "image", "grid": { "col": 1, "row": 1 }, "src": "https://via.placeholder.com/100", "alt": "Avatar", "width": 100, "border_radius": "50%" },
+      { "id": "avatar", "type": "image", "grid": { "col": 1, "row": 1 }, "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMTIwIDEyMCI+PHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNlMmU4ZjAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk0YTNiOCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiPkltYWdlPC90ZXh0Pjwvc3ZnPg==", "alt": "Avatar", "width": 100, "border_radius": "50%" },
       { "id": "name", "type": "text", "grid": { "col": 2, "row": 1 }, "content": "<strong>{{name}}</strong>", "style": { "font_size": 18, "font_weight": 700 } },
       { "id": "role", "type": "text", "grid": { "col": 2, "row": 2 }, "content": "{{role}} · {{company}}", "style": { "color": "#666666" } },
       { "id": "contact", "type": "contact_row", "grid": { "col": 2, "row": 3 }, "items": [ { "type": "email", "value": "{{email}}" }, { "type": "phone", "value": "{{phone}}" }, { "type": "website", "value": "{{website}}" } ], "layout": "stacked", "icon": false, "icon_color": "#1a73e8", "text_style": { "font_size": 12 } }

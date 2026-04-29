@@ -13,18 +13,6 @@ use ImaginaSignatures\Exceptions\ValidationException;
 use ImaginaSignatures\Services\JsonSchemaValidator;
 use PHPUnit\Framework\TestCase;
 
-if ( ! function_exists( 'wp_parse_url' ) ) {
-	function wp_parse_url( $url, $component = -1 ) {
-		return PHP_URL_SCHEME === $component ? parse_url( $url, $component ) : parse_url( $url );
-	}
-}
-
-if ( ! function_exists( '__' ) ) {
-	function __( $text, $domain = '' ) { // phpcs:ignore Generic.NamingConventions.CamelCapsFunctionName
-		return $text;
-	}
-}
-
 final class JsonSchemaValidatorTest extends TestCase {
 
 	public function test_accepts_minimal_valid_schema(): void {

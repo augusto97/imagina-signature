@@ -12,27 +12,6 @@ namespace ImaginaSignatures\Tests\Unit\Security;
 use ImaginaSignatures\Security\Encryption;
 use PHPUnit\Framework\TestCase;
 
-if ( ! defined( 'AUTH_KEY' ) ) {
-	define( 'AUTH_KEY', 'unit-test-auth-key-which-is-stable' );
-}
-
-if ( ! function_exists( 'get_option' ) ) {
-	$GLOBALS['imgsig_options'] = [];
-	function get_option( $name, $default = false ) {
-		return $GLOBALS['imgsig_options'][ $name ] ?? $default;
-	}
-	function update_option( $name, $value, $autoload = null ) {
-		$GLOBALS['imgsig_options'][ $name ] = $value;
-		return true;
-	}
-}
-
-if ( ! function_exists( 'wp_json_encode' ) ) {
-	function wp_json_encode( $value, $options = 0 ) {
-		return json_encode( $value, $options );
-	}
-}
-
 final class EncryptionTest extends TestCase {
 
 	public function test_round_trip_of_plain_string(): void {

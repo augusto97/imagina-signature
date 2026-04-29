@@ -18,6 +18,6 @@
       { "id": "cta", "type": "button_cta", "grid": { "col": 1, "row": 3 }, "text": "Shop our latest drop", "url": "{{shop_url}}", "background_color": "#ea580c", "text_color": "#ffffff", "border_radius": "20px", "padding": { "top": 10, "right": 18, "bottom": 10, "left": 18 }, "font_size": 13, "font_weight": 600 },
       { "id": "social", "type": "social_icons", "grid": { "col": 1, "row": 4 }, "networks": [ { "name": "instagram", "url": "{{instagram}}" }, { "name": "tiktok", "url": "{{tiktok}}" }, { "name": "facebook", "url": "{{facebook}}" } ], "size": 18, "gap": 4, "color": "#ea580c", "style": "rounded" }
     ],
-    "variables": { "logo_url": "https://via.placeholder.com/160x40", "store": "Acme Shop", "shop_url": "https://shop.example", "name": "Sam", "role": "Owner", "instagram": "https://instagram.com/shop", "tiktok": "https://tiktok.com/@shop", "facebook": "https://facebook.com/shop" }
+    "variables": { "logo_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMTIwIDEyMCI+PHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNlMmU4ZjAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk0YTNiOCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiPkltYWdlPC90ZXh0Pjwvc3ZnPg==", "store": "Acme Shop", "shop_url": "https://shop.example", "name": "Sam", "role": "Owner", "instagram": "https://instagram.com/shop", "tiktok": "https://tiktok.com/@shop", "facebook": "https://facebook.com/shop" }
   }
 }
