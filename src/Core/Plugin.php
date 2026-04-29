@@ -93,6 +93,25 @@ final class Plugin {
 
 		$this->load_textdomain();
 		$this->run_pending_migrations();
+		$this->register_services();
+
+		if ( is_admin() ) {
+			$this->container->make( \ImaginaSignatures\Admin\AdminMenu::class )->register();
+			$this->container->make( \ImaginaSignatures\Admin\AssetEnqueuer::class )->register();
+			$this->container->make( \ImaginaSignatures\Admin\Notices::class )->register();
+			if ( $this->container->has( '\\ImaginaSignatures\\Admin\\UserHardening' ) ) {
+				$this->container->make( '\\ImaginaSignatures\\Admin\\UserHardening' )->register();
+			}
+		}
+
+		if ( $this->container->has( '\\ImaginaSignatures\\Api\\RestRouter' ) ) {
+			add_action(
+				'rest_api_init',
+				function (): void {
+					$this->container->make( '\\ImaginaSignatures\\Api\\RestRouter' )->register_routes();
+				}
+			);
+		}
 
 		/**
 		 * Fires after the plugin has finished bootstrapping.
@@ -102,6 +121,15 @@ final class Plugin {
 		 * @param Plugin $plugin The plugin instance.
 		 */
 		do_action( 'imgsig/plugin/booted', $this );
+	}
+
+	/**
+	 * Registers services in the DI container.
+	 *
+	 * @since 1.0.0
+	 */
+	private function register_services(): void {
+		( new ServiceProvider() )->register( $this->container );
 	}
 
 	/**
