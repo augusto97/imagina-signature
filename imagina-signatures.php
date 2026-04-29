@@ -3,7 +3,7 @@
  * Plugin Name:       Imagina Signatures
  * Plugin URI:        https://imaginawp.com/imagina-signatures
  * Description:       Professional email signatures for WordPress with a drag-and-drop editor, multi-user plans, and dual storage (Media Library or S3-compatible).
- * Version:           1.0.1
+ * Version:           1.1.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Imagina WP
@@ -26,7 +26,7 @@ if ( defined( 'IMGSIG_VERSION' ) ) {
 	return;
 }
 
-define( 'IMGSIG_VERSION', '1.0.1' );
+define( 'IMGSIG_VERSION', '1.1.0' );
 define( 'IMGSIG_PLUGIN_FILE', __FILE__ );
 define( 'IMGSIG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'IMGSIG_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

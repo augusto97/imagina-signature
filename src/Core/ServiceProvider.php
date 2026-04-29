@@ -12,7 +12,6 @@ namespace ImaginaSignatures\Core;
 use ImaginaSignatures\Admin\AdminMenu;
 use ImaginaSignatures\Admin\AssetEnqueuer;
 use ImaginaSignatures\Admin\Notices;
-use ImaginaSignatures\Admin\SetupFallback;
 use ImaginaSignatures\Admin\UserHardening;
 use ImaginaSignatures\Api\RestRouter;
 use ImaginaSignatures\Repositories\AssetRepository;
@@ -114,7 +113,6 @@ final class ServiceProvider {
 		$c->singleton( AssetEnqueuer::class, static fn() => new AssetEnqueuer() );
 		$c->singleton( Notices::class, static fn() => new Notices() );
 		$c->singleton( UserHardening::class, static fn() => new UserHardening() );
-		$c->singleton( SetupFallback::class, static fn() => new SetupFallback() );
 		$c->singleton(
 			RestRouter::class,
 			static fn( Container $c ) => new RestRouter( $c )

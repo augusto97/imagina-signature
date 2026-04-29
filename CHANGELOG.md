@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-04-29
+
+### Changed
+- **Editor rebuilt with GrapesJS** as CLAUDE.md §1.2 / §12 originally
+  required. The prior 1.0.x click-to-add palette is removed completely.
+  The new editor is a real drag-and-drop surface backed by
+  `grapesjs-preset-newsletter`, with the 9 custom blocks (avatar,
+  text-stack, social-row, contact-row, divider, spacer, button-cta,
+  disclaimer, image-block) registered via `domComponents.addType` and
+  surfaced in the Blocks panel. Selecting a block on the canvas opens
+  its traits in the Properties panel; the Layers panel mirrors the
+  component tree. Documented in `docs/adr/0001-editor-implementation.md`
+  with explicit acceptance criteria.
+
+### Added
+- **`compiler/grapes-to-json.ts`** and **`compiler/json-to-grapes.ts`**:
+  bidirectional bridge between the GrapesJS component tree and the
+  `SignatureSchema` (CLAUDE.md §6.1). The schema remains the source of
+  truth for persistence and HTML compilation.
+- **Toolbar**: `DeviceSwitcher` (Desktop 600 px / Mobile 320 px),
+  `UndoRedo` (wired to `editor.UndoManager`), `PreviewToggle` (runs
+  `preview` command).
+- **Variables panel**: edit `{{name}}` / `{{email}}` / etc. live;
+  changes propagate through the schema to the preview.
+
+### Removed (per `docs/adr/0002-revert-unsanctioned-additions.md`)
+- The `/wp-json/imgsig/v1/health` diagnostic endpoint (not in
+  CLAUDE.md §11.2).
+- The `SetupFallback` `admin-post.php` handler and the no-JS
+  fallback form rendered alongside the SPA setup wizard (not in
+  CLAUDE.md).
+- The `imgsig_redirect_to_setup` transient and
+  `Plugin::maybe_redirect_to_setup()` (not in CLAUDE.md).
+- `BaseController::permission_for()`'s fallback to `manage_options`.
+  Strict `imgsig_*` capability checks per CLAUDE.md §10.1 are
+  restored.
+- `Plugin::safe()` boot try/catch wrapper. Boot exceptions propagate
+  to WordPress's fatal handler as designed.
+- The redirect-to-setup short-circuit in `assets/editor/src/main.tsx`.
+
 ## [1.0.1] - 2026-04-29
 
 ### Fixed

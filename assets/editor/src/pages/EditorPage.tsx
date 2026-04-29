@@ -1,41 +1,62 @@
+// Editor page (CLAUDE.md §12 + ADR-0001).
+//
+// Owns load/save lifecycle and toolbar; delegates the canvas, blocks panel,
+// layers panel, and properties panel to <GrapesEditor>.
+
 import { JSX } from 'preact';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import type { Editor } from 'grapesjs';
 import { signaturesApi } from '../api/signatures';
-import type { Block, SignatureSchema } from '@shared/types';
-import { emptySchema } from '../schema/signature';
-import { BLOCK_DESCRIPTORS } from '../editor/blocks';
-import { BlocksPanel } from '../editor/BlocksPanel';
-import { LayersPanel } from '../editor/LayersPanel';
-import { CanvasPanel } from '../editor/CanvasPanel';
-import { PropertiesPanel } from '../editor/PropertiesPanel';
-import { Preview } from '../editor/Preview';
+import type { SignatureSchema } from '@shared/types';
+import { CANVAS_DEFAULTS, SCHEMA_VERSION } from '@shared/constants';
+import { GrapesEditor } from '../editor/GrapesEditor';
+import { VariablesPanel } from '../editor/panels/VariablesPanel';
+import { DeviceSwitcher } from '../editor/toolbar/DeviceSwitcher';
+import { UndoRedo } from '../editor/toolbar/UndoRedo';
+import { PreviewToggle } from '../editor/toolbar/PreviewToggle';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { __ } from '../i18n/helpers';
 import { navigate } from '../router';
 import { pushToast } from '../components/ui/Toaster';
-import { useEditorStore } from '../stores/editorStore';
 import { copyToClipboard } from '../utils/clipboard';
 import { debounce } from '../utils/debounce';
-import type { CompileResult } from '../compiler';
+import { compileSignature, type CompileResult } from '../compiler';
 
 interface Props {
   signatureId: number;
 }
 
-export function EditorPage({ signatureId }: Props): JSX.Element {
-  const editor = useEditorStore();
-  const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const compiledRef = useRef<CompileResult | null>(null);
+function emptySchema(): SignatureSchema {
+  const now = new Date().toISOString();
+  return {
+    schema_version: SCHEMA_VERSION,
+    meta: { created_at: now, updated_at: now, editor_version: '1.1.0' },
+    canvas: { ...CANVAS_DEFAULTS },
+    layout: { type: 'table', columns: 1, gap: 8, padding: { top: 0, right: 0, bottom: 0, left: 0 } },
+    blocks: [],
+    variables: { name: 'Jane Doe', role: 'Account Executive', company: 'Acme Inc.', email: 'jane@acme.com' },
+  };
+}
 
-  // Load signature.
+export function EditorPage({ signatureId }: Props): JSX.Element {
+  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState(__('Untitled signature'));
+  const [schema, setSchema] = useState<SignatureSchema | null>(null);
+  const [savedId, setSavedId] = useState<number | null>(signatureId || null);
+  const [saving, setSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const compiledRef = useRef<CompileResult | null>(null);
+  const dirtyRef = useRef(false);
+
+  // Initial load.
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    if (!signatureId || signatureId === 0) {
-      const schema = emptySchema();
-      editor.setSignature(null, __('Untitled signature'), schema, 'draft');
+    if (! signatureId) {
+      setSchema(emptySchema());
+      setSavedId(null);
       setLoading(false);
       return;
     }
@@ -43,161 +64,124 @@ export function EditorPage({ signatureId }: Props): JSX.Element {
       .get(signatureId)
       .then((record) => {
         if (cancelled) return;
-        editor.setSignature(record.id, record.name, record.json_content, record.status);
+        setName(record.name);
+        setSchema(record.json_content);
+        setSavedId(record.id);
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         if (cancelled) return;
         const message = error instanceof Error ? error.message : __('Could not load signature.');
         pushToast(message, 'error');
         navigate('/signatures');
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (! cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signatureId]);
 
-  const schema = editor.schema;
-  const selectedBlock = useMemo(
-    () => (schema && selectedId ? schema.blocks.find((block) => block.id === selectedId) ?? null : null),
-    [schema, selectedId],
-  );
-
-  const updateSchema = useCallback(
-    (next: SignatureSchema) => {
-      editor.setSchema(next);
-    },
-    [editor],
-  );
-
-  // Autosave (debounced).
-  const persistRef = useRef<((schema: SignatureSchema, name: string) => void) | null>(null);
+  // Compile preview asynchronously whenever the schema changes.
   useEffect(() => {
-    persistRef.current = debounce<[SignatureSchema, string]>((nextSchema, nextName) => {
-      void save(nextSchema, nextName);
-    }, 800);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (! schema) return;
+    let cancelled = false;
+    compileSignature(schema)
+      .then((result) => {
+        if (cancelled) return;
+        compiledRef.current = result;
+      })
+      .catch(() => {
+        // Compilation failure is surfaced when the user tries to copy/export.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [schema]);
 
-  useEffect(() => {
-    if (!editor.isDirty || !schema) return;
-    persistRef.current?.(schema, editor.name);
-  }, [editor.isDirty, editor.name, schema]);
-
-  const save = async (currentSchema: SignatureSchema, currentName: string): Promise<void> => {
-    if (!currentSchema) return;
-    editor.markSaving(true);
-    try {
-      if (editor.signatureId) {
-        await signaturesApi.update(editor.signatureId, {
-          name: currentName,
-          json_content: currentSchema,
-          html_cache: compiledRef.current?.html ?? null,
-        });
-      } else {
-        const created = await signaturesApi.create({
-          name: currentName,
-          json_content: currentSchema,
-        });
-        editor.setSignature(created.id, created.name, created.json_content, created.status);
-        navigate('/editor', { id: created.id });
+  const persist = useCallback(
+    async (currentSchema: SignatureSchema, currentName: string): Promise<void> => {
+      if (saving) return;
+      setSaving(true);
+      try {
+        if (savedId) {
+          await signaturesApi.update(savedId, {
+            name: currentName,
+            json_content: currentSchema,
+            html_cache: compiledRef.current?.html ?? null,
+          });
+        } else {
+          const created = await signaturesApi.create({ name: currentName, json_content: currentSchema });
+          setSavedId(created.id);
+          navigate('/editor', { id: created.id });
+        }
+        setLastSavedAt(new Date().toISOString());
+        dirtyRef.current = false;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : __('Save failed');
+        pushToast(message, 'error');
+      } finally {
+        setSaving(false);
       }
-      editor.markSaved();
-    } catch (error) {
-      editor.markSaving(false);
-      const message = error instanceof Error ? error.message : __('Save failed');
-      pushToast(message, 'error');
-    }
-  };
+    },
+    [savedId, saving],
+  );
 
-  const addBlock = (type: string): void => {
-    if (!schema) return;
-    const descriptor = BLOCK_DESCRIPTORS.find((b) => b.type === type);
-    if (!descriptor) return;
-    const block = descriptor.factory();
-    const next: SignatureSchema = { ...schema, blocks: [...schema.blocks, block] };
-    updateSchema(next);
-    setSelectedId(block.id);
-  };
+  // Debounced autosave.
+  const debouncedPersistRef = useRef<((s: SignatureSchema, n: string) => void) | null>(null);
+  useEffect(() => {
+    debouncedPersistRef.current = debounce<[SignatureSchema, string]>((s, n) => {
+      void persist(s, n);
+    }, 800);
+  }, [persist]);
 
-  const updateBlock = (block: Block): void => {
-    if (!schema) return;
-    const next: SignatureSchema = {
-      ...schema,
-      blocks: schema.blocks.map((b) => (b.id === block.id ? block : b)),
-    };
-    updateSchema(next);
-  };
+  const handleSchemaChange = useCallback((next: SignatureSchema) => {
+    dirtyRef.current = true;
+    setSchema(next);
+    debouncedPersistRef.current?.(next, name);
+  }, [name]);
 
-  const removeBlock = (id: string): void => {
-    if (!schema) return;
-    const next: SignatureSchema = {
-      ...schema,
-      blocks: schema.blocks.filter((b) => b.id !== id),
-    };
-    updateSchema(next);
-    setSelectedId(null);
-  };
-
-  const moveBlock = (id: string, direction: -1 | 1): void => {
-    if (!schema) return;
-    const blocks = schema.blocks.slice();
-    const index = blocks.findIndex((b) => b.id === id);
-    const newIndex = index + direction;
-    if (index < 0 || newIndex < 0 || newIndex >= blocks.length) return;
-    const [block] = blocks.splice(index, 1);
-    blocks.splice(newIndex, 0, block);
-    updateSchema({ ...schema, blocks });
-  };
-
-  const toggleVisible = (id: string): void => {
-    if (!schema) return;
-    const next: SignatureSchema = {
-      ...schema,
-      blocks: schema.blocks.map((b) => (b.id === id ? { ...b, visible: b.visible === false } : b)),
-    };
-    updateSchema(next);
-  };
+  const handleVariablesChange = useCallback((variables: Record<string, string>) => {
+    if (! schema) return;
+    handleSchemaChange({ ...schema, variables });
+  }, [schema, handleSchemaChange]);
 
   const onCopyHtml = async (): Promise<void> => {
-    const compiled = compiledRef.current;
-    if (!compiled || !compiled.html) {
-      pushToast(__('Preview not ready yet.'), 'warning');
+    if (! schema) return;
+    const result = compiledRef.current ?? (await compileSignature(schema));
+    if (! result.html) {
+      pushToast(__('Compilation failed.'), 'warning');
       return;
     }
-    const ok = await copyToClipboard(compiled.html);
+    const ok = await copyToClipboard(result.html);
     pushToast(ok ? __('HTML copied to clipboard.') : __('Could not copy.'), ok ? 'success' : 'error');
   };
 
-  const onExportHtml = (): void => {
-    const compiled = compiledRef.current;
-    if (!compiled || !compiled.html) {
-      pushToast(__('Preview not ready yet.'), 'warning');
+  const onExportHtml = async (): Promise<void> => {
+    if (! schema) return;
+    const result = compiledRef.current ?? (await compileSignature(schema));
+    if (! result.html) {
+      pushToast(__('Compilation failed.'), 'warning');
       return;
     }
-    const blob = new Blob([compiled.html], { type: 'text/html' });
+    const blob = new Blob([result.html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${editor.name || 'signature'}.html`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${name || 'signature'}.html`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
     URL.revokeObjectURL(url);
   };
 
-  const onSaveNow = async (): Promise<void> => {
-    if (!schema) return;
-    await save(schema, editor.name);
+  const onSaveNow = (): void => {
+    if (! schema) return;
+    void persist(schema, name);
   };
 
-  if (loading || !schema) {
-    return (
-      <div className="is-py-24 is-text-center is-text-slate-500">{__('Loading editor…')}</div>
-    );
+  if (loading || ! schema) {
+    return <div className="is-py-24 is-text-center is-text-slate-500">{__('Loading editor…')}</div>;
   }
 
   return (
@@ -206,14 +190,29 @@ export function EditorPage({ signatureId }: Props): JSX.Element {
         <Button size="sm" variant="ghost" onClick={() => navigate('/signatures')}>
           ← {__('Back')}
         </Button>
-        <Input
-          className="is-min-w-[240px]"
-          value={editor.name}
-          onInput={(event) => editor.setName((event.target as HTMLInputElement).value)}
-        />
+        <div className="is-w-64">
+          <Input
+            value={name}
+            onInput={(event) => {
+              const next = (event.target as HTMLInputElement).value;
+              setName(next);
+              dirtyRef.current = true;
+              if (schema) debouncedPersistRef.current?.(schema, next);
+            }}
+          />
+        </div>
         <span className="is-text-xs is-text-slate-500">
-          {editor.isSaving ? __('Saving…') : editor.isDirty ? __('Unsaved') : editor.lastSavedAt ? __('Saved') : ''}
+          {saving
+            ? __('Saving…')
+            : dirtyRef.current
+              ? __('Unsaved')
+              : lastSavedAt
+                ? __('Saved')
+                : ''}
         </span>
+        <DeviceSwitcher editor={editor} />
+        <UndoRedo editor={editor} />
+        <PreviewToggle editor={editor} />
         <span className="is-flex-1" />
         <Button size="sm" variant="secondary" onClick={onCopyHtml}>
           {__('Copy HTML')}
@@ -221,38 +220,16 @@ export function EditorPage({ signatureId }: Props): JSX.Element {
         <Button size="sm" variant="secondary" onClick={onExportHtml}>
           {__('Export .html')}
         </Button>
-        <Button size="sm" onClick={onSaveNow} loading={editor.isSaving}>
+        <Button size="sm" onClick={onSaveNow} loading={saving}>
           {__('Save')}
         </Button>
       </header>
 
       <div className="is-flex is-flex-1 is-min-h-0">
-        <div className="is-flex is-flex-col is-w-56">
-          <BlocksPanel onAdd={addBlock} />
-        </div>
-        <div className="is-flex is-flex-col is-w-64 is-bg-white is-border-r is-border-slate-200 is-overflow-y-auto">
-          <CanvasPanel canvas={schema.canvas} onChange={(canvas) => updateSchema({ ...schema, canvas })} />
-          <LayersPanel
-            blocks={schema.blocks}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            onMove={moveBlock}
-            onToggleVisible={toggleVisible}
-          />
-        </div>
-        <Preview
-          schema={schema}
-          onCompiled={(result) => {
-            compiledRef.current = result;
-          }}
-        />
-        {selectedBlock && (
-          <PropertiesPanel
-            block={selectedBlock}
-            onChange={updateBlock}
-            onDelete={() => removeBlock(selectedBlock.id)}
-          />
-        )}
+        <GrapesEditor schema={schema} onChange={handleSchemaChange} onReady={setEditor} />
+        <aside className="is-w-64 is-bg-white is-border-l is-border-slate-200 is-overflow-y-auto" aria-label={__('Variables')}>
+          <VariablesPanel variables={schema.variables} onChange={handleVariablesChange} />
+        </aside>
       </div>
     </div>
   );

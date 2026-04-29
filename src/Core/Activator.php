@@ -46,13 +46,6 @@ final class Activator {
 		update_option( 'imgsig_version', IMGSIG_VERSION, false );
 		update_option( 'imgsig_activated_at', gmdate( 'Y-m-d H:i:s' ), false );
 
-		// Trigger a one-shot redirect to the setup wizard on the next admin
-		// load if setup hasn't been completed yet. The transient is consumed
-		// in `Plugin::boot()`.
-		if ( ! (bool) get_option( 'imgsig_setup_completed', false ) ) {
-			set_transient( 'imgsig_redirect_to_setup', 1, 30 );
-		}
-
 		/**
 		 * Fires after the plugin has been activated.
 		 *

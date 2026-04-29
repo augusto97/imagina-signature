@@ -17,8 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Top-level plugin coordinator.
  *
  * Owns the DI container and triggers the lifecycle hooks expected by other
- * subsystems. Sprint 1 keeps this minimal — later sprints will register the
- * admin pages, REST API, and frontend assets here.
+ * subsystems.
  *
  * @since 1.0.0
  */
@@ -91,34 +90,21 @@ final class Plugin {
 		}
 		$this->booted = true;
 
-		// Each phase is wrapped in a try/catch so a single failure (a missing
-		// file, a corrupted option, a third-party plugin throwing in our
-		// hooks) doesn't cascade into a full white-screen. Errors surface
-		// via the PHP error log and as an admin notice.
-		$this->safe( fn() => $this->load_textdomain(), 'textdomain' );
-		$this->safe( fn() => $this->run_pending_migrations(), 'migrations' );
-		$this->safe( fn() => $this->register_services(), 'services' );
-		$this->safe( fn() => $this->maybe_run_upgrade(), 'upgrade' );
+		$this->load_textdomain();
+		$this->run_pending_migrations();
+		$this->register_services();
 
 		if ( is_admin() ) {
-			$this->safe( fn() => $this->container->make( \ImaginaSignatures\Admin\AdminMenu::class )->register(), 'admin/menu' );
-			$this->safe( fn() => $this->container->make( \ImaginaSignatures\Admin\AssetEnqueuer::class )->register(), 'admin/assets' );
-			$this->safe( fn() => $this->container->make( \ImaginaSignatures\Admin\Notices::class )->register(), 'admin/notices' );
-			$this->safe( fn() => $this->container->make( \ImaginaSignatures\Admin\UserHardening::class )->register(), 'admin/hardening' );
-			$this->safe( fn() => $this->container->make( \ImaginaSignatures\Admin\SetupFallback::class )->register(), 'admin/setup_fallback' );
-			add_action( 'admin_init', [ $this, 'maybe_redirect_to_setup' ] );
+			$this->container->make( \ImaginaSignatures\Admin\AdminMenu::class )->register();
+			$this->container->make( \ImaginaSignatures\Admin\AssetEnqueuer::class )->register();
+			$this->container->make( \ImaginaSignatures\Admin\Notices::class )->register();
+			$this->container->make( \ImaginaSignatures\Admin\UserHardening::class )->register();
 		}
 
-		// Always register the REST hook outside the admin block so
-		// /wp-json/ requests (which run with is_admin() = false) get
-		// their routes.
 		add_action(
 			'rest_api_init',
 			function (): void {
-				$this->safe(
-					fn() => $this->container->make( \ImaginaSignatures\Api\RestRouter::class )->register_routes(),
-					'rest/routes'
-				);
+				$this->container->make( \ImaginaSignatures\Api\RestRouter::class )->register_routes();
 			}
 		);
 
@@ -133,97 +119,12 @@ final class Plugin {
 	}
 
 	/**
-	 * Boot-time errors observed during this request, indexed by phase.
-	 *
-	 * @var array<string, string>
-	 */
-	private array $boot_errors = [];
-
-	/**
-	 * Runs a callable, logs any throwable, and stashes the message for
-	 * later surfacing.
-	 *
-	 * @param callable $cb    Callable to run.
-	 * @param string   $phase Logical phase name (used in logs).
-	 *
-	 * @return void
-	 */
-	private function safe( callable $cb, string $phase ): void {
-		try {
-			$cb();
-		} catch ( \Throwable $e ) {
-			$this->boot_errors[ $phase ] = sprintf(
-				'%s: %s (%s:%d)',
-				get_class( $e ),
-				$e->getMessage(),
-				$e->getFile(),
-				$e->getLine()
-			);
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( '[imagina-signatures] ' . $phase . ' failed: ' . $this->boot_errors[ $phase ] );
-		}
-	}
-
-	/**
-	 * Returns boot-phase errors recorded during this request.
-	 *
-	 * @return array<string, string>
-	 */
-	public function boot_errors(): array {
-		return $this->boot_errors;
-	}
-
-	/**
-	 * Re-asserts the role install + plans seed when the version on disk
-	 * changes. Idempotent — repeated calls with the same version are no-ops.
-	 *
-	 * @return void
-	 */
-	private function maybe_run_upgrade(): void {
-		$stored = (string) get_option( 'imgsig_version', '0.0.0' );
-		if ( '0.0.0' === $stored || version_compare( $stored, IMGSIG_VERSION, '<' ) ) {
-			( new \ImaginaSignatures\Setup\RolesInstaller() )->install();
-			( new \ImaginaSignatures\Setup\DefaultPlansSeeder() )->seed();
-			update_option( 'imgsig_version', IMGSIG_VERSION, false );
-		}
-	}
-
-	/**
 	 * Registers services in the DI container.
 	 *
 	 * @since 1.0.0
 	 */
 	private function register_services(): void {
 		( new ServiceProvider() )->register( $this->container );
-	}
-
-	/**
-	 * Redirects the admin to the setup wizard once after activation.
-	 *
-	 * Triggered by the transient set in `Activator::activate()`. The transient
-	 * is consumed regardless of whether the redirect actually happens, so we
-	 * never attempt to redirect on every page load.
-	 *
-	 * @since 1.0.0
-	 */
-	public function maybe_redirect_to_setup(): void {
-		if ( ! get_transient( 'imgsig_redirect_to_setup' ) ) {
-			return;
-		}
-		delete_transient( 'imgsig_redirect_to_setup' );
-
-		if ( wp_doing_ajax() || ! current_user_can( 'imgsig_admin' ) ) {
-			return;
-		}
-		// Don't bounce the user if they're already on a plugin screen.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( (string) $_GET['page'] ) ) : '';
-		if ( '' !== $page && false !== strpos( $page, 'imagina-signatures' ) ) {
-			return;
-		}
-
-		wp_safe_redirect( admin_url( 'admin.php?page=imagina-signatures-setup' ) );
-		exit;
 	}
 
 	/**
@@ -243,8 +144,7 @@ final class Plugin {
 	 * Runs pending schema migrations on every boot.
 	 *
 	 * The migrator is version-gated: if the stored schema version matches the
-	 * code version, no work is performed. This keeps the upgrade path safe
-	 * even when `register_activation_hook` is bypassed (multisite, WP-CLI).
+	 * code version, no work is performed.
 	 *
 	 * @since 1.0.0
 	 */
