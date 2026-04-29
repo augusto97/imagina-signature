@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from './createStore';
 import type { MeResponse } from '@shared/types';
 
 interface UserState {
@@ -6,7 +6,7 @@ interface UserState {
   setMe: (me: MeResponse | null) => void;
 }
 
-export const useUserStore = create<UserState>()((set) => ({
+export const useUserStore = create<UserState>((set) => ({
   me: null,
   setMe: (me) => set({ me }),
 }));

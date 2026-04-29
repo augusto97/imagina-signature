@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2026-04-29
+
+### Fixed
+- **`Cannot read properties of null (reading '__H')`** crash on the
+  signatures dashboard. Zustand 4's React entrypoint imports
+  `use-sync-external-store/shim/with-selector`, which is incompatible
+  with Preact 10's hook scheduling. CLAUDE.md §1.2 still pins
+  Zustand 4 — we now use `zustand/vanilla` (the framework-free store
+  API; same package, same semantics) and ship a 30-line
+  `useState` + `useEffect` selector hook on top so all call-sites
+  (`useEditorStore((s) => s.x)`) keep working unchanged.
+  Documented in `docs/adr/0003-zustand-preact-compat.md`.
+
 ## [1.1.1] - 2026-04-29
 
 ### Fixed

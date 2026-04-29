@@ -1,0 +1,2 @@
+import{b as e,c as u,d as o,a}from"../editor.js";const g={list:(t={})=>{const s=new URLSearchParams;for(const[r,n]of Object.entries(t))s.set(r,String(n));const i=s.toString()?`?${s.toString()}`:"";return a(`/signatures${i}`)},get:t=>a(`/signatures/${t}`),create:t=>e("/signatures",t),update:(t,s)=>o(`/signatures/${t}`,s),delete:t=>u(`/signatures/${t}`),duplicate:t=>e(`/signatures/${t}/duplicate`)};export{g as s};
+//# sourceMappingURL=signatures-_mnWbUy5.js.map

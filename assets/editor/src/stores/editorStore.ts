@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from './createStore';
 import type { SignatureSchema } from '@shared/types';
 
 interface EditorState {
@@ -17,7 +17,7 @@ interface EditorState {
   reset: () => void;
 }
 
-export const useEditorStore = create<EditorState>()((set) => ({
+export const useEditorStore = create<EditorState>((set) => ({
   signatureId: null,
   name: '',
   schema: null,
