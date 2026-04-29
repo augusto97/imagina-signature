@@ -82,6 +82,60 @@ final class Notices {
 				false
 			);
 		}
+
+		$this->maybe_render_quota_notice();
+	}
+
+	/**
+	 * Renders a "you're close to your plan limit" notice when applicable.
+	 *
+	 * Read-only — never throws if the quota services aren't bound (e.g. in
+	 * isolated unit tests).
+	 *
+	 * @return void
+	 */
+	private function maybe_render_quota_notice(): void {
+		if ( ! is_user_logged_in() ) {
+			return;
+		}
+		if ( 'multi' !== (string) get_option( 'imgsig_mode', 'single' ) ) {
+			return;
+		}
+
+		$plugin = function_exists( 'imgsig_plugin' ) ? imgsig_plugin() : null;
+		if ( ! $plugin instanceof \ImaginaSignatures\Core\Plugin ) {
+			return;
+		}
+		$container = $plugin->container();
+		if ( ! $container->has( '\\ImaginaSignatures\\Services\\QuotaEnforcer' )
+			|| ! $container->has( '\\ImaginaSignatures\\Repositories\\UsageRepository' ) ) {
+			return;
+		}
+
+		try {
+			$quota = $container->make( '\\ImaginaSignatures\\Services\\QuotaEnforcer' );
+			$usage = $container->make( '\\ImaginaSignatures\\Repositories\\UsageRepository' );
+			$user  = get_current_user_id();
+			$plan  = $quota->plan_for_user( $user );
+			$rec   = $usage->get_for_user( $user );
+
+			if ( $plan->limits->max_signatures > 0
+				&& $rec->signatures_count >= (int) ( 0.9 * $plan->limits->max_signatures )
+				&& $rec->signatures_count < $plan->limits->max_signatures ) {
+				$this->print_notice(
+					sprintf(
+						/* translators: 1: count, 2: max. */
+						__( 'You have used %1$d of %2$d signatures on your plan.', 'imagina-signatures' ),
+						$rec->signatures_count,
+						$plan->limits->max_signatures
+					),
+					'warning',
+					false
+				);
+			}
+		} catch ( \Throwable $e ) {
+			// Notices must never throw.
+		}
 	}
 
 	/**

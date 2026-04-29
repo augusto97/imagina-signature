@@ -1,32 +1,43 @@
 // Editor SPA entry point.
 //
-// Sprint 4 ships only the mount infrastructure — the GrapesJS-backed
-// editor UI lands in subsequent sprints. The bundle currently renders a
-// placeholder so site administrators can verify enqueue + bootstrap data.
+// Sprint 8 wires the polish primitives (loading, empty-state, toasts,
+// error boundary) around the placeholder until the GrapesJS-based
+// editor lands in a follow-up release.
 
 import { meApi } from './api/me';
 import { setMe } from './stores/userStore';
 import { __ } from './i18n/helpers';
+import { createSpinner } from './components/loading';
+import { createEmptyState } from './components/empty-state';
+import { installErrorBoundary } from './components/error-boundary';
+import { toast } from './components/toast';
 
 async function init(): Promise<void> {
   const root = document.querySelector<HTMLDivElement>('.imagina-signatures-app');
   if (!root) return;
 
-  root.innerHTML = `<div class="is-loading" role="status">${__('Loading…')}</div>`;
+  installErrorBoundary(root);
+  root.replaceChildren(createSpinner(__('Loading editor…')));
 
   try {
     const me = await meApi.get();
     setMe(me);
-    root.innerHTML = `
-      <section class="is-app-placeholder">
-        <h1>${__('Imagina Signatures')}</h1>
-        <p>${__('Editor scaffolding ready. UI lands in upcoming sprints.')}</p>
-        <pre>${JSON.stringify({ user: me.user.display_name, plan: me.plan.name }, null, 2)}</pre>
-      </section>
-    `;
+    root.replaceChildren(
+      createEmptyState({
+        title: __('No signatures yet'),
+        description: __(
+          'The drag-and-drop editor lands in the next release. Use the Templates page in the meantime.',
+        ),
+        ctaLabel: __('Browse templates'),
+        onCta: () => {
+          const path = '../../wp-admin/admin.php?page=imagina-signatures-templates';
+          window.location.href = path;
+        },
+      }),
+    );
   } catch (error) {
-    root.innerHTML = `<div class="is-error" role="alert">${__('Could not load user info.')}</div>`;
-    console.error(error);
+    toast(__('Could not load user info.'), 'error');
+    throw error;
   }
 }
 
