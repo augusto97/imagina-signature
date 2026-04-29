@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+/vendor-dev/
+
+# Build artifacts (note: /build is COMMITTED for distribution)
+dist/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+.phpunit.result.cache
+coverage/
+.nyc_output/
+
+# Environment
+.env
+.env.local
+
+# Composer dev-only
+/composer.phar
