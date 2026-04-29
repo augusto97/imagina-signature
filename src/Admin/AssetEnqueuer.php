@@ -125,7 +125,10 @@ final class AssetEnqueuer {
 		$user = wp_get_current_user();
 
 		$data = [
-			'apiUrl'      => esc_url_raw( rest_url( 'imgsig/v1' ) ),
+			// `@wordpress/api-fetch` concatenates `apiUrl + path` literally with
+			// `createRootURLMiddleware`, so we MUST end with a trailing slash;
+			// otherwise `/me` is appended as `…/imgsig/v1me` and 404s.
+			'apiUrl'      => esc_url_raw( rest_url( 'imgsig/v1/' ) ),
 			'nonce'       => wp_create_nonce( 'wp_rest' ),
 			'pluginUrl'   => IMGSIG_PLUGIN_URL,
 			'currentUser' => [

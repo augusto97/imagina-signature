@@ -4,6 +4,17 @@ import { resolve } from 'node:path';
 
 export default defineConfig({
   plugins: [preact()],
+  // Emit relative URLs in the bundle so dynamic `import('chunks/X.js')`
+  // resolves against the bundle's URL (the plugin path) rather than the
+  // host page's URL (wp-admin/admin.php). Without this, code-split chunks
+  // 404 on every WordPress install because the browser tries to fetch
+  // them from the admin URL.
+  base: './',
+  experimental: {
+    renderBuiltUrl(_filename, _type) {
+      return { relative: true };
+    },
+  },
   resolve: {
     alias: {
       '@': resolve(__dirname, 'assets/editor/src'),

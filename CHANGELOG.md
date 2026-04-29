@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-04-29
+
+### Fixed
+- **Lazy-loaded chunks 404'd** on every install. Vite emits the
+  dynamic `import()` map with paths like `chunks/X.js` (no leading
+  `./`); the browser then resolves them against the page URL
+  (`/wp-admin/admin.php`) instead of the bundle URL, so the network
+  panel showed `https://site/wp-admin/chunks/X.js — 404`. Vite is now
+  configured with `base: './'` and `experimental.renderBuiltUrl =>
+  { relative: true }`, which produces `./chunks/X.js` paths that
+  resolve relative to the importing module.
+- **`/wp-json/imgsig/v1me`** instead of `/wp-json/imgsig/v1/me`.
+  `@wordpress/api-fetch`'s `createRootURLMiddleware` concatenates
+  `apiUrl + path` literally; the localized `apiUrl` now ends with a
+  trailing slash so `/me` becomes `…/imgsig/v1/me` correctly.
+
 ## [1.1.0] - 2026-04-29
 
 ### Changed
