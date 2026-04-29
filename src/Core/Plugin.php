@@ -9,7 +9,10 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Core;
 
+use ImaginaSignatures\Admin\AdminMenu;
+use ImaginaSignatures\Admin\Pages\SettingsPage;
 use ImaginaSignatures\Hooks\Actions;
+use ImaginaSignatures\Storage\StorageManager;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -96,6 +99,14 @@ final class Plugin {
 
 		$this->booted = true;
 
+		// Register core service bindings (Encryption, StorageManager).
+		ServiceProvider::register( $this->container );
+
+		// Admin-only wiring.
+		if ( is_admin() ) {
+			$this->boot_admin();
+		}
+
 		/**
 		 * Fires once the plugin has finished booting.
 		 *
@@ -108,6 +119,24 @@ final class Plugin {
 		 * @param Container $container The plugin's DI container.
 		 */
 		do_action( Actions::PLUGIN_BOOTED, $this->container );
+	}
+
+	/**
+	 * Wires the admin-only modules.
+	 *
+	 * Constructed lazily inside `is_admin()` so the front-end runtime
+	 * never instantiates the admin classes.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	private function boot_admin(): void {
+		$storage_manager = $this->container->make( StorageManager::class );
+
+		$settings_page = new SettingsPage( $storage_manager );
+		$admin_menu    = new AdminMenu( $settings_page );
+		$admin_menu->boot();
 	}
 
 	/**
