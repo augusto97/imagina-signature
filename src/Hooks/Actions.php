@@ -68,6 +68,22 @@ final class Actions {
 	public const PLUGIN_UNINSTALLED = 'imgsig/plugin/uninstalled';
 
 	/**
+	 * Fires from {@see \ImaginaSignatures\Storage\StorageManager::save_config()}
+	 * when the active storage driver ID changes (e.g. switching from
+	 * Media Library to S3).
+	 *
+	 * Useful for cache invalidation or migration triggers; the manager's
+	 * own cache is invalidated before this fires, so listeners can call
+	 * `active_driver()` and see the new state.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $previous_id Previously-active driver ID.
+	 * @param string $new_id      Newly-active driver ID.
+	 */
+	public const STORAGE_DRIVER_CHANGED = 'imgsig/storage/driver_changed';
+
+	/**
 	 * Constructor is private — this class is a static registry.
 	 */
 	private function __construct() {}
