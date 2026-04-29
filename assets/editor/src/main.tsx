@@ -14,12 +14,27 @@ const SignaturesPage = lazy(() => import('./pages/SignaturesPage').then((m) => (
 const EditorPage = lazy(() => import('./pages/EditorPage').then((m) => ({ default: m.EditorPage })));
 const TemplatesPage = lazy(() => import('./pages/TemplatesPage').then((m) => ({ default: m.TemplatesPage })));
 
+// If setup hasn't been completed yet, send the admin straight to the wizard
+// instead of letting them land on a half-functional dashboard. We handle the
+// redirect at module load (before render) so the user never sees the editor
+// shell flash.
+function redirectToSetupIfNeeded(): boolean {
+  const data = window.ImaginaSignaturesData;
+  if (!data || data.setup.completed) return false;
+  const isAdmin = (data.currentUser.capabilities ?? []).some(
+    (cap) => cap === 'imgsig_admin' || cap === 'manage_options',
+  );
+  if (!isAdmin) return false;
+  const target = window.location.pathname + '?page=imagina-signatures-setup';
+  // Avoid an infinite loop if we're already on the setup page.
+  if (window.location.search.includes('imagina-signatures-setup')) return false;
+  window.location.replace(target);
+  return true;
+}
+
 function App({ initialRoute }: { initialRoute: string }): JSX.Element {
   const route = useRouter();
 
-  // First mount: convert WordPress page route into a hash route. Run as soon
-  // as the SPA boots — do NOT wait for /me to resolve, so the user isn't
-  // stuck on the loading spinner if the REST endpoint is unreachable.
   useEffect(() => {
     if (route.path !== '/') return;
     const map: Record<string, string> = {
@@ -61,8 +76,10 @@ function NotFound(): JSX.Element {
   );
 }
 
-const root = document.querySelector<HTMLDivElement>('.imagina-signatures-app');
-if (root) {
-  const initialRoute = root.dataset.route ?? 'dashboard';
-  render(<App initialRoute={initialRoute} />, root);
+if (!redirectToSetupIfNeeded()) {
+  const root = document.querySelector<HTMLDivElement>('.imagina-signatures-app');
+  if (root) {
+    const initialRoute = root.dataset.route ?? 'dashboard';
+    render(<App initialRoute={initialRoute} />, root);
+  }
 }

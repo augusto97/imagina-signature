@@ -99,20 +99,16 @@ final class Plugin {
 			$this->container->make( \ImaginaSignatures\Admin\AdminMenu::class )->register();
 			$this->container->make( \ImaginaSignatures\Admin\AssetEnqueuer::class )->register();
 			$this->container->make( \ImaginaSignatures\Admin\Notices::class )->register();
-			if ( $this->container->has( '\\ImaginaSignatures\\Admin\\UserHardening' ) ) {
-				$this->container->make( '\\ImaginaSignatures\\Admin\\UserHardening' )->register();
-			}
+			$this->container->make( \ImaginaSignatures\Admin\UserHardening::class )->register();
 			add_action( 'admin_init', [ $this, 'maybe_redirect_to_setup' ] );
 		}
 
-		if ( $this->container->has( '\\ImaginaSignatures\\Api\\RestRouter' ) ) {
-			add_action(
-				'rest_api_init',
-				function (): void {
-					$this->container->make( '\\ImaginaSignatures\\Api\\RestRouter' )->register_routes();
-				}
-			);
-		}
+		add_action(
+			'rest_api_init',
+			function (): void {
+				$this->container->make( \ImaginaSignatures\Api\RestRouter::class )->register_routes();
+			}
+		);
 
 		/**
 		 * Fires after the plugin has finished bootstrapping.
