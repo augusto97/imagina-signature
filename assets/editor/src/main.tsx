@@ -9,7 +9,6 @@ import { useEffect } from 'preact/hooks';
 import { AppShell } from './components/AppShell';
 import { useRouter, navigate } from './router';
 import { __ } from './i18n/helpers';
-import { useUserStore } from './stores/userStore';
 
 const SignaturesPage = lazy(() => import('./pages/SignaturesPage').then((m) => ({ default: m.SignaturesPage })));
 const EditorPage = lazy(() => import('./pages/EditorPage').then((m) => ({ default: m.EditorPage })));
@@ -17,18 +16,19 @@ const TemplatesPage = lazy(() => import('./pages/TemplatesPage').then((m) => ({ 
 
 function App({ initialRoute }: { initialRoute: string }): JSX.Element {
   const route = useRouter();
-  const me = useUserStore((state) => state.me);
 
-  // First mount: convert WordPress page route into a hash route.
+  // First mount: convert WordPress page route into a hash route. Run as soon
+  // as the SPA boots — do NOT wait for /me to resolve, so the user isn't
+  // stuck on the loading spinner if the REST endpoint is unreachable.
   useEffect(() => {
-    if (route.path !== '/' || !me) return;
+    if (route.path !== '/') return;
     const map: Record<string, string> = {
       dashboard: '/signatures',
       editor: '/editor',
       templates: '/templates',
     };
     navigate(map[initialRoute] ?? '/signatures');
-  }, [route.path, me, initialRoute]);
+  }, [route.path, initialRoute]);
 
   return (
     <AppShell>

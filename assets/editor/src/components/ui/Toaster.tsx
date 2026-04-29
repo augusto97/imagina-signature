@@ -7,14 +7,24 @@ export interface ToastMessage {
   id: number;
   message: string;
   type: ToastType;
+  duration: number;
+}
+
+interface ToastOptions {
+  duration?: number;
 }
 
 let nextId = 1;
 let listener: ((toast: ToastMessage) => void) | null = null;
 
-export function pushToast(message: string, type: ToastType = 'info'): void {
+export function pushToast(message: string, type: ToastType = 'info', options: ToastOptions = {}): void {
   if (!listener) return;
-  listener({ id: nextId++, message, type });
+  listener({
+    id: nextId++,
+    message,
+    type,
+    duration: options.duration ?? 4000,
+  });
 }
 
 const colors: Record<ToastType, string> = {
@@ -32,7 +42,7 @@ export function Toaster(): JSX.Element {
       setToasts((prev) => [...prev, toast]);
       window.setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== toast.id));
-      }, 4000);
+      }, toast.duration);
     };
     return () => {
       listener = null;
@@ -40,9 +50,17 @@ export function Toaster(): JSX.Element {
   }, []);
 
   return (
-    <div className="is-fixed is-bottom-4 is-right-4 is-z-50 is-flex is-flex-col is-gap-2" role="region" aria-live="polite">
+    <div
+      className="is-fixed is-bottom-4 is-right-4 is-z-50 is-flex is-flex-col is-gap-2"
+      role="region"
+      aria-live="polite"
+      style={{ maxWidth: '480px' }}
+    >
       {toasts.map((toast) => (
-        <div key={toast.id} className={`is-px-4 is-py-2 is-rounded is-shadow ${colors[toast.type]} is-text-sm`}>
+        <div
+          key={toast.id}
+          className={`is-px-4 is-py-2 is-rounded is-shadow ${colors[toast.type]} is-text-sm`}
+        >
           {toast.message}
         </div>
       ))}

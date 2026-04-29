@@ -26,10 +26,33 @@ export function SetupWizardPage(): JSX.Element {
           'page=imagina-signatures',
         );
       }, 600);
-    } catch {
-      pushToast(__('Could not save setup.'), 'error');
+    } catch (error) {
+      const detail = formatApiError(error);
+      pushToast(__('Could not save setup: ') + detail, 'error', { duration: 8000 });
       setSaving(false);
     }
+  };
+
+  const formatApiError = (error: unknown): string => {
+    // @wordpress/api-fetch rejects with the parsed response body itself
+    // (e.g. { code: 'rest_forbidden', message: '…', data: { status: 403 } })
+    // and the legacy fetch wrapper rejects with { status, body }.
+    if (error && typeof error === 'object') {
+      const e = error as {
+        message?: string;
+        code?: string;
+        status?: number;
+        data?: { status?: number };
+        body?: { code?: string; message?: string };
+      };
+      const status = e.status ?? e.data?.status;
+      if (e.message) return e.message + (status ? ` (HTTP ${status})` : '');
+      if (e.code) return e.code + (status ? ` (HTTP ${status})` : '');
+      if (e.body?.message) return e.body.message + (status ? ` (HTTP ${status})` : '');
+      if (e.body?.code) return e.body.code + (status ? ` (HTTP ${status})` : '');
+      if (status) return `HTTP ${status}`;
+    }
+    return String(error);
   };
 
   return (

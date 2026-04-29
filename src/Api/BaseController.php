@@ -64,13 +64,18 @@ abstract class BaseController {
 	/**
 	 * Standard permission callback for own-resource endpoints.
 	 *
+	 * Site administrators (anyone with `manage_options`) always pass — this
+	 * keeps the plugin usable even if activation didn't manage to grant the
+	 * `imgsig_*` caps to their role (network super admins, half-completed
+	 * activation, etc.). Per-endpoint logic still applies ownership checks.
+	 *
 	 * @param string $cap Capability.
 	 *
 	 * @return callable
 	 */
 	protected function permission_for( string $cap ): callable {
 		return static function () use ( $cap ): bool {
-			return current_user_can( $cap );
+			return current_user_can( $cap ) || current_user_can( 'manage_options' );
 		};
 	}
 }
