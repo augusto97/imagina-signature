@@ -125,6 +125,7 @@ final class AssetEnqueuer {
 		$user = wp_get_current_user();
 
 		$data = [
+			'version'     => IMGSIG_VERSION,
 			// `@wordpress/api-fetch` concatenates `apiUrl + path` literally with
 			// `createRootURLMiddleware`, so we MUST end with a trailing slash;
 			// otherwise `/me` is appended as `…/imgsig/v1me` and 404s.
