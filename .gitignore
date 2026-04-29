@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+/vendor-dev/
+
+# Build artifacts
+# Note: build/ is intentionally NOT ignored — it ships in the plugin ZIP.
+dist/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+.phpunit.result.cache
+.phpunit.cache/
+phpunit.xml
+
+# OS
+*~
+
+# Vite
+.vite/
+stats.html
+
+# TypeScript
+*.tsbuildinfo

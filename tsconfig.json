@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "exactOptionalPropertyTypes": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "useDefineForClassFields": true,
+    "allowImportingTsExtensions": false,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["assets/editor/src/*"],
+      "@admin/*": ["assets/admin/src/*"],
+      "@shared/*": ["assets/shared/*"]
+    },
+    "types": ["vite/client", "vitest/globals"]
+  },
+  "include": [
+    "assets/editor/src/**/*.ts",
+    "assets/editor/src/**/*.tsx",
+    "assets/admin/src/**/*.ts",
+    "assets/admin/src/**/*.tsx",
+    "assets/shared/**/*.ts",
+    "tests/js/**/*.ts",
+    "tests/js/**/*.tsx",
+    "vite.config.ts"
+  ],
+  "exclude": ["node_modules", "build", "dist", "vendor"]
+}
