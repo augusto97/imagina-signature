@@ -28,9 +28,33 @@ export function SetupWizardPage(): JSX.Element {
       }, 600);
     } catch (error) {
       const detail = formatApiError(error);
-      pushToast(__('Could not save setup: ') + detail, 'error', { duration: 8000 });
-      setSaving(false);
+      pushToast(
+        __('REST save failed (') + detail + __(') — submitting via fallback…'),
+        'warning',
+        { duration: 5000 },
+      );
+      // Fallback: submit the no-JS form. WP's admin-post.php handler stores
+      // the choices and redirects to the dashboard. This bypasses REST
+      // entirely so we survive sites where /wp-json/ is blocked.
+      submitFallbackForm({ mode, storage_driver: driver });
     }
+  };
+
+  const submitFallbackForm = (data: { mode: Mode; storage_driver: Driver }): void => {
+    const fallback = document.querySelector<HTMLFormElement>('.is-fallback-setup form');
+    if (fallback) {
+      // Mirror the user's choices into the fallback form before submitting it.
+      const setRadio = (name: string, value: string) => {
+        const radio = fallback.querySelector<HTMLInputElement>(`input[name="${name}"][value="${value}"]`);
+        if (radio) radio.checked = true;
+      };
+      setRadio('mode', data.mode);
+      setRadio('storage_driver', data.storage_driver);
+      fallback.submit();
+      return;
+    }
+    pushToast(__('Could not save setup. Refresh the page and try again.'), 'error', { duration: 8000 });
+    setSaving(false);
   };
 
   const formatApiError = (error: unknown): string => {
