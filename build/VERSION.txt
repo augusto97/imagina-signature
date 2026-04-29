@@ -1,0 +1,7 @@
+1.1.3
+
+If you can fetch /wp-content/plugins/imagina-signatures/build/VERSION.txt
+and it returns "1.1.3", the correct build is deployed.
+
+If it 404s or returns an older number, you have not uploaded the latest
+build/ directory.
