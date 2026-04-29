@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hooks: Actions · Imagina Signatures</title>
+  <link rel="stylesheet" href="../assets/docs.css" />
+</head>
+<body>
+<header><h1><a href="../index.html">Imagina Signatures</a></h1><p class="lead">Hooks públicos: Actions</p></header>
+<main>
+<h2>Lifecycle</h2>
+<ul>
+  <li><code>imgsig/plugin/booted</code> — al terminar el bootstrap.</li>
+  <li><code>imgsig/plugin/activated</code> — tras la activación.</li>
+  <li><code>imgsig/plugin/deactivated</code> — tras la desactivación.</li>
+  <li><code>imgsig/plugin/uninstalled</code> — tras la desinstalación.</li>
+  <li><code>imgsig/schema/migrated</code> — al aplicar una migración (recibe el version string).</li>
+</ul>
+<h2>Servicios</h2>
+<ul>
+  <li><code>imgsig/services/registered</code> — DI container poblado, listo para extender.</li>
+  <li><code>imgsig/api/routes_registered</code> — REST routes registradas.</li>
+</ul>
+<h2>Firmas</h2>
+<ul>
+  <li><code>imgsig/signature/created</code> (<code>Signature</code>)</li>
+  <li><code>imgsig/signature/before_update</code> (<code>Signature $old</code>, <code>array $changes</code>)</li>
+  <li><code>imgsig/signature/updated</code> (<code>Signature</code>)</li>
+  <li><code>imgsig/signature/before_delete</code> (<code>Signature</code>)</li>
+  <li><code>imgsig/signature/deleted</code> (<code>int $id</code>)</li>
+</ul>
+<h2>Plantillas y assets</h2>
+<ul>
+  <li><code>imgsig/template/saved</code> (<code>Template</code>)</li>
+  <li><code>imgsig/asset/uploaded</code> (<code>Asset</code>)</li>
+  <li><code>imgsig/asset/deleted</code> (<code>int $id</code>)</li>
+</ul>
+<h2>Storage</h2>
+<ul>
+  <li><code>imgsig/storage/driver_changed</code> (<code>string $old</code>, <code>string $new</code>)</li>
+</ul>
+<h2>Planes</h2>
+<ul>
+  <li><code>imgsig/plan/saved</code> (<code>Plan</code>)</li>
+  <li><code>imgsig/user/plan_assigned</code> (<code>int $user_id</code>, <code>Plan</code>)</li>
+</ul>
+<h2>Integraciones</h2>
+<ul>
+  <li><code>imgsig/integrations/pmp/applied</code></li>
+  <li><code>imgsig/integrations/wc_memberships/changed</code></li>
+  <li><code>imgsig/integrations/memberpress/transaction</code></li>
+</ul>
+</main>
+<footer><p>© Imagina WP</p></footer>
+</body>
+</html>

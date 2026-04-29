@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bloques personalizados · Imagina Signatures</title>
+  <link rel="stylesheet" href="../assets/docs.css" />
+</head>
+<body>
+<header><h1><a href="../index.html">Imagina Signatures</a></h1><p class="lead">Bloques personalizados</p></header>
+<main>
+<p>El editor expone una API mínima para registrar bloques nuevos. Cada bloque debe implementar:</p>
+<ul>
+  <li>Un <em>schema</em> tipado en TypeScript que extiende <code>BlockBase</code>.</li>
+  <li>Un emisor MJML en <code>compileToMjml</code> (o reusa <code>renderText</code>).</li>
+  <li>Una validación adicional en <code>validators.ts</code> si el bloque tiene reglas propias.</li>
+</ul>
+<p>Los tipos válidos en el MVP están enumerados en <code>ALLOWED_BLOCK_TYPES</code> (TS) y <code>JsonSchemaValidator::ALLOWED_BLOCK_TYPES</code> (PHP). Para bloques de terceros, usa el filtro <code>imgsig/signature/data_before_save</code> para sanear y el hook <code>imgsig/services/registered</code> para registrar handlers.</p>
+</main>
+<footer><p>© Imagina WP</p></footer>
+</body>
+</html>

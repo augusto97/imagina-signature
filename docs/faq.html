@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>FAQ · Imagina Signatures</title>
+  <link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<header><h1><a href="index.html">Imagina Signatures</a></h1><p class="lead">Preguntas frecuentes</p></header>
+<main>
+<h3>¿Las firmas funcionan en Outlook?</h3>
+<p>Sí. La compilación produce HTML basado en tablas con CSS inline y comentarios condicionales para Outlook (vía MJML).</p>
+
+<h3>¿Las imágenes se incrustan en cada email?</h3>
+<p>No. Se enlazan al storage configurado (Media Library o S3). Los clientes de correo descargan la imagen del servidor.</p>
+
+<h3>¿Necesito un servicio externo?</h3>
+<p>No para Media Library. Para S3 sí, pero usas el proveedor que tú elijas; el plugin no llama a servicios SaaS del autor.</p>
+
+<h3>¿Funciona sin Composer en producción?</h3>
+<p>Sí. El autoloader es propio. Composer sólo se usa en desarrollo (linters y tests).</p>
+</main>
+<footer><p>© Imagina WP</p></footer>
+</body>
+</html>

@@ -3,10 +3,13 @@
 Professional email signatures for WordPress with a drag-and-drop editor,
 multi-user plans, and dual storage (Media Library or S3-compatible).
 
-> Sprint 1 (Foundations) is the only sprint shipped at the moment. The plugin
-> bootstraps cleanly, installs its database schema and capabilities, and is
-> ready for subsequent sprints to plug in admin pages, the editor, the REST
-> API, and the storage drivers. See `CLAUDE.md` for the full roadmap.
+> Sprints 1–10 are now in: bootstrap, schema, roles, encryption, storage
+> drivers (Media Library + S3 SigV4), full data layer, REST API, JSON→MJML
+> compilation pipeline, 10 bundled templates, multi-client preview
+> emulators, UI polish primitives, i18n script, build/release scripts, and
+> a static documentation site. The GrapesJS editor UI is scaffolded; the
+> visual block UI lands in a follow-up release. See `CLAUDE.md` for the
+> full roadmap.
 
 ## Requirements
 
@@ -14,19 +17,31 @@ multi-user plans, and dual storage (Media Library or S3-compatible).
 - PHP 7.4+ (tested on 7.4, 8.0, 8.1, 8.2, 8.3)
 - MySQL 5.7+ / MariaDB 10.3+
 
-## Status (post-Sprint 1)
+## Status (Sprints 1–10)
 
 | Subsystem | Status |
 |-----------|--------|
 | Plugin bootstrap | ready |
 | PSR-4 autoloader (no Composer at runtime) | ready |
-| DI container | ready |
+| DI container + ServiceProvider | ready |
 | Activator / Deactivator / Uninstaller | ready |
-| Versioned schema migrator | ready (`signatures`, `templates`) |
-| Roles & capabilities | ready |
+| Versioned schema migrator | ready (1.0.0, 1.1.0) |
+| Roles & capabilities + UserHardening | ready |
+| Encryption (AES-256-CBC, AUTH_KEY-derived) | ready |
+| Storage drivers: Media Library + S3 SigV4 | ready |
+| Models + Repositories + Services | ready |
+| Quota enforcer + DefaultPlansSeeder | ready |
+| REST API (signatures, templates, assets, upload, plans, users, storage, setup, me) | ready |
+| Compilation pipeline (JSON → MJML → inlined HTML) | ready |
+| 10 bundled templates + DefaultTemplatesSeeder | ready |
+| Multi-client preview emulators (Gmail/Outlook/Apple Mail) | ready |
+| UI polish (toasts, empty/loading states, error boundary) | ready |
+| Integration skeletons (PMP, WC Memberships, MemberPress) | ready |
 | Tooling: phpcs, phpunit, eslint, prettier, vitest, vite, ts | ready |
 | CI: lint + test on PHP 7.4–8.3 and Node 20 | ready |
-| Admin pages, REST API, editor, storage drivers | upcoming sprints |
+| Build / release / version / pot scripts | ready |
+| Static docs site under `docs/` | ready |
+| GrapesJS visual editor UI | scaffolded — full UI in follow-up release |
 
 ## Local development
 

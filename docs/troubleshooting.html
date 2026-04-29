@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Solución de problemas · Imagina Signatures</title>
+  <link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<header><h1><a href="index.html">Imagina Signatures</a></h1><p class="lead">Solución de problemas</p></header>
+<main>
+<h3>Las imágenes no se ven en Gmail/Outlook</h3>
+<p>Verifica que la URL pública del asset es accesible sin autenticación. En modo S3, comprueba el ACL del bucket o el CDN configurado.</p>
+
+<h3>Aparece un aviso de "HTML excede 102 KB"</h3>
+<p>Gmail clipea mensajes mayores a 102 KB. Reduce el número de bloques o el tamaño de las imágenes embebidas.</p>
+
+<h3>El editor no carga</h3>
+<p>Vacía el cache del navegador y revisa la consola — el bundle reporta errores con un Error Boundary global.</p>
+
+<h3>Sólo veo "Sign in" al activar el plugin</h3>
+<p>El plugin requiere PHP 7.4 o superior. Si tu hosting está por debajo, actualiza la versión de PHP.</p>
+</main>
+<footer><p>© Imagina WP</p></footer>
+</body>
+</html>

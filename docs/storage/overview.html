@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Storage · Imagina Signatures</title>
+  <link rel="stylesheet" href="../assets/docs.css" />
+</head>
+<body>
+<header><h1><a href="../index.html">Imagina Signatures</a></h1><p class="lead">Storage</p></header>
+<main>
+<p>Imagina Signatures soporta dos modos de almacenamiento de assets (imágenes que aparecen en las firmas):</p>
+<ul>
+  <li><strong>Media Library</strong>: las imágenes se guardan en <code>wp-content/uploads/imagina-signatures/</code>. Sin configuración, ideal para empezar.</li>
+  <li><strong>S3-compatible</strong>: presigned uploads directamente al bucket que elijas. Soportamos Cloudflare R2, Bunny, Amazon S3, Backblaze B2, DigitalOcean Spaces, Wasabi, MinIO y endpoints custom.</li>
+</ul>
+<p>Las credenciales se cifran con AES-256-CBC usando una clave derivada de <code>AUTH_KEY</code> antes de guardarse en la base de datos.</p>
+</main>
+<footer><p>© Imagina WP</p></footer>
+</body>
+</html>

@@ -1,0 +1,36 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci || npm install
+      - run: npm run build
+      - run: composer install --no-dev --optimize-autoloader
+      - run: scripts/build-zip.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-zip-${{ github.sha }}
+          path: dist/*.zip
