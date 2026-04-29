@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Core;
 
+use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 
 defined( 'ABSPATH' ) || exit;
@@ -85,7 +86,7 @@ final class Uninstaller {
 		 *
 		 * @since 1.0.0
 		 */
-		do_action( 'imgsig/plugin/uninstalled' );
+		do_action( Actions::PLUGIN_UNINSTALLED );
 	}
 
 	/**

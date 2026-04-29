@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Core;
 
+use ImaginaSignatures\Hooks\Actions;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -55,6 +57,6 @@ final class Deactivator {
 		 *
 		 * @since 1.0.0
 		 */
-		do_action( 'imgsig/plugin/deactivated' );
+		do_action( Actions::PLUGIN_DEACTIVATED );
 	}
 }

@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Core;
 
+use ImaginaSignatures\Hooks\Actions;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -105,7 +107,7 @@ final class Plugin {
 		 *
 		 * @param Container $container The plugin's DI container.
 		 */
-		do_action( 'imgsig/plugin/booted', $this->container );
+		do_action( Actions::PLUGIN_BOOTED, $this->container );
 	}
 
 	/**
