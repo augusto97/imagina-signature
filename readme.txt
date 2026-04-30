@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.6
+Stable tag: 1.0.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,10 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.7 =
+* Persistence actually persists. Two paired bugs fixed: (1) the editor never fetched an existing signature on open, so reloading `?id=42` started fresh empty — now `useLoadSignature` GETs `/signatures/:id` on mount and replays the schema. (2) For a brand-new signature, the autosave POSTed and got back the new id, but the URL still said no id, so a reload created yet another fresh draft and the user's first edits were unreachable — now the autosave writes `?id=N` into the URL via `history.replaceState` after the first POST. Autosave gates on `persistenceStore.isLoaded` so the load itself doesn't trigger a redundant round-trip.
+* Restored the 1px border on the block library cards. The 1.0.6 button reset used the shorthand `border: 0` which also clobbers `border-style` (sets it to `none`); Tailwind's `.border` utility only declares `border-width: 1px` and relies on preflight's `border-style: solid`, so the cards rendered borderless. Switching to longhand `border-width: 0` lets `.border` re-introduce a 1px width while preflight's solid style stays applied.
 
 = 1.0.6 =
 * Drop the editor iframe — the React editor now mounts directly on the wp-admin page, same pattern as the admin app shipped in 1.0.5. The Cloudflare beacon CSP block, the `?token=` URL in the address bar, and the `/favicon.ico` 404 all go away because there's no longer a separate iframe document with its own CSP. Removed `EditorIframeController` + its REST route + its container binding.

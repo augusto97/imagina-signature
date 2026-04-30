@@ -77,11 +77,15 @@
 /*
  * Wins specificity against wp-admin's `forms.css` defaults so our
  * React buttons don't render with the WP grey/blue UA-style border.
+ *
+ * Using `border-width: 0` longhand (not shorthand `border: 0`) so
+ * Tailwind's `.border` utility on a button can still re-introduce
+ * a 1px width while preflight's `border-style: solid` stays applied.
  */
 #imagina-admin-root button {
   appearance: none;
   background: transparent;
-  border: 0;
+  border-width: 0;
   border-radius: 0;
   color: inherit;
   font: inherit;

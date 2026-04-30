@@ -2,6 +2,16 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] — 2026-04-30
+
+### Fixed
+
+- Persistence actually persists. The editor used to show "Saved" in the topbar after autosave but reloading the page brought back an empty editor. Two paired bugs were responsible:
+  1. The editor never fetched an existing signature on open — `signatureId` from the bootstrap config was kept in `idRef` for autosave routing only, with no GET round-trip to populate the schema. New `useLoadSignature` hook fetches `/signatures/:id` on mount and replays `json_content` through `setSchema`.
+  2. For a brand-new signature, the autosave POSTed and got back the new id, but the URL still said no id, so a reload created yet another fresh draft and the user's first edits were unreachable. Autosave now writes `?id=N` into the URL via `history.replaceState` after the first POST.
+  Autosave gates on `persistenceStore.isLoaded` (new flag) so the load itself doesn't trigger a redundant PATCH round-trip; a `skipNextSave` ref handles the React effect-batching edge where `schema` and `isLoaded` change together.
+- Restored the 1px border on the block library cards. The 1.0.6 button reset used the shorthand `border: 0`, which expands to `border-width: 0; border-style: none; border-color: medium`. Tailwind's `.border` utility only declares `border-width: 1px` and relies on preflight's universal `border-style: solid`, so the `border-style: none` from our shorthand made the cards' explicit borders invisible. Switched to longhand `border-width: 0` so `.border` (specificity 0,1,0 > our 0,0,1) can re-introduce a 1px width while preflight's solid style survives.
+
 ## [1.0.6] — 2026-04-30
 
 ### Changed

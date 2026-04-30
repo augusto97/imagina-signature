@@ -91,11 +91,13 @@
   /*
    * Explicit, higher-specificity reset for native form controls.
    *
-   * Tailwind preflight covers `*, ::before, ::after { border-width: 0 }`
-   * but several Chromium / Firefox builds keep painting the UA's
-   * `button { border: 2px outset buttonborder }` even after the author
-   * universal rule lands. Belt-and-suspenders: declare it on the
-   * element selector itself so there's no ambiguity.
+   * Using the longhand `border-width: 0` (not the shorthand `border: 0`)
+   * is intentional: the shorthand also sets `border-style: none`, which
+   * would make any Tailwind `.border` utility on a `<button>` render
+   * invisible (the utility only declares `border-width: 1px` and relies
+   * on preflight's universal `border-style: solid`). With longhand we
+   * zero the width by default but `.border` (specificity 0,1,0 > our
+   * 0,0,1) can still re-add a 1px width AND keep the universal style.
    */
   button,
   [type='button'],
@@ -104,7 +106,7 @@
     appearance: none;
     -webkit-appearance: none;
     background: transparent;
-    border: 0;
+    border-width: 0;
     border-radius: 0;
     color: inherit;
     font: inherit;

@@ -1,0 +1,76 @@
+import { useEffect, useState } from 'react';
+import { apiCall, ApiError, getConfig } from '@/bridge/apiClient';
+import { useSchemaStore } from '@/stores/schemaStore';
+import { usePersistenceStore } from '@/stores/persistenceStore';
+import { useToastStore } from '@/stores/toastStore';
+import type { SignatureSchema } from '@/core/schema/signature';
+import { __ } from '@/i18n/helpers';
+
+interface SignatureRow {
+  id: number;
+  name: string;
+  json_content: SignatureSchema;
+}
+
+interface LoadState {
+  loading: boolean;
+  notFound: boolean;
+  error: string | null;
+}
+
+/**
+ * Loads the signature identified by `IMGSIG_EDITOR_CONFIG.signatureId`
+ * once on mount. When the id is `0` (new signature flow), nothing is
+ * fetched but `markLoaded()` still fires so the autosave gate opens.
+ *
+ * On success the schema replaces the in-store empty default and the
+ * history stack is cleared (setSchema does this). On failure the user
+ * sees an error toast and the editor still becomes interactive — they
+ * can either retry or start fresh.
+ */
+export function useLoadSignature(): LoadState {
+  const setSchema = useSchemaStore((s) => s.setSchema);
+  const markLoaded = usePersistenceStore((s) => s.markLoaded);
+  const showToast = useToastStore((s) => s.show);
+  const [state, setState] = useState<LoadState>({
+    loading: getConfig().signatureId > 0,
+    notFound: false,
+    error: null,
+  });
+
+  useEffect(() => {
+    const { signatureId } = getConfig();
+    if (signatureId === 0) {
+      markLoaded();
+      return;
+    }
+
+    let cancelled = false;
+    apiCall<SignatureRow>(`/signatures/${signatureId}`)
+      .then((row) => {
+        if (cancelled) return;
+        if (row.json_content && typeof row.json_content === 'object') {
+          setSchema(row.json_content);
+        }
+        setState({ loading: false, notFound: false, error: null });
+        markLoaded();
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        const isNotFound = e instanceof ApiError && e.status === 404;
+        const message = e instanceof ApiError ? e.message : (e as Error).message;
+        setState({ loading: false, notFound: isNotFound, error: message });
+        showToast(__('Could not load signature: %s', message), 'error');
+        // Open the autosave gate even on failure so the user can recover
+        // by editing — the next save will create a fresh signature row.
+        markLoaded();
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return state;
+}
