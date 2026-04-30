@@ -13,7 +13,6 @@ use ImaginaSignatures\Admin\AdminAppPage;
 use ImaginaSignatures\Admin\AdminMenu;
 use ImaginaSignatures\Admin\Pages\EditorPage;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
-use ImaginaSignatures\Api\Controllers\AdminAppController;
 use ImaginaSignatures\Api\Controllers\AssetsController;
 use ImaginaSignatures\Api\Controllers\EditorIframeController;
 use ImaginaSignatures\Api\Controllers\MeController;
@@ -150,12 +149,13 @@ final class Plugin {
 		$signature_repository = $this->container->make( SignatureRepository::class );
 
 		// Three React-mounting pages, all backed by the same admin
-		// bundle (assets/admin/src/main.tsx). The PHP class only
-		// changes the `page` key in the bootstrap config so the
-		// React app picks the right view.
-		$signatures_page = new AdminAppPage( 'signatures', CapabilitiesInstaller::CAP_USE );
-		$templates_page  = new AdminAppPage( 'templates', CapabilitiesInstaller::CAP_USE );
-		$settings_page   = new AdminAppPage( 'settings', CapabilitiesInstaller::CAP_MANAGE_STORAGE );
+		// bundle (assets/admin/src/main.tsx). The asset enqueuer
+		// (registered inside AdminMenu) chooses the bootstrap `page`
+		// key based on which hook suffix WordPress is currently
+		// rendering, so the React app picks the right view.
+		$signatures_page = new AdminAppPage( CapabilitiesInstaller::CAP_USE );
+		$templates_page  = new AdminAppPage( CapabilitiesInstaller::CAP_USE );
+		$settings_page   = new AdminAppPage( CapabilitiesInstaller::CAP_MANAGE_STORAGE );
 
 		// Editor is its own iframe-host page (different React bundle).
 		$editor_page = new EditorPage( $signature_repository );
@@ -185,7 +185,6 @@ final class Plugin {
 				$this->container->make( UploadController::class ),
 				$this->container->make( EditorIframeController::class ),
 				$this->container->make( AssetsController::class ),
-				$this->container->make( AdminAppController::class ),
 			]
 		);
 		$router->register();

@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,12 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.5 =
+* Drop the admin iframe — the wp-admin React app now mounts directly on the page (`#imagina-admin-root`, `position: fixed; inset: 0;`) so it matches how the rest of the Imagina plugins ship. Native form elements get explicit, higher-specificity resets in `globals.css` to win against wp-admin's `forms.css`, and a new `AdminAssetEnqueuer` loads the bundle (with `type="module"`) only on our admin page hooks.
+* Editor back-arrow now actually navigates: it reads `signaturesUrl` from the bootstrap config and sets `window.parent.location` instead of posting a `request-close` message no parent listened to.
+* Templates: "New template" button is functional — opens a modal (Name / Category / Description), POSTs to `/templates`, and the new row is prepended to the list.
+* Drop dead code: unreachable `templates` tab in the editor's left sidebar; unused `force-save` / `request-close` postMessage types; the now-superseded `AdminAppController` REST endpoint.
 
 = 1.0.4 =
 * Re-enable Tailwind preflight on both bundles. Now that the editor and admin both render inside isolated iframes, the global CSS reset is safe to ship — and necessary, because without it browser defaults (notably `button { border-width: 2px }`) leak through and stamp every native control with a UA-default heavy border. Buttons, inputs, headings, images, lists, and tables now read against a clean reset.

@@ -5,7 +5,7 @@ import { create } from 'zustand';
  * Decoupled from the schema so opening / closing a panel never marks
  * the document dirty.
  */
-type LeftSidebarTab = 'blocks' | 'layers' | 'templates';
+type LeftSidebarTab = 'blocks' | 'layers';
 type Modal = 'preview' | 'export' | 'template-picker' | null;
 
 interface EditorState {

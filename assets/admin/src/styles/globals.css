@@ -3,9 +3,12 @@
 @tailwind utilities;
 
 /*
- * Tokens for the wp-admin React app. Mirror the editor tokens but
- * scoped under #imagina-admin-root so we don't clobber wp-admin
- * elsewhere on the page (Tailwind preflight is disabled globally).
+ * Tokens for the wp-admin React app. The app paints into a fixed
+ * `#imagina-admin-root` container that covers the viewport, sitting
+ * over the wp-admin chrome. Tailwind preflight is enabled globally
+ * but its `*, ::before, ::after { border-width: 0 }` rule loses to
+ * wp-admin's `button { border-width: 2px }` (specificity 0,0,0 vs
+ * 0,0,1) — so we add explicit higher-specificity resets below.
  */
 #imagina-admin-root {
   --bg-primary: #f7f8fa;
@@ -69,6 +72,32 @@
 #imagina-admin-root *::before,
 #imagina-admin-root *::after {
   box-sizing: border-box;
+}
+
+/*
+ * Wins specificity against wp-admin's `forms.css` defaults so our
+ * React buttons don't render with the WP grey/blue UA-style border.
+ */
+#imagina-admin-root button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-align: inherit;
+  line-height: inherit;
+  box-shadow: none;
+  text-shadow: none;
+}
+#imagina-admin-root button:focus,
+#imagina-admin-root button:hover,
+#imagina-admin-root button:active {
+  box-shadow: none;
+  text-shadow: none;
+  outline: none;
 }
 
 #imagina-admin-root input[type='text'],

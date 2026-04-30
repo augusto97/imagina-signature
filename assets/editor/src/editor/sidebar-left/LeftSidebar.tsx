@@ -48,7 +48,6 @@ export const LeftSidebar: FC = () => {
       <div className="flex-1 overflow-y-auto">
         {tab === 'blocks' && <BlockLibrary />}
         {tab === 'layers' && <LayersPanel />}
-        {tab === 'templates' && <BlockLibrary />}
       </div>
     </aside>
   );

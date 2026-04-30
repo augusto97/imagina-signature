@@ -167,12 +167,13 @@ final class EditorIframeController extends BaseController {
 		}
 
 		$config = [
-			'signatureId' => $payload['signature_id'],
-			'userId'      => $payload['user_id'],
-			'apiBase'     => esc_url_raw( rest_url( self::NAMESPACE ) ),
-			'restNonce'   => wp_create_nonce( 'wp_rest' ),
-			'locale'      => get_user_locale( $payload['user_id'] ),
-			'pluginUrl'   => esc_url_raw( plugins_url( '', IMGSIG_FILE ) ),
+			'signatureId'   => $payload['signature_id'],
+			'userId'        => $payload['user_id'],
+			'apiBase'       => esc_url_raw( rest_url( self::NAMESPACE ) ),
+			'restNonce'     => wp_create_nonce( 'wp_rest' ),
+			'locale'        => get_user_locale( $payload['user_id'] ),
+			'pluginUrl'     => esc_url_raw( plugins_url( '', IMGSIG_FILE ) ),
+			'signaturesUrl' => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures' ) ),
 		];
 
 		$editor_js   = esc_url( plugins_url( 'build/editor.js', IMGSIG_FILE ) );

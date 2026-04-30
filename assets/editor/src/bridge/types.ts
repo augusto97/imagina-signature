@@ -23,21 +23,28 @@ export interface AppConfig {
   locale: string;
   /** Plugin URL for static asset references. */
   pluginUrl: string;
+  /** wp-admin URL of the signatures listing — used by the editor's back arrow. */
+  signaturesUrl: string;
 }
 
 /**
  * Messages the editor sends to its parent (the wp-admin host page).
+ *
+ * `ready` lets the host know the bundle has booted; `dirty` / `saved`
+ * are advisory hints if a host wants to colour the tab. The editor
+ * navigates back via `window.parent.location` (no messaging round-
+ * trip needed).
  */
 export type OutgoingMessage =
   | { type: 'ready' }
   | { type: 'dirty'; dirty: boolean }
-  | { type: 'saved' }
-  | { type: 'request-close' };
+  | { type: 'saved' };
 
 /**
- * Messages the host can send to the editor (e.g. to ask for a save
- * before closing the tab).
+ * Messages the host can send to the editor.
+ *
+ * Empty for now — the editor doesn't expose a host-driven action.
+ * Kept as a discriminated union so subscribers stay type-safe when
+ * future signals are added (e.g., `force-save` before tab close).
  */
-export type IncomingMessage =
-  | { type: 'force-save' }
-  | { type: 'request-close' };
+export type IncomingMessage = { type: '__noop__' };

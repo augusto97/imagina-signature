@@ -4,6 +4,7 @@ import { useEditorStore } from '@/stores/editorStore';
 import { useHistoryStore } from '@/stores/historyStore';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { usePersistenceStore } from '@/stores/persistenceStore';
+import { getConfig } from '@/bridge/apiClient';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 import { DeviceSwitcher } from './DeviceSwitcher';
@@ -56,15 +57,14 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
       {/* Left: navigation back + brand */}
       <div className="flex min-w-0 items-center gap-3">
         <a
-          href={window.parent !== window ? '#' : '#'}
+          href={getConfig().signaturesUrl}
           onClick={(e) => {
-            e.preventDefault();
-            // We're in an iframe — postMessage the host to navigate.
+            // The editor lives in an iframe — escape it by navigating
+            // the parent window. Falls back to a normal anchor click
+            // (same-frame navigation) if we somehow aren't framed.
             if (window.parent !== window) {
-              window.parent.postMessage(
-                { source: 'imgsig-editor', type: 'request-close' },
-                window.location.origin,
-              );
+              e.preventDefault();
+              window.parent.location.href = getConfig().signaturesUrl;
             }
           }}
           className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-secondary)]"

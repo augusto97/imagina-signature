@@ -9,43 +9,25 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Admin;
 
-use ImaginaSignatures\Api\Controllers\AdminAppController;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Renders the admin React app via a same-origin iframe.
+ * Renders the admin React app directly into the wp-admin page.
  *
- * The wp-admin page itself only outputs:
- *   1. A small CSS rule that hides wp-admin chrome so the iframe
- *      can take the full viewport.
- *   2. An `<iframe>` pointing at the
- *      {@see \ImaginaSignatures\Api\Controllers\AdminAppController}
- *      REST endpoint, signed with a short-lived token.
+ * The React tree paints into a fixed-position `#imagina-admin-root`
+ * div that covers the viewport. Asset loading and config injection
+ * are handled by {@see AdminAssetEnqueuer} on the
+ * `admin_enqueue_scripts` hook for our specific page hook suffixes —
+ * this class is responsible only for the markup the page outputs.
  *
- * Why the iframe? wp-admin auto-loads `forms.css` / `common.css`
- * which apply default styles to native `<button>` and `<input>`
- * elements. Even with our Tailwind preflight disabled and
- * scoped utilities, those rules bleed through and produce the
- * grey-bordered "WP buttons" inside our React UI. The iframe
- * lives in its own document — only our `admin.css` is loaded —
- * so the React app paints clean.
- *
- * Capability is checked twice: once here (the wp-admin page
- * gate) and again in the REST controller when the token is
- * verified. Same defense-in-depth pattern as
- * {@see \ImaginaSignatures\Admin\Pages\EditorPage}.
+ * The Tailwind preflight + scoped resets in `assets/admin/src/styles/
+ * globals.css` win specificity against wp-admin's `forms.css`, so
+ * native form elements paint with our design language without being
+ * isolated in an iframe.
  *
  * @since 1.0.0
  */
 final class AdminAppPage {
-
-	/**
-	 * Page key passed to the React app (signatures / templates / settings).
-	 *
-	 * @var string
-	 */
-	private string $page;
 
 	/**
 	 * Capability the current user must hold to view this page.
@@ -55,16 +37,14 @@ final class AdminAppPage {
 	private string $required_cap;
 
 	/**
-	 * @param string $page         Page key.
 	 * @param string $required_cap Capability gating the page.
 	 */
-	public function __construct( string $page, string $required_cap ) {
-		$this->page         = $page;
+	public function __construct( string $required_cap ) {
 		$this->required_cap = $required_cap;
 	}
 
 	/**
-	 * Renders the iframe host.
+	 * Renders the React mount point.
 	 *
 	 * @since 1.0.0
 	 *
@@ -77,29 +57,28 @@ final class AdminAppPage {
 			);
 		}
 
-		$user_id    = get_current_user_id();
-		$token      = AdminAppController::mint_token( $user_id, $this->page );
-		$iframe_url = add_query_arg(
-			[ 'token' => $token ],
-			rest_url( 'imagina-signatures/v1/admin/app' )
-		);
-
+		// The container covers the viewport (CSS: position:fixed; inset:0;
+		// z-index:99999) — see globals.css. We hide wp-admin chrome below
+		// it so there's no flicker / double-scroll. The chrome is still in
+		// the DOM (so plugins/admin-bar items keep working) but visually
+		// gone for the duration of this page.
 		?>
 		<style>
 			#wpadminbar,
 			#adminmenuwrap,
 			#adminmenuback,
-			#wpfooter { display: none !important; }
+			#wpfooter,
+			#screen-meta,
+			#screen-meta-links,
+			.update-nag,
+			.notice { display: none !important; }
 			html.wp-toolbar { padding-top: 0 !important; }
 			#wpcontent,
-			#wpbody-content { margin: 0 !important; padding: 0 !important; }
+			#wpbody,
+			#wpbody-content { margin: 0 !important; padding: 0 !important; background: transparent !important; }
 			html, body { background: #f7f8fa !important; overflow: hidden; }
 		</style>
-		<iframe
-			src="<?php echo esc_url( $iframe_url ); ?>"
-			style="width:100vw;height:100vh;border:0;position:fixed;inset:0;z-index:100000;background:#f7f8fa;"
-			title="<?php echo esc_attr__( 'Imagina Signatures', 'imagina-signatures' ); ?>"
-		></iframe>
+		<div id="imagina-admin-root"></div>
 		<?php
 	}
 }

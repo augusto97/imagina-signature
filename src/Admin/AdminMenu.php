@@ -87,12 +87,15 @@ final class AdminMenu {
 	/**
 	 * Adds the top-level menu and submenus.
 	 *
+	 * Collects each `add_*_page` hook suffix and wires the asset
+	 * enqueuer to load the React bundle on those screens only.
+	 *
 	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
 	public function register_menus(): void {
-		add_menu_page(
+		$signatures_hook = add_menu_page(
 			__( 'Imagina Signatures', 'imagina-signatures' ),
 			__( 'Imagina Signatures', 'imagina-signatures' ),
 			CapabilitiesInstaller::CAP_USE,
@@ -111,7 +114,7 @@ final class AdminMenu {
 			[ $this->signatures_page, 'render' ]
 		);
 
-		add_submenu_page(
+		$templates_hook = add_submenu_page(
 			self::MENU_SLUG,
 			__( 'Templates', 'imagina-signatures' ),
 			__( 'Templates', 'imagina-signatures' ),
@@ -120,7 +123,7 @@ final class AdminMenu {
 			[ $this->templates_page, 'render' ]
 		);
 
-		add_submenu_page(
+		$settings_hook = add_submenu_page(
 			self::MENU_SLUG,
 			__( 'Storage Settings', 'imagina-signatures' ),
 			__( 'Settings', 'imagina-signatures' ),
@@ -139,5 +142,21 @@ final class AdminMenu {
 			self::EDITOR_SLUG,
 			[ $this->editor_page, 'render' ]
 		);
+
+		// Wire asset loading. `add_*_page` returns false when the
+		// current user can't see the page; skip those entries.
+		$hook_pages = array_filter(
+			[
+				is_string( $signatures_hook ) ? $signatures_hook : null => 'signatures',
+				is_string( $templates_hook ) ? $templates_hook : null   => 'templates',
+				is_string( $settings_hook ) ? $settings_hook : null     => 'settings',
+			],
+			static function ( $key ): bool {
+				return null !== $key && '' !== $key;
+			},
+			ARRAY_FILTER_USE_KEY
+		);
+
+		( new AdminAssetEnqueuer( $hook_pages ) )->boot();
 	}
 }
