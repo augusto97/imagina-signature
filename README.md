@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.7 | [imagina-signatures-1.0.7.zip](imagina-signatures-1.0.7.zip) |
 | 1.0.6 | [imagina-signatures-1.0.6.zip](imagina-signatures-1.0.6.zip) |
 | 1.0.5 | [imagina-signatures-1.0.5.zip](imagina-signatures-1.0.5.zip) |
 | 1.0.4 | [imagina-signatures-1.0.4.zip](imagina-signatures-1.0.4.zip) |
@@ -19,6 +20,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.7.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.6.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.5.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.4.zip
@@ -63,6 +65,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.7
+Persistence actually persists. Two paired bugs fixed: (1) the editor never fetched an existing signature on open, so reloading `?id=42` started fresh empty — new `useLoadSignature` hook GETs `/signatures/:id` on mount and replays the schema. (2) For a brand-new signature, autosave POSTed and got back the new id but the URL still said no id, so a reload created yet another fresh draft and the user's first edits were unreachable — autosave now writes `?id=N` into the URL via `history.replaceState` after the first POST. Autosave gates on a new `persistenceStore.isLoaded` flag so the load itself doesn't trigger a redundant PATCH. Also: restored the 1px border on block library cards (1.0.6's `button { border: 0 }` shorthand was clobbering preflight's `border-style: solid`; switched to longhand `border-width: 0`).
 
 ### 1.0.6
 Drop the editor iframe — the React editor now mounts directly on the wp-admin page (same pattern as the admin app shipped in 1.0.5). Side effects: the Cloudflare beacon CSP block goes away, the `?token=...` URL in the address bar goes away, and the favicon.ico 404 goes away — all three were caused by the editor iframe being a separate document with its own CSP. Native `<button>` border bug fixed defensively: explicit reset on the element selector itself (`button, [type='button'], ... { border: 0 }`) so there's no specificity ambiguity against UA `button { border: 2px outset }`. Container (2-column) block actually works now: children are real Blocks rendered through the registry, click-selectable for property editing, and `compile()` recursively emits each child's email-safe HTML inside the right cell. Removed `EditorIframeController` + its `/editor/iframe` REST route + dead `postMessageBridge.ts`. Editor topbar icons bumped from 12–14px to 14–16px.
