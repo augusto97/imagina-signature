@@ -7,7 +7,7 @@
  */
 
 /**
- * Editor-host bridge config — injected by `EditorIframeController` PHP
+ * Editor bootstrap config — injected by `EditorAssetEnqueuer` PHP
  * as `window.IMGSIG_EDITOR_CONFIG` (CLAUDE.md §14.2).
  */
 export interface AppConfig {
@@ -25,26 +25,9 @@ export interface AppConfig {
   pluginUrl: string;
   /** wp-admin URL of the signatures listing — used by the editor's back arrow. */
   signaturesUrl: string;
+  /** Plugin caps held by the current user. */
+  capabilities?: {
+    use: boolean;
+    manage_templates: boolean;
+  };
 }
-
-/**
- * Messages the editor sends to its parent (the wp-admin host page).
- *
- * `ready` lets the host know the bundle has booted; `dirty` / `saved`
- * are advisory hints if a host wants to colour the tab. The editor
- * navigates back via `window.parent.location` (no messaging round-
- * trip needed).
- */
-export type OutgoingMessage =
-  | { type: 'ready' }
-  | { type: 'dirty'; dirty: boolean }
-  | { type: 'saved' };
-
-/**
- * Messages the host can send to the editor.
- *
- * Empty for now — the editor doesn't expose a host-driven action.
- * Kept as a discriminated union so subscribers stay type-safe when
- * future signals are added (e.g., `force-save` before tab close).
- */
-export type IncomingMessage = { type: '__noop__' };

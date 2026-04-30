@@ -134,7 +134,7 @@ final class AdminMenu {
 
 		// Editor: registered with empty parent so it's hidden from the
 		// menu but reachable via admin.php?page=...
-		add_submenu_page(
+		$editor_hook = add_submenu_page(
 			'',
 			__( 'Edit Signature', 'imagina-signatures' ),
 			__( 'Edit Signature', 'imagina-signatures' ),
@@ -158,5 +158,9 @@ final class AdminMenu {
 		);
 
 		( new AdminAssetEnqueuer( $hook_pages ) )->boot();
+
+		if ( is_string( $editor_hook ) && '' !== $editor_hook ) {
+			( new EditorAssetEnqueuer( $editor_hook ) )->boot();
+		}
 	}
 }

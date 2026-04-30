@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace ImaginaSignatures\Core;
 
 use ImaginaSignatures\Api\Controllers\AssetsController;
-use ImaginaSignatures\Api\Controllers\EditorIframeController;
 use ImaginaSignatures\Api\Controllers\MeController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
 use ImaginaSignatures\Api\Controllers\StorageController;
@@ -178,12 +177,6 @@ final class ServiceProvider {
 					$c->make( AssetRepository::class ),
 					$c->make( RateLimiter::class )
 				);
-			}
-		);
-		$container->singleton(
-			EditorIframeController::class,
-			static function (): EditorIframeController {
-				return new EditorIframeController();
 			}
 		);
 		$container->singleton(

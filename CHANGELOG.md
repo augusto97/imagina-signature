@@ -2,6 +2,22 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] — 2026-04-30
+
+### Changed
+
+- The React editor no longer renders inside an iframe. Same migration we did for the admin in 1.0.5: a fixed-position `#imagina-editor-root` covers the viewport (`position: fixed; inset: 0; z-index: 99999;`), a new `EditorAssetEnqueuer` loads `editor.js` (with `type="module"`) only on the editor page hook suffix, and the editor's bootstrap `IMGSIG_EDITOR_CONFIG` is injected inline. Side effects of dropping the iframe: the Cloudflare beacon CSP block goes away (no per-iframe CSP), the `?token=...` URL in the browser address bar goes away (the iframe's REST route is gone), and the favicon.ico 404 goes away (no separate iframe document fetching one). Removed `EditorIframeController` + its container binding + its `/editor/iframe` REST route.
+- Editor topbar icons bumped from 12–14px to 14–16px; tap targets from 24px to 28–32px. The brand pill, status text, Preview/Export buttons all picked up a tier of size to match.
+
+### Fixed
+
+- Native `<button>` border. Tailwind preflight ships `*, ::before, ::after { border-width: 0 }` (specificity 0,0,0). On some Chromium / Firefox builds the UA default `button { border: 2px outset buttonborder }` (specificity 0,0,1) keeps painting through even after the author universal rule lands. Defensive belt-and-suspenders: explicit reset declared on the element selector itself (`button, [type='button'], [type='submit'], [type='reset'] { border: 0; ... }`) so there's no specificity ambiguity. Confirmed in the built `editor.css` and `admin.css`.
+- Container (2-column) block. Was a placeholder: children rendered as `[type]` text strings, `compile()` ignored children entirely, no UI to add or remove children. Now: children are real Blocks rendered through the registry, click-selectable for property editing (recursive `findBlockByIdDeep` in `schemaStore` so the right-sidebar `RightSidebar` finds nested blocks), the property panel exposes Add / Remove + a column-count toggle, and `compile()` recursively emits each child's email-safe HTML inside the right cell. Schema unchanged (flat `children: Block[]`, split visually for 2 columns).
+
+### Removed
+
+- `assets/editor/src/bridge/postMessageBridge.ts` — dead now that the editor isn't iframed and doesn't need a host bridge. The bridge file's `IncomingMessage` / `OutgoingMessage` types are gone with it; `AppConfig` stays in `bridge/types.ts` because that's still the bootstrap config shape.
+
 ## [1.0.5] — 2026-04-30
 
 ### Changed

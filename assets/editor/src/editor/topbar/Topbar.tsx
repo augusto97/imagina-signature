@@ -50,7 +50,7 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
   return (
     <header
       className={cn(
-        'flex h-12 shrink-0 items-center justify-between gap-4 border-b border-[var(--border-default)] bg-[var(--bg-panel)] px-4',
+        'flex h-14 shrink-0 items-center justify-between gap-4 border-b border-[var(--border-default)] bg-[var(--bg-panel)] px-5',
         className,
       )}
     >
@@ -58,28 +58,19 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
       <div className="flex min-w-0 items-center gap-3">
         <a
           href={getConfig().signaturesUrl}
-          onClick={(e) => {
-            // The editor lives in an iframe — escape it by navigating
-            // the parent window. Falls back to a normal anchor click
-            // (same-frame navigation) if we somehow aren't framed.
-            if (window.parent !== window) {
-              e.preventDefault();
-              window.parent.location.href = getConfig().signaturesUrl;
-            }
-          }}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-secondary)]"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
           title={__('Back to signatures')}
         >
-          <ArrowLeft size={14} />
+          <ArrowLeft size={16} />
         </a>
         <div className="flex items-center gap-2 truncate">
           <span
             aria-hidden
-            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[var(--accent)] text-white"
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--accent)] text-white"
           >
-            <FileSignature size={12} />
+            <FileSignature size={14} />
           </span>
-          <span className="truncate text-[12px] font-semibold text-[var(--text-primary)]">
+          <span className="truncate text-[13px] font-semibold text-[var(--text-primary)]">
             {__('Imagina Signatures')}
           </span>
         </div>
@@ -90,39 +81,39 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
         <DeviceSwitcher />
         <div className="inline-flex items-center gap-0.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] p-0.5">
           <IconButton title={__('Undo')} onClick={onUndo} disabled={!canUndo}>
-            <Undo2 size={13} />
+            <Undo2 size={16} />
           </IconButton>
           <IconButton title={__('Redo')} onClick={onRedo} disabled={!canRedo}>
-            <Redo2 size={13} />
+            <Redo2 size={16} />
           </IconButton>
         </div>
         <IconButton
           title={__('Pick a template')}
           onClick={() => openModal('template-picker')}
         >
-          <LayoutTemplate size={14} />
+          <LayoutTemplate size={16} />
         </IconButton>
       </div>
 
       {/* Right: status + actions */}
       <div className="flex items-center gap-2">
-        <span aria-live="polite" className={cn('text-[11px] font-medium', statusTone)}>
+        <span aria-live="polite" className={cn('text-[12px] font-medium', statusTone)}>
           {status}
         </span>
         <button
           type="button"
-          className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-2.5 text-[12px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
+          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-3 text-[12.5px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
           onClick={() => openModal('preview')}
         >
-          <Eye size={13} />
+          <Eye size={14} />
           {__('Preview')}
         </button>
         <button
           type="button"
-          className="inline-flex h-7 items-center gap-1.5 rounded-md bg-[var(--accent)] px-2.5 text-[12px] font-medium text-white shadow-[var(--shadow-xs)] transition-colors hover:bg-[var(--accent-hover)]"
+          className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--accent)] px-3 text-[12.5px] font-medium text-white shadow-[var(--shadow-xs)] transition-colors hover:bg-[var(--accent-hover)]"
           onClick={() => openModal('export')}
         >
-          <Code2 size={13} />
+          <Code2 size={14} />
           {__('Export HTML')}
         </button>
       </div>
@@ -141,7 +132,7 @@ const IconButton: FC<{
     title={title}
     onClick={onClick}
     disabled={disabled}
-    className="inline-flex h-6 w-7 items-center justify-center rounded text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+    className="inline-flex h-7 w-8 items-center justify-center rounded text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
   >
     {children}
   </button>

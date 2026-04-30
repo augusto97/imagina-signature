@@ -32,6 +32,9 @@ interface SchemaState {
   moveBlock: (id: string, target_id: string, position: 'before' | 'after') => void;
   duplicateBlock: (id: string) => void;
 
+  /** Append a block to a Container's children list. */
+  addChildToContainer: (parent_id: string, child: Block) => void;
+
   updateCanvas: (updates: Partial<CanvasConfig>) => void;
   setVariable: (key: string, value: string) => void;
 }
@@ -42,6 +45,38 @@ function bumpUpdatedAt(schema: SignatureSchema): void {
 
 function findIndexById(blocks: Block[], id: string): number {
   return blocks.findIndex((b) => b.id === id);
+}
+
+/**
+ * Recursive lookup — walks into Container children so nested blocks
+ * are reachable by id without callers needing to know the parent.
+ */
+export function findBlockByIdDeep(blocks: Block[], id: string): Block | undefined {
+  for (const block of blocks) {
+    if (block.id === id) return block;
+    if (block.type === 'container' && block.children.length > 0) {
+      const found = findBlockByIdDeep(block.children, id);
+      if (found) return found;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Recursive splice — returns true on first hit, mutates `blocks` in place.
+ */
+function removeBlockByIdDeep(blocks: Block[], id: string): boolean {
+  const idx = blocks.findIndex((b) => b.id === id);
+  if (idx >= 0) {
+    blocks.splice(idx, 1);
+    return true;
+  }
+  for (const block of blocks) {
+    if (block.type === 'container' && removeBlockByIdDeep(block.children, id)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function pushSnapshot(): void {
@@ -99,8 +134,10 @@ export const useSchemaStore = create<SchemaState>()(
 
     updateBlock: (id, updates) => {
       // No snapshot for per-field edits — autosave captures periodically.
+      // Recurses into Container children so nested blocks are
+      // editable through the same selection-driven property panel.
       set((state) => {
-        const block = state.schema.blocks.find((b) => b.id === id);
+        const block = findBlockByIdDeep(state.schema.blocks, id);
         if (block) {
           Object.assign(block, updates);
           bumpUpdatedAt(state.schema);
@@ -111,8 +148,19 @@ export const useSchemaStore = create<SchemaState>()(
     deleteBlock: (id) => {
       pushSnapshot();
       set((state) => {
-        state.schema.blocks = state.schema.blocks.filter((b) => b.id !== id);
+        removeBlockByIdDeep(state.schema.blocks, id);
         bumpUpdatedAt(state.schema);
+      });
+    },
+
+    addChildToContainer: (parent_id, child) => {
+      pushSnapshot();
+      set((state) => {
+        const parent = findBlockByIdDeep(state.schema.blocks, parent_id);
+        if (parent && parent.type === 'container') {
+          parent.children.push(child);
+          bumpUpdatedAt(state.schema);
+        }
       });
     },
 

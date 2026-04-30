@@ -1,6 +1,6 @@
 <?php
 /**
- * Editor admin page (iframe mount point).
+ * Editor admin page (direct React mount).
  *
  * @package ImaginaSignatures\Admin\Pages
  */
@@ -9,20 +9,20 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Admin\Pages;
 
-use ImaginaSignatures\Api\Controllers\EditorIframeController;
 use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Renders the wp-admin page that hosts the editor iframe.
+ * Renders the wp-admin page that hosts the React editor.
  *
- * The page itself is bare — it just outputs a full-viewport `<iframe>`
- * pointing at `/wp-json/imagina-signatures/v1/editor/iframe?token=...`.
- * The visible chrome (admin-bar, side-menu, footer) is hidden via
- * inline CSS so the editor effectively takes over the whole tab,
- * matching the Framer / Webflow UX (CLAUDE.md §3.3 / §14.1).
+ * No iframe — the editor mounts directly into a fixed-position
+ * `#imagina-editor-root` container that covers the viewport.
+ * wp-admin chrome is hidden via the inline `<style>` so the editor
+ * effectively takes over the tab. Asset loading + the
+ * `IMGSIG_EDITOR_CONFIG` bootstrap is handled by
+ * {@see \ImaginaSignatures\Admin\EditorAssetEnqueuer}.
  *
  * Ownership for an existing signature is verified BEFORE rendering —
  * a user passing another user's `?id=` lands on a 403 instead of
@@ -71,31 +71,23 @@ final class EditorPage {
 			}
 		}
 
-		$token      = EditorIframeController::mint_token( $user_id, $signature_id );
-		$iframe_url = add_query_arg(
-			[ 'token' => $token ],
-			rest_url( EditorIframeController::NAMESPACE . '/editor/iframe' )
-		);
-
 		?>
 		<style>
 			#wpadminbar,
 			#adminmenuwrap,
 			#adminmenuback,
-			#wpfooter { display: none !important; }
+			#wpfooter,
+			#screen-meta,
+			#screen-meta-links,
+			.update-nag,
+			.notice { display: none !important; }
 			html.wp-toolbar { padding-top: 0 !important; }
 			#wpcontent,
-			#wpbody-content { margin: 0 !important; padding: 0 !important; }
-			html, body { background: #fafafa; overflow: hidden; }
+			#wpbody,
+			#wpbody-content { margin: 0 !important; padding: 0 !important; background: transparent !important; }
+			html, body { background: #f7f8fa !important; overflow: hidden; }
 		</style>
-		<div class="imagina-signatures-editor-frame">
-			<iframe
-				src="<?php echo esc_url( $iframe_url ); ?>"
-				style="width:100vw;height:100vh;border:0;position:fixed;inset:0;z-index:100000;background:#fafafa;"
-				allow="clipboard-write"
-				title="<?php echo esc_attr__( 'Imagina Signatures Editor', 'imagina-signatures' ); ?>"
-			></iframe>
-		</div>
+		<div id="imagina-editor-root"></div>
 		<?php
 	}
 }

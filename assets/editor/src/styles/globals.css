@@ -52,11 +52,18 @@
     --radius-lg: 12px;
   }
 
-  html,
-  body,
+  /*
+   * Editor root covers the viewport over wp-admin's chrome. Same
+   * pattern as #imagina-admin-root (admin globals.css). The
+   * EditorPage's inline <style> hides #wpadminbar / #adminmenuwrap
+   * etc. but z-index keeps us above any plugin that misses that.
+   */
   #imagina-editor-root {
-    height: 100%;
-    margin: 0;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
     background: var(--bg-primary);
     color: var(--text-primary);
     font-family:
@@ -79,6 +86,43 @@
   *::before,
   *::after {
     box-sizing: border-box;
+  }
+
+  /*
+   * Explicit, higher-specificity reset for native form controls.
+   *
+   * Tailwind preflight covers `*, ::before, ::after { border-width: 0 }`
+   * but several Chromium / Firefox builds keep painting the UA's
+   * `button { border: 2px outset buttonborder }` even after the author
+   * universal rule lands. Belt-and-suspenders: declare it on the
+   * element selector itself so there's no ambiguity.
+   */
+  button,
+  [type='button'],
+  [type='submit'],
+  [type='reset'] {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    padding: 0;
+    margin: 0;
+    text-align: inherit;
+    cursor: pointer;
+    box-shadow: none;
+    text-shadow: none;
+  }
+  button:focus,
+  [type='button']:focus,
+  [type='submit']:focus,
+  [type='reset']:focus {
+    outline: none;
+    box-shadow: none;
+    text-shadow: none;
   }
 
   /* Compact native form controls inside the editor surfaces. */

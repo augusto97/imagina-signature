@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { Settings2 } from 'lucide-react';
-import { useSchemaStore } from '@/stores/schemaStore';
+import { useSchemaStore, findBlockByIdDeep } from '@/stores/schemaStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { rendererForBlock } from '@/core/blocks/registry';
 import { __ } from '@/i18n/helpers';
@@ -14,8 +14,10 @@ import { PropertyPanel } from './PropertyPanel';
  */
 export const RightSidebar: FC = () => {
   const selectedId = useSelectionStore((s) => s.selectedBlockId);
+  // Walks into Container children too, so nested blocks are
+  // editable from the same property panel as top-level blocks.
   const block = useSchemaStore((s) =>
-    selectedId ? s.schema.blocks.find((b) => b.id === selectedId) : undefined,
+    selectedId ? findBlockByIdDeep(s.schema.blocks, selectedId) : undefined,
   );
   const definition = block ? rendererForBlock(block) : null;
 

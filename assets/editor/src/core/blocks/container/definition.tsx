@@ -1,33 +1,48 @@
-import type { FC } from 'react';
-import { Columns2 } from 'lucide-react';
+import { useState, type FC } from 'react';
+import { Columns2, Plus, Trash2 } from 'lucide-react';
+import type { Block } from '@/core/schema/blocks';
 import type { ContainerBlock } from '@/core/schema/blocks';
+import { useSchemaStore } from '@/stores/schemaStore';
+import { useSelectionStore } from '@/stores/selectionStore';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
+import { cn } from '@/utils/cn';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
-import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
+import {
+  registerBlock,
+  rendererForBlock,
+  getRegisteredBlocks,
+  type BlockDefinition,
+  type CompileContext,
+} from '../registry';
 
 /**
  * 1-or-2 column container.
  *
- * Sprint 8 ships a minimal version: the container renders a `<table>`
- * with 1 or 2 cells side-by-side, and any children are rendered
- * stacked inside each cell. Full nested drag-and-drop (each cell as
- * its own SortableContext) is deferred — the typical signature is
- * one column anyway, and the multi-column case is rare enough that
- * landing it later doesn't block useful editing now.
+ * Children are real `Block`s rendered through the registry, not
+ * placeholder strings. For a 2-column layout we split the flat
+ * `children` array in half visually so any add / remove flow stays
+ * a single splice. Compile is recursive — the container renders an
+ * email-safe `<table>` and embeds each child's own compiled HTML.
+ *
+ * Editing nested children: the canvas renderer wires every child to
+ * the same selection store, so clicking a nested image / text opens
+ * the right-sidebar property panel like any top-level block. The
+ * panel finds the block by id via {@link findBlockByIdDeep} which
+ * recurses into containers.
+ *
+ * Drag-and-drop reordering inside cells is deferred — the typical
+ * signature is one column anyway, and add / remove via the
+ * container's own property panel covers the multi-column case.
  */
-const Renderer: FC<{ block: ContainerBlock }> = ({ block }) => {
+const Renderer: FC<{ block: ContainerBlock; isPreview?: boolean }> = ({ block, isPreview }) => {
   const cells: React.ReactNode[] = [];
   const half = Math.ceil(block.children.length / 2);
 
   if (block.columns === 1) {
     cells.push(
       <td key="single" style={{ verticalAlign: 'top' }}>
-        {block.children.map((child) => (
-          <div key={child.id} style={{ marginBottom: 4 }}>
-            {`[${child.type}]`}
-          </div>
-        ))}
+        <ChildList items={block.children} isPreview={isPreview} />
       </td>,
     );
   } else {
@@ -39,23 +54,25 @@ const Renderer: FC<{ block: ContainerBlock }> = ({ block }) => {
           key={i}
           style={{
             verticalAlign: 'top',
-            paddingLeft: i === 0 ? 0 : block.gap,
+            paddingLeft: i === 0 ? 0 : block.gap / 2,
             paddingRight: i === 1 ? 0 : block.gap / 2,
             width: '50%',
           }}
         >
-          {slice.map((child) => (
-            <div key={child.id} style={{ marginBottom: 4 }}>
-              {`[${child.type}]`}
-            </div>
-          ))}
+          <ChildList items={slice} isPreview={isPreview} />
         </td>,
       );
     }
   }
 
   return (
-    <table role="presentation" cellPadding={0} cellSpacing={0} border={0} style={{ borderCollapse: 'collapse', width: '100%' }}>
+    <table
+      role="presentation"
+      cellPadding={0}
+      cellSpacing={0}
+      border={0}
+      style={{ borderCollapse: 'collapse', width: '100%' }}
+    >
       <tbody>
         <tr>{cells}</tr>
       </tbody>
@@ -63,43 +80,214 @@ const Renderer: FC<{ block: ContainerBlock }> = ({ block }) => {
   );
 };
 
-const Properties: FC<{ block: ContainerBlock; onChange: (u: Partial<ContainerBlock>) => void }> = ({
-  block,
-  onChange,
-}) => (
-  <div className="space-y-3 text-xs">
-    <label className="block">
-      <span className="mb-1 block text-[var(--text-secondary)]">{__('Columns')}</span>
-      <select
-        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
-        value={block.columns}
-        onChange={(e) => onChange({ columns: Number(e.target.value) as 1 | 2 })}
+const ChildList: FC<{ items: Block[]; isPreview?: boolean }> = ({ items, isPreview }) => {
+  const select = useSelectionStore((s) => s.select);
+  const selectedId = useSelectionStore((s) => s.selectedBlockId);
+
+  if (items.length === 0) {
+    if (isPreview) return null;
+    return (
+      <div
+        style={{
+          padding: 12,
+          fontSize: 11,
+          color: '#94a3b8',
+          textAlign: 'center',
+          border: '1px dashed #e5e7eb',
+          borderRadius: 4,
+        }}
       >
-        <option value={1}>1</option>
-        <option value={2}>2</option>
-      </select>
-    </label>
-    <DimensionInput label={__('Gap')} value={block.gap} onChange={(v) => onChange({ gap: v })} min={0} max={48} />
-    <p className="text-[var(--text-muted)]">
-      {__('Nested drag-and-drop into containers ships in a later release. For now, blocks added inside the container are placeholders.')}
-    </p>
-  </div>
-);
+        {__('Empty column')}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {items.map((child) => {
+        const def = rendererForBlock(child);
+        if (!def) return null;
+        const ChildRenderer = def.Renderer as FC<{ block: Block; isPreview?: boolean }>;
+        const isSelected = !isPreview && child.id === selectedId;
+        return (
+          <div
+            key={child.id}
+            onClick={
+              isPreview
+                ? undefined
+                : (e) => {
+                    e.stopPropagation();
+                    select(child.id);
+                  }
+            }
+            style={
+              isPreview
+                ? { marginBottom: 4 }
+                : {
+                    marginBottom: 4,
+                    cursor: 'pointer',
+                    outline: isSelected ? '1px solid #2563eb' : '1px solid transparent',
+                    borderRadius: 2,
+                  }
+            }
+          >
+            <ChildRenderer block={child} isPreview={isPreview} />
+          </div>
+        );
+      })}
+    </>
+  );
+};
+
+const Properties: FC<{
+  block: ContainerBlock;
+  onChange: (u: Partial<ContainerBlock>) => void;
+}> = ({ block, onChange }) => {
+  const addChildToContainer = useSchemaStore((s) => s.addChildToContainer);
+  const deleteBlock = useSchemaStore((s) => s.deleteBlock);
+  const select = useSelectionStore((s) => s.select);
+  const [adding, setAdding] = useState(false);
+
+  // Eligible child types — anything except another container (nesting
+  // containers is a footgun for email rendering and we don't support it).
+  const childCandidates = getRegisteredBlocks().filter((d) => d.type !== 'container');
+
+  return (
+    <div className="flex flex-col gap-4 text-[12px]">
+      <label className="flex flex-col gap-1.5">
+        <span className="font-medium text-[var(--text-secondary)]">{__('Columns')}</span>
+        <select
+          className="w-full"
+          value={block.columns}
+          onChange={(e) => onChange({ columns: Number(e.target.value) as 1 | 2 })}
+        >
+          <option value={1}>{__('1 column')}</option>
+          <option value={2}>{__('2 columns')}</option>
+        </select>
+      </label>
+
+      <DimensionInput
+        label={__('Gap')}
+        value={block.gap}
+        onChange={(v) => onChange({ gap: v })}
+        min={0}
+        max={48}
+      />
+
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <span className="is-section-label">{__('Children')}</span>
+          <button
+            type="button"
+            onClick={() => setAdding((v) => !v)}
+            className="inline-flex h-6 items-center gap-1 rounded px-2 text-[11px] font-medium text-[var(--accent)] transition-colors hover:bg-[var(--bg-hover)]"
+          >
+            <Plus size={12} />
+            {__('Add')}
+          </button>
+        </div>
+
+        {adding && (
+          <div className="grid grid-cols-2 gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel-soft)] p-2">
+            {childCandidates.map((def) => {
+              const Icon = def.icon;
+              return (
+                <button
+                  key={def.type}
+                  type="button"
+                  onClick={() => {
+                    const fresh = def.create() as Block;
+                    addChildToContainer(block.id, fresh);
+                    setAdding(false);
+                    select(fresh.id);
+                  }}
+                  className="flex items-center gap-1.5 rounded p-1.5 text-left text-[11px] transition-colors hover:bg-[var(--bg-hover)]"
+                >
+                  <Icon size={13} className="text-[var(--text-muted)]" />
+                  <span className="truncate">{__(def.label)}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {block.children.length === 0 ? (
+          <p className="rounded-md bg-[var(--bg-panel-soft)] px-2.5 py-2 text-[11px] text-[var(--text-muted)]">
+            {__('No children yet — click “Add” to drop a block into this container.')}
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-1">
+            {block.children.map((child) => {
+              const def = rendererForBlock(child);
+              const Icon = def?.icon;
+              return (
+                <li
+                  key={child.id}
+                  className={cn(
+                    'group flex items-center gap-2 rounded-md px-2 py-1.5 text-[11.5px] transition-colors',
+                    'hover:bg-[var(--bg-hover)]',
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => select(child.id)}
+                    className="flex flex-1 items-center gap-2 truncate text-left"
+                  >
+                    {Icon && <Icon size={12} className="text-[var(--text-muted)]" />}
+                    <span className="truncate font-medium text-[var(--text-primary)]">
+                      {__(def?.label ?? child.type)}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    title={__('Remove')}
+                    onClick={() => deleteBlock(child.id)}
+                    className="inline-flex h-5 w-5 items-center justify-center rounded text-[var(--text-muted)] opacity-0 hover:bg-red-50 hover:text-[var(--danger)] group-hover:opacity-100"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <p className="text-[10.5px] leading-relaxed text-[var(--text-muted)]">
+        {__('Children are split evenly between cells in 2-column mode. Reorder via Layers.')}
+      </p>
+    </div>
+  );
+};
 
 function compile(block: ContainerBlock, ctx: CompileContext): string {
-  // Children are out-of-scope for this minimal container; the full
-  // recursive compile lands when nested DnD does.
-  void ctx;
+  const half = Math.ceil(block.children.length / 2);
+
+  const compileChild = (child: Block): string => {
+    const def = rendererForBlock(child);
+    if (!def) {
+      ctx.warnings.push(`Unknown nested block type: ${child.type}`);
+      return '';
+    }
+    return (def.compile as (b: Block, c: CompileContext) => string)(child, ctx);
+  };
+
   if (block.columns === 1) {
-    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td></td></tr></table>`;
+    const inner = block.children.map(compileChild).join('\n');
+    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="vertical-align:top">${inner}</td></tr></table>`;
   }
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="vertical-align:top;width:50%;padding-right:${block.gap / 2}px"></td><td style="vertical-align:top;width:50%;padding-left:${block.gap / 2}px"></td></tr></table>`;
+
+  const left = block.children.slice(0, half).map(compileChild).join('\n');
+  const right = block.children.slice(half).map(compileChild).join('\n');
+  const padRight = `padding-right:${block.gap / 2}px`;
+  const padLeft = `padding-left:${block.gap / 2}px`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="vertical-align:top;width:50%;${padRight}">${left}</td><td style="vertical-align:top;width:50%;${padLeft}">${right}</td></tr></table>`;
 }
 
 const definition: BlockDefinition<ContainerBlock> = {
   type: 'container',
   label: 'Container',
-  description: '1 or 2 column layout.',
+  description: '1 or 2 column layout with embedded blocks.',
   icon: Columns2,
   category: 'layout',
   create: (): ContainerBlock => ({
