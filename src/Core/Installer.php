@@ -9,7 +9,9 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Core;
 
+use ImaginaSignatures\Repositories\TemplateRepository;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
+use ImaginaSignatures\Setup\DefaultTemplatesSeeder;
 use ImaginaSignatures\Setup\SchemaMigrator;
 
 defined( 'ABSPATH' ) || exit;
@@ -62,10 +64,15 @@ final class Installer {
 	 * @return void
 	 */
 	public function install(): void {
+		global $wpdb;
+
 		( new SchemaMigrator() )->migrate();
 		( new CapabilitiesInstaller() )->install();
 
 		$this->seed_default_options();
+
+		// Seed shipped templates (idempotent — skips slugs that already exist).
+		( new DefaultTemplatesSeeder( new TemplateRepository( $wpdb ) ) )->seed();
 
 		// Always overwrite — we want the option to reflect the version that
 		// last ran the installer, not the version that first did.

@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "meta": {
+    "created_at": "2026-01-01T00:00:00Z",
+    "updated_at": "2026-01-01T00:00:00Z",
+    "editor_version": "1.0.0"
+  },
+  "canvas": {
+    "width": 600,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#1d4ed8"
+  },
+  "variables": {},
+  "blocks": [
+    {
+      "id": "name",
+      "type": "heading",
+      "content": "Your Name",
+      "style": {
+        "font_family": "Arial, sans-serif",
+        "font_size": 18,
+        "font_weight": 700,
+        "color": "#111827",
+        "line_height": 1.2,
+        "text_align": "left"
+      },
+      "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 }
+    },
+    {
+      "id": "title",
+      "type": "text",
+      "content": "Title · Company",
+      "style": {
+        "font_family": "Arial, sans-serif",
+        "font_size": 13,
+        "font_weight": 400,
+        "color": "#6b7280",
+        "line_height": 1.4,
+        "text_align": "left"
+      },
+      "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
+    },
+    {
+      "id": "divider",
+      "type": "divider",
+      "border": { "width": 1, "color": "#e5e7eb", "style": "solid" },
+      "width_percent": 100,
+      "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
+    },
+    {
+      "id": "contact",
+      "type": "contact_row",
+      "rows": [
+        { "icon": "email", "label": "you@example.com", "href": "mailto:you@example.com" },
+        { "icon": "phone", "label": "+1 555 000 0000", "href": "tel:+15550000000" },
+        { "icon": "web", "label": "example.com", "href": "https://example.com" }
+      ],
+      "style": {
+        "font_family": "Arial, sans-serif",
+        "font_size": 13,
+        "font_weight": 400,
+        "color": "#374151"
+      },
+      "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 }
+    }
+  ]
+}

@@ -8,6 +8,8 @@ import { Topbar } from './topbar/Topbar';
 import { LeftSidebar } from './sidebar-left/LeftSidebar';
 import { RightSidebar } from './sidebar-right/RightSidebar';
 import { Canvas } from './canvas/Canvas';
+import { TemplatePicker } from './modals/TemplatePicker';
+import { ExportModal } from './modals/ExportModal';
 
 /**
  * Top-level editor layout — owns the DndContext that the library
@@ -51,6 +53,8 @@ export const EditorShell: FC = () => {
           ) : null}
         </DragOverlay>
       </DndContext>
+      <TemplatePicker />
+      <ExportModal />
     </div>
   );
 };

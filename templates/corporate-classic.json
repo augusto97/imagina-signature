@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0",
+  "meta": {
+    "created_at": "2026-01-01T00:00:00Z",
+    "updated_at": "2026-01-01T00:00:00Z",
+    "editor_version": "1.0.0"
+  },
+  "canvas": {
+    "width": 600,
+    "background_color": "#ffffff",
+    "font_family": "Georgia, serif",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#1f2937"
+  },
+  "variables": {},
+  "blocks": [
+    {
+      "id": "name",
+      "type": "heading",
+      "content": "Jane Doe",
+      "style": {
+        "font_family": "Georgia, serif",
+        "font_size": 20,
+        "font_weight": 700,
+        "color": "#1f2937",
+        "line_height": 1.2,
+        "text_align": "left"
+      },
+      "padding": { "top": 0, "right": 0, "bottom": 4, "left": 0 }
+    },
+    {
+      "id": "title",
+      "type": "text",
+      "content": "<em>Director of Operations</em>",
+      "style": {
+        "font_family": "Georgia, serif",
+        "font_size": 14,
+        "font_weight": 400,
+        "color": "#374151",
+        "line_height": 1.4,
+        "text_align": "left"
+      },
+      "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
+    },
+    {
+      "id": "company",
+      "type": "text",
+      "content": "<strong>ACME Industries</strong>",
+      "style": {
+        "font_family": "Georgia, serif",
+        "font_size": 13,
+        "font_weight": 600,
+        "color": "#111827",
+        "line_height": 1.4,
+        "text_align": "left"
+      },
+      "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
+    },
+    {
+      "id": "divider",
+      "type": "divider",
+      "border": { "width": 2, "color": "#1f2937", "style": "solid" },
+      "width_percent": 30,
+      "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
+    },
+    {
+      "id": "contact",
+      "type": "contact_row",
+      "rows": [
+        { "icon": "email", "label": "jane@acme.com", "href": "mailto:jane@acme.com" },
+        { "icon": "phone", "label": "+1 555 100 2000", "href": "tel:+15551002000" }
+      ],
+      "style": {
+        "font_family": "Georgia, serif",
+        "font_size": 13,
+        "font_weight": 400,
+        "color": "#374151"
+      },
+      "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 }
+    },
+    {
+      "id": "disclaimer",
+      "type": "disclaimer",
+      "content": "This email and any attachments are confidential. If you are not the intended recipient, please notify the sender.",
+      "style": {
+        "font_family": "Georgia, serif",
+        "font_size": 10,
+        "font_weight": 400,
+        "color": "#9ca3af",
+        "line_height": 1.4
+      },
+      "padding": { "top": 12, "right": 0, "bottom": 0, "left": 0 }
+    }
+  ]
+}
