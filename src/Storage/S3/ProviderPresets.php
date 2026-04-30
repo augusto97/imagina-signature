@@ -36,6 +36,27 @@ final class ProviderPresets {
 	/**
 	 * The preset map. Keys are preset IDs persisted on `imgsig_storage_config`.
 	 *
+	 * Each row carries:
+	 *  - `name`              human label.
+	 *  - `endpoint_template` URL with `{placeholder}` tokens replaced at runtime.
+	 *  - `region`            (optional) fixed region for providers that ignore it.
+	 *  - `region_options`    (optional) closed allow-list of regions.
+	 *  - `extra_fields`      (optional) extra fields the user must supply
+	 *                        beyond bucket / access_key / secret_key.
+	 *  - `path_style`        URL style. `true` produces
+	 *                        `https://endpoint/bucket/key` (compatible with
+	 *                        every shipped provider as of v1.0). `false`
+	 *                        would produce `https://bucket.endpoint/key` —
+	 *                        not yet implemented in S3Client / PresignedUrl.
+	 *                        Reserved for the future AWS S3 path-style
+	 *                        deprecation cutover.
+	 *
+	 * Bunny.net Edge Storage is intentionally NOT in this list — its native
+	 * API uses an AccessKey HTTP header, not SigV4 + bucket addressing,
+	 * which the generic S3 driver here can't sign. Users who need Bunny
+	 * with the (separate) S3-compatible mode should configure the
+	 * `custom` preset with the appropriate endpoint URL.
+	 *
 	 * @var array<string, array<string, mixed>>
 	 */
 	public const PRESETS = [
@@ -44,31 +65,32 @@ final class ProviderPresets {
 			'endpoint_template' => 'https://{account_id}.r2.cloudflarestorage.com',
 			'region'            => 'auto',
 			'extra_fields'      => [ 'account_id' ],
-		],
-		'bunny'         => [
-			'name'              => 'Bunny Storage',
-			'endpoint_template' => 'https://{region}.storage.bunnycdn.com',
-			'region_options'    => [ 'ny', 'la', 'sg', 'syd', 'de', 'uk' ],
+			'path_style'        => true,
 		],
 		's3'            => [
 			'name'              => 'Amazon S3',
 			'endpoint_template' => 'https://s3.{region}.amazonaws.com',
+			'path_style'        => true,
 		],
 		'b2'            => [
 			'name'              => 'Backblaze B2',
 			'endpoint_template' => 'https://s3.{region}.backblazeb2.com',
+			'path_style'        => true,
 		],
 		'do_spaces'     => [
 			'name'              => 'DigitalOcean Spaces',
 			'endpoint_template' => 'https://{region}.digitaloceanspaces.com',
+			'path_style'        => true,
 		],
 		'wasabi'        => [
 			'name'              => 'Wasabi',
 			'endpoint_template' => 'https://s3.{region}.wasabisys.com',
+			'path_style'        => true,
 		],
 		'custom'        => [
 			'name'         => 'Custom S3-compatible',
 			'extra_fields' => [ 'custom_endpoint' ],
+			'path_style'   => true,
 		],
 	];
 

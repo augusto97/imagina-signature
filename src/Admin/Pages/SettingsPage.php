@@ -245,7 +245,7 @@ final class SettingsPage {
 		);
 
 		// Region (most providers).
-		echo '<tr class="imgsig-field" data-providers="bunny,s3,b2,do_spaces,wasabi,custom">';
+		echo '<tr class="imgsig-field" data-providers="s3,b2,do_spaces,wasabi,custom">';
 		echo '<th scope="row"><label for="imgsig-region">' . esc_html__( 'Region', 'imagina-signatures' ) . '</label></th>';
 		echo '<td><input type="text" id="imgsig-region" name="region" value="' . esc_attr( $region ) . '" class="regular-text" autocomplete="off">';
 		echo '<p class="description">' . esc_html__( 'Region or zone code. Cloudflare R2 ignores this (always "auto").', 'imagina-signatures' ) . '</p>';

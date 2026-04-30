@@ -23,10 +23,11 @@ defined( 'ABSPATH' ) || exit;
  * Sorting is hard-coded to a small allow-list to keep injection
  * surfaces minimal; clients pick from {@see ALLOWED_ORDER_BY}.
  *
+ * Not declared `final` so PHPUnit 9 can produce mock doubles for
+ * controller integration tests.
+ *
  * @since 1.0.0
  */
-// Not `final` so PHPUnit 9 can create mocks for controller integration
-// tests. Subclassing is otherwise unsupported.
 class SignatureRepository extends BaseRepository {
 
 	/**

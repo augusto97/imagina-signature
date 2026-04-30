@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 final class ProviderPresetsTest extends TestCase {
 
 	public function test_exists_returns_true_for_known_presets(): void {
-		foreach ( [ 'cloudflare_r2', 'bunny', 's3', 'b2', 'do_spaces', 'wasabi', 'custom' ] as $id ) {
+		foreach ( [ 'cloudflare_r2', 's3', 'b2', 'do_spaces', 'wasabi', 'custom' ] as $id ) {
 			$this->assertTrue( ProviderPresets::exists( $id ), "$id should be a known preset" );
 		}
 	}

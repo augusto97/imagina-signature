@@ -31,12 +31,10 @@ defined( 'ABSPATH' ) || exit;
  * Controllers translate the typed exceptions thrown here into
  * `WP_Error` via {@see \ImaginaSignatures\Api\BaseController::exception_to_wp_error()}.
  *
- * @since 1.0.0
- */
-/**
  * Not declared `final` so PHPUnit 9 can produce mock doubles in
- * controller tests without resorting to runkit. Subclass at your own
- * risk — the public surface is the supported contract.
+ * controller tests. The public surface is the supported contract.
+ *
+ * @since 1.0.0
  */
 class SignatureService {
 

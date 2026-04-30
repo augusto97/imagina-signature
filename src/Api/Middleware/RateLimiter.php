@@ -29,9 +29,10 @@ defined( 'ABSPATH' ) || exit;
  * defensively) the limiter falls back to user_id = 0, giving every
  * such caller a shared bucket — coarse but safe.
  *
+ * Not `final` so PHPUnit 9 can produce mock doubles in controller tests.
+ *
  * @since 1.0.0
  */
-// Not `final` so PHPUnit 9 can create mocks for controller integration tests.
 class RateLimiter {
 
 	/**
