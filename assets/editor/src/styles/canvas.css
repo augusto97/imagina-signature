@@ -1,0 +1,45 @@
+/*
+ * Reset rules scoped to the canvas — the area inside the editor where
+ * the user's signature is rendered as live, email-safe HTML.
+ *
+ * Email clients ship enormously varied default stylesheets. To make
+ * the canvas a faithful preview we wipe the most aggressive editor
+ * defaults inside `.is-canvas-root` so the user sees what their
+ * inline styles produce, not Tailwind's preflight output.
+ */
+
+.is-canvas-root {
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-md);
+  margin: 32px auto;
+  overflow: hidden;
+}
+
+.is-canvas-root table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.is-canvas-root td,
+.is-canvas-root th {
+  margin: 0;
+  padding: 0;
+  vertical-align: top;
+}
+
+.is-canvas-root img {
+  border: 0;
+  display: block;
+  outline: none;
+  text-decoration: none;
+  max-width: 100%;
+  height: auto;
+}
+
+.is-canvas-root a {
+  color: inherit;
+  text-decoration: underline;
+}

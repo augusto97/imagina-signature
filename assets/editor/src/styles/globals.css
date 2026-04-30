@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens for the editor — CLAUDE.md §18.1.
+ *
+ * The iframe is an isolated context so we don't worry about clashing
+ * with wp-admin. All colours, radii, and shadows are sourced from
+ * these custom properties.
+ */
+@layer base {
+  :root {
+    --bg-primary: #fafafa;
+    --bg-panel: #ffffff;
+    --bg-hover: #f5f5f5;
+    --bg-selected: #eff6ff;
+
+    --border-default: #e5e7eb;
+    --border-strong: #d1d5db;
+    --border-selected: #3b82f6;
+
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+  }
+
+  html,
+  body,
+  #imagina-editor-root {
+    height: 100%;
+    margin: 0;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family:
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      'Inter',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+}

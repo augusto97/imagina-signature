@@ -76,6 +76,5 @@ jobs:
       - name: Test (Vitest)
         run: npm test
 
-      # `npm run build` is intentionally skipped during Sprint 1: the editor
-      # and admin entry points (assets/{editor,admin}/src/main.tsx) don't
-      # exist yet — they land in Sprint 4. Re-enable this step once they do.
+      - name: Build (Vite)
+        run: npm run build
