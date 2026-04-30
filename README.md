@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.5 | [imagina-signatures-1.0.5.zip](imagina-signatures-1.0.5.zip) |
 | 1.0.4 | [imagina-signatures-1.0.4.zip](imagina-signatures-1.0.4.zip) |
 | 1.0.3 | [imagina-signatures-1.0.3.zip](imagina-signatures-1.0.3.zip) |
 | 1.0.2 | [imagina-signatures-1.0.2.zip](imagina-signatures-1.0.2.zip) |
@@ -17,6 +18,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.5.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.4.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.3.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.2.zip
@@ -59,6 +61,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.5
+Drop the admin iframe — the wp-admin React app now mounts directly on the page (`#imagina-admin-root`, `position: fixed; inset: 0;`) so it matches how the rest of the Imagina plugins ship. Native form controls keep paint integrity via explicit higher-specificity resets in `globals.css` instead of through CSS isolation. Editor back-arrow now actually navigates (reads `signaturesUrl` from config and sets `window.parent.location` instead of posting a `request-close` message no parent listened to). Templates "New template" button opens a working modal that POSTs to `/templates`. Removed dead `templates` tab in the editor's left sidebar, dead `force-save` / `request-close` postMessage types, and the now-superseded `AdminAppController` REST endpoint.
 
 ### 1.0.4
 Re-enable Tailwind preflight (CSS reset) on both bundles. The reset was off because the admin bundle used to load directly inside wp-admin; that constraint went away in 1.0.3 when the admin app moved into its own iframe. Without the reset, native `<button>` elements inherited the browser's default `border-width: 2px outset`, which produced the heavy grey stamp seen on hover toolbars and admin buttons. Other UA quirks (heading default sizes, image inline-block, list bullets) were also leaking. The full preflight is now safe and the source of every native control's baseline.
