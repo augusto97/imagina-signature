@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # Builds a distribution ZIP for Imagina Signatures.
 #
-# Bundles only the files the plugin needs at runtime — drops dev
-# tooling, tests, sources of compiled assets. The output lands in
-# dist/imagina-signatures-<version>.zip and is what end users
-# install via Plugins → Add New → Upload Plugin.
+# Output: dist/imagina-signatures-<version>.zip
+#
+# The ZIP contains a single top-level directory named exactly
+# `imagina-signatures/` (no version suffix). WordPress uses the
+# directory name as the plugin slug, and our text domain / hooks /
+# options all assume `imagina-signatures`, so the folder must NOT
+# include the version number.
 #
 # Run from the repo root.
 
@@ -14,7 +17,6 @@ if ! command -v rsync >/dev/null 2>&1; then
   echo "rsync is required" >&2
   exit 1
 fi
-
 if ! command -v zip >/dev/null 2>&1; then
   echo "zip is required" >&2
   exit 1
@@ -26,16 +28,24 @@ if [[ -z "$VERSION" ]]; then
   exit 1
 fi
 
-DIST="dist/imagina-signatures-$VERSION"
+STAGE="dist/stage"
+SLUG_DIR="$STAGE/imagina-signatures"
+ZIP_FILE="dist/imagina-signatures-$VERSION.zip"
 
-rm -rf "$DIST" "$DIST.zip"
-mkdir -p "$DIST"
+rm -rf "$STAGE" "$ZIP_FILE"
+mkdir -p "$SLUG_DIR"
 
-rsync -av \
+# Mirror the runtime tree into the staged directory. Excludes
+# everything that's only needed during development.
+rsync -a \
   --exclude='node_modules' \
   --exclude='tests' \
+  --exclude='vendor' \
   --exclude='.github' \
-  --exclude='.git*' \
+  --exclude='.git' \
+  --exclude='.gitignore' \
+  --exclude='.gitattributes' \
+  --exclude='.editorconfig' \
   --exclude='dist' \
   --exclude='scripts' \
   --exclude='package*.json' \
@@ -50,12 +60,21 @@ rsync -av \
   --exclude='phpunit.xml.dist' \
   --exclude='composer.json' \
   --exclude='composer.lock' \
+  --exclude='patchwork.json' \
   --exclude='CLAUDE.md' \
   --exclude='CONTRIBUTING.md' \
+  --exclude='CHANGELOG.md' \
   --exclude='assets/*/src' \
   --exclude='assets/*/public' \
-  ./ "$DIST/"
+  --exclude='.vite' \
+  --exclude='*.tsbuildinfo' \
+  ./ "$SLUG_DIR/"
 
-cd dist
-zip -rq "imagina-signatures-$VERSION.zip" "imagina-signatures-$VERSION"
-echo "Built: dist/imagina-signatures-$VERSION.zip"
+(
+  cd "$STAGE"
+  zip -rq "../../$ZIP_FILE" "imagina-signatures"
+)
+
+rm -rf "$STAGE"
+echo "Built: $ZIP_FILE"
+echo "Version: $VERSION"
