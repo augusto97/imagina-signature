@@ -49,11 +49,14 @@ const config: Config = {
       },
     },
   },
-  corePlugins: {
-    // Disable preflight so the admin bundle, when loaded inside
-    // wp-admin, doesn't reset core WordPress UI styles.
-    preflight: false,
-  },
+  // Preflight is enabled. Both bundles (editor and admin) ship inside
+  // same-origin iframes whose documents are owned entirely by us, so
+  // Tailwind's CSS reset can apply globally without clobbering
+  // wp-admin's UI outside the iframe. The reset is what keeps native
+  // <button>, <input>, <a>, headings, lists, images, etc. consistent
+  // — without it the iframe falls back to UA defaults (button border:
+  // 2px outset, image inline-block alignment quirks, list bullets,
+  // h1-h6 default sizes, etc.).
   plugins: [],
 };
 
