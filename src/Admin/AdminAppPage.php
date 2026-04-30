@@ -115,7 +115,7 @@ final class AdminAppPage {
 		<link rel="stylesheet" href="<?php echo esc_url( $admin_css ); ?>">
 		<div id="imagina-admin-root"></div>
 		<script>window.IMGSIG_ADMIN_CONFIG = <?php echo $config_json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;</script>
-		<script src="<?php echo esc_url( $admin_js ); ?>"></script>
+		<script type="module" src="<?php echo esc_url( $admin_js ); ?>"></script>
 		<?php
 	}
 }

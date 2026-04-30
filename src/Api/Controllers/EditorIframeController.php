@@ -203,7 +203,7 @@ final class EditorIframeController extends BaseController {
 		echo '<body>' . "\n";
 		echo '<div id="imagina-editor-root"></div>' . "\n";
 		echo '<script>window.IMGSIG_EDITOR_CONFIG = ' . $config_json . ';</script>' . "\n";
-		echo '<script src="' . $editor_js . '"></script>' . "\n";
+		echo '<script type="module" src="' . $editor_js . '"></script>' . "\n";
 		echo '</body>' . "\n";
 		echo '</html>';
 		// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
