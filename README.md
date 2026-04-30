@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.2 | [imagina-signatures-1.0.2.zip](imagina-signatures-1.0.2.zip) |
 | 1.0.1 | [imagina-signatures-1.0.1.zip](imagina-signatures-1.0.1.zip) |
 | 1.0.0 | [imagina-signatures-1.0.0.zip](imagina-signatures-1.0.0.zip) |
 
@@ -14,6 +15,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.2.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.1.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.0.zip
 ```
@@ -53,6 +55,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.2
+Layers panel inside the editor's left sidebar (Blocks / Layers tab strip), with click-to-select, hover-to-highlight, and a per-row visibility toggle. Visual polish: lighter shadow tokens, softer 1px selection ring with subtle outer glow, white-pill block toolbar without the heavy border, larger admin sidebar nav rows + roomier signatures table to match the Imagina Proposals reference, removed the empty "Properties" wrap section so non-Text block panels render as a flat list of fields.
 
 ### 1.0.1
 Hotfix: load `editor.js` / `admin.js` as ES modules so Vite's per-entry shared chunk imports correctly. Without `type="module"` the bundles failed with "Cannot use import statement outside a module" and the editor / admin pages rendered blank.
