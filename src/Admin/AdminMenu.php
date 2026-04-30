@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Admin;
 
+use ImaginaSignatures\Admin\Pages\DashboardPage;
+use ImaginaSignatures\Admin\Pages\EditorPage;
 use ImaginaSignatures\Admin\Pages\SettingsPage;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 
@@ -17,28 +19,34 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Registers the plugin's wp-admin menu structure.
  *
- * Sprint 2 wires only the top-level entry and the Settings sub-page
- * (storage configuration). The Dashboard / Editor / Templates pages
- * land in later sprints; their menu slots are stubbed with a
- * placeholder body so the menu structure stays stable.
+ * Wires:
+ *  - Top-level "Imagina Signatures" — drops the user on Dashboard.
+ *  - Dashboard      submenu (cap `imgsig_use_signatures`).
+ *  - Editor         submenu (cap `imgsig_use_signatures`); hidden
+ *                   from the menu but registered so admin.php?page=
+ *                   loads it. The "New" button on Dashboard and
+ *                   "Edit" links on each row point here.
+ *  - Settings       submenu (cap `imgsig_manage_storage`).
  *
- * Capabilities (CLAUDE.md §15.2):
- *  - Top entry & Dashboard sub-page: `imgsig_use_signatures`
- *  - Settings sub-page:              `imgsig_manage_storage`
+ * Templates page lands in Sprint 10 alongside the templates seeder.
  *
  * @since 1.0.0
  */
 final class AdminMenu {
 
-	/**
-	 * Top-level menu slug.
-	 */
-	public const MENU_SLUG = 'imagina-signatures';
+	public const MENU_SLUG     = 'imagina-signatures';
+	public const EDITOR_SLUG   = 'imagina-signatures-editor';
+	public const SETTINGS_SLUG = 'imagina-signatures-settings';
 
 	/**
-	 * Settings sub-page slug.
+	 * @var DashboardPage
 	 */
-	public const SETTINGS_SLUG = 'imagina-signatures-settings';
+	private DashboardPage $dashboard_page;
+
+	/**
+	 * @var EditorPage
+	 */
+	private EditorPage $editor_page;
 
 	/**
 	 * @var SettingsPage
@@ -46,10 +54,18 @@ final class AdminMenu {
 	private SettingsPage $settings_page;
 
 	/**
-	 * @param SettingsPage $settings_page Renderer for the storage settings page.
+	 * @param DashboardPage $dashboard_page Dashboard renderer.
+	 * @param EditorPage    $editor_page    Editor (iframe host) renderer.
+	 * @param SettingsPage  $settings_page  Settings renderer.
 	 */
-	public function __construct( SettingsPage $settings_page ) {
-		$this->settings_page = $settings_page;
+	public function __construct(
+		DashboardPage $dashboard_page,
+		EditorPage $editor_page,
+		SettingsPage $settings_page
+	) {
+		$this->dashboard_page = $dashboard_page;
+		$this->editor_page    = $editor_page;
+		$this->settings_page  = $settings_page;
 	}
 
 	/**
@@ -77,12 +93,33 @@ final class AdminMenu {
 			__( 'Imagina Signatures', 'imagina-signatures' ),
 			CapabilitiesInstaller::CAP_USE,
 			self::MENU_SLUG,
-			[ $this, 'render_dashboard_placeholder' ],
+			[ $this->dashboard_page, 'render' ],
 			'dashicons-email-alt',
 			30
 		);
 
-		// Settings — storage configuration.
+		// Dashboard explicit (renames the auto-created first submenu).
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( 'My Signatures', 'imagina-signatures' ),
+			__( 'My Signatures', 'imagina-signatures' ),
+			CapabilitiesInstaller::CAP_USE,
+			self::MENU_SLUG,
+			[ $this->dashboard_page, 'render' ]
+		);
+
+		// Editor — registered with `null` parent so it's hidden from
+		// the menu (you reach it from the dashboard's New / Edit
+		// links), but the page still mounts at admin.php?page=...
+		add_submenu_page(
+			'',
+			__( 'Edit Signature', 'imagina-signatures' ),
+			__( 'Edit Signature', 'imagina-signatures' ),
+			CapabilitiesInstaller::CAP_USE,
+			self::EDITOR_SLUG,
+			[ $this->editor_page, 'render' ]
+		);
+
 		add_submenu_page(
 			self::MENU_SLUG,
 			__( 'Storage Settings', 'imagina-signatures' ),
@@ -91,23 +128,5 @@ final class AdminMenu {
 			self::SETTINGS_SLUG,
 			[ $this->settings_page, 'render' ]
 		);
-	}
-
-	/**
-	 * Placeholder dashboard body until {@see DashboardPage} lands.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return void
-	 */
-	public function render_dashboard_placeholder(): void {
-		if ( ! current_user_can( CapabilitiesInstaller::CAP_USE ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'imagina-signatures' ) );
-		}
-
-		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Imagina Signatures', 'imagina-signatures' ) . '</h1>';
-		echo '<p>' . esc_html__( 'The signature dashboard is coming soon.', 'imagina-signatures' ) . '</p>';
-		echo '</div>';
 	}
 }

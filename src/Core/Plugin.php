@@ -10,7 +10,10 @@ declare(strict_types=1);
 namespace ImaginaSignatures\Core;
 
 use ImaginaSignatures\Admin\AdminMenu;
+use ImaginaSignatures\Admin\Pages\DashboardPage;
+use ImaginaSignatures\Admin\Pages\EditorPage;
 use ImaginaSignatures\Admin\Pages\SettingsPage;
+use ImaginaSignatures\Api\Controllers\EditorIframeController;
 use ImaginaSignatures\Api\Controllers\MeController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
 use ImaginaSignatures\Api\Controllers\StorageController;
@@ -18,6 +21,7 @@ use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\RestRouter;
 use ImaginaSignatures\Hooks\Actions;
+use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Storage\StorageManager;
 
 defined( 'ABSPATH' ) || exit;
@@ -142,10 +146,14 @@ final class Plugin {
 	 * @return void
 	 */
 	private function boot_admin(): void {
-		$storage_manager = $this->container->make( StorageManager::class );
+		$storage_manager      = $this->container->make( StorageManager::class );
+		$signature_repository = $this->container->make( SignatureRepository::class );
 
-		$settings_page = new SettingsPage( $storage_manager );
-		$admin_menu    = new AdminMenu( $settings_page );
+		$dashboard_page = new DashboardPage( $signature_repository );
+		$editor_page    = new EditorPage( $signature_repository );
+		$settings_page  = new SettingsPage( $storage_manager );
+
+		$admin_menu = new AdminMenu( $dashboard_page, $editor_page, $settings_page );
 		$admin_menu->boot();
 	}
 
@@ -168,6 +176,7 @@ final class Plugin {
 				$this->container->make( TemplatesController::class ),
 				$this->container->make( StorageController::class ),
 				$this->container->make( UploadController::class ),
+				$this->container->make( EditorIframeController::class ),
 			]
 		);
 		$router->register();
