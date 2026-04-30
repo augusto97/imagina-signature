@@ -11,6 +11,12 @@ namespace ImaginaSignatures\Core;
 
 use ImaginaSignatures\Admin\AdminMenu;
 use ImaginaSignatures\Admin\Pages\SettingsPage;
+use ImaginaSignatures\Api\Controllers\MeController;
+use ImaginaSignatures\Api\Controllers\SignaturesController;
+use ImaginaSignatures\Api\Controllers\StorageController;
+use ImaginaSignatures\Api\Controllers\TemplatesController;
+use ImaginaSignatures\Api\Controllers\UploadController;
+use ImaginaSignatures\Api\RestRouter;
 use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Storage\StorageManager;
 
@@ -99,8 +105,12 @@ final class Plugin {
 
 		$this->booted = true;
 
-		// Register core service bindings (Encryption, StorageManager).
+		// Register core service bindings (Encryption, StorageManager,
+		// repositories, services, controllers).
 		ServiceProvider::register( $this->container );
+
+		// REST API: register every controller's routes on rest_api_init.
+		$this->boot_rest();
 
 		// Admin-only wiring.
 		if ( is_admin() ) {
@@ -137,6 +147,30 @@ final class Plugin {
 		$settings_page = new SettingsPage( $storage_manager );
 		$admin_menu    = new AdminMenu( $settings_page );
 		$admin_menu->boot();
+	}
+
+	/**
+	 * Wires REST controllers via {@see RestRouter}.
+	 *
+	 * Pulls each controller from the container so a single instance is
+	 * shared between the route-registration call and any other consumer
+	 * that resolves it.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	private function boot_rest(): void {
+		$router = new RestRouter(
+			[
+				$this->container->make( MeController::class ),
+				$this->container->make( SignaturesController::class ),
+				$this->container->make( TemplatesController::class ),
+				$this->container->make( StorageController::class ),
+				$this->container->make( UploadController::class ),
+			]
+		);
+		$router->register();
 	}
 
 	/**
