@@ -177,7 +177,7 @@ export const SignaturesPage: FC = () => {
                       key={row.id}
                       className="border-b border-[var(--border-subtle)] last:border-b-0 hover:bg-[var(--bg-panel-soft)]"
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-4">
                         <a
                           href={editorUrl(row.id)}
                           className="font-medium text-[var(--text-primary)] hover:text-[var(--accent)]"
@@ -185,13 +185,13 @@ export const SignaturesPage: FC = () => {
                           {row.name || __('Untitled')}
                         </a>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-4">
                         <StatusPill status={row.status} />
                       </td>
-                      <td className="px-4 py-3 text-[12px] text-[var(--text-secondary)]">
+                      <td className="px-5 py-4 text-[12.5px] text-[var(--text-secondary)]">
                         {formatDate(row.updated_at)}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-5 py-4 text-right">
                         <div className="inline-flex items-center gap-1">
                           <Button
                             size="sm"

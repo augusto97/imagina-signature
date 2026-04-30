@@ -9,14 +9,13 @@ interface Props {
 /**
  * Page-level header — title + optional description + actions slot.
  *
- * Sits below the global breadcrumb (which lives in `Layout`) and
- * gives every page a consistent way to surface its primary CTA on
- * the right.
+ * Sized to mirror the Imagina Proposals reference: 19px semibold
+ * title, generous vertical padding, actions group right-aligned.
  */
 export const Topbar: FC<Props> = ({ title, description, actions }) => (
-  <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border-default)] bg-[var(--bg-panel)] px-6 py-5">
+  <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border-default)] bg-[var(--bg-panel)] px-7 py-6">
     <div className="min-w-0">
-      <h1 className="truncate text-[18px] font-semibold tracking-tight text-[var(--text-primary)]">
+      <h1 className="truncate text-[19px] font-semibold tracking-tight text-[var(--text-primary)]">
         {title}
       </h1>
       {description && (

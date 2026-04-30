@@ -52,20 +52,20 @@ export const SidebarNav: FC<Props> = ({ page }) => {
   );
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-r border-[var(--border-default)] bg-[var(--bg-sidebar)]">
-      <div className="flex h-14 shrink-0 items-center gap-2 border-b border-[var(--border-default)] px-4">
+    <aside className="flex w-64 shrink-0 flex-col border-r border-[var(--border-default)] bg-[var(--bg-sidebar)]">
+      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-[var(--border-default)] px-5">
         <span
           aria-hidden
-          className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[var(--accent)] text-white"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-white"
         >
-          <FileSignature size={15} />
+          <FileSignature size={17} strokeWidth={2} />
         </span>
-        <span className="text-[14px] font-semibold tracking-tight text-[var(--text-primary)]">
+        <span className="text-[14.5px] font-semibold tracking-tight text-[var(--text-primary)]">
           {__('Imagina Signatures')}
         </span>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-2">
+      <nav className="flex-1 overflow-y-auto p-3">
         {visible.map((item) => {
           const Icon = item.icon;
           const active = item.key === page;
@@ -74,25 +74,25 @@ export const SidebarNav: FC<Props> = ({ page }) => {
               key={item.key}
               href={config.urls[item.href]}
               className={cn(
-                'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors',
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] font-medium transition-colors',
                 active
                   ? 'bg-[var(--bg-selected)] text-[var(--accent)]'
                   : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]',
               )}
             >
-              <Icon size={16} strokeWidth={1.8} />
+              <Icon size={17} strokeWidth={1.9} />
               <span>{__(item.label)}</span>
             </a>
           );
         })}
       </nav>
 
-      <div className="shrink-0 border-t border-[var(--border-default)] p-2">
+      <div className="shrink-0 border-t border-[var(--border-default)] p-3">
         <a
           href={config.wpAdminUrl}
-          className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[12px] text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-secondary)]"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-[12.5px] text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-secondary)]"
         >
-          <ExternalLink size={14} strokeWidth={1.8} />
+          <ExternalLink size={14} strokeWidth={1.9} />
           <span>{__('Back to WP Admin')}</span>
         </a>
       </div>

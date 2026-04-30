@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,10 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.2 =
+* Implemented Layers panel: the LeftSidebar gains a Blocks / Layers tab strip; Layers shows a tree of every block on the canvas with click-to-select, hover-to-highlight, and a per-row visibility toggle.
+* Visual polish pass: lighter shadow tokens, softer 1px selection ring with a subtle outer glow, white-pill block toolbar with no heavy border, larger sidebar nav items and a roomier signatures table to match the Imagina Proposals reference, dropped the empty "Properties" wrap section so non-Text block panels render as a flat list of fields.
 
 = 1.0.1 =
 * Fix: load editor.js / admin.js as ES modules so the shared bundle chunk imports correctly. Without `type="module"` the Vite output triggered "Cannot use import statement outside a module" and the page rendered blank.
