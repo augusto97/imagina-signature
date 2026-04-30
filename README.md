@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.6 | [imagina-signatures-1.0.6.zip](imagina-signatures-1.0.6.zip) |
 | 1.0.5 | [imagina-signatures-1.0.5.zip](imagina-signatures-1.0.5.zip) |
 | 1.0.4 | [imagina-signatures-1.0.4.zip](imagina-signatures-1.0.4.zip) |
 | 1.0.3 | [imagina-signatures-1.0.3.zip](imagina-signatures-1.0.3.zip) |
@@ -18,6 +19,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.6.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.5.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.4.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.3.zip
@@ -61,6 +63,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.6
+Drop the editor iframe — the React editor now mounts directly on the wp-admin page (same pattern as the admin app shipped in 1.0.5). Side effects: the Cloudflare beacon CSP block goes away, the `?token=...` URL in the address bar goes away, and the favicon.ico 404 goes away — all three were caused by the editor iframe being a separate document with its own CSP. Native `<button>` border bug fixed defensively: explicit reset on the element selector itself (`button, [type='button'], ... { border: 0 }`) so there's no specificity ambiguity against UA `button { border: 2px outset }`. Container (2-column) block actually works now: children are real Blocks rendered through the registry, click-selectable for property editing, and `compile()` recursively emits each child's email-safe HTML inside the right cell. Removed `EditorIframeController` + its `/editor/iframe` REST route + dead `postMessageBridge.ts`. Editor topbar icons bumped from 12–14px to 14–16px.
 
 ### 1.0.5
 Drop the admin iframe — the wp-admin React app now mounts directly on the page (`#imagina-admin-root`, `position: fixed; inset: 0;`) so it matches how the rest of the Imagina plugins ship. Native form controls keep paint integrity via explicit higher-specificity resets in `globals.css` instead of through CSS isolation. Editor back-arrow now actually navigates (reads `signaturesUrl` from config and sets `window.parent.location` instead of posting a `request-close` message no parent listened to). Templates "New template" button opens a working modal that POSTs to `/templates`. Removed dead `templates` tab in the editor's left sidebar, dead `force-save` / `request-close` postMessage types, and the now-superseded `AdminAppController` REST endpoint.
