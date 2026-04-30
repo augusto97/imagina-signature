@@ -33,8 +33,12 @@ export default defineConfig({
         entryFileNames: '[name].js',
         chunkFileNames: '[name]-[hash].js',
         assetFileNames: (info) => {
+          // With cssCodeSplit: false Vite merges everything into a single
+          // bundle and names it "style.css" by default. The iframe host
+          // (`EditorIframeController`) loads `build/editor.css`, so emit
+          // under that name.
           if (info.name?.endsWith('.css')) {
-            return '[name][extname]';
+            return 'editor.css';
           }
           return 'assets/[name]-[hash][extname]';
         },
