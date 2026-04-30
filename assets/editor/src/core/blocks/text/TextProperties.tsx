@@ -1,6 +1,12 @@
 import type { FC } from 'react';
 import type { TextBlock } from '@/core/schema/blocks';
 import { __ } from '@/i18n/helpers';
+import { TiptapEditor } from '@/tiptap/TiptapEditor';
+import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
+import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
+import { FontFamilyInput } from '@/editor/sidebar-right/inputs/FontFamilyInput';
+import { FontWeightInput } from '@/editor/sidebar-right/inputs/FontWeightInput';
+import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
 
 interface Props {
   block: TextBlock;
@@ -8,50 +14,60 @@ interface Props {
 }
 
 /**
- * Properties panel for a Text block — Sprint 5 ships a plain
- * <textarea> for the HTML content. Sprint 7 swaps in TiptapEditor
- * with the email-safe formatting toolbar.
+ * Properties panel for a Text block (Sprint 7 wiring).
+ *
+ * Tiptap edits the content — no contentEditable on the canvas, so
+ * cursor-and-selection bugs that plague email editors don't apply.
+ * The remaining controls feed `block.style` and `block.padding`.
  */
 export const TextProperties: FC<Props> = ({ block, onChange }) => {
+  const setStyle = <K extends keyof TextBlock['style']>(key: K, value: TextBlock['style'][K]) => {
+    onChange({ style: { ...block.style, [key]: value } });
+  };
+
   return (
-    <div className="space-y-3 text-xs">
-      <label className="block">
-        <span className="mb-1 block text-[var(--text-secondary)]">{__('Content (HTML)')}</span>
-        <textarea
-          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-2 font-mono text-xs text-[var(--text-primary)]"
-          rows={5}
-          value={block.content}
-          onChange={(e) => onChange({ content: e.target.value })}
+    <div className="space-y-4 text-xs">
+      <section className="space-y-2">
+        <h3 className="text-[var(--text-secondary)]">{__('Content')}</h3>
+        <TiptapEditor
+          content={block.content}
+          onChange={(html) => onChange({ content: html })}
         />
-      </label>
-      <label className="block">
-        <span className="mb-1 block text-[var(--text-secondary)]">{__('Color')}</span>
-        <input
-          type="color"
-          className="h-8 w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)]"
-          value={block.style.color}
-          onChange={(e) =>
-            onChange({
-              style: { ...block.style, color: e.target.value },
-            })
-          }
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="text-[var(--text-secondary)]">{__('Typography')}</h3>
+        <FontFamilyInput
+          label={__('Font')}
+          value={block.style.font_family}
+          onChange={(v) => setStyle('font_family', v)}
         />
-      </label>
-      <label className="block">
-        <span className="mb-1 block text-[var(--text-secondary)]">{__('Font size (px)')}</span>
-        <input
-          type="number"
+        <DimensionInput
+          label={__('Size')}
+          value={block.style.font_size}
+          onChange={(v) => setStyle('font_size', v)}
           min={8}
           max={72}
-          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5 text-xs"
-          value={block.style.font_size}
-          onChange={(e) =>
-            onChange({
-              style: { ...block.style, font_size: Number(e.target.value) || 14 },
-            })
-          }
         />
-      </label>
+        <FontWeightInput
+          label={__('Weight')}
+          value={block.style.font_weight}
+          onChange={(v) => setStyle('font_weight', v)}
+        />
+        <ColorInput
+          label={__('Color')}
+          value={block.style.color}
+          onChange={(v) => setStyle('color', v)}
+        />
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="text-[var(--text-secondary)]">{__('Spacing')}</h3>
+        <PaddingInput
+          value={block.padding ?? { top: 0, right: 0, bottom: 0, left: 0 }}
+          onChange={(p) => onChange({ padding: p })}
+        />
+      </section>
     </div>
   );
 };
