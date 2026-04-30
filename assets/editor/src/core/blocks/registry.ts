@@ -51,7 +51,11 @@ export interface BlockDefinition<T extends BlockBase = BlockBase> {
 const registry = new Map<string, BlockDefinition>();
 
 export function registerBlock<T extends BlockBase>(definition: BlockDefinition<T>): void {
-  registry.set(definition.type, definition as BlockDefinition);
+  // The registry stores type-erased definitions. We cast through
+  // `unknown` because BlockDefinition<T> is invariant in T (the
+  // Renderer accepts T, not BlockBase) — the registry consumer
+  // narrows back via the discriminated union when looking up.
+  registry.set(definition.type, definition as unknown as BlockDefinition);
 }
 
 export function getBlockDefinition(type: string): BlockDefinition | undefined {

@@ -105,7 +105,7 @@ final class TemplateRepository extends BaseRepository {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		$sql = $this->wpdb->prepare(
 			"SELECT * FROM {$this->table()} {$where_sql} ORDER BY {$order_by} {$order} LIMIT %d OFFSET %d",
-			array_merge( $where_values, [ $per_page, $offset ] )
+			...array_merge( $where_values, [ $per_page, $offset ] )
 		);
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
@@ -138,7 +138,7 @@ final class TemplateRepository extends BaseRepository {
 		$count = $this->wpdb->get_var(
 			$this->wpdb->prepare(
 				"SELECT COUNT(*) FROM {$this->table()} {$where_sql}",
-				$where_values
+				...$where_values
 			)
 		);
 

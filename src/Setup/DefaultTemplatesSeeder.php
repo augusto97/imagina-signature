@@ -88,7 +88,7 @@ final class DefaultTemplatesSeeder {
 				continue;
 			}
 
-			$json = (string) file_get_contents( $file );
+			$json    = (string) file_get_contents( $file );
 			$decoded = json_decode( $json, true );
 			if ( ! is_array( $decoded ) ) {
 				continue;

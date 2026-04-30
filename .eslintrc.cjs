@@ -55,5 +55,15 @@ module.exports = {
       files: ['tests/**/*.{ts,tsx}', '**/*.test.{ts,tsx}'],
       env: { node: true },
     },
+    {
+      // Each block's definition.tsx co-locates the Renderer + Properties
+      // components alongside the registration object. That trips
+      // react-refresh/only-export-components even though it doesn't matter
+      // for production — Fast Refresh isn't used outside dev.
+      files: ['assets/editor/src/core/blocks/**/definition.tsx'],
+      rules: {
+        'react-refresh/only-export-components': 'off',
+      },
+    },
   ],
 };

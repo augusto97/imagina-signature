@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
-/vendor-dev/
+# Composer dev dependencies — the plugin has no runtime composer deps
+# (custom PSR-4 autoloader), so vendor/ is dev-only and not committed.
+# The lockfile (composer.lock) IS committed for reproducible CI builds.
+vendor/
 
 # Build artifacts
 # Note: build/ is intentionally NOT ignored — it ships in the plugin ZIP.

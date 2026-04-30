@@ -75,6 +75,15 @@ final class MediaLibraryDriver implements StorageDriverInterface {
 	 * the resulting attachment ID. `$meta['user_id']` is required so we
 	 * can route the file into the user-scoped subdirectory and assign
 	 * authorship.
+	 *
+	 * @param string               $source_path     Absolute path to the source file.
+	 * @param string               $destination_key Filename hint (sanitised before use).
+	 * @param array<string, mixed> $meta            Must include `user_id` (int).
+	 *
+	 * @return UploadResult
+	 *
+	 * @throws StorageException When the source file is missing, `meta[user_id]`
+	 *                          is absent, or the WordPress upload pipeline fails.
 	 */
 	public function upload( string $source_path, string $destination_key, array $meta ): UploadResult {
 		if ( ! is_string( $source_path ) || '' === $source_path || ! file_exists( $source_path ) ) {
@@ -178,6 +187,13 @@ final class MediaLibraryDriver implements StorageDriverInterface {
 	 * should check {@see supports_presigned_uploads()} and route through
 	 * {@see upload()} when this driver is active.
 	 *
+	 * @param string $key             Unused.
+	 * @param string $content_type    Unused.
+	 * @param int    $max_size        Unused.
+	 * @param int    $expires_seconds Unused.
+	 *
+	 * @return PresignedResult Never returns; always throws.
+	 *
 	 * @throws StorageException Always.
 	 */
 	public function get_presigned_upload_url(
@@ -192,6 +208,10 @@ final class MediaLibraryDriver implements StorageDriverInterface {
 
 	/**
 	 * @inheritDoc
+	 *
+	 * @param string $key Attachment ID, stringified.
+	 *
+	 * @return string
 	 */
 	public function get_public_url( string $key ): string {
 		$attachment_id = (int) $key;
@@ -208,6 +228,8 @@ final class MediaLibraryDriver implements StorageDriverInterface {
 	 *
 	 * Idempotent: returns true when the attachment never existed in the
 	 * first place, since the post-condition (it's gone) is satisfied.
+	 *
+	 * @param string $key Attachment ID, stringified.
 	 */
 	public function delete( string $key ): bool {
 		$attachment_id = (int) $key;

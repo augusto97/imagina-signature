@@ -123,9 +123,9 @@ final class SettingsPage {
 			);
 		}
 
-		$action_url = esc_url( admin_url( 'admin-post.php' ) );
+		$action_url = admin_url( 'admin-post.php' );
 
-		echo '<form method="post" action="' . $action_url . '" id="imgsig-storage-form">';
+		echo '<form method="post" action="' . esc_url( $action_url ) . '" id="imgsig-storage-form">';
 		wp_nonce_field( self::ACTION_SAVE, self::NONCE_NAME );
 		echo '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_SAVE ) . '">';
 
@@ -452,10 +452,14 @@ final class SettingsPage {
 		$public_url_base = $this->read_url_param( 'public_url_base' );
 
 		// Secret: empty value means "keep existing".
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$incoming_secret = isset( $_POST['secret_key'] ) ? (string) wp_unslash( $_POST['secret_key'] ) : '';
+		// Nonce was already verified in guard_post_request() before this method runs.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		$incoming_secret = isset( $_POST['secret_key'] )
+			? sanitize_text_field( wp_unslash( $_POST['secret_key'] ) )
+			: '';
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		$secret_key      = '' !== $incoming_secret
-			? sanitize_text_field( $incoming_secret )
+			? $incoming_secret
 			: (string) ( $current['secret_key'] ?? '' );
 
 		// R2 has a fixed region; users can leave the field blank.
@@ -515,8 +519,7 @@ final class SettingsPage {
 			return '';
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$raw = wp_unslash( (string) $_POST[ $name ] );
-		return esc_url_raw( $raw );
+		return esc_url_raw( wp_unslash( (string) $_POST[ $name ] ) );
 	}
 
 	/**
@@ -534,7 +537,9 @@ final class SettingsPage {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$nonce = isset( $_POST[ self::NONCE_NAME ] ) ? (string) wp_unslash( $_POST[ self::NONCE_NAME ] ) : '';
+		$nonce = isset( $_POST[ self::NONCE_NAME ] )
+			? sanitize_text_field( wp_unslash( $_POST[ self::NONCE_NAME ] ) )
+			: '';
 		if ( ! wp_verify_nonce( $nonce, $nonce_action ) ) {
 			wp_die( esc_html__( 'Security check failed.', 'imagina-signatures' ) );
 		}

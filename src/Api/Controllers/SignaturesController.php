@@ -83,8 +83,8 @@ final class SignaturesController extends BaseController {
 	 * @inheritDoc
 	 */
 	public function register_routes(): void {
-		$require_use      = CapabilityCheck::require_capability( CapabilitiesInstaller::CAP_USE );
-		$ownership        = ( new OwnershipCheck(
+		$require_use = CapabilityCheck::require_capability( CapabilitiesInstaller::CAP_USE );
+		$ownership   = ( new OwnershipCheck(
 			CapabilitiesInstaller::CAP_USE,
 			[ $this, 'owns_signature' ]
 		) )->callback();
@@ -169,8 +169,8 @@ final class SignaturesController extends BaseController {
 	 * @return \WP_REST_Response
 	 */
 	public function index( \WP_REST_Request $request ): \WP_REST_Response {
-		$user_id  = get_current_user_id();
-		$args     = [
+		$user_id = get_current_user_id();
+		$args    = [
 			'status'   => $request->get_param( 'status' ),
 			'search'   => $request->get_param( 'search' ),
 			'page'     => $this->read_int( $request, 'page', 1 ),

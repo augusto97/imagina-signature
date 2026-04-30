@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Tests\Unit\Services;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use ImaginaSignatures\Exceptions\ValidationException;
 use ImaginaSignatures\Services\JsonSchemaValidator;
 use PHPUnit\Framework\TestCase;
@@ -17,6 +19,20 @@ use PHPUnit\Framework\TestCase;
  * @covers \ImaginaSignatures\Services\JsonSchemaValidator
  */
 final class JsonSchemaValidatorTest extends TestCase {
+
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
+		// JsonSchemaValidator surfaces error messages through __() —
+		// passthrough is plenty for a test that asserts on the
+		// structured `errors` payload, not the human message.
+		Functions\when( '__' )->returnArg( 1 );
+	}
+
+	protected function tearDown(): void {
+		Monkey\tearDown();
+		parent::tearDown();
+	}
 
 	/**
 	 * @return array<string, mixed>

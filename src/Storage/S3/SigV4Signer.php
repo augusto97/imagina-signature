@@ -114,7 +114,7 @@ final class SigV4Signer {
 		$payload_hash = '' === $payload ? self::EMPTY_BODY_HASH : hash( 'sha256', $payload );
 
 		// Required signed headers, lower-cased to match canonicalisation.
-		$signing_headers = $this->lowercase_keys( $headers );
+		$signing_headers                         = $this->lowercase_keys( $headers );
 		$signing_headers['host']                 = $parts['host'];
 		$signing_headers['x-amz-date']           = $amz_date;
 		$signing_headers['x-amz-content-sha256'] = $payload_hash;
@@ -231,11 +231,14 @@ final class SigV4Signer {
 		$query_params['X-Amz-Signature'] = $signature;
 		$final_query                     = http_build_query( $query_params, '', '&', PHP_QUERY_RFC3986 );
 
+		// The output URL must carry the percent-encoded path so the
+		// browser request matches the canonical URI used in the signature.
+		// Use canonical_uri() so encoding is identical on both sides.
 		return sprintf(
 			'%s://%s%s?%s',
 			$parts['scheme'],
 			$parts['host'],
-			$parts['path'],
+			$this->canonical_uri( $parts['path'] ),
 			$final_query
 		);
 	}
@@ -363,10 +366,10 @@ final class SigV4Signer {
 
 		$pairs = [];
 		foreach ( explode( '&', $query ) as $pair ) {
-			$parts                                  = explode( '=', $pair, 2 );
-			$key                                    = rawurldecode( $parts[0] );
-			$value                                  = isset( $parts[1] ) ? rawurldecode( $parts[1] ) : '';
-			$pairs[]                                = [
+			$parts   = explode( '=', $pair, 2 );
+			$key     = rawurldecode( $parts[0] );
+			$value   = isset( $parts[1] ) ? rawurldecode( $parts[1] ) : '';
+			$pairs[] = [
 				'k' => rawurlencode( $key ),
 				'v' => rawurlencode( $value ),
 			];
@@ -400,10 +403,10 @@ final class SigV4Signer {
 	private function canonical_headers( array $headers ): array {
 		$normalized = [];
 		foreach ( $headers as $name => $value ) {
-			$key                    = strtolower( trim( (string) $name ) );
-			$val                    = is_array( $value ) ? implode( ',', $value ) : (string) $value;
-			$val                    = (string) preg_replace( '/\s+/', ' ', trim( $val ) );
-			$normalized[ $key ][]   = $val;
+			$key                  = strtolower( trim( (string) $name ) );
+			$val                  = is_array( $value ) ? implode( ',', $value ) : (string) $value;
+			$val                  = (string) preg_replace( '/\s+/', ' ', trim( $val ) );
+			$normalized[ $key ][] = $val;
 		}
 
 		ksort( $normalized );

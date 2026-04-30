@@ -33,7 +33,12 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 1.0.0
  */
-final class SignatureService {
+/**
+ * Not declared `final` so PHPUnit 9 can produce mock doubles in
+ * controller tests without resorting to runkit. Subclass at your own
+ * risk — the public surface is the supported contract.
+ */
+class SignatureService {
 
 	/**
 	 * @var SignatureRepository
@@ -70,7 +75,7 @@ final class SignatureService {
 	 * @throws ValidationException When the JSON schema check fails.
 	 */
 	public function create( int $user_id, array $data ): Signature {
-		$prepared = $this->prepare_for_save( $data, 'create' );
+		$prepared            = $this->prepare_for_save( $data, 'create' );
 		$prepared['user_id'] = $user_id;
 
 		do_action( 'imgsig/signature/before_create', $prepared, $user_id );
@@ -86,7 +91,9 @@ final class SignatureService {
 	 * Updates an existing signature.
 	 *
 	 * Fetches the row through `find_owned_by` so ownership is enforced
-	 * even if the caller passes the wrong user_id by mistake.
+	 * even if the caller passes the wrong user_id by mistake. Propagates
+	 * a {@see ValidationException} from {@see prepare_for_save()} when
+	 * the new payload fails schema validation.
 	 *
 	 * @since 1.0.0
 	 *
@@ -96,8 +103,7 @@ final class SignatureService {
 	 *
 	 * @return Signature
 	 *
-	 * @throws OwnershipException  When the row is missing or owned by someone else.
-	 * @throws ValidationException When new `json_content` fails validation.
+	 * @throws OwnershipException When the row is missing or owned by someone else.
 	 */
 	public function update( int $signature_id, int $user_id, array $changes ): Signature {
 		$existing = $this->repo->find_owned_by( $signature_id, $user_id );
@@ -213,7 +219,12 @@ final class SignatureService {
 			if ( ! in_array( $status, Signature::STATUSES, true ) ) {
 				throw new ValidationException(
 					'Invalid status value.',
-					[ [ 'path' => 'status', 'message' => 'Status must be one of: draft, ready, archived.' ] ]
+					[
+						[
+							'path'    => 'status',
+							'message' => 'Status must be one of: draft, ready, archived.',
+						],
+					]
 				);
 			}
 			$prepared['status'] = $status;
@@ -230,7 +241,12 @@ final class SignatureService {
 			if ( ! is_array( $decoded ) ) {
 				throw new ValidationException(
 					'json_content must be a JSON object.',
-					[ [ 'path' => 'json_content', 'message' => 'Could not decode payload.' ] ]
+					[
+						[
+							'path'    => 'json_content',
+							'message' => 'Could not decode payload.',
+						],
+					]
 				);
 			}
 

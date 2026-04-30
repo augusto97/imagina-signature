@@ -101,7 +101,7 @@ final class Autoloader {
 			return;
 		}
 
-		$relative = substr( $class_name, strlen( self::PREFIX ) );
+		$relative      = substr( $class_name, strlen( self::PREFIX ) );
 		$relative_path = str_replace( '\\', DIRECTORY_SEPARATOR, $relative ) . '.php';
 
 		$file = $this->base_dir . $relative_path;

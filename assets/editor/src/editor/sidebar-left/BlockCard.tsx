@@ -3,6 +3,7 @@ import { useDraggable } from '@dnd-kit/core';
 import type { LucideIcon } from 'lucide-react';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { getBlockDefinition } from '@/core/blocks/registry';
+import type { Block } from '@/core/schema/blocks';
 import { __ } from '@/i18n/helpers';
 
 interface Props {
@@ -29,7 +30,9 @@ export const BlockCard: FC<Props> = ({ type, label, icon: Icon }) => {
 
   const handleClick = () => {
     const definition = getBlockDefinition(type);
-    if (definition) addBlock(definition.create());
+    // create() returns the registered concrete Block subtype but the
+    // type-erased registry surface widens it to BlockBase; cast back.
+    if (definition) addBlock(definition.create() as Block);
   };
 
   return (

@@ -106,11 +106,11 @@ final class StorageController extends BaseController {
 
 		return rest_ensure_response(
 			[
-				'driver'           => $this->manager->active_driver_id(),
-				'available'        => $this->manager->available_driver_ids(),
-				'config'           => $this->redact( $config ),
-				'has_access_key'   => ! empty( $config['access_key'] ),
-				'has_secret_key'   => ! empty( $config['secret_key'] ),
+				'driver'         => $this->manager->active_driver_id(),
+				'available'      => $this->manager->available_driver_ids(),
+				'config'         => $this->redact( $config ),
+				'has_access_key' => ! empty( $config['access_key'] ),
+				'has_secret_key' => ! empty( $config['secret_key'] ),
 			]
 		);
 	}

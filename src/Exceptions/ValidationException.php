@@ -32,9 +32,9 @@ class ValidationException extends ImaginaSignaturesException {
 	private array $errors;
 
 	/**
-	 * @param string                                                $message Human-readable summary.
-	 * @param array<int, array{path: string, message: string}>     $errors  Field-level errors.
-	 * @param \Throwable|null                                       $previous Previous throwable for chaining.
+	 * @param string                                           $message Human-readable summary.
+	 * @param array<int, array{path: string, message: string}> $errors  Field-level errors.
+	 * @param \Throwable|null                                  $previous Previous throwable for chaining.
 	 */
 	public function __construct( string $message, array $errors = [], ?\Throwable $previous = null ) {
 		parent::__construct( $message, 0, $previous );

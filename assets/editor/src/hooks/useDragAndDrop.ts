@@ -11,6 +11,7 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { getBlockDefinition } from '@/core/blocks/registry';
+import type { Block } from '@/core/schema/blocks';
 
 /**
  * Owns the drag lifecycle shared by the library and the canvas.
@@ -54,7 +55,9 @@ export function useDragAndDrop() {
     if (data?.source === 'library' && typeof data.blockType === 'string') {
       const definition = getBlockDefinition(data.blockType);
       if (!definition) return;
-      const fresh = definition.create();
+      // create() returns the concrete Block subtype but the registry
+      // is type-erased; cast back to the discriminated union.
+      const fresh = definition.create() as Block;
 
       if (over.id === 'canvas-empty') {
         addBlock(fresh);

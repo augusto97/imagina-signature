@@ -25,7 +25,9 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 1.0.0
  */
-final class SignatureRepository extends BaseRepository {
+// Not `final` so PHPUnit 9 can create mocks for controller integration
+// tests. Subclassing is otherwise unsupported.
+class SignatureRepository extends BaseRepository {
 
 	/**
 	 * Whitelist of orderable columns.
@@ -121,7 +123,7 @@ final class SignatureRepository extends BaseRepository {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		$sql = $this->wpdb->prepare(
 			"SELECT * FROM {$this->table()} WHERE {$where_sql} ORDER BY {$order_by} {$order} LIMIT %d OFFSET %d",
-			array_merge( $where_values, [ $per_page, $offset ] )
+			...array_merge( $where_values, [ $per_page, $offset ] )
 		);
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
@@ -156,7 +158,7 @@ final class SignatureRepository extends BaseRepository {
 		$count = $this->wpdb->get_var(
 			$this->wpdb->prepare(
 				"SELECT COUNT(*) FROM {$this->table()} WHERE {$where_sql}",
-				$where_values
+				...$where_values
 			)
 		);
 
@@ -197,7 +199,7 @@ final class SignatureRepository extends BaseRepository {
 			[ '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s' ]
 		);
 
-		$row['id']           = (int) $this->wpdb->insert_id;
+		$row['id'] = (int) $this->wpdb->insert_id;
 		return Signature::from_row( $row );
 	}
 

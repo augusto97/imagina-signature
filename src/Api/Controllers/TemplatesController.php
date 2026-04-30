@@ -240,8 +240,17 @@ final class TemplatesController extends BaseController {
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			],
-			'page'     => [ 'type' => 'integer', 'minimum' => 1, 'default' => 1 ],
-			'per_page' => [ 'type' => 'integer', 'minimum' => 1, 'maximum' => 100, 'default' => 50 ],
+			'page'     => [
+				'type'    => 'integer',
+				'minimum' => 1,
+				'default' => 1,
+			],
+			'per_page' => [
+				'type'    => 'integer',
+				'minimum' => 1,
+				'maximum' => 100,
+				'default' => 50,
+			],
 			'order_by' => [
 				'type' => 'string',
 				'enum' => [ 'sort_order', 'created_at', 'name' ],

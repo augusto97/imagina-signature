@@ -31,7 +31,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 1.0.0
  */
-final class RateLimiter {
+// Not `final` so PHPUnit 9 can create mocks for controller integration tests.
+class RateLimiter {
 
 	/**
 	 * Storage backend.

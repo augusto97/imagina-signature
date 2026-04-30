@@ -16,6 +16,29 @@
 
 declare(strict_types=1);
 
+// WordPress time / size constants used in plugin defaults.
+if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
+	define( 'MINUTE_IN_SECONDS', 60 );
+}
+if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
+	define( 'HOUR_IN_SECONDS', 60 * 60 );
+}
+if ( ! defined( 'DAY_IN_SECONDS' ) ) {
+	define( 'DAY_IN_SECONDS', 24 * 60 * 60 );
+}
+if ( ! defined( 'WEEK_IN_SECONDS' ) ) {
+	define( 'WEEK_IN_SECONDS', 7 * 24 * 60 * 60 );
+}
+if ( ! defined( 'MB_IN_BYTES' ) ) {
+	define( 'MB_IN_BYTES', 1024 * 1024 );
+}
+
+// Note: WordPress function stubs (`__`, `esc_html__`, ...) are NOT defined
+// here. Defining them as plain PHP functions blocks Brain Monkey's
+// Patchwork-based redefinition (DefinedTooEarly). Each test sets up
+// the WP functions it uses via `Brain\Monkey\Functions\when()` after
+// `Monkey\setUp()` runs.
+
 if ( ! class_exists( 'WP_Error' ) ) {
 	/**
 	 * @phpstan-ignore-next-line

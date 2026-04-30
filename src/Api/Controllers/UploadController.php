@@ -102,9 +102,19 @@ final class UploadController extends BaseController {
 					'callback'            => [ $this, 'init' ],
 					'permission_callback' => $require_use,
 					'args'                => [
-						'filename'    => [ 'type' => 'string', 'required' => true ],
-						'mime_type'   => [ 'type' => 'string', 'required' => true ],
-						'size_bytes'  => [ 'type' => 'integer', 'required' => true, 'minimum' => 1 ],
+						'filename'    => [
+							'type'     => 'string',
+							'required' => true,
+						],
+						'mime_type'   => [
+							'type'     => 'string',
+							'required' => true,
+						],
+						'size_bytes'  => [
+							'type'     => 'integer',
+							'required' => true,
+							'minimum'  => 1,
+						],
 						'hash_sha256' => [ 'type' => 'string' ],
 					],
 				],
@@ -132,10 +142,23 @@ final class UploadController extends BaseController {
 					'callback'            => [ $this, 'finalize' ],
 					'permission_callback' => $require_use,
 					'args'                => [
-						'key'         => [ 'type' => 'string', 'required' => true ],
-						'mime_type'   => [ 'type' => 'string', 'required' => true ],
-						'size_bytes'  => [ 'type' => 'integer', 'required' => true, 'minimum' => 1 ],
-						'hash_sha256' => [ 'type' => 'string', 'required' => true ],
+						'key'         => [
+							'type'     => 'string',
+							'required' => true,
+						],
+						'mime_type'   => [
+							'type'     => 'string',
+							'required' => true,
+						],
+						'size_bytes'  => [
+							'type'     => 'integer',
+							'required' => true,
+							'minimum'  => 1,
+						],
+						'hash_sha256' => [
+							'type'     => 'string',
+							'required' => true,
+						],
 						'width'       => [ 'type' => 'integer' ],
 						'height'      => [ 'type' => 'integer' ],
 					],
@@ -179,7 +202,10 @@ final class UploadController extends BaseController {
 			return new \WP_Error(
 				'imgsig_too_large',
 				__( 'File size exceeds the configured limit.', 'imagina-signatures' ),
-				[ 'status' => 400, 'max_size' => $this->max_size() ]
+				[
+					'status'   => 400,
+					'max_size' => $this->max_size(),
+				]
 			);
 		}
 
@@ -284,7 +310,7 @@ final class UploadController extends BaseController {
 		}
 
 		try {
-			$driver       = $this->storage->active_driver();
+			$driver        = $this->storage->active_driver();
 			$upload_result = $driver->upload(
 				(string) $file['tmp_name'],
 				isset( $file['name'] ) ? (string) $file['name'] : 'upload',

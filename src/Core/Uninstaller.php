@@ -143,7 +143,7 @@ final class Uninstaller {
 	 * @return void
 	 */
 	private static function delete_transients( \wpdb $wpdb ): void {
-		$like = $wpdb->esc_like( '_transient_imgsig_' ) . '%';
+		$like         = $wpdb->esc_like( '_transient_imgsig_' ) . '%';
 		$timeout_like = $wpdb->esc_like( '_transient_timeout_imgsig_' ) . '%';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery

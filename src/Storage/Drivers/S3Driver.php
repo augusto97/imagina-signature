@@ -126,7 +126,7 @@ final class S3Driver implements StorageDriverInterface {
 			'/'
 		);
 
-		$base = isset( $config['public_url_base'] ) ? (string) $config['public_url_base'] : '';
+		$base                  = isset( $config['public_url_base'] ) ? (string) $config['public_url_base'] : '';
 		$this->public_url_base = '' !== $base
 			? rtrim( $base, '/' )
 			: $this->endpoint . '/' . rawurlencode( (string) ( $config['bucket'] ?? '' ) );
@@ -230,6 +230,14 @@ final class S3Driver implements StorageDriverInterface {
 	 * Server-side upload — reads the file into memory and PUTs it. Kept
 	 * for parity with {@see MediaLibraryDriver}; in practice the editor
 	 * uses {@see get_presigned_upload_url()} so the file never touches PHP.
+	 *
+	 * @param string               $source_path     Absolute path to the source file.
+	 * @param string               $destination_key S3 object key for the upload.
+	 * @param array<string, mixed> $meta            Optional `mime_type`, `width`, `height` hints.
+	 *
+	 * @return UploadResult
+	 *
+	 * @throws StorageException When the source file is missing, unreadable, or the PUT fails.
 	 */
 	public function upload( string $source_path, string $destination_key, array $meta ): UploadResult {
 		if ( '' === $source_path || ! file_exists( $source_path ) ) {
@@ -265,6 +273,15 @@ final class S3Driver implements StorageDriverInterface {
 
 	/**
 	 * @inheritDoc
+	 *
+	 * @param string $key             Destination object key.
+	 * @param string $content_type    MIME type the browser will send.
+	 * @param int    $max_size        Maximum allowed bytes for the upload.
+	 * @param int    $expires_seconds URL validity in seconds.
+	 *
+	 * @return PresignedResult
+	 *
+	 * @throws StorageException When the driver is not fully configured.
 	 */
 	public function get_presigned_upload_url(
 		string $key,
@@ -297,6 +314,10 @@ final class S3Driver implements StorageDriverInterface {
 	 * either the configured CDN prefix (when present) or the resolved
 	 * endpoint + bucket. The key is URL-encoded segment-by-segment so
 	 * `/` separators are preserved.
+	 *
+	 * @param string $key Object key.
+	 *
+	 * @return string
 	 */
 	public function get_public_url( string $key ): string {
 		if ( '' === $key ) {
@@ -321,6 +342,10 @@ final class S3Driver implements StorageDriverInterface {
 	 *
 	 * Idempotent: 404 from the backend counts as success because the
 	 * object is gone (or never existed).
+	 *
+	 * @param string $key Object key to delete.
+	 *
+	 * @return bool
 	 */
 	public function delete( string $key ): bool {
 		if ( '' === $key ) {
@@ -351,7 +376,10 @@ final class S3Driver implements StorageDriverInterface {
 		} catch ( StorageException $e ) {
 			return TestResult::failure(
 				__( 'Could not reach the storage endpoint.', 'imagina-signatures' ),
-				[ 'reason' => 'transport', 'detail' => $e->getMessage() ]
+				[
+					'reason' => 'transport',
+					'detail' => $e->getMessage(),
+				]
 			);
 		}
 
@@ -360,21 +388,30 @@ final class S3Driver implements StorageDriverInterface {
 		if ( $code >= 200 && $code < 300 ) {
 			return TestResult::success(
 				__( 'Connection succeeded — bucket is reachable and credentials are valid.', 'imagina-signatures' ),
-				[ 'http_code' => $code, 'endpoint' => $this->endpoint ]
+				[
+					'http_code' => $code,
+					'endpoint'  => $this->endpoint,
+				]
 			);
 		}
 
 		if ( 403 === $code || 401 === $code ) {
 			return TestResult::failure(
 				__( 'The endpoint rejected the credentials.', 'imagina-signatures' ),
-				[ 'reason' => 'forbidden', 'http_code' => $code ]
+				[
+					'reason'    => 'forbidden',
+					'http_code' => $code,
+				]
 			);
 		}
 
 		if ( 404 === $code ) {
 			return TestResult::failure(
 				__( 'The configured bucket was not found at this endpoint.', 'imagina-signatures' ),
-				[ 'reason' => 'not_found', 'http_code' => $code ]
+				[
+					'reason'    => 'not_found',
+					'http_code' => $code,
+				]
 			);
 		}
 
@@ -384,7 +421,10 @@ final class S3Driver implements StorageDriverInterface {
 				__( 'Storage endpoint returned an unexpected HTTP %d response.', 'imagina-signatures' ),
 				$code
 			),
-			[ 'reason' => 'unexpected_http', 'http_code' => $code ]
+			[
+				'reason'    => 'unexpected_http',
+				'http_code' => $code,
+			]
 		);
 	}
 }

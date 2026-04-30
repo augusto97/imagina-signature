@@ -68,7 +68,12 @@ final class TemplateService {
 		if ( null !== $this->repo->find_by_slug( (string) $prepared['slug'] ) ) {
 			throw new ValidationException(
 				'Slug already exists.',
-				[ [ 'path' => 'slug', 'message' => 'A template with this slug already exists.' ] ]
+				[
+					[
+						'path'    => 'slug',
+						'message' => 'A template with this slug already exists.',
+					],
+				]
 			);
 		}
 
@@ -97,7 +102,12 @@ final class TemplateService {
 		if ( null === $existing ) {
 			throw new ValidationException(
 				'Template not found.',
-				[ [ 'path' => 'id', 'message' => 'No template with this id.' ] ]
+				[
+					[
+						'path'    => 'id',
+						'message' => 'No template with this id.',
+					],
+				]
 			);
 		}
 
@@ -109,7 +119,12 @@ final class TemplateService {
 			if ( null !== $collision && $collision->id !== $template_id ) {
 				throw new ValidationException(
 					'Slug already exists.',
-					[ [ 'path' => 'slug', 'message' => 'A template with this slug already exists.' ] ]
+					[
+						[
+							'path'    => 'slug',
+							'message' => 'A template with this slug already exists.',
+						],
+					]
 				);
 			}
 		}
@@ -134,14 +149,24 @@ final class TemplateService {
 		if ( null === $existing ) {
 			throw new ValidationException(
 				'Template not found.',
-				[ [ 'path' => 'id', 'message' => 'No template with this id.' ] ]
+				[
+					[
+						'path'    => 'id',
+						'message' => 'No template with this id.',
+					],
+				]
 			);
 		}
 
 		if ( $existing->is_system ) {
 			throw new ValidationException(
 				'System templates cannot be deleted.',
-				[ [ 'path' => 'id', 'message' => 'This template is shipped with the plugin.' ] ]
+				[
+					[
+						'path'    => 'id',
+						'message' => 'This template is shipped with the plugin.',
+					],
+				]
 			);
 		}
 
@@ -189,7 +214,12 @@ final class TemplateService {
 			if ( ! is_array( $decoded ) ) {
 				throw new ValidationException(
 					'json_content must be a JSON object.',
-					[ [ 'path' => 'json_content', 'message' => 'Could not decode payload.' ] ]
+					[
+						[
+							'path'    => 'json_content',
+							'message' => 'Could not decode payload.',
+						],
+					]
 				);
 			}
 

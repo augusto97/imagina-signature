@@ -175,8 +175,8 @@ final class EditorIframeController extends BaseController {
 			'pluginUrl'   => esc_url_raw( plugins_url( '', IMGSIG_FILE ) ),
 		];
 
-		$editor_js  = esc_url( plugins_url( 'build/editor.js', IMGSIG_FILE ) );
-		$editor_css = esc_url( plugins_url( 'build/editor.css', IMGSIG_FILE ) );
+		$editor_js   = esc_url( plugins_url( 'build/editor.js', IMGSIG_FILE ) );
+		$editor_css  = esc_url( plugins_url( 'build/editor.css', IMGSIG_FILE ) );
 		$config_json = (string) wp_json_encode( $config );
 
 		header( 'Content-Type: text/html; charset=utf-8' );
