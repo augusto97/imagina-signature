@@ -1,11 +1,15 @@
-/**
- * Admin entry point.
- *
- * Reserved for Sprint 4+ React-rendered admin views (a richer
- * dashboard / settings page). For now the admin pages are
- * server-rendered so this bundle is intentionally near-empty —
- * Vite needs an entry to produce `build/admin.js`, but no React
- * tree mounts.
- */
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { App } from './App';
+import './styles/globals.css';
 
-export {};
+const container = document.getElementById('imagina-admin-root');
+if (!container) {
+  throw new Error('Mount point #imagina-admin-root is missing.');
+}
+
+createRoot(container).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);

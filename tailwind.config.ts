@@ -1,23 +1,29 @@
 import type { Config } from 'tailwindcss';
 
 /**
- * Tailwind config for the editor running inside the iframe.
- *
- * No prefix: the iframe is an isolated context, so we don't need to
- * namespace utilities. (CLAUDE.md §6.6)
- *
- * For the wp-admin views (assets/admin), see CLAUDE.md §6.6 — those
- * use the `is-` prefix and a separate config when needed.
+ * Tailwind config covers both the iframe editor and the wp-admin
+ * React app. Both bundles are scoped — the editor iframe runs in an
+ * isolated document, and the admin React app mounts inside an
+ * `#imagina-admin-root` div whose styles are loaded via a dedicated
+ * stylesheet. We turn off Tailwind's preflight so the admin bundle
+ * never resets WP-admin's existing styles outside our root.
  */
 const config: Config = {
   content: [
     './assets/editor/src/**/*.{ts,tsx,html}',
+    './assets/admin/src/**/*.{ts,tsx,html}',
     './assets/shared/**/*.{ts,tsx}',
   ],
+  // Scope every utility class behind the admin root in the admin
+  // bundle so wp-admin's own UI is untouched. The editor iframe
+  // doesn't need this — its document is owned by us — but the same
+  // selector also matches `#imagina-editor-root` inside the iframe
+  // so editor utilities still apply.
+  important: ':where(#imagina-editor-root, #imagina-admin-root)',
   theme: {
     extend: {
       colors: {
-        // Tokens declared in src/styles/globals.css (CLAUDE.md §18.1)
+        // Tokens declared in src/styles/globals.css.
         'bg-primary': 'var(--bg-primary)',
         'bg-panel': 'var(--bg-panel)',
         'bg-hover': 'var(--bg-hover)',
@@ -39,8 +45,14 @@ const config: Config = {
       boxShadow: {
         sm: 'var(--shadow-sm)',
         md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
       },
     },
+  },
+  corePlugins: {
+    // Disable preflight so the admin bundle, when loaded inside
+    // wp-admin, doesn't reset core WordPress UI styles.
+    preflight: false,
   },
   plugins: [],
 };

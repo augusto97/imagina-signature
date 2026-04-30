@@ -1,6 +1,10 @@
 import type { FC } from 'react';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { __ } from '@/i18n/helpers';
+import { ColorInput } from './inputs/ColorInput';
+import { DimensionInput } from './inputs/DimensionInput';
+import { FontFamilyInput } from './inputs/FontFamilyInput';
+import { PropertySection } from './sections/PropertySection';
 
 /**
  * Sidebar contents shown when nothing is selected — controls global
@@ -11,45 +15,50 @@ export const CanvasProperties: FC = () => {
   const updateCanvas = useSchemaStore((s) => s.updateCanvas);
 
   return (
-    <div className="space-y-3 text-xs">
-      <label className="block">
-        <span className="mb-1 block text-[var(--text-secondary)]">{__('Canvas width (px)')}</span>
-        <input
-          type="number"
-          min={320}
-          max={800}
-          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
-          value={canvas.width}
-          onChange={(e) => updateCanvas({ width: Number(e.target.value) || 600 })}
-        />
-      </label>
-      <label className="block">
-        <span className="mb-1 block text-[var(--text-secondary)]">{__('Background')}</span>
-        <input
-          type="color"
-          className="h-8 w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)]"
-          value={canvas.background_color}
-          onChange={(e) => updateCanvas({ background_color: e.target.value })}
-        />
-      </label>
-      <label className="block">
-        <span className="mb-1 block text-[var(--text-secondary)]">{__('Default text colour')}</span>
-        <input
-          type="color"
-          className="h-8 w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)]"
-          value={canvas.text_color}
-          onChange={(e) => updateCanvas({ text_color: e.target.value })}
-        />
-      </label>
-      <label className="block">
-        <span className="mb-1 block text-[var(--text-secondary)]">{__('Default link colour')}</span>
-        <input
-          type="color"
-          className="h-8 w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)]"
-          value={canvas.link_color}
-          onChange={(e) => updateCanvas({ link_color: e.target.value })}
-        />
-      </label>
-    </div>
+    <>
+      <PropertySection title={__('Canvas')}>
+        <div className="space-y-2.5">
+          <DimensionInput
+            label={__('Width')}
+            value={canvas.width}
+            onChange={(v) => updateCanvas({ width: v })}
+            min={320}
+            max={800}
+          />
+          <ColorInput
+            label={__('Background')}
+            value={canvas.background_color}
+            onChange={(v) => updateCanvas({ background_color: v })}
+          />
+        </div>
+      </PropertySection>
+
+      <PropertySection title={__('Typography')}>
+        <div className="space-y-2.5">
+          <FontFamilyInput
+            label={__('Default font')}
+            value={canvas.font_family}
+            onChange={(v) => updateCanvas({ font_family: v })}
+          />
+          <DimensionInput
+            label={__('Default size')}
+            value={canvas.font_size}
+            onChange={(v) => updateCanvas({ font_size: v })}
+            min={10}
+            max={24}
+          />
+          <ColorInput
+            label={__('Text color')}
+            value={canvas.text_color}
+            onChange={(v) => updateCanvas({ text_color: v })}
+          />
+          <ColorInput
+            label={__('Link color')}
+            value={canvas.link_color}
+            onChange={(v) => updateCanvas({ link_color: v })}
+          />
+        </div>
+      </PropertySection>
+    </>
   );
 };

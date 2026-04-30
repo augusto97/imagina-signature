@@ -46,6 +46,17 @@ export interface BlockDefinition<T extends BlockBase = BlockBase> {
 
   /** Whether this block can host other blocks (containers). */
   acceptsChildren?: boolean;
+
+  /**
+   * When `false`, the right-sidebar PropertyPanel renders the block's
+   * `PropertiesPanel` directly without wrapping it in a default
+   * "Properties" {@link PropertySection}. Blocks that already use
+   * `PropertySection` internally (Text) set this to `false` to avoid
+   * a double-section render.
+   *
+   * Defaults to `true`.
+   */
+  wrap_in_section?: boolean;
 }
 
 const registry = new Map<string, BlockDefinition>();

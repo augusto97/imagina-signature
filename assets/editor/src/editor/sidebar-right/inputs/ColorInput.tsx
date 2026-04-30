@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { Field } from './_shared';
 
 interface Props {
   label: string;
@@ -7,26 +8,25 @@ interface Props {
 }
 
 /**
- * Native HTML color picker + hex text input pair. The native control
- * is fast on every browser; the text input lets the user paste a
- * hex code (or a CSS named colour) directly.
+ * Native HTML colour picker + hex text input pair. The native
+ * control is fast everywhere; the text input lets the user paste a
+ * hex code or a CSS named colour.
  */
 export const ColorInput: FC<Props> = ({ label, value, onChange }) => (
-  <label className="block">
-    <span className="mb-1 block text-[var(--text-secondary)]">{label}</span>
-    <div className="flex items-center gap-2">
+  <Field label={label}>
+    <div className="flex items-center gap-1.5">
       <input
         type="color"
-        className="h-8 w-10 cursor-pointer rounded border border-[var(--border-default)] bg-[var(--bg-panel)]"
+        className="!h-7 !w-9 shrink-0 !p-0.5"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
       <input
         type="text"
-        className="flex-1 rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5 font-mono text-xs"
+        className="flex-1 font-mono"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
     </div>
-  </label>
+  </Field>
 );

@@ -75,8 +75,17 @@ final class AssetsController extends BaseController {
 					'callback'            => [ $this, 'index' ],
 					'permission_callback' => $require_use,
 					'args'                => [
-						'page'     => [ 'type' => 'integer', 'minimum' => 1, 'default' => 1 ],
-						'per_page' => [ 'type' => 'integer', 'minimum' => 1, 'maximum' => 200, 'default' => 50 ],
+						'page'     => [
+							'type'    => 'integer',
+							'minimum' => 1,
+							'default' => 1,
+						],
+						'per_page' => [
+							'type'    => 'integer',
+							'minimum' => 1,
+							'maximum' => 200,
+							'default' => 50,
+						],
 					],
 				],
 			]

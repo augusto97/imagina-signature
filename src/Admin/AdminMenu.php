@@ -9,9 +9,7 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Admin;
 
-use ImaginaSignatures\Admin\Pages\DashboardPage;
 use ImaginaSignatures\Admin\Pages\EditorPage;
-use ImaginaSignatures\Admin\Pages\SettingsPage;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 
 defined( 'ABSPATH' ) || exit;
@@ -19,29 +17,38 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Registers the plugin's wp-admin menu structure.
  *
- * Wires:
- *  - Top-level "Imagina Signatures" — drops the user on Dashboard.
- *  - Dashboard      submenu (cap `imgsig_use_signatures`).
- *  - Editor         submenu (cap `imgsig_use_signatures`); hidden
- *                   from the menu but registered so admin.php?page=
- *                   loads it. The "New" button on Dashboard and
- *                   "Edit" links on each row point here.
- *  - Settings       submenu (cap `imgsig_manage_storage`).
+ * Three top-level destinations all back onto the same React admin
+ * app ({@see AdminAppPage}) — different wp-admin URLs just tell the
+ * app which "page" to render (Signatures / Templates / Settings).
  *
- * Templates page lands in Sprint 10 alongside the templates seeder.
+ * The Editor remains a dedicated wp-admin page that mounts the
+ * iframe (full-screen React editor) — separate bundle, separate
+ * config global. Reached only via the New / Edit links from the
+ * Signatures listing, so it isn't surfaced in the side menu.
  *
  * @since 1.0.0
  */
 final class AdminMenu {
 
-	public const MENU_SLUG     = 'imagina-signatures';
-	public const EDITOR_SLUG   = 'imagina-signatures-editor';
-	public const SETTINGS_SLUG = 'imagina-signatures-settings';
+	public const MENU_SLUG      = 'imagina-signatures';
+	public const TEMPLATES_SLUG = 'imagina-signatures-templates';
+	public const SETTINGS_SLUG  = 'imagina-signatures-settings';
+	public const EDITOR_SLUG    = 'imagina-signatures-editor';
 
 	/**
-	 * @var DashboardPage
+	 * @var AdminAppPage
 	 */
-	private DashboardPage $dashboard_page;
+	private AdminAppPage $signatures_page;
+
+	/**
+	 * @var AdminAppPage
+	 */
+	private AdminAppPage $templates_page;
+
+	/**
+	 * @var AdminAppPage
+	 */
+	private AdminAppPage $settings_page;
 
 	/**
 	 * @var EditorPage
@@ -49,23 +56,21 @@ final class AdminMenu {
 	private EditorPage $editor_page;
 
 	/**
-	 * @var SettingsPage
-	 */
-	private SettingsPage $settings_page;
-
-	/**
-	 * @param DashboardPage $dashboard_page Dashboard renderer.
-	 * @param EditorPage    $editor_page    Editor (iframe host) renderer.
-	 * @param SettingsPage  $settings_page  Settings renderer.
+	 * @param AdminAppPage $signatures_page Renderer for the signatures listing.
+	 * @param AdminAppPage $templates_page  Renderer for the templates page.
+	 * @param AdminAppPage $settings_page   Renderer for the storage settings page.
+	 * @param EditorPage   $editor_page     Renderer for the editor iframe host.
 	 */
 	public function __construct(
-		DashboardPage $dashboard_page,
-		EditorPage $editor_page,
-		SettingsPage $settings_page
+		AdminAppPage $signatures_page,
+		AdminAppPage $templates_page,
+		AdminAppPage $settings_page,
+		EditorPage $editor_page
 	) {
-		$this->dashboard_page = $dashboard_page;
-		$this->editor_page    = $editor_page;
-		$this->settings_page  = $settings_page;
+		$this->signatures_page = $signatures_page;
+		$this->templates_page  = $templates_page;
+		$this->settings_page   = $settings_page;
+		$this->editor_page     = $editor_page;
 	}
 
 	/**
@@ -77,7 +82,6 @@ final class AdminMenu {
 	 */
 	public function boot(): void {
 		add_action( 'admin_menu', [ $this, 'register_menus' ] );
-		$this->settings_page->register_handlers();
 	}
 
 	/**
@@ -93,31 +97,27 @@ final class AdminMenu {
 			__( 'Imagina Signatures', 'imagina-signatures' ),
 			CapabilitiesInstaller::CAP_USE,
 			self::MENU_SLUG,
-			[ $this->dashboard_page, 'render' ],
+			[ $this->signatures_page, 'render' ],
 			'dashicons-email-alt',
 			30
 		);
 
-		// Dashboard explicit (renames the auto-created first submenu).
 		add_submenu_page(
 			self::MENU_SLUG,
 			__( 'My Signatures', 'imagina-signatures' ),
 			__( 'My Signatures', 'imagina-signatures' ),
 			CapabilitiesInstaller::CAP_USE,
 			self::MENU_SLUG,
-			[ $this->dashboard_page, 'render' ]
+			[ $this->signatures_page, 'render' ]
 		);
 
-		// Editor — registered with `null` parent so it's hidden from
-		// the menu (you reach it from the dashboard's New / Edit
-		// links), but the page still mounts at admin.php?page=...
 		add_submenu_page(
-			'',
-			__( 'Edit Signature', 'imagina-signatures' ),
-			__( 'Edit Signature', 'imagina-signatures' ),
+			self::MENU_SLUG,
+			__( 'Templates', 'imagina-signatures' ),
+			__( 'Templates', 'imagina-signatures' ),
 			CapabilitiesInstaller::CAP_USE,
-			self::EDITOR_SLUG,
-			[ $this->editor_page, 'render' ]
+			self::TEMPLATES_SLUG,
+			[ $this->templates_page, 'render' ]
 		);
 
 		add_submenu_page(
@@ -127,6 +127,17 @@ final class AdminMenu {
 			CapabilitiesInstaller::CAP_MANAGE_STORAGE,
 			self::SETTINGS_SLUG,
 			[ $this->settings_page, 'render' ]
+		);
+
+		// Editor: registered with empty parent so it's hidden from the
+		// menu but reachable via admin.php?page=...
+		add_submenu_page(
+			'',
+			__( 'Edit Signature', 'imagina-signatures' ),
+			__( 'Edit Signature', 'imagina-signatures' ),
+			CapabilitiesInstaller::CAP_USE,
+			self::EDITOR_SLUG,
+			[ $this->editor_page, 'render' ]
 		);
 	}
 }

@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { Field } from './_shared';
 
 interface Props {
   label: string;
@@ -16,20 +17,29 @@ interface Props {
  * Used for sizes, paddings, font sizes — anywhere we want a single
  * positive integer with a visible unit hint.
  */
-export const DimensionInput: FC<Props> = ({ label, value, onChange, min = 0, max, step = 1, unit = 'px' }) => (
-  <label className="block">
-    <span className="mb-1 block text-[var(--text-secondary)]">{label}</span>
-    <div className="flex items-center gap-2">
+export const DimensionInput: FC<Props> = ({
+  label,
+  value,
+  onChange,
+  min = 0,
+  max,
+  step = 1,
+  unit = 'px',
+}) => (
+  <Field label={label}>
+    <div className="relative">
       <input
         type="number"
         min={min}
         max={max}
         step={step}
-        className="flex-1 rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5 text-xs"
+        className="pr-8"
         value={value}
         onChange={(e) => onChange(Number(e.target.value) || 0)}
       />
-      <span className="text-xs text-[var(--text-muted)]">{unit}</span>
+      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+        {unit}
+      </span>
     </div>
-  </label>
+  </Field>
 );

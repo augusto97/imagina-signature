@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { Field } from './_shared';
 
 const WEB_SAFE_FONTS = [
   { value: 'Arial, sans-serif', label: 'Arial' },
@@ -18,25 +19,19 @@ interface Props {
 }
 
 /**
- * Restricted to the web-safe font set per CLAUDE.md §20.1.
- *
- * Email clients vary wildly in what fonts they ship; sticking to
- * web-safe stacks keeps the rendered signature identical across
- * Outlook / Gmail / Apple Mail.
+ * Restricted to the web-safe font set per CLAUDE.md §20.1. Email
+ * clients vary wildly in what fonts they ship; sticking to web-safe
+ * stacks keeps the rendered signature identical across Outlook /
+ * Gmail / Apple Mail.
  */
 export const FontFamilyInput: FC<Props> = ({ label, value, onChange }) => (
-  <label className="block">
-    <span className="mb-1 block text-[var(--text-secondary)]">{label}</span>
-    <select
-      className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5 text-xs"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    >
+  <Field label={label}>
+    <select value={value} onChange={(e) => onChange(e.target.value)}>
       {WEB_SAFE_FONTS.map((font) => (
         <option key={font.value} value={font.value}>
           {font.label}
         </option>
       ))}
     </select>
-  </label>
+  </Field>
 );

@@ -102,12 +102,16 @@
 
 	<!-- EditorIframeController explicitly composes raw HTML and headers
 	     for the iframe response (CLAUDE.md §14.2). wp_enqueue_* is not
-	     applicable. -->
+	     applicable. AdminAppPage similarly mounts the React admin app
+	     by emitting the script + style tags inline so the React DOM
+	     is the only thing on the page. -->
 	<rule ref="WordPress.WP.EnqueuedResources">
 		<exclude-pattern>*/src/Api/Controllers/EditorIframeController.php</exclude-pattern>
+		<exclude-pattern>*/src/Admin/AdminAppPage.php</exclude-pattern>
 	</rule>
 	<rule ref="WordPress.Security.EscapeOutput.OutputNotEscaped">
 		<exclude-pattern>*/src/Api/Controllers/EditorIframeController.php</exclude-pattern>
+		<exclude-pattern>*/src/Admin/AdminAppPage.php</exclude-pattern>
 	</rule>
 
 	<!-- Text domain check. -->

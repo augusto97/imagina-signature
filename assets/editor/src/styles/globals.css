@@ -3,36 +3,53 @@
 @tailwind utilities;
 
 /*
- * Design tokens for the editor — CLAUDE.md §18.1.
- *
- * The iframe is an isolated context so we don't worry about clashing
- * with wp-admin. All colours, radii, and shadows are sourced from
- * these custom properties.
+ * Design tokens — refined pass to lift the editor to a more polished
+ * Framer / Webflow feel. Values are tuned for a tight 14px base with
+ * generous neutrals and one strong accent.
  */
 @layer base {
   :root {
-    --bg-primary: #fafafa;
-    --bg-panel: #ffffff;
-    --bg-hover: #f5f5f5;
+    /* Surfaces */
+    --bg-primary: #f7f8fa;        /* canvas backdrop */
+    --bg-panel: #ffffff;          /* sidebars, modals */
+    --bg-panel-soft: #fafbfc;     /* subtle alternative */
+    --bg-hover: #f3f4f6;
     --bg-selected: #eff6ff;
+    --bg-active: #2563eb;
 
+    /* Borders */
+    --border-subtle: #f1f2f4;
     --border-default: #e5e7eb;
     --border-strong: #d1d5db;
-    --border-selected: #3b82f6;
+    --border-selected: #2563eb;
 
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
-    --text-muted: #9ca3af;
+    /* Text */
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --text-on-accent: #ffffff;
 
-    --accent: #3b82f6;
-    --accent-hover: #2563eb;
+    /* Accent */
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-soft: #dbeafe;
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+    /* Status */
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
 
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
+    /* Shadows */
+    --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 10px 24px rgba(15, 23, 42, 0.08);
+
+    /* Radii */
+    --radius-xs: 3px;
+    --radius-sm: 5px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
   }
 
   html,
@@ -43,23 +60,103 @@
     background: var(--bg-primary);
     color: var(--text-primary);
     font-family:
+      'Inter',
       -apple-system,
       BlinkMacSystemFont,
       'Segoe UI',
-      'Inter',
       Roboto,
       'Helvetica Neue',
       Arial,
       sans-serif;
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   *,
   *::before,
   *::after {
     box-sizing: border-box;
+  }
+
+  /* Compact native form controls inside the editor surfaces. */
+  input[type='text'],
+  input[type='url'],
+  input[type='email'],
+  input[type='number'],
+  input[type='password'],
+  input[type='search'],
+  textarea,
+  select {
+    appearance: none;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: inherit;
+    padding: 6px 8px;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+    width: 100%;
+  }
+
+  input[type='text']:focus,
+  input[type='url']:focus,
+  input[type='email']:focus,
+  input[type='number']:focus,
+  input[type='password']:focus,
+  input[type='search']:focus,
+  textarea:focus,
+  select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    outline: none;
+  }
+
+  input[type='color'] {
+    width: 100%;
+    height: 28px;
+    padding: 2px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-panel);
+    cursor: pointer;
+  }
+
+  /* Tiptap focus ring should match the rest of the inputs. */
+  .ProseMirror {
+    outline: none;
+  }
+
+  /* Scrollbar polish (WebKit only). */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-default);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--border-strong);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+  }
+}
+
+@layer components {
+  .is-section-label {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
   }
 }

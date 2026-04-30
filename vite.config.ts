@@ -3,10 +3,13 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'node:path';
 
 /**
- * Vite config for the iframe editor (and admin views).
+ * Vite config for the iframe editor and the wp-admin React app.
  *
- * Outputs to /build, which IS committed (it ships in the plugin ZIP).
- * No external CDNs at runtime — everything is bundled (CLAUDE.md §1.4).
+ * Outputs to /build (committed, ships in the plugin ZIP). No
+ * external CDNs at runtime (CLAUDE.md §1.4).
+ *
+ * Each entry produces its own CSS file so the editor.js bundle
+ * doesn't ship admin styles and vice versa.
  */
 export default defineConfig({
   plugins: [react()],
@@ -23,7 +26,7 @@ export default defineConfig({
     outDir: 'build',
     emptyOutDir: true,
     sourcemap: false,
-    cssCodeSplit: false,
+    cssCodeSplit: true,
     rollupOptions: {
       input: {
         editor: resolve(__dirname, 'assets/editor/src/main.tsx'),
@@ -33,12 +36,10 @@ export default defineConfig({
         entryFileNames: '[name].js',
         chunkFileNames: '[name]-[hash].js',
         assetFileNames: (info) => {
-          // With cssCodeSplit: false Vite merges everything into a single
-          // bundle and names it "style.css" by default. The iframe host
-          // (`EditorIframeController`) loads `build/editor.css`, so emit
-          // under that name.
+          // Per-entry CSS — Vite names them after the entry, so we get
+          // editor.css and admin.css alongside their JS counterparts.
           if (info.name?.endsWith('.css')) {
-            return 'editor.css';
+            return '[name][extname]';
           }
           return 'assets/[name]-[hash][extname]';
         },

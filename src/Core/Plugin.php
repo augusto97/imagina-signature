@@ -9,10 +9,10 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Core;
 
+use ImaginaSignatures\Admin\AdminAppPage;
 use ImaginaSignatures\Admin\AdminMenu;
-use ImaginaSignatures\Admin\Pages\DashboardPage;
 use ImaginaSignatures\Admin\Pages\EditorPage;
-use ImaginaSignatures\Admin\Pages\SettingsPage;
+use ImaginaSignatures\Setup\CapabilitiesInstaller;
 use ImaginaSignatures\Api\Controllers\AssetsController;
 use ImaginaSignatures\Api\Controllers\EditorIframeController;
 use ImaginaSignatures\Api\Controllers\MeController;
@@ -23,7 +23,6 @@ use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\RestRouter;
 use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Repositories\SignatureRepository;
-use ImaginaSignatures\Storage\StorageManager;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -147,14 +146,20 @@ final class Plugin {
 	 * @return void
 	 */
 	private function boot_admin(): void {
-		$storage_manager      = $this->container->make( StorageManager::class );
 		$signature_repository = $this->container->make( SignatureRepository::class );
 
-		$dashboard_page = new DashboardPage( $signature_repository );
-		$editor_page    = new EditorPage( $signature_repository );
-		$settings_page  = new SettingsPage( $storage_manager );
+		// Three React-mounting pages, all backed by the same admin
+		// bundle (assets/admin/src/main.tsx). The PHP class only
+		// changes the `page` key in the bootstrap config so the
+		// React app picks the right view.
+		$signatures_page = new AdminAppPage( 'signatures', CapabilitiesInstaller::CAP_USE );
+		$templates_page  = new AdminAppPage( 'templates', CapabilitiesInstaller::CAP_USE );
+		$settings_page   = new AdminAppPage( 'settings', CapabilitiesInstaller::CAP_MANAGE_STORAGE );
 
-		$admin_menu = new AdminMenu( $dashboard_page, $editor_page, $settings_page );
+		// Editor is its own iframe-host page (different React bundle).
+		$editor_page = new EditorPage( $signature_repository );
+
+		$admin_menu = new AdminMenu( $signatures_page, $templates_page, $settings_page, $editor_page );
 		$admin_menu->boot();
 	}
 

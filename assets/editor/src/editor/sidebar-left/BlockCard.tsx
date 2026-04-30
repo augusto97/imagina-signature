@@ -30,8 +30,6 @@ export const BlockCard: FC<Props> = ({ type, label, icon: Icon }) => {
 
   const handleClick = () => {
     const definition = getBlockDefinition(type);
-    // create() returns the registered concrete Block subtype but the
-    // type-erased registry surface widens it to BlockBase; cast back.
     if (definition) addBlock(definition.create() as Block);
   };
 
@@ -39,14 +37,14 @@ export const BlockCard: FC<Props> = ({ type, label, icon: Icon }) => {
     <button
       ref={setNodeRef}
       type="button"
-      className="flex cursor-grab flex-col items-center gap-1 rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-3 text-xs text-[var(--text-primary)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)] active:cursor-grabbing"
-      style={{ opacity: isDragging ? 0.5 : 1 }}
+      className="group flex aspect-[4/3] cursor-grab flex-col items-center justify-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-2 py-3 text-[11px] font-medium text-[var(--text-secondary)] transition-all duration-150 hover:-translate-y-px hover:border-[var(--accent)] hover:bg-[var(--bg-selected)] hover:text-[var(--accent)] hover:shadow-sm active:cursor-grabbing"
+      style={{ opacity: isDragging ? 0.4 : 1 }}
       onClick={handleClick}
       {...attributes}
       {...listeners}
     >
-      <Icon size={20} />
-      <span>{__(label)}</span>
+      <Icon size={20} strokeWidth={1.6} className="text-[var(--text-secondary)] transition-colors group-hover:text-[var(--accent)]" />
+      <span className="text-[11px]">{__(label)}</span>
     </button>
   );
 };
