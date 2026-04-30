@@ -9,32 +9,39 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Admin;
 
-use ImaginaSignatures\Setup\CapabilitiesInstaller;
+use ImaginaSignatures\Api\Controllers\AdminAppController;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Renders the React admin app for one of the three "pages" we expose
- * in the wp-admin menu (Signatures / Templates / Settings).
+ * Renders the admin React app via a same-origin iframe.
  *
- * The PHP side does three things:
- *   1. Hides the wp-admin chrome with inline CSS so the React app can
- *      take over the viewport (similar to {@see Pages\EditorPage}).
- *   2. Injects an `IMGSIG_ADMIN_CONFIG` global with REST nonce, user
- *      info, capability map, URLs to navigate between pages, and the
- *      "page" key so the React app knows which view to render.
- *   3. Outputs the mount point and loads `build/admin.js` / `admin.css`.
+ * The wp-admin page itself only outputs:
+ *   1. A small CSS rule that hides wp-admin chrome so the iframe
+ *      can take the full viewport.
+ *   2. An `<iframe>` pointing at the
+ *      {@see \ImaginaSignatures\Api\Controllers\AdminAppController}
+ *      REST endpoint, signed with a short-lived token.
  *
- * The same PHP class is re-used for all three pages — the wp-admin
- * URL (`?page=imagina-signatures-...`) determines which `page` value
- * the config carries.
+ * Why the iframe? wp-admin auto-loads `forms.css` / `common.css`
+ * which apply default styles to native `<button>` and `<input>`
+ * elements. Even with our Tailwind preflight disabled and
+ * scoped utilities, those rules bleed through and produce the
+ * grey-bordered "WP buttons" inside our React UI. The iframe
+ * lives in its own document — only our `admin.css` is loaded —
+ * so the React app paints clean.
+ *
+ * Capability is checked twice: once here (the wp-admin page
+ * gate) and again in the REST controller when the token is
+ * verified. Same defense-in-depth pattern as
+ * {@see \ImaginaSignatures\Admin\Pages\EditorPage}.
  *
  * @since 1.0.0
  */
 final class AdminAppPage {
 
 	/**
-	 * Page key (one of `signatures` / `templates` / `settings`).
+	 * Page key passed to the React app (signatures / templates / settings).
 	 *
 	 * @var string
 	 */
@@ -57,8 +64,7 @@ final class AdminAppPage {
 	}
 
 	/**
-	 * Renders the page. Outputs the mount node, the bootstrap config
-	 * blob, and the bundle `<script>` / `<link>` tags.
+	 * Renders the iframe host.
 	 *
 	 * @since 1.0.0
 	 *
@@ -71,36 +77,13 @@ final class AdminAppPage {
 			);
 		}
 
-		$user_id = get_current_user_id();
+		$user_id    = get_current_user_id();
+		$token      = AdminAppController::mint_token( $user_id, $this->page );
+		$iframe_url = add_query_arg(
+			[ 'token' => $token ],
+			rest_url( 'imagina-signatures/v1/admin/app' )
+		);
 
-		$config = [
-			'page'         => $this->page,
-			'userId'       => $user_id,
-			'capabilities' => [
-				'use'              => current_user_can( CapabilitiesInstaller::CAP_USE ),
-				'manage_templates' => current_user_can( CapabilitiesInstaller::CAP_MANAGE_TEMPLATES ),
-				'manage_storage'   => current_user_can( CapabilitiesInstaller::CAP_MANAGE_STORAGE ),
-			],
-			'apiBase'      => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),
-			'restNonce'    => wp_create_nonce( 'wp_rest' ),
-			'locale'       => get_user_locale( $user_id ),
-			'wpAdminUrl'   => esc_url_raw( admin_url() ),
-			'urls'         => [
-				'signatures' => esc_url_raw( admin_url( 'admin.php?page=' . AdminMenu::MENU_SLUG ) ),
-				'templates'  => esc_url_raw( admin_url( 'admin.php?page=' . AdminMenu::TEMPLATES_SLUG ) ),
-				'settings'   => esc_url_raw( admin_url( 'admin.php?page=' . AdminMenu::SETTINGS_SLUG ) ),
-				'editor'     => esc_url_raw(
-					admin_url( 'admin.php?page=' . AdminMenu::EDITOR_SLUG . '&id={id}' )
-				),
-			],
-		];
-
-		$admin_js    = esc_url( plugins_url( 'build/admin.js', IMGSIG_FILE ) );
-		$admin_css   = esc_url( plugins_url( 'build/admin.css', IMGSIG_FILE ) );
-		$config_json = (string) wp_json_encode( $config );
-
-		// Hide wp-admin chrome so the React app can take over the
-		// viewport. Same trick as the editor iframe page.
 		?>
 		<style>
 			#wpadminbar,
@@ -112,10 +95,11 @@ final class AdminAppPage {
 			#wpbody-content { margin: 0 !important; padding: 0 !important; }
 			html, body { background: #f7f8fa !important; overflow: hidden; }
 		</style>
-		<link rel="stylesheet" href="<?php echo esc_url( $admin_css ); ?>">
-		<div id="imagina-admin-root"></div>
-		<script>window.IMGSIG_ADMIN_CONFIG = <?php echo $config_json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;</script>
-		<script type="module" src="<?php echo esc_url( $admin_js ); ?>"></script>
+		<iframe
+			src="<?php echo esc_url( $iframe_url ); ?>"
+			style="width:100vw;height:100vh;border:0;position:fixed;inset:0;z-index:100000;background:#f7f8fa;"
+			title="<?php echo esc_attr__( 'Imagina Signatures', 'imagina-signatures' ); ?>"
+		></iframe>
 		<?php
 	}
 }

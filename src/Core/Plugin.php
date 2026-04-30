@@ -13,6 +13,7 @@ use ImaginaSignatures\Admin\AdminAppPage;
 use ImaginaSignatures\Admin\AdminMenu;
 use ImaginaSignatures\Admin\Pages\EditorPage;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
+use ImaginaSignatures\Api\Controllers\AdminAppController;
 use ImaginaSignatures\Api\Controllers\AssetsController;
 use ImaginaSignatures\Api\Controllers\EditorIframeController;
 use ImaginaSignatures\Api\Controllers\MeController;
@@ -184,6 +185,7 @@ final class Plugin {
 				$this->container->make( UploadController::class ),
 				$this->container->make( EditorIframeController::class ),
 				$this->container->make( AssetsController::class ),
+				$this->container->make( AdminAppController::class ),
 			]
 		);
 		$router->register();
