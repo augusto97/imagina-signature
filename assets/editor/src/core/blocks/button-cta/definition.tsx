@@ -78,8 +78,24 @@ function compile(block: ButtonCtaBlock, _ctx: CompileContext): string {
   const safeLabel = String(block.label).replace(/[<>&]/g, (c) =>
     c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&amp;',
   );
-  // Sprint 9 will inject a VML fallback for Outlook bullet-proof buttons.
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><a href="${block.href}" style="display:inline-block;padding:12px 24px;background:${block.background_color};color:${block.text_color};text-decoration:none;border-radius:${block.border_radius}px;font-family:Arial,sans-serif;font-weight:600;font-size:14px">${safeLabel}</a></td></tr></table>`;
+  const safeHref = String(block.href).replace(/"/g, '&quot;');
+
+  // Bullet-proof button: Outlook desktop (uses Microsoft Word's render
+  // engine, no border-radius / no padding on <a>) sees a VML <v:roundrect>
+  // sized to ~200x40 with the same background/text. Every other client
+  // ignores the conditional and renders the regular CSS <a> below.
+  // Reference: https://www.caniemail.com (round buttons in Outlook).
+  const vmlButton =
+    `<!--[if mso]>
+<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${safeHref}" style="height:40px;v-text-anchor:middle;width:200px;" arcsize="${Math.round((block.border_radius / 40) * 100)}%" stroke="f" fillcolor="${block.background_color}">
+<w:anchorlock/>
+<center style="color:${block.text_color};font-family:Arial,sans-serif;font-size:14px;font-weight:600;">${safeLabel}</center>
+</v:roundrect>
+<![endif]-->`;
+
+  const cssButton = `<!--[if !mso]><!-- --><a href="${safeHref}" style="display:inline-block;padding:12px 24px;background:${block.background_color};color:${block.text_color};text-decoration:none;border-radius:${block.border_radius}px;font-family:Arial,sans-serif;font-weight:600;font-size:14px">${safeLabel}</a><!--<![endif]-->`;
+
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}">${vmlButton}${cssButton}</td></tr></table>`;
 }
 
 const definition: BlockDefinition<ButtonCtaBlock> = {

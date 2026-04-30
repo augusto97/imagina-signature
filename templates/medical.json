@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "meta": { "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z", "editor_version": "1.0.0" },
+  "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Arial, sans-serif", "font_size": 14, "text_color": "#1e3a8a", "link_color": "#1e40af" },
+  "variables": {},
+  "blocks": [
+    { "id": "name", "type": "heading", "content": "Dr. Maria Hernandez, MD", "style": { "font_family": "Arial, sans-serif", "font_size": 17, "font_weight": 700, "color": "#1e3a8a", "line_height": 1.2, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 } },
+    { "id": "title", "type": "text", "content": "Internal Medicine · Lic. #MD-12345", "style": { "font_family": "Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569", "line_height": 1.4, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
+    { "id": "contact", "type": "contact_row", "rows": [ { "icon": "phone", "label": "Reception: +1 555 700 8000", "href": "tel:+15557008000" }, { "icon": "email", "label": "appointments@clinic.example", "href": "mailto:appointments@clinic.example" } ], "style": { "font_family": "Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569" }, "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 } },
+    { "id": "disclaimer", "type": "disclaimer", "content": "CONFIDENTIAL: This message may contain protected health information. If you are not the intended recipient, delete this message immediately.", "style": { "font_family": "Arial, sans-serif", "font_size": 10, "font_weight": 400, "color": "#94a3b8", "line_height": 1.4 }, "padding": { "top": 12, "right": 0, "bottom": 0, "left": 0 } }
+  ]
+}

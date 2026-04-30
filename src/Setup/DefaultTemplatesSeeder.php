@@ -50,6 +50,54 @@ final class DefaultTemplatesSeeder {
 			'sort_order'  => 20,
 			'description' => 'Serif typography with a short rule.',
 		],
+		'sales-active'      => [
+			'name'        => 'Sales Active',
+			'category'    => 'sales',
+			'sort_order'  => 30,
+			'description' => 'Conversion-focused with a CTA button.',
+		],
+		'medical'           => [
+			'name'        => 'Medical',
+			'category'    => 'professional',
+			'sort_order'  => 40,
+			'description' => 'Professional credentials with a confidentiality disclaimer.',
+		],
+		'legal'             => [
+			'name'        => 'Legal',
+			'category'    => 'professional',
+			'sort_order'  => 50,
+			'description' => 'Serif type with a long privilege disclaimer.',
+		],
+		'creative'          => [
+			'name'        => 'Creative',
+			'category'    => 'creative',
+			'sort_order'  => 60,
+			'description' => 'Vibrant accent colours and social icons.',
+		],
+		'developer'         => [
+			'name'        => 'Developer',
+			'category'    => 'creative',
+			'sort_order'  => 70,
+			'description' => 'Monospace type with a GitHub link.',
+		],
+		'tech-startup'      => [
+			'name'        => 'Tech Startup',
+			'category'    => 'sales',
+			'sort_order'  => 80,
+			'description' => 'Modern type with a product CTA.',
+		],
+		'consultant'        => [
+			'name'        => 'Consultant',
+			'category'    => 'professional',
+			'sort_order'  => 90,
+			'description' => 'Credentials front-and-centre with LinkedIn.',
+		],
+		'e-commerce'        => [
+			'name'        => 'E-commerce',
+			'category'    => 'sales',
+			'sort_order'  => 100,
+			'description' => 'Shop CTA + social icons for storefront teams.',
+		],
 	];
 
 	/**

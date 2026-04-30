@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "meta": { "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z", "editor_version": "1.0.0" },
+  "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Arial, sans-serif", "font_size": 14, "text_color": "#0f172a", "link_color": "#0f766e" },
+  "variables": {},
+  "blocks": [
+    { "id": "name", "type": "heading", "content": "Daniel Park", "style": { "font_family": "Arial, sans-serif", "font_size": 18, "font_weight": 700, "color": "#0f172a", "line_height": 1.2, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 } },
+    { "id": "title", "type": "text", "content": "Independent Strategy Consultant · MBA, PMP", "style": { "font_family": "Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569", "line_height": 1.4, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
+    { "id": "social", "type": "social_icons", "networks": [ { "platform": "linkedin", "url": "https://linkedin.com/in/daniel" } ], "icon_size": 24, "gap": 0, "color": "#0a66c2", "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
+    { "id": "contact", "type": "contact_row", "rows": [ { "icon": "email", "label": "daniel@parkconsulting.example", "href": "mailto:daniel@parkconsulting.example" }, { "icon": "phone", "label": "+1 555 222 1100", "href": "tel:+15552221100" } ], "style": { "font_family": "Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569" }, "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 } }
+  ]
+}

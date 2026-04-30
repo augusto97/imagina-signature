@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "meta": { "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z", "editor_version": "1.0.0" },
+  "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Arial, sans-serif", "font_size": 14, "text_color": "#0f172a", "link_color": "#f97316" },
+  "variables": {},
+  "blocks": [
+    { "id": "name", "type": "heading", "content": "Lisa Tan", "style": { "font_family": "Arial, sans-serif", "font_size": 17, "font_weight": 700, "color": "#0f172a", "line_height": 1.2, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 } },
+    { "id": "title", "type": "text", "content": "Customer Care · The Coffee Shop", "style": { "font_family": "Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569", "line_height": 1.4, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 6, "left": 0 } },
+    { "id": "cta", "type": "button_cta", "label": "Shop the new collection", "href": "https://shop.example", "background_color": "#f97316", "text_color": "#ffffff", "border_radius": 999, "padding": { "top": 4, "right": 0, "bottom": 8, "left": 0 } },
+    { "id": "social", "type": "social_icons", "networks": [ { "platform": "instagram", "url": "https://instagram.com/shop" }, { "platform": "facebook", "url": "https://facebook.com/shop" } ], "icon_size": 24, "gap": 8, "color": "#f97316", "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
+    { "id": "contact", "type": "contact_row", "rows": [ { "icon": "email", "label": "support@shop.example", "href": "mailto:support@shop.example" } ], "style": { "font_family": "Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569" }, "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 } }
+  ]
+}

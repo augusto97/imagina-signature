@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "meta": { "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z", "editor_version": "1.0.0" },
+  "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "\"Courier New\", Courier, monospace", "font_size": 13, "text_color": "#1f2937", "link_color": "#0d9488" },
+  "variables": {},
+  "blocks": [
+    { "id": "name", "type": "heading", "content": "$ jamie.dev", "style": { "font_family": "\"Courier New\", Courier, monospace", "font_size": 16, "font_weight": 700, "color": "#1f2937", "line_height": 1.2, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 } },
+    { "id": "title", "type": "text", "content": "Senior Backend Engineer · OpenSource Co.", "style": { "font_family": "\"Courier New\", Courier, monospace", "font_size": 12, "font_weight": 400, "color": "#4b5563", "line_height": 1.4, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
+    { "id": "contact", "type": "contact_row", "rows": [ { "icon": "email", "label": "jamie@dev.example", "href": "mailto:jamie@dev.example" }, { "icon": "web", "label": "github.com/jamie", "href": "https://github.com/jamie" } ], "style": { "font_family": "\"Courier New\", Courier, monospace", "font_size": 12, "font_weight": 400, "color": "#4b5563" }, "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 } }
+  ]
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Editor guide — Imagina Signatures</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body { font-family: -apple-system, sans-serif; line-height: 1.6; color: #111; max-width: 720px; margin: 40px auto; padding: 0 20px; }
+  h1 { border-bottom: 2px solid #1d4ed8; padding-bottom: 8px; }
+  kbd { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9em; border: 1px solid #d1d5db; }
+  a { color: #1d4ed8; }
+</style>
+</head>
+<body>
+<p><a href="index.html">← Documentation</a></p>
+<h1>Editor guide</h1>
+
+<h2>Adding blocks</h2>
+<p>Click any block in the left sidebar to append it at the end of your signature, or drag it onto the canvas to drop it at a specific position.</p>
+
+<h2>Editing</h2>
+<p>Click a block on the canvas to select it. The right sidebar swaps to show that block's properties (text, colour, padding, etc.). Editing happens in the sidebar — never directly on the canvas — so cursor and selection behave predictably.</p>
+
+<h2>Reordering and deleting</h2>
+<p>The floating toolbar above each selected block has duplicate, drag, and delete buttons. You can also drag any block to a new position.</p>
+
+<h2>Keyboard shortcuts</h2>
+<ul>
+  <li><kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Z</kbd> — Undo</li>
+  <li><kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> — Redo</li>
+  <li><kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>D</kbd> — Duplicate selected block</li>
+  <li><kbd>Backspace</kbd> / <kbd>Delete</kbd> — Delete selected block</li>
+  <li><kbd>Esc</kbd> — Clear selection</li>
+</ul>
+
+<h2>Saving</h2>
+<p>Changes auto-save 1.5 seconds after you stop editing. The topbar shows the current status: <em>Saved</em>, <em>Saving…</em>, or <em>Unsaved changes</em>.</p>
+
+<h2>Exporting</h2>
+<p>Click <strong>Export HTML</strong> in the topbar. The compiler runs and shows the email-safe HTML alongside any warnings (Gmail clipping, missing alt attributes, etc.). Use <strong>Copy HTML</strong> to put it on the clipboard, or <strong>Download .html</strong> to save it as a file.</p>
+
+<h2>Preview</h2>
+<p>Click <strong>Preview</strong> to see the signature rendered the way Gmail / Outlook / Apple Mail approximately render it. Real client testing still belongs in the actual mail client.</p>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "meta": { "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z", "editor_version": "1.0.0" },
+  "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Georgia, serif", "font_size": 14, "text_color": "#1a1a1a", "link_color": "#3b3b3b" },
+  "variables": {},
+  "blocks": [
+    { "id": "name", "type": "heading", "content": "Robert Whitaker, Esq.", "style": { "font_family": "Georgia, serif", "font_size": 17, "font_weight": 700, "color": "#1a1a1a", "line_height": 1.2, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 } },
+    { "id": "title", "type": "text", "content": "Partner · Whitaker & Associates LLP", "style": { "font_family": "Georgia, serif", "font_size": 13, "font_weight": 400, "color": "#3b3b3b", "line_height": 1.4, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
+    { "id": "divider", "type": "divider", "border": { "width": 1, "color": "#cbd5e1", "style": "solid" }, "width_percent": 100, "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
+    { "id": "contact", "type": "contact_row", "rows": [ { "icon": "email", "label": "rwhitaker@example.law", "href": "mailto:rwhitaker@example.law" }, { "icon": "phone", "label": "+1 555 444 8888", "href": "tel:+15554448888" } ], "style": { "font_family": "Georgia, serif", "font_size": 13, "font_weight": 400, "color": "#3b3b3b" }, "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 } },
+    { "id": "disclaimer", "type": "disclaimer", "content": "ATTORNEY-CLIENT PRIVILEGE: This email and any attachments may contain privileged or confidential information intended solely for the named recipient. Unauthorized review, use, disclosure, or distribution is prohibited. If you are not the intended recipient, please notify the sender by reply email and destroy all copies of the original.", "style": { "font_family": "Georgia, serif", "font_size": 9, "font_weight": 400, "color": "#94a3b8", "line_height": 1.4 }, "padding": { "top": 12, "right": 0, "bottom": 0, "left": 0 } }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "meta": { "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z", "editor_version": "1.0.0" },
+  "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Arial, sans-serif", "font_size": 14, "text_color": "#0f172a", "link_color": "#dc2626" },
+  "variables": {},
+  "blocks": [
+    { "id": "name", "type": "heading", "content": "Alex Rivera", "style": { "font_family": "Arial, sans-serif", "font_size": 18, "font_weight": 700, "color": "#0f172a", "line_height": 1.2, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 } },
+    { "id": "title", "type": "text", "content": "Senior Account Executive · ACME", "style": { "font_family": "Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569", "line_height": 1.4, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
+    { "id": "cta", "type": "button_cta", "label": "Book a 15-min call", "href": "https://cal.example.com/alex", "background_color": "#dc2626", "text_color": "#ffffff", "border_radius": 4, "padding": { "top": 4, "right": 0, "bottom": 8, "left": 0 } },
+    { "id": "contact", "type": "contact_row", "rows": [ { "icon": "email", "label": "alex@acme.com", "href": "mailto:alex@acme.com" }, { "icon": "phone", "label": "+1 555 200 3000", "href": "tel:+15552003000" } ], "style": { "font_family": "Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569" }, "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 } }
+  ]
+}
