@@ -1,13 +1,16 @@
 import { useEffect, type FC } from 'react';
 import { EditorShell } from '@/editor/EditorShell';
 import { PostMessageBridge } from '@/bridge/postMessageBridge';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import { Toaster } from '@/components/shared/Toaster';
+import { useAutosave } from '@/hooks/useAutosave';
 
 /**
  * App root.
  *
- * Owns the lifetime of the postMessage bridge (one per app instance)
- * and signals "ready" to the host so wp-admin can drop its loading
- * placeholder.
+ * Wraps the editor in an ErrorBoundary, mounts the toast layer, and
+ * runs the autosave hook. Owns the postMessage bridge lifetime and
+ * signals `ready` to the host on mount.
  */
 export const App: FC = () => {
   useEffect(() => {
@@ -16,5 +19,12 @@ export const App: FC = () => {
     return () => bridge.destroy();
   }, []);
 
-  return <EditorShell />;
+  useAutosave();
+
+  return (
+    <ErrorBoundary>
+      <EditorShell />
+      <Toaster />
+    </ErrorBoundary>
+  );
 };

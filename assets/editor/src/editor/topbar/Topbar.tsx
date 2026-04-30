@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { Undo2, Redo2, LayoutTemplate, Code2 } from 'lucide-react';
+import { Undo2, Redo2, LayoutTemplate, Code2, Eye } from 'lucide-react';
 import { useEditorStore } from '@/stores/editorStore';
 import { useHistoryStore } from '@/stores/historyStore';
 import { useSchemaStore } from '@/stores/schemaStore';
@@ -70,6 +70,14 @@ export const Topbar: FC<TopbarProps> = ({ className }) => {
         <span aria-live="polite" className="text-xs text-[var(--text-secondary)]">
           {status}
         </span>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 rounded border border-[var(--border-default)] px-3 py-1 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+          onClick={() => openModal('preview')}
+        >
+          <Eye size={14} />
+          {__('Preview')}
+        </button>
         <button
           type="button"
           className="inline-flex items-center gap-1 rounded bg-[var(--accent)] px-3 py-1 text-xs text-white hover:bg-[var(--accent-hover)]"

@@ -10,6 +10,7 @@ import { RightSidebar } from './sidebar-right/RightSidebar';
 import { Canvas } from './canvas/Canvas';
 import { TemplatePicker } from './modals/TemplatePicker';
 import { ExportModal } from './modals/ExportModal';
+import { PreviewModal } from './modals/PreviewModal';
 
 /**
  * Top-level editor layout — owns the DndContext that the library
@@ -55,6 +56,7 @@ export const EditorShell: FC = () => {
       </DndContext>
       <TemplatePicker />
       <ExportModal />
+      <PreviewModal />
     </div>
   );
 };
