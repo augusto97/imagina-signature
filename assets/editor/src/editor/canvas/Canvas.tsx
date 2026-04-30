@@ -1,22 +1,20 @@
 import type { FC } from 'react';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { __ } from '@/i18n/helpers';
-import { BlockRenderer } from './BlockRenderer';
-import { SelectionOverlay } from './SelectionOverlay';
+import { SortableBlock } from './SortableBlock';
 import '@/core/blocks';
 
 /**
- * Editor canvas — renders the schema's block list as live email-safe
- * markup, layered with selection / hover overlays.
- *
- * Click a block to select; click empty canvas to clear selection.
- * Drag-and-drop arrives in Sprint 6.
+ * Editor canvas — renders the schema's block list inside a
+ * SortableContext so each block is reorderable. The DndContext
+ * itself lives one level up in {@link EditorShell} so the block
+ * library can dispatch drops into the same context.
  */
 export const Canvas: FC = () => {
   const schema = useSchemaStore((s) => s.schema);
-
-  const { selectedBlockId, hoveredBlockId, select, hover, clearSelection } = useSelectionStore();
+  const clearSelection = useSelectionStore((s) => s.clearSelection);
 
   const canvasStyle: React.CSSProperties = {
     width: schema.canvas.width,
@@ -36,24 +34,21 @@ export const Canvas: FC = () => {
         className="is-canvas-root border border-[var(--border-default)]"
         style={canvasStyle}
         onClick={(e) => e.stopPropagation()}
+        id="canvas-empty"
       >
         {schema.blocks.length === 0 ? (
           <p className="text-center text-sm text-[var(--text-muted)]">
             {__('Drop blocks from the left sidebar to start your signature.')}
           </p>
         ) : (
-          schema.blocks.map((block) => (
-            <SelectionOverlay
-              key={block.id}
-              selected={block.id === selectedBlockId}
-              hovered={block.id === hoveredBlockId}
-              onSelect={() => select(block.id)}
-              onHoverEnter={() => hover(block.id)}
-              onHoverLeave={() => hover(null)}
-            >
-              <BlockRenderer block={block} />
-            </SelectionOverlay>
-          ))
+          <SortableContext
+            items={schema.blocks.map((b) => b.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {schema.blocks.map((block) => (
+              <SortableBlock key={block.id} block={block} />
+            ))}
+          </SortableContext>
         )}
       </div>
     </main>
