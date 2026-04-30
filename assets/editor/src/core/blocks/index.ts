@@ -1,14 +1,19 @@
 /**
- * Side-effect registration of every shipped block.
+ * Side-effect registration of every shipped block (CLAUDE.md §10.2).
  *
  * Importing this barrel registers each definition with the
- * registry, so the rest of the app (BlockRenderer, BlockLibrary)
- * can resolve types by name.
+ * registry in registry.ts so the rest of the app
+ * (BlockRenderer, BlockLibrary) can resolve types by name.
  */
 
 import './text/definition';
+import './heading/definition';
 import './image/definition';
+import './avatar/definition';
 import './divider/definition';
-
-// Sprint 8 will append: heading, avatar, spacer, social_icons,
-// contact_row, button_cta, disclaimer, container.
+import './spacer/definition';
+import './social-icons/definition';
+import './contact-row/definition';
+import './button-cta/definition';
+import './disclaimer/definition';
+import './container/definition';
