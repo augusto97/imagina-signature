@@ -1,0 +1,10 @@
+# Release branch — whitelist approach.
+# Only the README and the versioned ZIPs belong here. Everything else
+# (vendor/, node_modules/, source, build artifacts, dev configs) is
+# ignored so accidental `git add -A` after a dev install doesn't
+# pollute this branch.
+
+*
+!.gitignore
+!README.md
+!*.zip
