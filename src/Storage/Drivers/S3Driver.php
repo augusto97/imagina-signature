@@ -427,4 +427,32 @@ final class S3Driver implements StorageDriverInterface {
 			]
 		);
 	}
+
+	/**
+	 * @inheritDoc
+	 *
+	 * Issues a HEAD against the object. 2xx / 3xx counts as exists;
+	 * any non-2xx HTTP response or transport failure (which the
+	 * S3Client surfaces as a StorageException) is treated as
+	 * "missing".
+	 *
+	 * @param string $key Object key.
+	 *
+	 * @return bool
+	 */
+	public function verify_object_exists( string $key ): bool {
+		if ( '' === $key || ! $this->is_configured() ) {
+			return false;
+		}
+
+		try {
+			$response = $this->client->head_object( $key );
+		} catch ( StorageException $e ) {
+			unset( $e );
+			return false;
+		}
+
+		$code = (int) $response['code'];
+		return $code >= 200 && $code < 400;
+	}
 }

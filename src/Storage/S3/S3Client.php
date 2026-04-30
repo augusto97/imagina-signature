@@ -91,6 +91,27 @@ final class S3Client {
 	}
 
 	/**
+	 * HEADs a single object, used to verify existence after a presigned PUT.
+	 *
+	 * Returns the response array — callers interpret a 200 as
+	 * "exists", anything else as "doesn't" (or "we can't tell").
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $key Object key.
+	 *
+	 * @return array{code: int, body: string, headers: array<string, string>}
+	 *
+	 * @throws StorageException On HTTP transport failure.
+	 */
+	public function head_object( string $key ): array {
+		$url     = $this->object_url( $key );
+		$headers = $this->signer->sign_request( 'HEAD', $url );
+
+		return $this->execute( 'HEAD', $url, $headers );
+	}
+
+	/**
 	 * Deletes a single object.
 	 *
 	 * Returns the response array — callers should treat 204 / 404 as

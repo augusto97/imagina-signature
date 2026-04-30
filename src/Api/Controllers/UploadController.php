@@ -348,11 +348,12 @@ final class UploadController extends BaseController {
 	 * `POST /upload/finalize` — registers the asset row after a
 	 * browser-direct PUT to S3.
 	 *
-	 * The server trusts the metadata sent by the browser (mime, size,
-	 * hash, dimensions) since it never saw the bytes; the storage
-	 * backend is the source of truth. A future hardening pass can
-	 * add a HEAD probe here to verify the object actually exists at
-	 * the reported key.
+	 * The server never saw the bytes, so it has to trust most of the
+	 * metadata (mime, size, hash, dimensions) the browser sends. As
+	 * defense-in-depth we probe the storage backend with a HEAD
+	 * before inserting the row: this catches both "browser claims
+	 * upload succeeded but the PUT actually 4xx'd" and "key was
+	 * forged from a presign that was never used".
 	 *
 	 * @since 1.0.0
 	 *
@@ -393,6 +394,17 @@ final class UploadController extends BaseController {
 			$driver = $this->storage->active_driver();
 		} catch ( StorageException $e ) {
 			return $this->exception_to_wp_error( $e );
+		}
+
+		// Defense-in-depth: confirm the bytes actually landed before
+		// we register the row. Caught here (not by exception) because
+		// verify_object_exists() never throws.
+		if ( ! $driver->verify_object_exists( $key ) ) {
+			return new \WP_Error(
+				'imgsig_upload_not_found',
+				__( 'No object exists at the reported storage key. Was the upload completed?', 'imagina-signatures' ),
+				[ 'status' => 422 ]
+			);
 		}
 
 		$asset = $this->assets->insert(

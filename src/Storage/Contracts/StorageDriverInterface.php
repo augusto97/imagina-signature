@@ -139,4 +139,26 @@ interface StorageDriverInterface {
 	 * @return TestResult
 	 */
 	public function test_connection(): TestResult;
+
+	/**
+	 * Confirms that an object already exists at `$key`.
+	 *
+	 * Called by the upload finalize flow to check that a browser-
+	 * direct PUT (presigned) actually landed before the asset row is
+	 * inserted into `imgsig_assets`. Drivers that ingest server-side
+	 * (e.g. {@see \ImaginaSignatures\Storage\Drivers\MediaLibraryDriver})
+	 * may treat this as a no-op since the upload is synchronous and
+	 * the row insertion happens in the same call as the write.
+	 *
+	 * Returns false on any non-2xx / non-3xx HTTP response or
+	 * transport failure — never throws so callers have a single
+	 * decision point.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $key Storage key to probe.
+	 *
+	 * @return bool True when the object is present.
+	 */
+	public function verify_object_exists( string $key ): bool;
 }

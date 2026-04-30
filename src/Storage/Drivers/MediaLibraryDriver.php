@@ -280,6 +280,27 @@ final class MediaLibraryDriver implements StorageDriverInterface {
 	}
 
 	/**
+	 * @inheritDoc
+	 *
+	 * For Media Library the "key" is an attachment ID. Existence is
+	 * cheap to verify — `wp_attachment_url()` returns false when the
+	 * attachment doesn't exist.
+	 *
+	 * @param string $key Attachment ID, stringified.
+	 *
+	 * @return bool
+	 */
+	public function verify_object_exists( string $key ): bool {
+		$attachment_id = (int) $key;
+		if ( $attachment_id <= 0 ) {
+			return false;
+		}
+
+		$url = wp_get_attachment_url( $attachment_id );
+		return is_string( $url ) && '' !== $url;
+	}
+
+	/**
 	 * Returns a closure that rewrites `wp_upload_dir()` to land inside the
 	 * `imagina-signatures/{user_id}/` subdirectory.
 	 *
