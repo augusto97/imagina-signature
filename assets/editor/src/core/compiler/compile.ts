@@ -4,6 +4,7 @@ import { wrapInEmailShell } from './table-builder';
 import { applyOutlookFixes } from './outlook-fixes';
 import { minifyHtml } from './minify';
 import { validateEmailHtml } from './validate';
+import { substituteVariables } from './variables';
 
 export interface CompileResult {
   html: string;
@@ -49,12 +50,20 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
   const concatenated = blockChunks.join('\n');
   const shelled = wrapInEmailShell(concatenated, schema.canvas);
   const withOutlookFixes = applyOutlookFixes(shelled);
-  const minified = minifyHtml(withOutlookFixes);
+
+  // Variable substitution runs AFTER block compile so any string
+  // field that ended up in the HTML (content, alt, href, label,
+  // button text) gets its `{{name}}` placeholders resolved.
+  const { html: substituted, missing } = substituteVariables(withOutlookFixes, schema.variables);
+  const minified = minifyHtml(substituted);
   const validationWarnings = validateEmailHtml(minified);
+  const variableWarnings = missing.map(
+    (name) => `Variable "{{${name}}}" referenced but not defined; left as literal text.`,
+  );
 
   return {
     html: minified,
-    warnings: [...ctx.warnings, ...validationWarnings],
+    warnings: [...ctx.warnings, ...variableWarnings, ...validationWarnings],
     size: new Blob([minified]).size,
   };
 }

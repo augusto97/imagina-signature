@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.10
+Stable tag: 1.0.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,14 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.11 =
+* Track 1 — Premium feature parity round 1. Five additions that close the gap with HiHello / WiseStamp / Newoldstamp on basic capability surface:
+* New **QR Code** block. Encodes any URL / mailto: / tel: / vCard string and renders as a base64 PNG `<img>` (no external CDN, fully email-portable). Custom fg / bg colours via an offscreen canvas. ~5KB gzipped from `qrcode-generator`.
+* New **Banner** block. Promotional image with a click-through link. Defaults to 600px wide (matches canvas), supports border-radius.
+* New **vCard** block. Renders a "Save my contact" button whose `href` is a `data:text/vcard;base64,…` URI built from name / org / title / email / phone / website. Recipients click → contact opens in their address book. Strict RFC 6350 vCard 3.0 output.
+* **Save signature as template** (admin-only). New topbar button visible to users with `imgsig_manage_templates`. POSTs the current schema to `/templates` so admins can seed templates from real content instead of an empty schema.
+* **Variables UI**. The schema's `variables` bag finally has an editor — sits below Typography in the right sidebar (when nothing is selected). Add / rename / remove / copy `{{token}}` to clipboard. Compiler substitutes `{{varname}}` → escaped value at the very end of the pipeline; missing names ship as literal text and surface as compile warnings (no silent data loss).
 
 = 1.0.10 =
 * Container columns are no longer locked to a 50/50 split. New `left_width` field on `ContainerBlock` (percentage 10–90, optional, defaults to 50 for back-compat with rows saved before this field). Renderer + email-safe `compile()` both honour the value, so what you see on the canvas matches what the signature ships. Properties panel gains a Column-widths control: a live preview bar, a 10–90% range slider, and quick-preset buttons (1/4, 1/3, 1/2, 2/3, 3/4) for common ratios like a logo cell + content cell.

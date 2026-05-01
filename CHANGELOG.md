@@ -2,6 +2,24 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.11] — 2026-05-01
+
+### Added — Track 1: premium feature parity round 1
+
+Five additions that close the gap with HiHello / WiseStamp / Newoldstamp on the basic capability surface — none of them require a third-party SaaS or new external service.
+
+- **QR Code block** (`type: 'qr_code'`). Encodes any string — URL, mailto:, tel:, full vCard — and renders as a base64 PNG `<img>` so the email payload is fully self-contained, no external CDN, no upload-on-save round trip. Custom foreground / background colours via an offscreen `<canvas>` because `qrcode-generator`'s built-in `createDataURL` is mono-colour only. ~5KB gzipped from the `qrcode-generator` dependency.
+- **Banner block** (`type: 'banner'`). Promotional image with a click-through link. Different from the existing Image block in defaults (600px wide to match the canvas, 8px vertical padding, lives in the same Content category but with its own Megaphone icon) — gives admins a clear marketing surface without overloading Image.
+- **vCard block** (`type: 'vcard'`). Renders a "Save my contact" link whose `href` is a `data:text/vcard;charset=utf-8;base64,…` URI built from the block's name / organization / title / email / phone / website fields. Strict RFC 6350 vCard 3.0 output (CRLF line endings, escaped delimiters, structured `N:` line). Recipients click → contact opens in Apple Contacts / Outlook / Google Contacts. data: URIs in `href` are widely supported (Gmail web/app, Apple Mail, Outlook 365, Thunderbird); old Outlook may strip them so admins can pair with a QR Code block carrying the same vCard string for full coverage.
+- **"Save signature as template"** (admin-only). New topbar button visible to users holding `imgsig_manage_templates`. POSTs the current schema to `/templates` with user-supplied name / category / description. Closes the loop — admins can now seed real templates from the editor instead of creating empty shells from the admin Templates page.
+- **Variables editor**. The schema's `variables: Record<string, string>` bag finally has a UI: sits in the right sidebar below Typography when nothing is selected. Add / rename / remove pairs, copy the `{{token}}` to clipboard, and the compiler substitutes `{{varname}}` → HTML-escaped value at the very end of the pipeline (post block-compile, before minify, so any string field — content, alt, href, label — gets resolved). Missing names ship as literal text and surface as compile warnings, so a typo can't silently delete content.
+
+### Changed
+
+- Added `qrcode-generator` (~5KB) as a runtime dependency. No external CDN; the lib is bundled into `editor.js`.
+- Editor bundle: `editor.js` 587 KB → 631 KB (gzip 184 KB → 198 KB) — well under the 600 KB gzip target in CLAUDE.md §2.3.
+- `schemaStore` gained `removeVariable(key)` and `renameVariable(old, new)` actions.
+
 ## [1.0.10] — 2026-05-01
 
 ### Added

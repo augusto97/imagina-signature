@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { Undo2, Redo2, LayoutTemplate, Code2, Eye, ArrowLeft, FileSignature } from 'lucide-react';
+import { Undo2, Redo2, LayoutTemplate, Code2, Eye, ArrowLeft, FileSignature, Bookmark } from 'lucide-react';
 import { useEditorStore } from '@/stores/editorStore';
 import { useHistoryStore } from '@/stores/historyStore';
 import { useSchemaStore } from '@/stores/schemaStore';
@@ -113,6 +113,17 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
         <span aria-live="polite" className={cn('text-[12px] font-medium', statusTone)}>
           {status}
         </span>
+        {getConfig().capabilities?.manage_templates && (
+          <button
+            type="button"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-3 text-[12.5px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
+            onClick={() => openModal('save-as-template')}
+            title={__('Save the current canvas as a global template')}
+          >
+            <Bookmark size={14} />
+            {__('Save as template')}
+          </button>
+        )}
         <button
           type="button"
           className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-3 text-[12.5px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"

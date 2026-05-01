@@ -110,6 +110,47 @@ export interface ContainerBlock extends BlockBase {
   children: Block[];
 }
 
+export interface QrCodeBlock extends BlockBase {
+  type: 'qr_code';
+  /** What the QR encodes — typically a URL, but vCard / mailto / tel work too. */
+  data: string;
+  /** Edge length in px in the rendered email. */
+  size: number;
+  /** Foreground (modules) colour. */
+  color: string;
+  /** Background colour. */
+  background_color: string;
+  /** Optional caption rendered below the QR. */
+  caption?: string;
+}
+
+export interface BannerBlock extends BlockBase {
+  type: 'banner';
+  src: string;
+  alt: string;
+  link: string;
+  /** Width in px, capped to the canvas width at compile time. */
+  width: number;
+  border_radius?: number;
+}
+
+export interface VCardBlock extends BlockBase {
+  type: 'vcard';
+  /** The link label rendered in the email (e.g. "Save my contact"). */
+  label: string;
+  /** vCard fields — empty strings just get omitted from the output. */
+  full_name: string;
+  organization: string;
+  title: string;
+  email: string;
+  phone: string;
+  website: string;
+  /** Visual style for the link / button. */
+  background_color: string;
+  text_color: string;
+  border_radius: number;
+}
+
 export type Block =
   | TextBlock
   | HeadingBlock
@@ -121,4 +162,7 @@ export type Block =
   | ContactRowBlock
   | ButtonCtaBlock
   | DisclaimerBlock
-  | ContainerBlock;
+  | ContainerBlock
+  | QrCodeBlock
+  | BannerBlock
+  | VCardBlock;

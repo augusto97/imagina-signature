@@ -5,6 +5,7 @@ import { ColorInput } from './inputs/ColorInput';
 import { DimensionInput } from './inputs/DimensionInput';
 import { FontFamilyInput } from './inputs/FontFamilyInput';
 import { PropertySection } from './sections/PropertySection';
+import { VariablesEditor } from './VariablesEditor';
 
 /**
  * Sidebar contents shown when nothing is selected — controls global
@@ -59,6 +60,8 @@ export const CanvasProperties: FC = () => {
           />
         </div>
       </PropertySection>
+
+      <VariablesEditor />
     </>
   );
 };

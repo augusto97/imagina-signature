@@ -17,3 +17,6 @@ import './contact-row/definition';
 import './button-cta/definition';
 import './disclaimer/definition';
 import './container/definition';
+import './qr-code/definition';
+import './banner/definition';
+import './vcard/definition';

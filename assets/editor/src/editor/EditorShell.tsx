@@ -11,6 +11,8 @@ import { Canvas } from './canvas/Canvas';
 import { TemplatePicker } from './modals/TemplatePicker';
 import { ExportModal } from './modals/ExportModal';
 import { PreviewModal } from './modals/PreviewModal';
+import { SaveAsTemplateModal } from './modals/SaveAsTemplateModal';
+import { useEditorStore } from '@/stores/editorStore';
 
 /**
  * Top-level editor layout — owns the DndContext that the library
@@ -57,6 +59,15 @@ export const EditorShell: FC = () => {
       <TemplatePicker />
       <ExportModal />
       <PreviewModal />
+      <SaveAsTemplateModalHost />
     </div>
+  );
+};
+
+const SaveAsTemplateModalHost: FC = () => {
+  const modal = useEditorStore((s) => s.modal);
+  const closeModal = useEditorStore((s) => s.closeModal);
+  return (
+    <SaveAsTemplateModal open={modal === 'save-as-template'} onClose={closeModal} />
   );
 };

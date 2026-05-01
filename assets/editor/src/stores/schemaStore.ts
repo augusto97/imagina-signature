@@ -43,6 +43,8 @@ interface SchemaState {
 
   updateCanvas: (updates: Partial<CanvasConfig>) => void;
   setVariable: (key: string, value: string) => void;
+  removeVariable: (key: string) => void;
+  renameVariable: (old_key: string, new_key: string) => void;
 }
 
 function bumpUpdatedAt(schema: SignatureSchema): void {
@@ -265,6 +267,26 @@ export const useSchemaStore = create<SchemaState>()(
     setVariable: (key, value) => {
       set((state) => {
         state.schema.variables[key] = value;
+        bumpUpdatedAt(state.schema);
+      });
+    },
+
+    removeVariable: (key) => {
+      set((state) => {
+        delete state.schema.variables[key];
+        bumpUpdatedAt(state.schema);
+      });
+    },
+
+    renameVariable: (old_key, new_key) => {
+      if (old_key === new_key || !new_key) return;
+      set((state) => {
+        if (!(old_key in state.schema.variables)) return;
+        const value = state.schema.variables[old_key];
+        delete state.schema.variables[old_key];
+        if (value !== undefined) {
+          state.schema.variables[new_key] = value;
+        }
         bumpUpdatedAt(state.schema);
       });
     },
