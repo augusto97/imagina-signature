@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.11
+Stable tag: 1.0.12
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,9 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.12 =
+* Track 2 — visual polish round. **Image cropper**: a Crop button on Image and Avatar property panels opens a modal with `react-easy-crop`. Avatar uses a 1:1 round crop, Image uses free-aspect rectangular. Output is a cropped data-URI written back to the block's `src`. **TemplatePicker filtering**: search input + horizontal category chips derived from the loaded templates so admin-added categories show automatically. **Multi-device preview**: PreviewModal gains Desktop (720px) / Tablet (480px) / Mobile (360px) tabs that lock the iframe width, plus an HTML payload-size pill that turns amber when over the 102KB Gmail clipping threshold, and a collapsible compile-warnings section that lists missing variables / alt / width / clip warnings.
 
 = 1.0.11 =
 * Track 1 — Premium feature parity round 1. Five additions that close the gap with HiHello / WiseStamp / Newoldstamp on basic capability surface:

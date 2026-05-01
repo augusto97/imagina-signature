@@ -3,7 +3,7 @@
  * Plugin Name:       Imagina Signatures
  * Plugin URI:        https://github.com/augusto97/imagina-signature
  * Description:       Visual email signature editor for WordPress with an isolated React 18 iframe editor and S3-compatible storage.
- * Version:           1.0.11
+ * Version:           1.0.12
  * Requires at least: 6.0
  * Tested up to:      6.7
  * Requires PHP:      7.4
@@ -34,7 +34,7 @@ defined( 'ABSPATH' ) || exit;
  * -----------------------------------------------------------------------------
  */
 
-define( 'IMGSIG_VERSION', '1.0.11' );
+define( 'IMGSIG_VERSION', '1.0.12' );
 define( 'IMGSIG_FILE', __FILE__ );
 define( 'IMGSIG_PATH', plugin_dir_path( __FILE__ ) );
 define( 'IMGSIG_URL', plugin_dir_url( __FILE__ ) );

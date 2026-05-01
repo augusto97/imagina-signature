@@ -1,8 +1,9 @@
-import type { FC } from 'react';
-import { Image as ImageIcon } from 'lucide-react';
+import { useState, type FC } from 'react';
+import { Image as ImageIcon, Crop } from 'lucide-react';
 import type { ImageBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
+import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: ImageBlock }> = ({ block }) => {
@@ -50,7 +51,10 @@ const Renderer: FC<{ block: ImageBlock }> = ({ block }) => {
 const Properties: FC<{ block: ImageBlock; onChange: (updates: Partial<ImageBlock>) => void }> = ({
   block,
   onChange,
-}) => (
+}) => {
+  const [cropping, setCropping] = useState(false);
+
+  return (
   <div className="space-y-3 text-xs">
     <label className="block">
       <span className="mb-1 block text-[var(--text-secondary)]">{__('Image URL')}</span>
@@ -61,6 +65,15 @@ const Properties: FC<{ block: ImageBlock; onChange: (updates: Partial<ImageBlock
         onChange={(e) => onChange({ src: e.target.value })}
       />
     </label>
+    <button
+      type="button"
+      disabled={!block.src}
+      onClick={() => setCropping(true)}
+      className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-2 text-[12px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      <Crop size={12} />
+      {__('Crop image')}
+    </button>
     <label className="block">
       <span className="mb-1 block text-[var(--text-secondary)]">{__('Alt text')}</span>
       <input
@@ -101,8 +114,19 @@ const Properties: FC<{ block: ImageBlock; onChange: (updates: Partial<ImageBlock
         onChange={(e) => onChange({ link: e.target.value || undefined })}
       />
     </label>
+
+    <ImageCropperModal
+      open={cropping}
+      src={block.src}
+      onCancel={() => setCropping(false)}
+      onConfirm={(croppedDataUrl) => {
+        onChange({ src: croppedDataUrl });
+        setCropping(false);
+      }}
+    />
   </div>
-);
+  );
+};
 
 function compile(block: ImageBlock, _ctx: CompileContext): string {
   const p = block.padding;

@@ -1,10 +1,11 @@
-import type { FC } from 'react';
-import { CircleUserRound } from 'lucide-react';
+import { useState, type FC } from 'react';
+import { CircleUserRound, Crop } from 'lucide-react';
 import type { AvatarBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
+import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: AvatarBlock }> = ({ block }) => {
@@ -39,30 +40,54 @@ const Renderer: FC<{ block: AvatarBlock }> = ({ block }) => {
   );
 };
 
-const Properties: FC<{ block: AvatarBlock; onChange: (u: Partial<AvatarBlock>) => void }> = ({ block, onChange }) => (
-  <div className="space-y-3 text-xs">
-    <label className="block">
-      <span className="mb-1 block text-[var(--text-secondary)]">{__('Image URL')}</span>
-      <input
-        type="url"
-        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
-        value={block.src}
-        onChange={(e) => onChange({ src: e.target.value })}
+const Properties: FC<{ block: AvatarBlock; onChange: (u: Partial<AvatarBlock>) => void }> = ({ block, onChange }) => {
+  const [cropping, setCropping] = useState(false);
+  return (
+    <div className="space-y-3 text-xs">
+      <label className="block">
+        <span className="mb-1 block text-[var(--text-secondary)]">{__('Image URL')}</span>
+        <input
+          type="url"
+          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
+          value={block.src}
+          onChange={(e) => onChange({ src: e.target.value })}
+        />
+      </label>
+      <button
+        type="button"
+        disabled={!block.src}
+        onClick={() => setCropping(true)}
+        className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-2 text-[12px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <Crop size={12} />
+        {__('Crop image')}
+      </button>
+      <label className="block">
+        <span className="mb-1 block text-[var(--text-secondary)]">{__('Alt text')}</span>
+        <input
+          type="text"
+          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
+          value={block.alt}
+          onChange={(e) => onChange({ alt: e.target.value })}
+        />
+      </label>
+      <DimensionInput label={__('Size')} value={block.size} onChange={(v) => onChange({ size: v })} min={32} max={200} />
+      <PaddingInput value={block.padding ?? { top: 0, right: 0, bottom: 0, left: 0 }} onChange={(p) => onChange({ padding: p })} />
+
+      <ImageCropperModal
+        open={cropping}
+        src={block.src}
+        aspect={1}
+        circular
+        onCancel={() => setCropping(false)}
+        onConfirm={(croppedDataUrl) => {
+          onChange({ src: croppedDataUrl });
+          setCropping(false);
+        }}
       />
-    </label>
-    <label className="block">
-      <span className="mb-1 block text-[var(--text-secondary)]">{__('Alt text')}</span>
-      <input
-        type="text"
-        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
-        value={block.alt}
-        onChange={(e) => onChange({ alt: e.target.value })}
-      />
-    </label>
-    <DimensionInput label={__('Size')} value={block.size} onChange={(v) => onChange({ size: v })} min={32} max={200} />
-    <PaddingInput value={block.padding ?? { top: 0, right: 0, bottom: 0, left: 0 }} onChange={(p) => onChange({ padding: p })} />
-  </div>
-);
+    </div>
+  );
+};
 
 function compile(block: AvatarBlock, _ctx: CompileContext): string {
   const p = block.padding;

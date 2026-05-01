@@ -2,6 +2,19 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.12] — 2026-05-01
+
+### Added — Track 2: visual polish
+
+- **Image cropper**. New `ImageCropperModal` (wraps `react-easy-crop`, ~30KB) wired into both Image and Avatar property panels via a "Crop image" button. Avatar opens it locked to 1:1 with a round crop overlay; Image opens it free-aspect rectangular. The cropper renders the chosen region onto an offscreen canvas and writes a data URI back to the block's `src`. Old Outlook builds may strip data URIs — admins can still upload an external URL and paste it instead.
+- **Template picker filtering**. The editor's `TemplatePicker` modal grew a search field that matches against name + description and a horizontal category-chip strip derived from the loaded templates so admin-added categories surface automatically. Templates carry a small uppercase category badge in their card. Per-row hover styling tightened.
+- **Multi-device preview**. `PreviewModal` now exposes Desktop (720px) / Tablet (480px) / Mobile (360px) device presets that lock the iframe width so the user can see how the signature reflows at each breakpoint. The header gains: a payload-size pill that turns amber when the compiled HTML crosses Gmail's 102KB clipping threshold, and a collapsible compile-warnings panel that lists every issue the compiler flagged — missing alt / width / href, undefined `{{variables}}`, oversized images, etc.
+
+### Changed
+
+- Added `react-easy-crop` as a runtime dependency.
+- Editor bundle: 631 KB → 663 KB (gzip 198 KB → 207 KB) — under the 600 KB gzip target.
+
 ## [1.0.11] — 2026-05-01
 
 ### Added — Track 1: premium feature parity round 1
