@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Admin;
 
+use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 
 defined( 'ABSPATH' ) || exit;
@@ -124,20 +125,67 @@ final class EditorAssetEnqueuer {
 	 * @return array<string, mixed>
 	 */
 	private function build_config( int $signature_id ): array {
-		$user_id = get_current_user_id();
+		$user_id   = get_current_user_id();
+		$user      = wp_get_current_user();
+		$site_opts = SiteSettingsController::current_settings();
 
 		return [
-			'signatureId'   => $signature_id,
-			'userId'        => $user_id,
-			'apiBase'       => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),
-			'restNonce'     => wp_create_nonce( 'wp_rest' ),
-			'locale'        => get_user_locale( $user_id ),
-			'pluginUrl'     => esc_url_raw( plugins_url( '', IMGSIG_FILE ) ),
-			'signaturesUrl' => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures' ) ),
-			'capabilities'  => [
+			'signatureId'      => $signature_id,
+			'userId'           => $user_id,
+			'apiBase'          => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),
+			'restNonce'        => wp_create_nonce( 'wp_rest' ),
+			'locale'           => get_user_locale( $user_id ),
+			'pluginUrl'        => esc_url_raw( plugins_url( '', IMGSIG_FILE ) ),
+			'signaturesUrl'    => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures' ) ),
+			'capabilities'     => [
 				'use'              => current_user_can( CapabilitiesInstaller::CAP_USE ),
 				'manage_templates' => current_user_can( CapabilitiesInstaller::CAP_MANAGE_TEMPLATES ),
 			],
+			'systemVariables'  => self::system_variables_for( $user ),
+			'brandPalette'     => $site_opts['brand_palette'],
+			'complianceFooter' => $site_opts['compliance_footer'],
 		];
+	}
+
+	/**
+	 * Build the read-only `wp_*` variables that auto-populate from
+	 * the WordPress user record. Plus a filterable extension hook so
+	 * an admin (or another plugin) can expose custom user_meta keys.
+	 *
+	 * @since 1.0.13
+	 *
+	 * @param \WP_User $user The current user.
+	 *
+	 * @return array<string, string>
+	 */
+	private static function system_variables_for( \WP_User $user ): array {
+		$base = [
+			'wp_display_name' => (string) $user->display_name,
+			'wp_email'        => (string) $user->user_email,
+			'wp_first_name'   => (string) $user->first_name,
+			'wp_last_name'    => (string) $user->last_name,
+			'wp_url'          => (string) $user->user_url,
+		];
+
+		/**
+		 * Filters the read-only system variables surfaced to the
+		 * editor. Add `wp_user_meta` keys here, or expose org-wide
+		 * defaults pulled from a directory sync.
+		 *
+		 * @since 1.0.13
+		 *
+		 * @param array<string, string> $base    Default `wp_*` variables.
+		 * @param int                   $user_id The user the editor is bound to.
+		 */
+		$filtered = apply_filters( 'imgsig/editor/system_variables', $base, $user->ID );
+
+		// Make sure the filter can't smuggle non-strings into the bag.
+		$out = [];
+		foreach ( (array) $filtered as $key => $value ) {
+			if ( is_string( $key ) && ( is_string( $value ) || is_numeric( $value ) ) ) {
+				$out[ $key ] = (string) $value;
+			}
+		}
+		return $out;
 	}
 }

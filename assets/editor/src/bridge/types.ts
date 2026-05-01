@@ -30,4 +30,26 @@ export interface AppConfig {
     use: boolean;
     manage_templates: boolean;
   };
+  /**
+   * Read-only `wp_*` variables auto-populated from the current
+   * WP user record (display_name, email, first_name, last_name,
+   * url) plus any extras a host plugin added via the
+   * `imgsig/editor/system_variables` filter. Surfaced in the
+   * Variables editor as immutable rows; merged into the substitution
+   * pass at compile time (user-defined variables win on conflict).
+   */
+  systemVariables?: Record<string, string>;
+  /**
+   * Site-wide brand colour swatches, shown in every ColorInput as
+   * quick-pick buttons. Configured in admin Settings.
+   */
+  brandPalette?: string[];
+  /**
+   * Site-wide compliance footer (GDPR / CAN-SPAM disclaimer) appended
+   * at the bottom of every compiled signature when `enabled` is true.
+   */
+  complianceFooter?: {
+    enabled: boolean;
+    html: string;
+  };
 }

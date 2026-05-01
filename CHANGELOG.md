@@ -2,6 +2,23 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.13] — 2026-05-01
+
+### Added — Track 3 (round 1): WordPress-native team primitives
+
+These three features rely on WP's native user / option model — none of them require a SaaS dependency or external directory sync, which is what Exclaimer / Newoldstamp charge for.
+
+- **Auto-merge from `wp_users` / `wp_user_meta`**. Read-only `wp_*` system variables auto-populate from the current user's record (`display_name`, `user_email`, `first_name`, `last_name`, `user_url`). Injected into the editor bootstrap via a new `IMGSIG_EDITOR_CONFIG.systemVariables` field; the right-sidebar Variables editor surfaces them as locked rows above the user-defined ones (with a small lock icon and a copy-token affordance). The compile pipeline merges system variables with `schema.variables` at substitution time — user-defined variables win on key collision so anything the user types takes precedence. New filter `imgsig/editor/system_variables` lets host plugins expose custom `user_meta` keys (departments, employee IDs, internal phone extensions) without touching the core code.
+- **Brand palette**. New site-wide option `imgsig_brand_palette`: up to 12 hex colours, normalised + deduped. Surfaces in every editor `ColorInput` as a row of small clickable swatches below the picker — single-click to apply. Edited in the admin Settings page's new Branding tab (live preview, hex input + native colour picker, "Use starter palette" shortcut for fresh installs).
+- **Compliance footer**. New site-wide option `imgsig_compliance_footer` = `{ enabled: bool, html: string }`. When enabled, the compile pipeline appends the HTML inside the outer email-shell `<table>` so it inherits the same width / centring as the signature body. HTML is `wp_kses_post`-sanitised server-side (admin-only write cap, but defence-in-depth). Edited in the admin Settings page's new Compliance tab, with toggle + textarea + live preview + GDPR / CAN-SPAM starter templates.
+
+### Changed
+
+- New `SiteSettingsController` with `GET/PATCH /admin/site-settings`. Read access gated on `imgsig_use_signatures` (so the editor can fetch its own bootstrap), write gated on `imgsig_manage_storage`.
+- Settings page is now tabbed (Storage / Branding / Compliance). The original Storage form moved into the first tab unchanged. Each tab owns its own data round-trip so a slow storage probe never blocks the branding tab.
+- `EditorAssetEnqueuer` and `AdminAssetEnqueuer` now inject the site settings (palette + footer) into their respective bootstrap configs.
+- Editor `compileSignature()` reads `getConfig().complianceFooter` and `getConfig().systemVariables` defensively (falls back gracefully when the bootstrap is missing — matters for tests / standalone preview).
+
 ## [1.0.12] — 2026-05-01
 
 ### Added — Track 2: visual polish

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Admin;
 
+use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 
 defined( 'ABSPATH' ) || exit;
@@ -127,26 +128,29 @@ final class AdminAssetEnqueuer {
 	 * @return array<string, mixed>
 	 */
 	private function build_config( string $page ): array {
-		$user_id = get_current_user_id();
+		$user_id   = get_current_user_id();
+		$site_opts = SiteSettingsController::current_settings();
 
 		return [
-			'page'         => $page,
-			'userId'       => $user_id,
-			'capabilities' => [
+			'page'             => $page,
+			'userId'           => $user_id,
+			'capabilities'     => [
 				'use'              => current_user_can( CapabilitiesInstaller::CAP_USE ),
 				'manage_templates' => current_user_can( CapabilitiesInstaller::CAP_MANAGE_TEMPLATES ),
 				'manage_storage'   => current_user_can( CapabilitiesInstaller::CAP_MANAGE_STORAGE ),
 			],
-			'apiBase'      => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),
-			'restNonce'    => wp_create_nonce( 'wp_rest' ),
-			'locale'       => get_user_locale( $user_id ),
-			'wpAdminUrl'   => esc_url_raw( admin_url() ),
-			'urls'         => [
+			'apiBase'          => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),
+			'restNonce'        => wp_create_nonce( 'wp_rest' ),
+			'locale'           => get_user_locale( $user_id ),
+			'wpAdminUrl'       => esc_url_raw( admin_url() ),
+			'urls'             => [
 				'signatures' => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures' ) ),
 				'templates'  => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures-templates' ) ),
 				'settings'   => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures-settings' ) ),
 				'editor'     => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures-editor&id={id}' ) ),
 			],
+			'brandPalette'     => $site_opts['brand_palette'],
+			'complianceFooter' => $site_opts['compliance_footer'],
 		];
 	}
 }

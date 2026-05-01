@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.12
+Stable tag: 1.0.13
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,13 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.13 =
+* Track 3 (round 1) — WordPress-native team management primitives that don't exist in any SaaS competitor because they piggyback on WP's user model directly.
+* **Auto-merge from `wp_users` / `wp_user_meta`** — read-only `wp_*` system variables (display_name, email, first_name, last_name, url) auto-populate from the current user's record. Surface in the right-sidebar Variables panel as locked rows; the compiler merges them into substitution at export time (user-defined variables win on key conflict). New `imgsig/editor/system_variables` filter lets host plugins expose custom user_meta keys (departments, employee IDs, etc.).
+* **Brand palette** — site-wide list of up to 12 hex colours, edited in admin Settings → Branding. Surfaces under every editor ColorInput as quick-pick swatches.
+* **Compliance footer** — admin-only HTML disclaimer (kses-sanitized) appended to every signature on compile. Useful for GDPR / CAN-SPAM at the org level. Toggle + textarea + live preview in admin Settings → Compliance, with GDPR / CAN-SPAM starter templates.
+* The Settings page is now tabbed (Storage / Branding / Compliance) — the storage form is unchanged, just moved into the first tab.
 
 = 1.0.12 =
 * Track 2 — visual polish round. **Image cropper**: a Crop button on Image and Avatar property panels opens a modal with `react-easy-crop`. Avatar uses a 1:1 round crop, Image uses free-aspect rectangular. Output is a cropped data-URI written back to the block's `src`. **TemplatePicker filtering**: search input + horizontal category chips derived from the loaded templates so admin-added categories show automatically. **Multi-device preview**: PreviewModal gains Desktop (720px) / Tablet (480px) / Mobile (360px) tabs that lock the iframe width, plus an HTML payload-size pill that turns amber when over the 102KB Gmail clipping threshold, and a collapsible compile-warnings section that lists missing variables / alt / width / clip warnings.

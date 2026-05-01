@@ -12,6 +12,7 @@ namespace ImaginaSignatures\Core;
 use ImaginaSignatures\Api\Controllers\AssetsController;
 use ImaginaSignatures\Api\Controllers\MeController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
+use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Api\Controllers\StorageController;
 use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
@@ -186,6 +187,12 @@ final class ServiceProvider {
 					$c->make( AssetRepository::class ),
 					$c->make( StorageManager::class )
 				);
+			}
+		);
+		$container->singleton(
+			SiteSettingsController::class,
+			static function (): SiteSettingsController {
+				return new SiteSettingsController();
 			}
 		);
 	}

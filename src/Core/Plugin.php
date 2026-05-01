@@ -14,6 +14,7 @@ use ImaginaSignatures\Admin\AdminMenu;
 use ImaginaSignatures\Admin\Pages\EditorPage;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 use ImaginaSignatures\Api\Controllers\AssetsController;
+use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Api\Controllers\MeController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
 use ImaginaSignatures\Api\Controllers\StorageController;
@@ -183,6 +184,7 @@ final class Plugin {
 				$this->container->make( StorageController::class ),
 				$this->container->make( UploadController::class ),
 				$this->container->make( AssetsController::class ),
+				$this->container->make( SiteSettingsController::class ),
 			]
 		);
 		$router->register();

@@ -70,3 +70,9 @@ export interface StorageState {
   has_access_key: boolean;
   has_secret_key: boolean;
 }
+
+/** REST: the bundle returned by /admin/site-settings. */
+export interface SiteSettings {
+  brand_palette: string[];
+  compliance_footer: { enabled: boolean; html: string };
+}

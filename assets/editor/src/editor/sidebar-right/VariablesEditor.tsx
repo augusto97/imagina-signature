@@ -1,7 +1,8 @@
 import { useState, type FC } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Lock } from 'lucide-react';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { useToastStore } from '@/stores/toastStore';
+import { getConfig } from '@/bridge/apiClient';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 
@@ -31,6 +32,7 @@ export const VariablesEditor: FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const entries = Object.entries(variables);
+  const systemEntries = Object.entries(getConfig().systemVariables ?? {});
 
   const addVariable = (): void => {
     const key = draftKey.trim();
@@ -75,6 +77,19 @@ export const VariablesEditor: FC = () => {
           'Type {{name}} anywhere in a text or button — the compiler swaps it for the value below at export time.',
         )}
       </p>
+
+      {systemEntries.length > 0 && (
+        <ul className="flex flex-col gap-1">
+          {systemEntries.map(([key, value]) => (
+            <SystemVariableRow
+              key={key}
+              name={key}
+              value={value}
+              onCopy={() => void copyToken(key)}
+            />
+          ))}
+        </ul>
+      )}
 
       {entries.length > 0 && (
         <ul className="flex flex-col gap-1.5">
@@ -214,6 +229,30 @@ const VariableRow: FC<RowProps> = ({ name, value, onRename, onChangeValue, onRem
     </li>
   );
 };
+
+const SystemVariableRow: FC<{
+  name: string;
+  value: string;
+  onCopy: () => void;
+}> = ({ name, value, onCopy }) => (
+  <li className="flex items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel-soft)] p-2 text-[11.5px]">
+    <Lock size={11} className="shrink-0 text-[var(--text-muted)]" />
+    <span className="shrink-0 truncate font-mono text-[10.5px] text-[var(--text-primary)]">
+      {name}
+    </span>
+    <span className="flex-1 truncate text-[var(--text-muted)]">
+      {value || __('(empty in profile)')}
+    </span>
+    <button
+      type="button"
+      onClick={onCopy}
+      title={__('Copy {{token}}')}
+      className="inline-flex h-6 items-center rounded px-1.5 font-mono text-[10.5px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
+    >
+      {`{{}}`}
+    </button>
+  </li>
+);
 
 function isValidVariableName(name: string): boolean {
   return /^[a-zA-Z0-9_.-]+$/.test(name);
