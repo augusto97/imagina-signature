@@ -66,6 +66,29 @@ class PersistenceEngine {
   }
 
   /**
+   * Manual-save entry point — used by the topbar Save button and the
+   * Cmd/Ctrl + S shortcut.
+   *
+   * Cancels any debounce timer, runs an immediate save, and awaits
+   * everything (including any coalesced follow-up). Resolves with
+   * the signature id after the save lands so the caller can show
+   * a "Saved as #N" confirmation.
+   */
+  async saveNow(): Promise<number> {
+    // Force a save even if persistenceStore.isDirty is false — the
+    // user pressed the button, give them confirmation regardless.
+    usePersistenceStore.getState().markDirty();
+    await this.flushNow();
+    if (this.signatureId === 0) {
+      // No save fired (probably an empty schema with nothing to write,
+      // or the engine wasn't initialised yet). Run one more pass.
+      void this.runSave();
+      await this.flushNow();
+    }
+    return this.signatureId;
+  }
+
+  /**
    * Notify the engine that the schema changed. Schedules a save —
    * eager (immediate) for the very first one, debounced afterwards.
    */
@@ -94,23 +117,43 @@ class PersistenceEngine {
   /**
    * Flush any pending / in-flight save. Awaitable.
    *
-   * Used by the back-arrow click handler so navigation never aborts
-   * an in-flight POST before the server has persisted the row.
+   * Loops until both `pendingTimer` and `inFlight` are clear, because
+   * a save that finishes here can re-schedule another via the
+   * `runSave().finally(scheduleAutosave)` coalesce path — and that
+   * second save also needs to land before navigation aborts it.
+   * Concretely: user adds Block A (eager POST in flight), adds
+   * Block B (re-schedules via finally), clicks back. Without the
+   * loop, only Block A's POST awaits — the .finally fires after
+   * the await, schedules Block B's PATCH, then page unload kills
+   * the timer and Block B is lost.
+   *
+   * Hard cap at 5 iterations as a safety net against an infinite
+   * coalesce chain (shouldn't be reachable in practice — every
+   * save eventually either succeeds or errors out).
    */
   async flushNow(): Promise<void> {
-    if (this.pendingTimer !== null) {
-      window.clearTimeout(this.pendingTimer);
-      this.pendingTimer = null;
-      void this.runSave();
-    }
-    while (this.inFlight) {
-      try {
-        await this.inFlight;
-      } catch {
-        // Errors are surfaced through the toast / persistenceStore;
-        // we don't want to throw out of flushNow because callers
-        // typically navigate immediately after.
+    for (let i = 0; i < 5; i++) {
+      if (this.pendingTimer !== null) {
+        window.clearTimeout(this.pendingTimer);
+        this.pendingTimer = null;
+        void this.runSave();
       }
+      if (this.inFlight) {
+        try {
+          await this.inFlight;
+        } catch {
+          // Errors are surfaced through the toast / persistenceStore;
+          // we don't want to throw out of flushNow because callers
+          // typically navigate immediately after.
+        }
+        // After awaiting, the IIFE's finally has cleared
+        // `this.inFlight = null` AND any externally-attached
+        // `.finally(scheduleAutosave)` has run, possibly setting a
+        // new pendingTimer. Loop and re-check.
+        continue;
+      }
+      // Nothing pending and nothing in-flight. Done.
+      return;
     }
   }
 
@@ -159,6 +202,14 @@ class PersistenceEngine {
           } catch {
             // history API unavailable — non-fatal.
           }
+
+          // Announce the freshly-minted ID so the user has a concrete
+          // confirmation that a row was created (subtle reassurance
+          // when the autosave races a quick navigation).
+          showToast(
+            __('Saved as signature #%s', String(created.id)),
+            'success',
+          );
         }
 
         persistence.markSaved();

@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.18
+Stable tag: 1.0.19
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,12 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.19 =
+* **Fix the persistence race that was eating the user's last edits.** When the user added a block on a brand-new signature, the eager-first POST went out and started returning. If the user added MORE blocks during that POST and then clicked the back-arrow, `flushNow()` awaited the original POST but exited before the coalesce-finally could re-schedule the second save. The page navigated, the timer was cancelled, the second batch of edits was lost. Symptom: returning to the listing showed a duplicate signature with only the first edits, and re-entering it looked empty. Fix: `flushNow()` now loops until both `pendingTimer` and `inFlight` are clear (re-checks after each await; capped at 5 iterations).
+* **Manual Save button in the topbar.** No more guessing whether the autosave fired — there's now a clearly-clickable Save button next to the back-arrow with five visual states (Save / Saving… spinner / Retry save red / Saved · 14:32 timestamp / never-saved outline). Click runs `persistenceEngine.saveNow()` which forces a flush and awaits the round-trip. `Cmd/Ctrl + S` already triggered this since 1.0.8 — now it's also a visible button.
+* **First-save toast announces the signature ID.** When a brand-new signature gets its first POST, a "Saved as signature #42" toast confirms the row was actually created. Useful confidence check after a quick navigation.
+* **Plugin version pill** next to the Imagina Signatures brand label in the topbar. If the editor still says `v1.0.18` after upgrading, the browser is serving cached JS — hard-refresh (Ctrl/Cmd + Shift + R) to invalidate.
 
 = 1.0.18 =
 * **Fix: Button block invisible in non-Outlook clients** (Gmail, Apple Mail, Outlook Web, multi-device preview, "Copy visual" paste). The minifier was stripping the closing half of the Button's downlevel-revealed conditional comment (`<!--<![endif]-->`), which left the opener `<!--[if !mso]>` orphaned. Browsers then read everything after the opener as one long unterminated comment and the `<a>` got swallowed. Same root cause for the GIF static-fallback `<img>` shipped in 1.0.16. Minifier now extracts every conditional comment block (`<!--[if …]>` … `<![endif]-->`) into a placeholder before stripping plain comments, then restores them verbatim. Seven regression tests added in `tests/js/compiler/minify.test.ts`.

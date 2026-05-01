@@ -1,14 +1,30 @@
-import type { FC } from 'react';
-import { Undo2, Redo2, LayoutTemplate, Code2, Eye, ArrowLeft, FileSignature, Bookmark } from 'lucide-react';
+import { useState, type FC } from 'react';
+import {
+  Undo2,
+  Redo2,
+  LayoutTemplate,
+  Code2,
+  Eye,
+  ArrowLeft,
+  FileSignature,
+  Bookmark,
+  Save,
+  AlertTriangle,
+  Loader2,
+  Check,
+} from 'lucide-react';
 import { useEditorStore } from '@/stores/editorStore';
 import { useHistoryStore } from '@/stores/historyStore';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { usePersistenceStore } from '@/stores/persistenceStore';
+import { useToastStore } from '@/stores/toastStore';
 import { getConfig } from '@/bridge/apiClient';
 import { persistenceEngine } from '@/services/persistenceEngine';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 import { DeviceSwitcher } from './DeviceSwitcher';
+
+const PLUGIN_VERSION = '1.0.19';
 
 /**
  * Editor topbar — three regions:
@@ -26,21 +42,25 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
   const redo = useHistoryStore((s) => s.redo);
   const schema = useSchemaStore((s) => s.schema);
   const setSchema = useSchemaStore((s) => s.setSchema);
+  const showToast = useToastStore((s) => s.show);
+  const [manualSaving, setManualSaving] = useState(false);
 
-  let status = __('Saved');
-  let statusTone = 'text-[var(--text-muted)]';
-  if (lastError) {
-    status = __('Save failed — click Save to retry');
-    statusTone = 'text-[var(--danger)]';
-  } else if (isSaving) {
-    status = __('Saving…');
-    statusTone = 'text-[var(--accent)]';
-  } else if (isDirty) {
-    status = __('Unsaved');
-    statusTone = 'text-[var(--warning)]';
-  } else if (!lastSavedAt) {
-    status = __('Ready');
-  }
+  const onManualSave = async (): Promise<void> => {
+    if (manualSaving) return;
+    setManualSaving(true);
+    try {
+      const id = await persistenceEngine.saveNow();
+      if (id > 0) {
+        showToast(__('Saved'), 'success');
+      } else {
+        showToast(__('Nothing to save yet — add a block first.'), 'info');
+      }
+    } catch {
+      // Errors already surfaced as a toast inside the engine.
+    } finally {
+      setManualSaving(false);
+    }
+  };
 
   const onUndo = () => {
     const previous = undo(schema);
@@ -86,6 +106,12 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
           <span className="truncate text-[13px] font-semibold text-[var(--text-primary)]">
             {__('Imagina Signatures')}
           </span>
+          <span
+            className="rounded-full bg-slate-100 px-1.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wide text-slate-500"
+            title={__('Plugin version. If this string is stale after an upgrade, hard-refresh the browser to invalidate cached assets.')}
+          >
+            v{PLUGIN_VERSION}
+          </span>
         </div>
       </div>
 
@@ -108,11 +134,15 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
         </IconButton>
       </div>
 
-      {/* Right: status + actions */}
+      {/* Right: save state + actions */}
       <div className="flex items-center gap-2">
-        <span aria-live="polite" className={cn('text-[12px] font-medium', statusTone)}>
-          {status}
-        </span>
+        <SaveButton
+          onClick={() => void onManualSave()}
+          isSaving={isSaving || manualSaving}
+          isDirty={isDirty}
+          hasError={Boolean(lastError)}
+          lastSavedAt={lastSavedAt}
+        />
         {getConfig().capabilities?.manage_templates && (
           <button
             type="button"
@@ -161,3 +191,76 @@ const IconButton: FC<{
     {children}
   </button>
 );
+
+interface SaveButtonProps {
+  onClick: () => void;
+  isSaving: boolean;
+  isDirty: boolean;
+  hasError: boolean;
+  lastSavedAt: string | null;
+}
+
+/**
+ * Manual save button. Five visual states, picked in priority order:
+ *   1. Saving — spinner, disabled.
+ *   2. Error — red, "Retry save".
+ *   3. Dirty — accent blue, "Save".
+ *   4. Saved with timestamp — subtle, "Saved · 14:32".
+ *   5. Idle (never saved yet) — outline, "Save".
+ *
+ * Click in every state runs `persistenceEngine.saveNow()` (the
+ * Topbar host wires it). Cmd/Ctrl + S already calls flushNow via
+ * the keyboard shortcut hook — this button is the visible
+ * counterpart so the user always has a clear "I'm done" lever.
+ */
+const SaveButton: FC<SaveButtonProps> = ({ onClick, isSaving, isDirty, hasError, lastSavedAt }) => {
+  let label = __('Save');
+  let icon: React.ReactNode = <Save size={14} />;
+  let tone =
+    'border-[var(--border-default)] bg-[var(--bg-panel)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)]';
+
+  if (isSaving) {
+    label = __('Saving…');
+    icon = <Loader2 size={14} className="animate-spin" />;
+    tone = 'border-[var(--accent)]/30 bg-[var(--bg-selected)] text-[var(--accent)] cursor-wait';
+  } else if (hasError) {
+    label = __('Retry save');
+    icon = <AlertTriangle size={14} />;
+    tone = 'border-[var(--danger)]/40 bg-red-50 text-[var(--danger)] hover:bg-red-100';
+  } else if (isDirty) {
+    label = __('Save');
+    icon = <Save size={14} />;
+    tone =
+      'border-transparent bg-[var(--accent)] text-white shadow-[var(--shadow-xs)] hover:bg-[var(--accent-hover)]';
+  } else if (lastSavedAt) {
+    label = __('Saved · %s', formatTime(lastSavedAt));
+    icon = <Check size={14} />;
+    tone = 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100';
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={isSaving}
+      className={cn(
+        'inline-flex h-8 items-center gap-1.5 rounded-md border px-3 text-[12.5px] font-medium transition-colors disabled:cursor-not-allowed',
+        tone,
+      )}
+      title={__('Save now (Cmd/Ctrl + S)')}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+};
+
+function formatTime(iso: string): string {
+  try {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+    return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  } catch {
+    return iso;
+  }
+}

@@ -2,6 +2,39 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.19] — 2026-05-01
+
+### Fixed
+
+- **Persistence race that ate the user's most recent edits.** Reported as: "guardé una de las firmas y me generó otra cuando regresé al listado, y cuando volví a entrar estaba vacía". Reproducible flow:
+  1. User opens a fresh signature (`?id=0`).
+  2. Adds Block A → eager-first POST goes out and starts returning (200–500 ms latency).
+  3. **While that POST is in flight**, adds Block B → `runSave()` hits the `inFlight !== null` guard and chains `this.inFlight.finally(() => this.scheduleAutosave())` — so the second save is queued to fire AFTER the POST settles.
+  4. User clicks the back-arrow → `flushNow()` awaits the in-flight POST, then exits.
+  5. The promise settles in this order: IIFE's internal `finally` clears `this.inFlight = null` → externally-attached `.finally(scheduleAutosave)` runs → schedules a 1500 ms timer for Block B's PATCH → `flushNow`'s `while (this.inFlight)` loop sees `null` and exits → page navigates → 1500 ms timer is cancelled by page unload → **Block B is never written**.
+  6. User returns to listing, sees signature #42 with only Block A. Re-enters → looks empty (or close to it, depending on which edits were in flight when they navigated).
+
+  Fix: `flushNow()` now loops until both `pendingTimer` AND `inFlight` are clear, with a 5-iteration safety cap. After each `await this.inFlight`, the externally-attached `.finally` callbacks have already run and may have set a new `pendingTimer` — the loop catches it, fires the save immediately, awaits, and re-checks.
+
+### Added
+
+- **Manual Save button** in the topbar (right side, next to the back-arrow status was previously). Five visual states picked in priority order:
+  1. `Saving…` with a spinning loader, disabled.
+  2. `Retry save` in red when the last save errored.
+  3. `Save` in accent blue when the document is dirty.
+  4. `Saved · 14:32` in subtle emerald with a checkmark + last-save timestamp.
+  5. `Save` in outline when the document has never been saved yet.
+
+  Click runs `persistenceEngine.saveNow()` — a new public method that forces `markDirty` + `flushNow` + (if no save fired) one more pass + awaits the whole chain. Resolves with the assigned signature ID so the topbar can show a "Saved" toast for confirmation. `Cmd/Ctrl + S` already triggered this path since 1.0.8 — now it's also a visible button.
+
+- **First-save toast announces the assigned signature ID.** When a brand-new signature's first POST returns successfully, the engine fires a `Saved as signature #42` success toast. Concrete confirmation that a row was created — eliminates the "did the autosave actually fire?" anxiety.
+
+- **Plugin version pill** in the topbar's brand area (`v1.0.19` as a small uppercase chip). If the editor displays the wrong version after a plugin upgrade, the browser is serving cached JS / CSS — hard-refresh (`Ctrl/Cmd + Shift + R`) to invalidate. Worth keeping permanently as a debugging aid.
+
+### Changed
+
+- Editor bundle: 676 KB → 679 KB (gzip 210 KB → 212 KB) — under the 600 KB gzip target.
+
 ## [1.0.18] — 2026-05-01
 
 ### Fixed
