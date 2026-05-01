@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.15 | [imagina-signatures-1.0.15.zip](imagina-signatures-1.0.15.zip) |
 | 1.0.14 | [imagina-signatures-1.0.14.zip](imagina-signatures-1.0.14.zip) |
 | 1.0.13 | [imagina-signatures-1.0.13.zip](imagina-signatures-1.0.13.zip) |
 | 1.0.12 | [imagina-signatures-1.0.12.zip](imagina-signatures-1.0.12.zip) |
@@ -27,6 +28,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.15.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.14.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.13.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.12.zip
@@ -79,6 +81,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.15
+Track 4 — banner campaigns con rotación + scheduling. Site-wide option `imgsig_banner_campaigns` storing up to 50 campaigns (name / image / link / alt / width / enabled / start_date / end_date). Compile pipeline picks one **currently-active** campaign at random per export (`Math.random()`) and inserts it as a new `<tr><td>` row inside the outer email-shell table — re-exporting cycles through active banners. "Active" = enabled + inside date window + has image; the editor bootstrap only receives the active slice (filtered server-side against `current_time('Y-m-d')`), so the compiler never has to know about scheduling. New admin Settings → **Campaigns** tab: per-campaign card with status pill (Active / Scheduled / Expired / Disabled), inline name + enabled toggle, image / link / alt / width fields, date pickers, and a live preview. Banners sit visually between the user content and the compliance footer.
 
 ### 1.0.14
 Track 3 round 2. **Templates por rol**: each template gains a `visible_to_roles` field. Empty = visible to everyone with `imgsig_use_signatures` (existing behaviour); populated = only users with one of the matching WP roles see it in the editor's TemplatePicker. Admins always see every template. New schema migration `1.1.0` adds the column via dbDelta (idempotent, safe to re-run). **Bulk apply**: new `POST /admin/templates/:id/apply` endpoint with scope = `all` | `role:slug` | `users:1,2,3`. Creates a new signature per user in scope seeded from the template; doesn't touch existing signatures. `skip_existing` (default true) prevents duplicates when re-running. Admin Templates page gains per-card visibility chip + Edit modal (with role toggle chips) + Apply modal (radio scope picker + result summary).
