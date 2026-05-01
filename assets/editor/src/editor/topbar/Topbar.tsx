@@ -19,12 +19,12 @@ import { useSchemaStore } from '@/stores/schemaStore';
 import { usePersistenceStore } from '@/stores/persistenceStore';
 import { useToastStore } from '@/stores/toastStore';
 import { getConfig } from '@/bridge/apiClient';
-import { persistenceEngine } from '@/services/persistenceEngine';
+import { persistence } from '@/services/persistence';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 import { DeviceSwitcher } from './DeviceSwitcher';
 
-const PLUGIN_VERSION = '1.0.19';
+const PLUGIN_VERSION = '1.0.20';
 
 /**
  * Editor topbar — three regions:
@@ -49,7 +49,7 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
     if (manualSaving) return;
     setManualSaving(true);
     try {
-      const id = await persistenceEngine.saveNow();
+      const id = await persistence.saveNow();
       if (id > 0) {
         showToast(__('Saved'), 'success');
       } else {
@@ -88,7 +88,7 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
             // back during the 1500ms autosave debounce drops the user's
             // most recent edits.
             e.preventDefault();
-            await persistenceEngine.flushNow();
+            await persistence.saveNow();
             window.location.href = getConfig().signaturesUrl;
           }}
           className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
@@ -208,10 +208,10 @@ interface SaveButtonProps {
  *   4. Saved with timestamp — subtle, "Saved · 14:32".
  *   5. Idle (never saved yet) — outline, "Save".
  *
- * Click in every state runs `persistenceEngine.saveNow()` (the
- * Topbar host wires it). Cmd/Ctrl + S already calls flushNow via
- * the keyboard shortcut hook — this button is the visible
- * counterpart so the user always has a clear "I'm done" lever.
+ * Click in every state runs `persistence.saveNow()` (the
+ * Topbar host wires it). Cmd/Ctrl + S calls the same path via the
+ * keyboard shortcut hook — this button is the visible counterpart
+ * so the user always has a clear "I'm done" lever.
  */
 const SaveButton: FC<SaveButtonProps> = ({ onClick, isSaving, isDirty, hasError, lastSavedAt }) => {
   let label = __('Save');

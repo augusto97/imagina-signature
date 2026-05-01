@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.19
+Stable tag: 1.0.20
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,12 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.20 =
+* **Persistence engine rewritten from scratch.** Old `persistenceEngine.ts` deleted. The previous version used a chain of `.finally(scheduleAutosave)` callbacks to coalesce saves arriving during an in-flight POST — that chain raced with `flushNow()` in subtle ways (visible to the user as duplicate empty signatures + edits dropped). New `assets/editor/src/services/persistence.ts` uses a different model: one save at a time, a self-coalescing `while (dirty) { dirty = false; await save(); }` loop, no promise chains. Concurrency reduces to a single `inFlight` reference. `saveNow()` is just `clearTimeout + performSave + await` — if a save is already running, await it, the loop will pick up new edits via the dirty flag.
+* **Empty-schema POST refused.** If the user clicks Save / Cmd-S with no edits and no signature id yet, the engine returns `0` without POSTing. That's the path that was creating empty rows in earlier versions whenever the engine disagreed with itself about whether `signatureId` was set.
+* **Branding palette + Banner campaigns** now stored as native PHP arrays (WP's `update_option` serializes them automatically) instead of being JSON-encoded into a string first. The JSON-string roundtrip was the suspected cause of palette saves not persisting. Reads are back-compat: legacy JSON-string values from 1.0.13–1.0.19 still decode correctly, and the next write normalises to a native array.
+* **Round-trip verification** in `PATCH /admin/site-settings`. After `update_option` runs, the controller re-reads the option and compares against what the client sent. Mismatch → returns a 500 with `{sent, readback}` payload instead of the misleading "Saved" toast.
 
 = 1.0.19 =
 * **Fix the persistence race that was eating the user's last edits.** When the user added a block on a brand-new signature, the eager-first POST went out and started returning. If the user added MORE blocks during that POST and then clicked the back-arrow, `flushNow()` awaited the original POST but exited before the coalesce-finally could re-schedule the second save. The page navigated, the timer was cancelled, the second batch of edits was lost. Symptom: returning to the listing showed a duplicate signature with only the first edits, and re-entering it looked empty. Fix: `flushNow()` now loops until both `pendingTimer` and `inFlight` are clear (re-checks after each await; capped at 5 iterations).

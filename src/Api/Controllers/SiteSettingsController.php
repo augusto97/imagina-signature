@@ -95,10 +95,16 @@ final class SiteSettingsController extends BaseController {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function update( \WP_REST_Request $request ) {
+		// Persist directly as PHP arrays — WordPress's `update_option`
+		// runs `maybe_serialize` automatically. The previous code stored
+		// `wp_json_encode($palette)` as a string, which roundtripped
+		// through an extra encode/decode layer for no benefit and made
+		// silent corruption hard to spot. Switching to native arrays
+		// also matches how `compliance_footer` was always stored.
 		if ( null !== $request->get_param( 'brand_palette' ) ) {
 			$palette = (array) $request->get_param( 'brand_palette' );
 			$palette = self::sanitize_palette( $palette );
-			update_option( self::OPT_BRAND_PALETTE, wp_json_encode( $palette ), false );
+			update_option( self::OPT_BRAND_PALETTE, $palette, false );
 		}
 
 		if ( null !== $request->get_param( 'compliance_footer' ) ) {
@@ -113,10 +119,46 @@ final class SiteSettingsController extends BaseController {
 		if ( null !== $request->get_param( 'banner_campaigns' ) ) {
 			$raw = (array) $request->get_param( 'banner_campaigns' );
 			$campaigns = self::sanitize_campaigns( $raw );
-			update_option( self::OPT_BANNER_CAMPAIGNS, wp_json_encode( $campaigns ), false );
+			update_option( self::OPT_BANNER_CAMPAIGNS, $campaigns, false );
 		}
 
-		return rest_ensure_response( self::current_settings() );
+		// Round-trip verification: read each option back and compare
+		// against what we just wrote. If anything diverges (silent
+		// `update_option` failure, conflicting filter, broken cache),
+		// surface a 500 instead of returning a misleading "Saved" toast.
+		$current = self::current_settings();
+
+		if ( null !== $request->get_param( 'brand_palette' ) ) {
+			$expected = self::sanitize_palette( (array) $request->get_param( 'brand_palette' ) );
+			if ( $expected !== $current['brand_palette'] ) {
+				return new \WP_Error(
+					'imgsig_brand_palette_persist_failed',
+					__( 'Brand palette did not persist on the server. Check the WordPress error log for details.', 'imagina-signatures' ),
+					[
+						'status'   => 500,
+						'sent'     => $expected,
+						'readback' => $current['brand_palette'],
+					]
+				);
+			}
+		}
+
+		if ( null !== $request->get_param( 'banner_campaigns' ) ) {
+			$expected_count = count( self::sanitize_campaigns( (array) $request->get_param( 'banner_campaigns' ) ) );
+			if ( count( $current['banner_campaigns'] ) !== $expected_count ) {
+				return new \WP_Error(
+					'imgsig_banner_campaigns_persist_failed',
+					__( 'Banner campaigns did not persist on the server.', 'imagina-signatures' ),
+					[
+						'status'   => 500,
+						'expected' => $expected_count,
+						'readback' => count( $current['banner_campaigns'] ),
+					]
+				);
+			}
+		}
+
+		return rest_ensure_response( $current );
 	}
 
 	/**
@@ -140,15 +182,20 @@ final class SiteSettingsController extends BaseController {
 	 * @return array<int, string>
 	 */
 	public static function current_palette(): array {
-		$raw = get_option( self::OPT_BRAND_PALETTE, '' );
-		if ( ! is_string( $raw ) || '' === $raw ) {
-			return [];
+		$raw = get_option( self::OPT_BRAND_PALETTE, [] );
+		// Native array (current 1.0.20+ storage path).
+		if ( is_array( $raw ) ) {
+			return self::sanitize_palette( $raw );
 		}
-		$decoded = json_decode( $raw, true );
-		if ( ! is_array( $decoded ) ) {
-			return [];
+		// Legacy: a JSON-encoded string (1.0.13–1.0.19). Decode then
+		// sanitize. The next write will normalise to a native array.
+		if ( is_string( $raw ) && '' !== $raw ) {
+			$decoded = json_decode( $raw, true );
+			if ( is_array( $decoded ) ) {
+				return self::sanitize_palette( $decoded );
+			}
 		}
-		return self::sanitize_palette( $decoded );
+		return [];
 	}
 
 	/**
@@ -225,15 +272,20 @@ final class SiteSettingsController extends BaseController {
 	 * @return array<int, array<string, mixed>>
 	 */
 	public static function current_banner_campaigns(): array {
-		$raw = get_option( self::OPT_BANNER_CAMPAIGNS, '' );
-		if ( ! is_string( $raw ) || '' === $raw ) {
-			return [];
+		$raw = get_option( self::OPT_BANNER_CAMPAIGNS, [] );
+		// Native array (1.0.20+ storage path).
+		if ( is_array( $raw ) ) {
+			return self::sanitize_campaigns( $raw );
 		}
-		$decoded = json_decode( $raw, true );
-		if ( ! is_array( $decoded ) ) {
-			return [];
+		// Legacy: JSON-encoded string (1.0.15–1.0.19). The next write
+		// will normalise.
+		if ( is_string( $raw ) && '' !== $raw ) {
+			$decoded = json_decode( $raw, true );
+			if ( is_array( $decoded ) ) {
+				return self::sanitize_campaigns( $decoded );
+			}
 		}
-		return self::sanitize_campaigns( $decoded );
+		return [];
 	}
 
 	/**

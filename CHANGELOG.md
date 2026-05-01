@@ -2,6 +2,33 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.20] — 2026-05-01
+
+### Changed — Persistence engine rewritten from scratch
+
+After multiple iterative bug fixes (1.0.7, 1.0.8, 1.0.19), the `persistenceEngine.ts` design — which coalesced saves via a chain of `.finally(scheduleAutosave)` callbacks — kept producing edge-case races. Symptoms reported by the user: a single new signature would create two empty rows in the listing; edits made during a quick navigation would silently drop. The old engine is **deleted**.
+
+The new `assets/editor/src/services/persistence.ts` uses a different model that's correct by construction:
+
+- **One save at a time.** A single `inFlight: Promise<void> | null`. While a save is running, no other save can start.
+- **Self-coalescing internal loop.** The save body is `while (dirty) { dirty = false; await save(); }`. Any change that lands during a save iteration sets `dirty = true` and is picked up on the next iteration of the SAME loop. No promise chains.
+- **`saveNow()` is just `clearTimeout + performSave + await`.** If `performSave` is already running, `saveNow` awaits it. The in-flight loop will see `dirty = true` and run another iteration before exiting.
+- **Empty-schema POST refused.** If the user clicks Save with nothing edited and no signature id yet, `saveNow` returns `0` without POSTing. That path is what produced the "two empty rows" symptom in earlier versions.
+
+Same public surface as before (`initialize`, `resetToNew`, `scheduleSave`, `saveNow`, `hasPending`) — only the internals changed. `useAutosave`, `useLoadSignature`, `Topbar`, `useKeyboardShortcuts`, and the back-arrow click handler were all updated to import from `'@/services/persistence'`.
+
+### Fixed — Branding palette save not persisting
+
+Reported as: "tampoco en los ajustes del plugin guarda los cambios de color en branding". Two changes:
+
+1. **Storage format**. Brand palette + banner campaigns were being stored as JSON-encoded strings (`update_option(OPT, wp_json_encode($value), false)`). That detour adds an encode/decode layer for no benefit and made silent corruption invisible. Switched to native PHP arrays — `update_option` runs `maybe_serialize` automatically. Compliance footer was always stored as a native array; this aligns the three options. Readers stay back-compat with legacy JSON-string values from 1.0.13–1.0.19, and the next write normalises to native.
+2. **Round-trip verification**. After `update_option` runs in `PATCH /admin/site-settings`, the controller re-reads the option and compares it against what the client sent. If they differ (silent `update_option` failure, conflicting filter, broken object cache), the endpoint returns a 500 with `{sent, readback}` payload instead of the misleading "Saved" toast — so the next time something silently fails, the user sees an actionable error.
+
+### Internal
+
+- Editor bundle: 679 KB → 678 KB (gzip 211 KB) — slightly smaller because the new engine has less code than the old one.
+- Plugin version pill in the topbar bumped to `v1.0.20`. After upgrading, hard-refresh (Ctrl/Cmd + Shift + R) to invalidate cached `editor.js`.
+
 ## [1.0.19] — 2026-05-01
 
 ### Fixed
