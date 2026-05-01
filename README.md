@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.20 | [imagina-signatures-1.0.20.zip](imagina-signatures-1.0.20.zip) |
 | 1.0.19 | [imagina-signatures-1.0.19.zip](imagina-signatures-1.0.19.zip) |
 | 1.0.18 | [imagina-signatures-1.0.18.zip](imagina-signatures-1.0.18.zip) |
 | 1.0.17 | [imagina-signatures-1.0.17.zip](imagina-signatures-1.0.17.zip) |
@@ -32,6 +33,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.20.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.19.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.18.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.17.zip
@@ -89,6 +91,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.20
+**Persistence engine rewritten from scratch.** Old `persistenceEngine.ts` deleted. The previous design coalesced saves via `.finally(scheduleAutosave)` callbacks, which raced with `flushNow()` in subtle ways — visible to the user as duplicate empty signatures + edits dropped on quick navigation. New `services/persistence.ts` uses one `inFlight` reference + a self-coalescing `while (dirty) { dirty = false; await save(); }` loop. No promise chains. Empty-schema POST refused so accidental Save clicks don't create empty rows. Branding palette + Banner campaigns now stored as native PHP arrays instead of JSON-encoded strings (was the suspected cause of palette saves not persisting), with round-trip verification: after `update_option` the controller re-reads and compares against what the client sent — silent failures return 500 with `{sent, readback}` instead of a misleading "Saved" toast.
 
 ### 1.0.19
 **Fix: persistence race that ate the user's most recent edits.** Reported as "se generó otra firma cuando regresé al listado, y cuando volví a entrar estaba vacía". `flushNow()` awaited the in-flight POST but exited before the coalesce-finally chain could run `scheduleAutosave` for any save that landed during it — page navigated, the timer for that second batch was cancelled, edits were lost. `flushNow()` now loops until both `pendingTimer` and `inFlight` are clear (5-iteration safety cap). Plus the UX upgrades the user explicitly asked for: a **manual Save button** in the topbar with five visual states (Saving spinner / Retry save red / Save accent / Saved · 14:32 emerald / Save outline) — click runs `persistenceEngine.saveNow()` which forces flush + awaits the round-trip. First-save **toast announces the assigned ID** (`Saved as signature #42`). **Plugin version pill** in the topbar so cached JS after an upgrade is visible at a glance.
