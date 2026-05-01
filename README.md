@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.10 | [imagina-signatures-1.0.10.zip](imagina-signatures-1.0.10.zip) |
 | 1.0.9 | [imagina-signatures-1.0.9.zip](imagina-signatures-1.0.9.zip) |
 | 1.0.8 | [imagina-signatures-1.0.8.zip](imagina-signatures-1.0.8.zip) |
 | 1.0.7 | [imagina-signatures-1.0.7.zip](imagina-signatures-1.0.7.zip) |
@@ -22,6 +23,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.10.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.9.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.8.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.7.zip
@@ -69,6 +71,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.10
+Container columns no longer locked at 50/50. New `left_width` field on `ContainerBlock` (percentage 10–90, optional, defaults to 50 for back-compat). Renderer + email-safe `compile()` both honour it. Properties panel gets a Column-widths control with a live preview bar, a 10–90% range slider, and quick-preset buttons (1/4, 1/3, 1/2, 2/3, 3/4) for common ratios like a logo cell + content cell.
 
 ### 1.0.9
 Layers panel is a real tree. Container children render indented under their parent — previously the panel only walked the top-level array, so column contents were invisible. Each row gets up / down chevrons (swap with sibling within the same parent: top-level reorders among top-level, nested children reorder within their column array), eye toggle, and trash. New `moveBlockUp` / `moveBlockDown` schemaStore actions back the chevrons via a `findParentAndIndex` helper that locates a block whether it lives at the top level or inside a Container.
