@@ -2,6 +2,29 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] — 2026-05-01
+
+### Fixed
+
+- Real persistence. The 1.0.7 autosave appeared to save (`Saved` status flashed) but work was lost when returning to the listing. The bug wasn't the request itself — it was timing. Two failure modes:
+  1. **First-save race**: when the user added a block and clicked the back-arrow inside the 1500ms debounce window, the page navigated before the debounce fired. The POST never went out, no row was created.
+  2. **In-flight abort**: if the user clicked back while the POST was in flight, the browser canceled the request as the page unloaded. Server may or may not have committed depending on how far the request got.
+
+  Both are fixed by promoting the autosave into a real engine (`assets/editor/src/services/persistenceEngine.ts`) with three guarantees:
+  - The very **first save fires eagerly**, not on debounce. The moment the user makes any edit on a brand-new signature, the POST goes out immediately. The row + URL update land before any navigation can race.
+  - The **back-arrow now `await persistenceEngine.flushNow()`** before calling `window.location.href = ...`. Cancels the debounce timer, runs the pending save, and awaits any in-flight save. Navigation only happens after the server has acknowledged.
+  - **`beforeunload`** triggers the browser's "leave / stay" dialog if anything is dirty / saving / pending — covers tab close, address-bar nav, browser back button.
+
+  Subsequent saves still debounce 1500ms (unchanged). Concurrent edits during an in-flight save are coalesced via a `.finally(() => scheduleAutosave())` chain — never two parallel POSTs for the same draft.
+
+- Stale `?id=` recovery. Opening the editor with `?id=N` for a deleted / non-existent signature would 404 the load and then PATCH-loop the same 404 on every autosave. `useLoadSignature` now calls `persistenceEngine.resetToNew()` on 404, which drops `?id=` from the URL and zeroes the in-memory id so the user's first edit creates a fresh row instead.
+
+- Topbar surfaces save errors. Used to bounce back to "Saved" / "Unsaved" even when a save had failed — only the toast carried the error. Now shows red `Save failed — click Save to retry` until the next successful save.
+
+### Added
+
+- **Cmd/Ctrl + S** triggers a manual flush of any pending save. Useful when the user wants to confirm the current state is committed before navigating.
+
 ## [1.0.7] — 2026-04-30
 
 ### Fixed

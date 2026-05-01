@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,11 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.8 =
+* Real persistence engine. The 1.0.7 autosave still lost work when the user clicked the back-arrow during the 1500ms debounce window — the browser navigates away and aborts the in-flight POST before the server commits the row. Refactored into a module-level `persistenceEngine` singleton: (a) the very first save (when `signatureId === 0`) fires immediately, not on debounce, so the new row + URL update happen ASAP; (b) the back-arrow now `await persistenceEngine.flushNow()` before navigating, so any pending / in-flight save lands first; (c) `Cmd/Ctrl + S` triggers a manual flush; (d) `beforeunload` warns if anything is unsaved when the user tries to close the tab. Coalesces concurrent edits (saves during in-flight POST get re-scheduled, never doubled).
+* Stale `?id=` recovery. If the editor is opened with `?id=N` for a deleted / non-existent signature, the load 404s and the engine `resetToNew()`s — the URL drops `?id=`, so the user's first edit creates a fresh row instead of PATCH-looping a 404.
+* Topbar status now shows save errors. Red "Save failed — click Save to retry" instead of just bouncing back to "Saved" / "Unsaved" on failure.
 
 = 1.0.7 =
 * Persistence actually persists. Two paired bugs fixed: (1) the editor never fetched an existing signature on open, so reloading `?id=42` started fresh empty — now `useLoadSignature` GETs `/signatures/:id` on mount and replays the schema. (2) For a brand-new signature, the autosave POSTed and got back the new id, but the URL still said no id, so a reload created yet another fresh draft and the user's first edits were unreachable — now the autosave writes `?id=N` into the URL via `history.replaceState` after the first POST. Autosave gates on `persistenceStore.isLoaded` so the load itself doesn't trigger a redundant round-trip.

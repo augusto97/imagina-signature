@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useHistoryStore } from '@/stores/historyStore';
+import { persistenceEngine } from '@/services/persistenceEngine';
 
 /**
  * Editor-global keyboard shortcuts (CLAUDE.md §18.4):
@@ -26,6 +27,13 @@ export function useKeyboardShortcuts(): void {
       const selection = useSelectionStore.getState();
       const schema = useSchemaStore.getState();
       const history = useHistoryStore.getState();
+
+      // Manual save (Cmd/Ctrl + S) — flushes the autosave debounce.
+      if (meta && (event.key === 's' || event.key === 'S')) {
+        event.preventDefault();
+        void persistenceEngine.flushNow();
+        return;
+      }
 
       // Undo / Redo.
       if (meta && (event.key === 'z' || event.key === 'Z')) {

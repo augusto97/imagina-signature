@@ -5,6 +5,7 @@ import { useHistoryStore } from '@/stores/historyStore';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { usePersistenceStore } from '@/stores/persistenceStore';
 import { getConfig } from '@/bridge/apiClient';
+import { persistenceEngine } from '@/services/persistenceEngine';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 import { DeviceSwitcher } from './DeviceSwitcher';
@@ -17,7 +18,7 @@ import { DeviceSwitcher } from './DeviceSwitcher';
  *  - Right: save indicator + Preview + Export HTML.
  */
 export const Topbar: FC<{ className?: string }> = ({ className }) => {
-  const { isSaving, isDirty, lastSavedAt } = usePersistenceStore();
+  const { isSaving, isDirty, lastSavedAt, lastError } = usePersistenceStore();
   const openModal = useEditorStore((s) => s.openModal);
   const canUndo = useHistoryStore((s) => s.canUndo());
   const canRedo = useHistoryStore((s) => s.canRedo());
@@ -28,7 +29,10 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
 
   let status = __('Saved');
   let statusTone = 'text-[var(--text-muted)]';
-  if (isSaving) {
+  if (lastError) {
+    status = __('Save failed — click Save to retry');
+    statusTone = 'text-[var(--danger)]';
+  } else if (isSaving) {
     status = __('Saving…');
     statusTone = 'text-[var(--accent)]';
   } else if (isDirty) {
@@ -58,6 +62,15 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
       <div className="flex min-w-0 items-center gap-3">
         <a
           href={getConfig().signaturesUrl}
+          onClick={async (e) => {
+            // Flush any pending / in-flight save BEFORE the browser
+            // navigates and aborts the request. Without this, clicking
+            // back during the 1500ms autosave debounce drops the user's
+            // most recent edits.
+            e.preventDefault();
+            await persistenceEngine.flushNow();
+            window.location.href = getConfig().signaturesUrl;
+          }}
           className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
           title={__('Back to signatures')}
         >

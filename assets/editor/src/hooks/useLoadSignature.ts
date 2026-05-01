@@ -3,6 +3,7 @@ import { apiCall, ApiError, getConfig } from '@/bridge/apiClient';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { usePersistenceStore } from '@/stores/persistenceStore';
 import { useToastStore } from '@/stores/toastStore';
+import { persistenceEngine } from '@/services/persistenceEngine';
 import type { SignatureSchema } from '@/core/schema/signature';
 import { __ } from '@/i18n/helpers';
 
@@ -60,9 +61,16 @@ export function useLoadSignature(): LoadState {
         const isNotFound = e instanceof ApiError && e.status === 404;
         const message = e instanceof ApiError ? e.message : (e as Error).message;
         setState({ loading: false, notFound: isNotFound, error: message });
-        showToast(__('Could not load signature: %s', message), 'error');
-        // Open the autosave gate even on failure so the user can recover
-        // by editing — the next save will create a fresh signature row.
+        if (isNotFound) {
+          // Stale `?id=` (signature was deleted, user typed wrong id):
+          // reset the engine to "new" so the user's edits create a
+          // fresh row instead of PATCH-looping a 404.
+          persistenceEngine.resetToNew();
+        } else {
+          showToast(__('Could not load signature: %s', message), 'error');
+        }
+        // Open the autosave gate either way so the user can recover
+        // by editing — the next save will land on the right row.
         markLoaded();
       });
 
