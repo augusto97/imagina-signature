@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.8 | [imagina-signatures-1.0.8.zip](imagina-signatures-1.0.8.zip) |
 | 1.0.7 | [imagina-signatures-1.0.7.zip](imagina-signatures-1.0.7.zip) |
 | 1.0.6 | [imagina-signatures-1.0.6.zip](imagina-signatures-1.0.6.zip) |
 | 1.0.5 | [imagina-signatures-1.0.5.zip](imagina-signatures-1.0.5.zip) |
@@ -20,6 +21,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.8.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.7.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.6.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.5.zip
@@ -65,6 +67,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.8
+Real persistence engine. The 1.0.7 autosave looked saved (`Saved` status flashed) but work was lost when returning to the listing — the 1500ms debounce raced page navigation. Now: the very first save fires eagerly (no debounce) so the new row + URL update happen immediately; the back-arrow `await persistenceEngine.flushNow()` before navigating, so any pending / in-flight save lands first; `beforeunload` warns on tab close while anything is unsaved; concurrent edits during an in-flight save coalesce instead of double-POSTing. Plus: `Cmd/Ctrl + S` triggers a manual flush, the topbar shows "Save failed — click Save to retry" in red on errors instead of bouncing back to "Saved", and stale `?id=` (signature was deleted) recovers to "new" instead of PATCH-looping a 404.
 
 ### 1.0.7
 Persistence actually persists. Two paired bugs fixed: (1) the editor never fetched an existing signature on open, so reloading `?id=42` started fresh empty — new `useLoadSignature` hook GETs `/signatures/:id` on mount and replays the schema. (2) For a brand-new signature, autosave POSTed and got back the new id but the URL still said no id, so a reload created yet another fresh draft and the user's first edits were unreachable — autosave now writes `?id=N` into the URL via `history.replaceState` after the first POST. Autosave gates on a new `persistenceStore.isLoaded` flag so the load itself doesn't trigger a redundant PATCH. Also: restored the 1px border on block library cards (1.0.6's `button { border: 0 }` shorthand was clobbering preflight's `border-style: solid`; switched to longhand `border-width: 0`).
