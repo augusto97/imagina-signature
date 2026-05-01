@@ -76,16 +76,23 @@ final class EditorAssetEnqueuer {
 		$signature_id = isset( $_GET['id'] ) ? (int) $_GET['id'] : 0;
 		$version      = defined( 'IMGSIG_VERSION' ) ? IMGSIG_VERSION : '1.0.0';
 
-		wp_enqueue_style(
-			self::HANDLE,
-			plugins_url( 'build/editor.css', IMGSIG_FILE ),
-			[],
-			$version
-		);
+		// Hashed filenames from the Vite manifest — every release ships
+		// fresh URLs so caches can't possibly serve a stale bundle.
+		$js_file  = ManifestReader::file_for( 'assets/editor/src/main.tsx', 'editor.js' );
+		$css_file = ManifestReader::css_for( 'assets/editor/src/main.tsx' );
+
+		if ( '' !== $css_file ) {
+			wp_enqueue_style(
+				self::HANDLE,
+				plugins_url( 'build/' . $css_file, IMGSIG_FILE ),
+				[],
+				$version
+			);
+		}
 
 		wp_enqueue_script(
 			self::HANDLE,
-			plugins_url( 'build/editor.js', IMGSIG_FILE ),
+			plugins_url( 'build/' . $js_file, IMGSIG_FILE ),
 			[],
 			$version,
 			true
@@ -130,6 +137,7 @@ final class EditorAssetEnqueuer {
 		$site_opts = SiteSettingsController::current_settings();
 
 		return [
+			'pluginVersion'    => defined( 'IMGSIG_VERSION' ) ? IMGSIG_VERSION : '0.0.0',
 			'signatureId'      => $signature_id,
 			'userId'           => $user_id,
 			'apiBase'          => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),

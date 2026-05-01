@@ -11,6 +11,15 @@
  * as `window.IMGSIG_EDITOR_CONFIG` (CLAUDE.md §14.2).
  */
 export interface AppConfig {
+  /**
+   * Plugin version sourced from `IMGSIG_VERSION` in the PHP main file.
+   * The bundle bakes its compile-time version into `__BUNDLE_VERSION__`
+   * and compares against this at runtime — mismatch means the user's
+   * browser is serving a cached editor.js while the plugin itself has
+   * been upgraded, and we surface that as a "hard-refresh required"
+   * banner so they don't keep wondering why fixes aren't landing.
+   */
+  pluginVersion: string;
   /** ID of the signature being edited; 0 means "new". */
   signatureId: number;
   /** ID of the WordPress user who opened the editor. */

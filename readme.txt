@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.20
+Stable tag: 1.0.21
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,10 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.21 =
+* **Real cache busting via hashed filenames + manifest.** The user reported "fixes don't seem to land after upgrading the plugin" — the root cause was that previous releases output `editor.js` and `admin.js` with no content hash in the filename. Browsers, CDNs, and page-cache plugins ignored the `?ver=` query string and served stale bundles. Vite now emits hashed filenames (`editor.[hash].js`, `admin.[hash].js`, etc.) and a `build/.vite/manifest.json` mapping each entry to its current hashed name. PHP's `AdminAssetEnqueuer` and `EditorAssetEnqueuer` read the manifest at request time. **Every release ships completely different URLs** — no cache layer can possibly serve stale code on the upgrade boundary.
+* **Single-source-of-truth version.** Vite now reads `IMGSIG_VERSION` from `imagina-signatures.php` at build time and bakes it into the JS bundle as `__BUNDLE_VERSION__`. PHP injects the runtime `IMGSIG_VERSION` as `pluginVersion` into the bootstrap config. Topbar pill compares both — match shows a quiet grey `v1.0.21`, mismatch shows a red **clickable** "stale bundle" pill (`v1.0.20 → 1.0.21 ↻`) that hard-refreshes the page with a unique cache-bust query string. So the next time the user wonders if the upgrade actually took, the editor tells them directly.
 
 = 1.0.20 =
 * **Persistence engine rewritten from scratch.** Old `persistenceEngine.ts` deleted. The previous version used a chain of `.finally(scheduleAutosave)` callbacks to coalesce saves arriving during an in-flight POST — that chain raced with `flushNow()` in subtle ways (visible to the user as duplicate empty signatures + edits dropped). New `assets/editor/src/services/persistence.ts` uses a different model: one save at a time, a self-coalescing `while (dirty) { dirty = false; await save(); }` loop, no promise chains. Concurrency reduces to a single `inFlight` reference. `saveNow()` is just `clearTimeout + performSave + await` — if a save is already running, await it, the loop will pick up new edits via the dirty flag.

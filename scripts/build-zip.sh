@@ -66,7 +66,6 @@ rsync -a \
   --exclude='CHANGELOG.md' \
   --exclude='assets/*/src' \
   --exclude='assets/*/public' \
-  --exclude='.vite' \
   --exclude='*.tsbuildinfo' \
   ./ "$SLUG_DIR/"
 

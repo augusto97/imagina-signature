@@ -75,16 +75,26 @@ final class AdminAssetEnqueuer {
 		$page    = $this->hook_pages[ $hook_suffix ];
 		$version = defined( 'IMGSIG_VERSION' ) ? IMGSIG_VERSION : '1.0.0';
 
-		wp_enqueue_style(
-			self::HANDLE,
-			plugins_url( 'build/admin.css', IMGSIG_FILE ),
-			[],
-			$version
-		);
+		// Resolve the hashed filenames Vite emits — every release has
+		// fresh URLs so caches can't possibly serve a stale bundle.
+		// `file_for` falls back to the un-hashed legacy name so the
+		// page still loads if someone's running off an old build that
+		// pre-dates the manifest convention.
+		$js_file  = ManifestReader::file_for( 'assets/admin/src/main.tsx', 'admin.js' );
+		$css_file = ManifestReader::css_for( 'assets/admin/src/main.tsx' );
+
+		if ( '' !== $css_file ) {
+			wp_enqueue_style(
+				self::HANDLE,
+				plugins_url( 'build/' . $css_file, IMGSIG_FILE ),
+				[],
+				$version
+			);
+		}
 
 		wp_enqueue_script(
 			self::HANDLE,
-			plugins_url( 'build/admin.js', IMGSIG_FILE ),
+			plugins_url( 'build/' . $js_file, IMGSIG_FILE ),
 			[],
 			$version,
 			true
@@ -132,6 +142,7 @@ final class AdminAssetEnqueuer {
 		$site_opts = SiteSettingsController::current_settings();
 
 		return [
+			'pluginVersion'    => defined( 'IMGSIG_VERSION' ) ? IMGSIG_VERSION : '0.0.0',
 			'page'             => $page,
 			'userId'           => $user_id,
 			'capabilities'     => [

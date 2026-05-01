@@ -24,7 +24,15 @@ import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 import { DeviceSwitcher } from './DeviceSwitcher';
 
-const PLUGIN_VERSION = '1.0.20';
+/**
+ * Compile-time version baked into the bundle by Vite (`define`
+ * config reads `IMGSIG_VERSION` from the PHP main file). The runtime
+ * `IMGSIG_EDITOR_CONFIG.pluginVersion` is the version PHP just
+ * served with this request — they should match. When they don't,
+ * the user's browser is serving a cached bundle from a previous
+ * release, which is the #1 reason "your fixes aren't landing".
+ */
+const BUNDLE_VERSION = __BUNDLE_VERSION__;
 
 /**
  * Editor topbar — three regions:
@@ -106,12 +114,7 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
           <span className="truncate text-[13px] font-semibold text-[var(--text-primary)]">
             {__('Imagina Signatures')}
           </span>
-          <span
-            className="rounded-full bg-slate-100 px-1.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wide text-slate-500"
-            title={__('Plugin version. If this string is stale after an upgrade, hard-refresh the browser to invalidate cached assets.')}
-          >
-            v{PLUGIN_VERSION}
-          </span>
+          <VersionPill />
         </div>
       </div>
 
@@ -264,3 +267,65 @@ function formatTime(iso: string): string {
     return iso;
   }
 }
+
+/**
+ * Plugin version pill. Two version sources:
+ *
+ *   - `BUNDLE_VERSION` — baked into the JS bundle at build time
+ *     (Vite reads `IMGSIG_VERSION` from the PHP main file).
+ *   - `getConfig().pluginVersion` — what PHP just served with
+ *     this request.
+ *
+ * When they match, it's a quiet grey pill. When they don't, it
+ * means the user's browser served a cached bundle from a previous
+ * release while the plugin itself was upgraded — and that's the
+ * #1 reason past "fixes" appeared not to land. Surface it loudly:
+ * red pill with a hard-refresh CTA. Click reloads with cache
+ * bypass via `window.location.reload()` after a query-string
+ * cache-bust.
+ */
+const VersionPill: FC = () => {
+  let runtimeVersion = '0.0.0';
+  try {
+    runtimeVersion = getConfig().pluginVersion ?? '0.0.0';
+  } catch {
+    // Bootstrap missing — leave as 0.0.0; the mismatch view kicks in.
+  }
+  const stale = runtimeVersion !== BUNDLE_VERSION;
+
+  if (!stale) {
+    return (
+      <span
+        className="rounded-full bg-slate-100 px-1.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wide text-slate-500"
+        title={__('Plugin version (PHP and JS bundle agree).')}
+      >
+        v{runtimeVersion}
+      </span>
+    );
+  }
+
+  const reload = (): void => {
+    // Append a unique query string so even an aggressive CDN /
+    // page-cache layer can't serve the same response we just
+    // received. The browser will fetch the new HTML, which links
+    // to the freshly-hashed bundle filenames.
+    const url = new URL(window.location.href);
+    url.searchParams.set('imgsig_cache_bust', String(Date.now()));
+    window.location.href = url.toString();
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={reload}
+      title={__(
+        'Stale bundle detected. The plugin is on PHP %s but your browser is running JS %s. Click to hard-refresh.',
+        runtimeVersion,
+        BUNDLE_VERSION,
+      )}
+      className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-[var(--danger)] ring-1 ring-inset ring-red-200 transition-colors hover:bg-red-100"
+    >
+      v{BUNDLE_VERSION} → {runtimeVersion} ↻
+    </button>
+  );
+};

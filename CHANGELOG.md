@@ -2,6 +2,25 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.21] — 2026-05-01
+
+### Fixed — The reason past fixes appeared not to land
+
+User reported that several fixes shipped over the prior weeks "didn't seem to do anything" after upgrading the plugin. Root cause investigated: the build pipeline emitted entry files without content hashes in the filename (`editor.js`, `admin.js`). Browser, CDN, and page-cache layers cached those URLs aggressively and ignored WordPress's `?ver=` query parameter. Result: the plugin's PHP files updated correctly on disk, but the browser kept executing the previous release's JavaScript.
+
+Two complementary fixes:
+
+- **Hashed filenames + Vite manifest.** `vite.config.ts` now uses `entryFileNames: '[name].[hash].js'` and emits `build/.vite/manifest.json`. The hash is content-derived — every release with a non-trivial code change ships completely different URLs. New `src/Admin/ManifestReader.php` resolves the entry's source-tree path (`assets/editor/src/main.tsx` etc.) to its current hashed output. Both `AdminAssetEnqueuer` and `EditorAssetEnqueuer` ask the reader for the JS + CSS filenames at request time. No cache layer keying on URL can serve a stale bundle, because the URL itself is brand new.
+
+- **Build-time / runtime version reconciliation.** Vite reads `IMGSIG_VERSION` from `imagina-signatures.php` at build time (small regex inside `vite.config.ts`) and exposes it as `__BUNDLE_VERSION__` via the `define` config. The PHP bootstrap injects the request-time `IMGSIG_VERSION` as `IMGSIG_EDITOR_CONFIG.pluginVersion`. The topbar's version pill now compares both:
+  - Match → quiet grey `v1.0.21`.
+  - Mismatch → red **clickable** "stale bundle" pill: `v1.0.20 → 1.0.21 ↻`. Click hard-refreshes with a unique `imgsig_cache_bust=<timestamp>` query string. The next time the user thinks an upgrade didn't take, the editor tells them directly instead of leaving them guessing.
+
+### Internal
+
+- `scripts/build-zip.sh` had `--exclude='.vite'` which would have excluded the manifest from the distribution ZIP. Removed.
+- Editor bundle: 678 KB → 679 KB (gzip 212 KB). Slightly different filename encoding, same content size.
+
 ## [1.0.20] — 2026-05-01
 
 ### Changed — Persistence engine rewritten from scratch
