@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.21 | [imagina-signatures-1.0.21.zip](imagina-signatures-1.0.21.zip) |
 | 1.0.20 | [imagina-signatures-1.0.20.zip](imagina-signatures-1.0.20.zip) |
 | 1.0.19 | [imagina-signatures-1.0.19.zip](imagina-signatures-1.0.19.zip) |
 | 1.0.18 | [imagina-signatures-1.0.18.zip](imagina-signatures-1.0.18.zip) |
@@ -33,6 +34,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.21.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.20.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.19.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.18.zip
@@ -91,6 +93,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.21
+**Real cache busting.** User reported "fixes don't seem to land after upgrading" — root cause was Vite outputting `editor.js`/`admin.js` without content hashes. Browsers, CDNs, page-cache plugins ignored `?ver=` and kept serving stale bundles. Vite now emits hashed filenames (`editor.[hash].js`, etc.) and a `manifest.json`; PHP's enqueuers read the manifest at request time. Every release ships brand-new URLs — no cache layer can possibly serve stale code. Plus a runtime check: Vite reads `IMGSIG_VERSION` from the PHP main file and bakes it into the bundle as `__BUNDLE_VERSION__`; PHP injects the runtime version as `pluginVersion`. Topbar pill compares both — match shows quiet grey, mismatch shows red clickable "stale bundle" pill that hard-refreshes with a unique query string. The next time the upgrade appears not to land, the editor tells the user directly.
 
 ### 1.0.20
 **Persistence engine rewritten from scratch.** Old `persistenceEngine.ts` deleted. The previous design coalesced saves via `.finally(scheduleAutosave)` callbacks, which raced with `flushNow()` in subtle ways — visible to the user as duplicate empty signatures + edits dropped on quick navigation. New `services/persistence.ts` uses one `inFlight` reference + a self-coalescing `while (dirty) { dirty = false; await save(); }` loop. No promise chains. Empty-schema POST refused so accidental Save clicks don't create empty rows. Branding palette + Banner campaigns now stored as native PHP arrays instead of JSON-encoded strings (was the suspected cause of palette saves not persisting), with round-trip verification: after `update_option` the controller re-reads and compares against what the client sent — silent failures return 500 with `{sent, readback}` instead of a misleading "Saved" toast.
