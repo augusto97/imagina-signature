@@ -35,6 +35,15 @@ import {
  * signature is one column anyway, and add / remove via the
  * container's own property panel covers the multi-column case.
  */
+const DEFAULT_LEFT_WIDTH = 50;
+const MIN_LEFT_WIDTH = 10;
+const MAX_LEFT_WIDTH = 90;
+
+function leftWidth(block: ContainerBlock): number {
+  const raw = block.left_width ?? DEFAULT_LEFT_WIDTH;
+  return Math.max(MIN_LEFT_WIDTH, Math.min(MAX_LEFT_WIDTH, raw));
+}
+
 const Renderer: FC<{ block: ContainerBlock; isPreview?: boolean }> = ({ block, isPreview }) => {
   const cells: React.ReactNode[] = [];
   const half = Math.ceil(block.children.length / 2);
@@ -46,6 +55,8 @@ const Renderer: FC<{ block: ContainerBlock; isPreview?: boolean }> = ({ block, i
       </td>,
     );
   } else {
+    const leftPct = leftWidth(block);
+    const widths = [`${leftPct}%`, `${100 - leftPct}%`];
     for (let i = 0; i < 2; i++) {
       const start = i * half;
       const slice = block.children.slice(start, start + half);
@@ -56,7 +67,7 @@ const Renderer: FC<{ block: ContainerBlock; isPreview?: boolean }> = ({ block, i
             verticalAlign: 'top',
             paddingLeft: i === 0 ? 0 : block.gap / 2,
             paddingRight: i === 1 ? 0 : block.gap / 2,
-            width: '50%',
+            width: widths[i],
           }}
         >
           <ChildList items={slice} isPreview={isPreview} />
@@ -174,6 +185,8 @@ const Properties: FC<{
         max={48}
       />
 
+      {block.columns === 2 && <ColumnWidthControl block={block} onChange={onChange} />}
+
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <span className="is-section-label">{__('Children')}</span>
@@ -254,8 +267,78 @@ const Properties: FC<{
       </div>
 
       <p className="text-[10.5px] leading-relaxed text-[var(--text-muted)]">
-        {__('Children are split evenly between cells in 2-column mode. Reorder via Layers.')}
+        {__('Children are split evenly between cells. Reorder via Layers.')}
       </p>
+    </div>
+  );
+};
+
+const COLUMN_WIDTH_PRESETS: ReadonlyArray<{ label: string; value: number }> = [
+  { label: '1 / 4', value: 25 },
+  { label: '1 / 3', value: 33 },
+  { label: '1 / 2', value: 50 },
+  { label: '2 / 3', value: 67 },
+  { label: '3 / 4', value: 75 },
+];
+
+const ColumnWidthControl: FC<{
+  block: ContainerBlock;
+  onChange: (u: Partial<ContainerBlock>) => void;
+}> = ({ block, onChange }) => {
+  const left = leftWidth(block);
+  const right = 100 - left;
+
+  const set = (next: number): void => {
+    const clamped = Math.max(MIN_LEFT_WIDTH, Math.min(MAX_LEFT_WIDTH, Math.round(next)));
+    onChange({ left_width: clamped });
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="font-medium text-[var(--text-secondary)]">{__('Column widths')}</span>
+        <span className="font-mono text-[11px] text-[var(--text-muted)]">
+          {left}% / {right}%
+        </span>
+      </div>
+
+      {/* Visual preview — two bars sized like the cells will render. */}
+      <div className="flex h-2 overflow-hidden rounded bg-[var(--bg-panel-soft)] ring-1 ring-inset ring-[var(--border-default)]">
+        <div className="bg-[var(--accent)]/70" style={{ width: `${left}%` }} />
+        <div className="bg-[var(--accent)]/30" style={{ width: `${right}%` }} />
+      </div>
+
+      <input
+        type="range"
+        min={MIN_LEFT_WIDTH}
+        max={MAX_LEFT_WIDTH}
+        step={1}
+        value={left}
+        onChange={(e) => set(Number(e.target.value))}
+        className="w-full"
+      />
+
+      <div className="flex flex-wrap gap-1">
+        {COLUMN_WIDTH_PRESETS.map(({ label, value }) => {
+          const active = left === value;
+          return (
+            <button
+              key={value}
+              type="button"
+              onClick={() => set(value)}
+              className={cn(
+                'h-6 rounded px-2 text-[11px] font-medium transition-colors',
+                active
+                  ? 'bg-[var(--bg-selected)] text-[var(--accent)] ring-1 ring-inset ring-[var(--accent)]/30'
+                  : 'text-[var(--text-secondary)] ring-1 ring-inset ring-[var(--border-default)] hover:bg-[var(--bg-hover)]',
+              )}
+              title={`${value}% / ${100 - value}%`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -279,9 +362,11 @@ function compile(block: ContainerBlock, ctx: CompileContext): string {
 
   const left = block.children.slice(0, half).map(compileChild).join('\n');
   const right = block.children.slice(half).map(compileChild).join('\n');
+  const leftPct = leftWidth(block);
+  const rightPct = 100 - leftPct;
   const padRight = `padding-right:${block.gap / 2}px`;
   const padLeft = `padding-left:${block.gap / 2}px`;
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="vertical-align:top;width:50%;${padRight}">${left}</td><td style="vertical-align:top;width:50%;${padLeft}">${right}</td></tr></table>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="vertical-align:top;width:${leftPct}%;${padRight}">${left}</td><td style="vertical-align:top;width:${rightPct}%;${padLeft}">${right}</td></tr></table>`;
 }
 
 const definition: BlockDefinition<ContainerBlock> = {

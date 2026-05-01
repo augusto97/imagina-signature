@@ -100,6 +100,13 @@ export interface ContainerBlock extends BlockBase {
   type: 'container';
   columns: 1 | 2;
   gap: number;
+  /**
+   * Percentage width of the LEFT column when `columns === 2`. The
+   * right column gets `100 - left_width`. Optional for back-compat
+   * with rows saved before this field existed — falls back to 50
+   * (even split) at render / compile time.
+   */
+  left_width?: number;
   children: Block[];
 }
 

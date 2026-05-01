@@ -2,6 +2,13 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.10] — 2026-05-01
+
+### Added
+
+- Container column widths are tunable. `ContainerBlock` gained an optional `left_width` field (percentage of the left column when `columns === 2`; right column is `100 - left_width`). Range 10–90, default 50, optional for back-compat — rows saved before this field default to an even split at render / compile time. Both the canvas Renderer and the email-safe `compile()` honour the value, so the WYSIWYG promise holds for nested columns too.
+- Properties panel gets a Column-widths control with three modalities: a live preview bar (two strips sized to match the cells), a 10–90% range slider, and a row of preset buttons (1/4, 1/3, 1/2, 2/3, 3/4) for the common cases like a logo cell on the left + a content cell on the right.
+
 ## [1.0.9] — 2026-05-01
 
 ### Changed

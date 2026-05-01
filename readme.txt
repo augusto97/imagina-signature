@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.9
+Stable tag: 1.0.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,9 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.10 =
+* Container columns are no longer locked to a 50/50 split. New `left_width` field on `ContainerBlock` (percentage 10–90, optional, defaults to 50 for back-compat with rows saved before this field). Renderer + email-safe `compile()` both honour the value, so what you see on the canvas matches what the signature ships. Properties panel gains a Column-widths control: a live preview bar, a 10–90% range slider, and quick-preset buttons (1/4, 1/3, 1/2, 2/3, 3/4) for common ratios like a logo cell + content cell.
 
 = 1.0.9 =
 * Layers panel is a real tree now. Container children render indented under their parent — previously the panel only walked the top-level array, so column contents were invisible there. Each row gets up / down chevrons that swap with siblings within the same parent (top-level rows reorder among top-level, nested children reorder within their column array), an eye toggle for visibility, and a trash icon for delete. New `moveBlockUp` / `moveBlockDown` schemaStore actions back the chevrons and use a `findParentAndIndex` helper that locates a block whether it lives at the top level or inside a Container.
