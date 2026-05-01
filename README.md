@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.18 | [imagina-signatures-1.0.18.zip](imagina-signatures-1.0.18.zip) |
 | 1.0.17 | [imagina-signatures-1.0.17.zip](imagina-signatures-1.0.17.zip) |
 | 1.0.16 | [imagina-signatures-1.0.16.zip](imagina-signatures-1.0.16.zip) |
 | 1.0.15 | [imagina-signatures-1.0.15.zip](imagina-signatures-1.0.15.zip) |
@@ -30,6 +31,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.18.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.17.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.16.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.15.zip
@@ -85,6 +87,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.18
+**Fix: Button block invisible in non-Outlook clients** (Gmail, Apple Mail, Outlook Web, multi-device preview, "Copy visual" paste). The minifier was stripping the closing half of the Button's downlevel-revealed conditional comment (`<!--<![endif]-->`), which left the opener `<!--[if !mso]>` orphaned. Browsers then read everything after it as one long unterminated comment and the `<a>` got swallowed. Same root cause for the GIF static-fallback `<img>` shipped in 1.0.16. Minifier now extracts every conditional comment block (`<!--[if …]>` … `<![endif]-->`) into a placeholder before stripping plain comments, then restores them verbatim. Seven regression tests added.
 
 ### 1.0.17
 New **"Copy visual"** button in the Export modal — copies the rendered signature with `text/html` MIME type so it pastes visually into rich-text composers (Gmail compose, Outlook signature box, Apple Mail, Word, anywhere with a `contenteditable`). For platforms whose signature settings don't expose an HTML / source mode and refuse a raw HTML paste. Modern path uses `navigator.clipboard.write([new ClipboardItem({...})])`; falls back to a hidden contenteditable + `execCommand('copy')` for old browsers / locked-down iframes. "Copy HTML" kept for HTML-mode flows. Per-client install tabs now flag which copy mode the steps assume (`Use Copy visual` / `Use Download .html` pill) and start each list with "Press [button] above" so there's no ambiguity.
