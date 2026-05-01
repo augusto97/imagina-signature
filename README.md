@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.19 | [imagina-signatures-1.0.19.zip](imagina-signatures-1.0.19.zip) |
 | 1.0.18 | [imagina-signatures-1.0.18.zip](imagina-signatures-1.0.18.zip) |
 | 1.0.17 | [imagina-signatures-1.0.17.zip](imagina-signatures-1.0.17.zip) |
 | 1.0.16 | [imagina-signatures-1.0.16.zip](imagina-signatures-1.0.16.zip) |
@@ -31,6 +32,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.19.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.18.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.17.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.16.zip
@@ -87,6 +89,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.19
+**Fix: persistence race that ate the user's most recent edits.** Reported as "se generó otra firma cuando regresé al listado, y cuando volví a entrar estaba vacía". `flushNow()` awaited the in-flight POST but exited before the coalesce-finally chain could run `scheduleAutosave` for any save that landed during it — page navigated, the timer for that second batch was cancelled, edits were lost. `flushNow()` now loops until both `pendingTimer` and `inFlight` are clear (5-iteration safety cap). Plus the UX upgrades the user explicitly asked for: a **manual Save button** in the topbar with five visual states (Saving spinner / Retry save red / Save accent / Saved · 14:32 emerald / Save outline) — click runs `persistenceEngine.saveNow()` which forces flush + awaits the round-trip. First-save **toast announces the assigned ID** (`Saved as signature #42`). **Plugin version pill** in the topbar so cached JS after an upgrade is visible at a glance.
 
 ### 1.0.18
 **Fix: Button block invisible in non-Outlook clients** (Gmail, Apple Mail, Outlook Web, multi-device preview, "Copy visual" paste). The minifier was stripping the closing half of the Button's downlevel-revealed conditional comment (`<!--<![endif]-->`), which left the opener `<!--[if !mso]>` orphaned. Browsers then read everything after it as one long unterminated comment and the `<a>` got swallowed. Same root cause for the GIF static-fallback `<img>` shipped in 1.0.16. Minifier now extracts every conditional comment block (`<!--[if …]>` … `<![endif]-->`) into a placeholder before stripping plain comments, then restores them verbatim. Seven regression tests added.
