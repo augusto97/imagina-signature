@@ -144,6 +144,11 @@ final class EditorAssetEnqueuer {
 			'systemVariables'  => self::system_variables_for( $user ),
 			'brandPalette'     => $site_opts['brand_palette'],
 			'complianceFooter' => $site_opts['compliance_footer'],
+			// Editor only sees CURRENTLY-ACTIVE campaigns (filtered by
+			// enabled + date window) so the compile pipeline doesn't
+			// have to know about scheduling. The admin sees the full
+			// list via /admin/site-settings.
+			'bannerCampaigns'  => SiteSettingsController::active_banner_campaigns(),
 		];
 	}
 

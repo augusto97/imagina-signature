@@ -151,6 +151,10 @@ final class AdminAssetEnqueuer {
 			],
 			'brandPalette'     => $site_opts['brand_palette'],
 			'complianceFooter' => $site_opts['compliance_footer'],
+			// Admin sees the FULL campaign list (enabled + disabled +
+			// out-of-window) for editing. The editor bootstrap only
+			// receives currently-active campaigns.
+			'bannerCampaigns'  => $site_opts['banner_campaigns'],
 		];
 	}
 }

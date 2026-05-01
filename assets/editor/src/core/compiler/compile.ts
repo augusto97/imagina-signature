@@ -6,6 +6,7 @@ import { minifyHtml } from './minify';
 import { validateEmailHtml } from './validate';
 import { substituteVariables } from './variables';
 import { getConfig } from '@/bridge/apiClient';
+import type { AppConfig } from '@/bridge/types';
 
 export interface CompileResult {
   html: string;
@@ -56,7 +57,11 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
   const concatenated = blockChunks.join('\n');
   const shelled = wrapInEmailShell(concatenated, schema.canvas);
   const withOutlookFixes = applyOutlookFixes(shelled);
-  const withFooter = appendComplianceFooter(withOutlookFixes);
+  // Campaign banner first (sits visually right under the user's
+  // signature content), THEN the compliance footer (which always
+  // wants to be the very last thing the recipient sees).
+  const withCampaign = appendBannerCampaign(withOutlookFixes, schema.canvas.width);
+  const withFooter = appendComplianceFooter(withCampaign);
 
   // Merge: read-only wp_* variables first, then user-defined override.
   // The bootstrap config is optional in tests / standalone preview —
@@ -106,13 +111,48 @@ function appendComplianceFooter(html: string): string {
   }
   if (!footer?.enabled || !footer.html) return html;
 
-  // Outer table closing tag — `wrapInEmailShell` emits exactly this
-  // pattern. If a future change to the shell breaks the marker, the
-  // append silently no-ops rather than corrupting the output.
   const marker = '</td></tr>\n</table>';
   const idx = html.lastIndexOf(marker);
   if (idx === -1) return html;
 
   const footerRow = `</td></tr><tr><td style="padding-top:12px;font-size:11px;color:#64748b;line-height:1.5">${footer.html}</td></tr>\n</table>`;
   return html.slice(0, idx) + footerRow + html.slice(idx + marker.length);
+}
+
+/**
+ * Pick one currently-active campaign at random and append it inside
+ * the outer email-shell table as a new `<tr><td>` row. Re-running
+ * `compileSignature()` re-runs the random pick, so each export rotates
+ * between active banners.
+ *
+ * Insertion uses the same outer-table marker as the compliance footer
+ * — a future change to the shell that breaks the marker silently no-
+ * ops rather than corrupting the output.
+ *
+ * Banner is rendered as a centred `<a><img></a>` so it inherits the
+ * canvas width but never overflows on narrow clients (`max-width:100%`).
+ */
+function appendBannerCampaign(html: string, canvasWidth: number): string {
+  let campaigns: AppConfig['bannerCampaigns'];
+  try {
+    campaigns = getConfig().bannerCampaigns;
+  } catch {
+    return html;
+  }
+  if (!campaigns || campaigns.length === 0) return html;
+
+  const pick = campaigns[Math.floor(Math.random() * campaigns.length)];
+  if (!pick || !pick.image_url) return html;
+
+  const marker = '</td></tr>\n</table>';
+  const idx = html.lastIndexOf(marker);
+  if (idx === -1) return html;
+
+  const width = Math.max(100, Math.min(canvasWidth, pick.width || canvasWidth));
+  const safeAlt = String(pick.alt || pick.name || '').replace(/"/g, '&quot;');
+  const img = `<img src="${pick.image_url}" alt="${safeAlt}" width="${width}" style="display:block;max-width:100%;height:auto;border:0;margin:0 auto" />`;
+  const inner = pick.link_url ? `<a href="${pick.link_url}">${img}</a>` : img;
+
+  const campaignRow = `</td></tr><tr><td style="padding-top:14px;text-align:center" data-imgsig-campaign="${pick.id}">${inner}</td></tr>\n</table>`;
+  return html.slice(0, idx) + campaignRow + html.slice(idx + marker.length);
 }

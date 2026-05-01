@@ -52,4 +52,22 @@ export interface AppConfig {
     enabled: boolean;
     html: string;
   };
+  /**
+   * Currently-active banner campaigns the compile pipeline can rotate
+   * between. Already filtered by the server (enabled + within date
+   * window). Empty array = no campaign banner is injected.
+   */
+  bannerCampaigns?: BannerCampaign[];
+}
+
+export interface BannerCampaign {
+  id: string;
+  name: string;
+  enabled: boolean;
+  image_url: string;
+  link_url: string;
+  alt: string;
+  width: number;
+  start_date: string;
+  end_date: string;
 }

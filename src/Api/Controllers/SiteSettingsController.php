@@ -43,8 +43,11 @@ final class SiteSettingsController extends BaseController {
 
 	public const OPT_BRAND_PALETTE     = 'imgsig_brand_palette';
 	public const OPT_COMPLIANCE_FOOTER = 'imgsig_compliance_footer';
+	public const OPT_BANNER_CAMPAIGNS  = 'imgsig_banner_campaigns';
 
-	public const MAX_PALETTE_SIZE = 12;
+	public const MAX_PALETTE_SIZE   = 12;
+	public const MAX_CAMPAIGNS      = 50;
+	public const MAX_CAMPAIGN_WIDTH = 800;
 
 	/**
 	 * @inheritDoc
@@ -107,6 +110,12 @@ final class SiteSettingsController extends BaseController {
 			update_option( self::OPT_COMPLIANCE_FOOTER, $footer, false );
 		}
 
+		if ( null !== $request->get_param( 'banner_campaigns' ) ) {
+			$raw = (array) $request->get_param( 'banner_campaigns' );
+			$campaigns = self::sanitize_campaigns( $raw );
+			update_option( self::OPT_BANNER_CAMPAIGNS, wp_json_encode( $campaigns ), false );
+		}
+
 		return rest_ensure_response( self::current_settings() );
 	}
 
@@ -123,6 +132,7 @@ final class SiteSettingsController extends BaseController {
 		return [
 			'brand_palette'     => self::current_palette(),
 			'compliance_footer' => self::current_compliance_footer(),
+			'banner_campaigns'  => self::current_banner_campaigns(),
 		];
 	}
 
@@ -204,5 +214,128 @@ final class SiteSettingsController extends BaseController {
 	 */
 	private static function sanitize_compliance_html( string $html ): string {
 		return wp_kses_post( $html );
+	}
+
+	/**
+	 * Returns the full stored campaign list (admin view — includes
+	 * disabled and out-of-window entries).
+	 *
+	 * @since 1.0.15
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function current_banner_campaigns(): array {
+		$raw = get_option( self::OPT_BANNER_CAMPAIGNS, '' );
+		if ( ! is_string( $raw ) || '' === $raw ) {
+			return [];
+		}
+		$decoded = json_decode( $raw, true );
+		if ( ! is_array( $decoded ) ) {
+			return [];
+		}
+		return self::sanitize_campaigns( $decoded );
+	}
+
+	/**
+	 * Returns only campaigns that are enabled AND inside their date
+	 * window (or have no window). Used by the editor bootstrap so the
+	 * compile pipeline doesn't have to know about scheduling.
+	 *
+	 * @since 1.0.15
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function active_banner_campaigns(): array {
+		$today = current_time( 'Y-m-d' );
+
+		return array_values(
+			array_filter(
+				self::current_banner_campaigns(),
+				static function ( array $c ) use ( $today ): bool {
+					if ( empty( $c['enabled'] ) ) {
+						return false;
+					}
+					if ( ! empty( $c['start_date'] ) && (string) $c['start_date'] > $today ) {
+						return false;
+					}
+					if ( ! empty( $c['end_date'] ) && (string) $c['end_date'] < $today ) {
+						return false;
+					}
+					if ( empty( $c['image_url'] ) ) {
+						return false;
+					}
+					return true;
+				}
+			)
+		);
+	}
+
+	/**
+	 * Normalise the campaign list — drops invalid entries, fills in
+	 * defaults, caps total length at MAX_CAMPAIGNS.
+	 *
+	 * Each output campaign is a strict shape:
+	 *   { id, name, enabled, image_url, link_url, alt, width,
+	 *     start_date, end_date }
+	 *
+	 * @since 1.0.15
+	 *
+	 * @param array<int, mixed> $raw Untrusted input.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function sanitize_campaigns( array $raw ): array {
+		$out = [];
+		foreach ( $raw as $entry ) {
+			if ( ! is_array( $entry ) ) {
+				continue;
+			}
+
+			$image_url = isset( $entry['image_url'] ) ? esc_url_raw( (string) $entry['image_url'] ) : '';
+			if ( '' === $image_url ) {
+				// A campaign without an image has nothing to render.
+				continue;
+			}
+
+			$width = isset( $entry['width'] ) ? (int) $entry['width'] : 600;
+			$width = max( 100, min( self::MAX_CAMPAIGN_WIDTH, $width ) );
+
+			$out[] = [
+				'id'         => isset( $entry['id'] ) ? sanitize_key( (string) $entry['id'] ) : self::generate_campaign_id(),
+				'name'       => isset( $entry['name'] ) ? sanitize_text_field( (string) $entry['name'] ) : '',
+				'enabled'    => ! empty( $entry['enabled'] ),
+				'image_url'  => $image_url,
+				'link_url'   => isset( $entry['link_url'] ) ? esc_url_raw( (string) $entry['link_url'] ) : '',
+				'alt'        => isset( $entry['alt'] ) ? sanitize_text_field( (string) $entry['alt'] ) : '',
+				'width'      => $width,
+				'start_date' => self::sanitize_date( $entry['start_date'] ?? null ),
+				'end_date'   => self::sanitize_date( $entry['end_date'] ?? null ),
+			];
+
+			if ( count( $out ) >= self::MAX_CAMPAIGNS ) {
+				break;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * @param mixed $value Raw input.
+	 *
+	 * @return string Empty string when invalid.
+	 */
+	private static function sanitize_date( $value ): string {
+		if ( ! is_string( $value ) || '' === $value ) {
+			return '';
+		}
+		// Accept YYYY-MM-DD only — keeps date arithmetic simple.
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
+			return '';
+		}
+		return $value;
+	}
+
+	private static function generate_campaign_id(): string {
+		return 'camp_' . substr( md5( uniqid( '', true ) ), 0, 12 );
 	}
 }

@@ -1,13 +1,14 @@
 import { useState, type FC } from 'react';
-import { Cloud, Palette, FileText } from 'lucide-react';
+import { Cloud, Palette, FileText, Megaphone } from 'lucide-react';
 import { Topbar } from '@admin/components/Topbar';
 import { __ } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
 import { StorageTab } from './settings/StorageTab';
 import { BrandingTab } from './settings/BrandingTab';
 import { ComplianceTab } from './settings/ComplianceTab';
+import { CampaignsTab } from './settings/CampaignsTab';
 
-type Tab = 'storage' | 'branding' | 'compliance';
+type Tab = 'storage' | 'branding' | 'compliance' | 'campaigns';
 
 const TABS: Array<{ id: Tab; label: string; icon: typeof Cloud; description: string }> = [
   {
@@ -27,6 +28,12 @@ const TABS: Array<{ id: Tab; label: string; icon: typeof Cloud; description: str
     label: 'Compliance',
     icon: FileText,
     description: 'Optional HTML footer appended to every signature on export (GDPR / CAN-SPAM).',
+  },
+  {
+    id: 'campaigns',
+    label: 'Campaigns',
+    icon: Megaphone,
+    description: 'Promotional banners auto-injected at the bottom of every signature, with optional date scheduling and random rotation across active entries.',
   },
 ];
 
@@ -70,6 +77,7 @@ export const SettingsPage: FC = () => {
           {tab === 'storage' && <StorageTab />}
           {tab === 'branding' && <BrandingTab />}
           {tab === 'compliance' && <ComplianceTab />}
+          {tab === 'campaigns' && <CampaignsTab />}
         </div>
       </div>
     </div>

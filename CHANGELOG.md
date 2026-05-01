@@ -2,6 +2,21 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.15] — 2026-05-01
+
+### Added — Track 4: banner campaigns with rotation + scheduling
+
+- **Site-wide banner campaigns**. New option `imgsig_banner_campaigns` storing up to 50 campaigns. Each campaign is a strict shape: `id` / `name` / `enabled` / `image_url` / `link_url` / `alt` / `width` / `start_date` / `end_date`. URLs are `esc_url_raw`'d, dates accept `YYYY-MM-DD` only (regex-validated to keep date arithmetic simple), width is clamped to 100–800px.
+- **Random rotation in the compile pipeline**. `appendBannerCampaign()` reads the editor bootstrap's `bannerCampaigns` (already filtered to active by the server), picks one at random with `Math.random()`, and inserts it as a new `<tr><td>` row inside the outer email-shell table — so the banner inherits the canvas width and centring without breaking the existing layout. Re-running `compileSignature()` re-runs the pick, so each export cycles through active banners. Position: between the user's signature content and the compliance footer (the footer always wants to be the last thing the recipient sees).
+- **Server-side scheduling**. New static `SiteSettingsController::active_banner_campaigns()` returns only campaigns that are enabled AND inside their date window (or have no window) AND have a non-empty image URL. Compared against `current_time( 'Y-m-d' )` so the timezone matches the site's. The compiler never has to know about scheduling — the editor bootstrap pre-filters.
+- **Admin Settings → Campaigns tab**. Fourth tab in the Settings page. Per-campaign card with: status pill (Active green / Scheduled amber / Expired grey / Disabled grey), inline name + enabled toggle, image URL / link URL / alt / width fields, start / end date pickers, and a live preview of the banner. Add / remove / save-all in bulk via a single "Save campaigns" button — admins can tune multiple entries without one PATCH per keystroke.
+
+### Changed
+
+- `SiteSettingsController::current_settings()` now returns `banner_campaigns` (full list, for admin) alongside the existing `brand_palette` and `compliance_footer`.
+- `EditorAssetEnqueuer` injects only the `active_banner_campaigns()` slice; `AdminAssetEnqueuer` injects the full list (admin needs disabled / scheduled / expired entries to edit them).
+- Editor `compileSignature()` runs `appendBannerCampaign()` BEFORE `appendComplianceFooter()` so visually banner sits above the disclaimer.
+
 ## [1.0.14] — 2026-05-01
 
 ### Added — Track 3 (round 2): role-scoped templates + bulk apply

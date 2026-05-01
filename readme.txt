@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.14
+Stable tag: 1.0.15
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,13 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.15 =
+* Track 4 — banner campaigns with random rotation + scheduling.
+* New site-wide option `imgsig_banner_campaigns`. Each campaign carries: name, image URL, link URL, alt text, width, enabled flag, and an optional date window (start_date / end_date in `YYYY-MM-DD`). Up to 50 campaigns per site.
+* The compile pipeline picks one currently-active campaign at random each export and inserts it as a new `<tr><td>` row inside the outer email-shell table — so the banner inherits the canvas width / centring and lives between the user content and the compliance footer. Re-exporting picks again, so successive copies cycle through active campaigns.
+* "Active" = enabled AND inside the date window AND has a non-empty image URL. The editor bootstrap only receives ALREADY-ACTIVE campaigns (filtered server-side via `current_time( 'Y-m-d' )`), so the compiler never has to know about scheduling.
+* Admin Settings → new **Campaigns** tab. Per-campaign card with status pill (Active / Scheduled / Expired / Disabled), inline name + enabled toggle, image / link / alt / width fields, date pickers, and a live preview of the banner. Add / remove / save in bulk via "Save campaigns".
 
 = 1.0.14 =
 * Track 3 (round 2) — templates por rol + bulk apply.

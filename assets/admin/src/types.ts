@@ -87,4 +87,17 @@ export interface StorageState {
 export interface SiteSettings {
   brand_palette: string[];
   compliance_footer: { enabled: boolean; html: string };
+  banner_campaigns: BannerCampaign[];
+}
+
+export interface BannerCampaign {
+  id: string;
+  name: string;
+  enabled: boolean;
+  image_url: string;
+  link_url: string;
+  alt: string;
+  width: number;
+  start_date: string;
+  end_date: string;
 }
