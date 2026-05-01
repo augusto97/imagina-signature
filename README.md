@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.9 | [imagina-signatures-1.0.9.zip](imagina-signatures-1.0.9.zip) |
 | 1.0.8 | [imagina-signatures-1.0.8.zip](imagina-signatures-1.0.8.zip) |
 | 1.0.7 | [imagina-signatures-1.0.7.zip](imagina-signatures-1.0.7.zip) |
 | 1.0.6 | [imagina-signatures-1.0.6.zip](imagina-signatures-1.0.6.zip) |
@@ -21,6 +22,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.9.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.8.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.7.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.6.zip
@@ -67,6 +69,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.9
+Layers panel is a real tree. Container children render indented under their parent — previously the panel only walked the top-level array, so column contents were invisible. Each row gets up / down chevrons (swap with sibling within the same parent: top-level reorders among top-level, nested children reorder within their column array), eye toggle, and trash. New `moveBlockUp` / `moveBlockDown` schemaStore actions back the chevrons via a `findParentAndIndex` helper that locates a block whether it lives at the top level or inside a Container.
 
 ### 1.0.8
 Real persistence engine. The 1.0.7 autosave looked saved (`Saved` status flashed) but work was lost when returning to the listing — the 1500ms debounce raced page navigation. Now: the very first save fires eagerly (no debounce) so the new row + URL update happen immediately; the back-arrow `await persistenceEngine.flushNow()` before navigating, so any pending / in-flight save lands first; `beforeunload` warns on tab close while anything is unsaved; concurrent edits during an in-flight save coalesce instead of double-POSTing. Plus: `Cmd/Ctrl + S` triggers a manual flush, the topbar shows "Save failed — click Save to retry" in red on errors instead of bouncing back to "Saved", and stale `?id=` (signature was deleted) recovers to "new" instead of PATCH-looping a 404.
