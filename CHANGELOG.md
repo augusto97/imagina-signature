@@ -2,6 +2,28 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.16] — 2026-05-01
+
+### Added — Track 5 (alternative path): install flow + GIF polish
+
+OAuth deploy (Track 5.C2 in the original roadmap) was reconsidered and replaced with a polished copy-and-install flow. OAuth requires every WP admin to register a Google Cloud project + an Azure AD app (≈1h each), then their end users' IT departments to whitelist those apps for corporate accounts — which most enterprise IT departments simply refuse. Google's "sensitive scopes" verification adds 4–8 weeks before unverified-app warnings disappear. Copy-and-install covers 95%+ of installations (per HiHello / MySignature usage data) without any of that overhead, so we're doing that path right instead.
+
+- **ExportModal redesigned**. Three primary actions in a single header row: **Copy HTML** (the existing flow, now with bigger affordance + green "Copied!" state), **Send to my email** (new), **Download .html** (existing). Below: per-client install tabs.
+- **Send to my email**. New `POST /signatures/test-send` REST endpoint that takes the compiled HTML in the request body and dispatches via `wp_mail` to the current WP user's own `user_email` only — never accepts an arbitrary `to` address, so the endpoint can't be turned into a spam channel by a compromised account. Rate-limited at 6 sends per hour per user. The body wraps the signature in a tiny intro shell that explains what the recipient is looking at.
+- **Per-client install tabs** (Gmail / Outlook Web / Outlook Desktop / Apple Mail / Thunderbird). Each tab shows a deep-link button — `https://mail.google.com/mail/u/0/#settings/general` for Gmail, `https://outlook.live.com/mail/0/options/mail/messageContent` for Outlook Web — that opens the client's signature settings screen directly so the user doesn't have to dig through menus. Below the deep-link, 5 numbered paste-here steps tuned per client (the Apple Mail steps mention the "Always match my default message font" gotcha; the Thunderbird steps explain the "attach signature from a file" workflow because Thunderbird's HTML signature support is awkward).
+
+### Added — GIF polish
+
+GIFs already worked as image URLs in any image-accepting block (Image, Avatar, Banner, banner campaigns) because they're just `<img src="…">`. This release adds the polish around them:
+
+- **`static_fallback_url`** field on `ImageBlock` and `BannerBlock`. Only surfaces in the property panel when the current `src` looks like a GIF (extension sniff after stripping query string). When set, the compile pipeline emits the standard `<!--[if mso]>` conditional swap so Outlook 2007–2019 — which freezes animated GIFs on the first frame, often a transparent placeholder — shows the static PNG instead, while every modern client (Gmail, Apple Mail, Outlook 365) keeps the animated original.
+- **Cropper warning**. `ImageCropperModal` now detects a GIF source and shows an amber warning above the apply button: cropping renders the chosen region onto a canvas and exports as PNG, which silently kills the animation. The warning gives the user a chance to cancel and resize the GIF in another tool first.
+- New exported helpers `isAnimatedGif(src)` and `withOutlookFallback(...)` from `core/blocks/image/definition.tsx` so the Banner block reuses the same conditional-swap markup as Image. (Future: extend banner campaigns and Avatar with the same fallback, deferred until a user actually files for it.)
+
+### Changed
+
+- Editor bundle: 664 KB → 674 KB (gzip 207 → 210 KB) — under the 600 KB gzip target.
+
 ## [1.0.15] — 2026-05-01
 
 ### Added — Track 4: banner campaigns with rotation + scheduling

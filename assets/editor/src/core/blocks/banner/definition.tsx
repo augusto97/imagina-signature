@@ -5,6 +5,7 @@ import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
+import { isAnimatedGif, withOutlookFallback } from '../image/definition';
 
 /**
  * Banner block — promotional / campaign image with a link.
@@ -106,6 +107,23 @@ const Properties: FC<{
       min={0}
       max={32}
     />
+
+    {isAnimatedGif(block.src) && (
+      <label className="flex flex-col gap-1.5">
+        <span className="font-medium text-[var(--text-secondary)]">
+          {__('Static fallback URL')}
+        </span>
+        <input
+          type="url"
+          value={block.static_fallback_url ?? ''}
+          onChange={(e) => onChange({ static_fallback_url: e.target.value || undefined })}
+          placeholder="https://example.com/banner-static.png"
+        />
+        <span className="text-[10.5px] text-[var(--text-muted)]">
+          {__('Outlook 2007–2019 freezes GIFs on the first frame. Provide a static PNG/JPG and modern clients keep the animation while old Outlook shows this instead.')}
+        </span>
+      </label>
+    )}
   </div>
 );
 
@@ -113,17 +131,19 @@ function compile(block: BannerBlock, _ctx: CompileContext): string {
   const p = block.padding;
   const padding = p ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px` : '0';
   const widthAttr = block.width ? ` width="${block.width}"` : '';
-  const radius = block.border_radius
-    ? `;border-radius:${block.border_radius}px`
-    : '';
-  const img = `<img src="${block.src}" alt="${escapeAttr(block.alt)}"${widthAttr} style="display:block;max-width:100%;height:auto;border:0;margin:0 auto${radius}" />`;
-  const inner = block.link ? `<a href="${block.link}">${img}</a>` : img;
+  const radius = block.border_radius ? `;border-radius:${block.border_radius}px` : '';
+  const baseStyle = `display:block;max-width:100%;height:auto;border:0;margin:0 auto${radius}`;
+
+  const inner = withOutlookFallback(
+    block.src,
+    block.static_fallback_url,
+    block.alt,
+    widthAttr,
+    baseStyle,
+    block.link,
+  );
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="padding:${padding};text-align:center">${inner}</td></tr></table>`;
-}
-
-function escapeAttr(value: string): string {
-  return value.replace(/"/g, '&quot;');
 }
 
 const definition: BlockDefinition<BannerBlock> = {

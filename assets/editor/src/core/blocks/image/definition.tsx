@@ -115,6 +115,24 @@ const Properties: FC<{ block: ImageBlock; onChange: (updates: Partial<ImageBlock
       />
     </label>
 
+    {isAnimatedGif(block.src) && (
+      <label className="block">
+        <span className="mb-1 block text-[var(--text-secondary)]">
+          {__('Static fallback URL')}
+        </span>
+        <input
+          type="url"
+          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
+          value={block.static_fallback_url ?? ''}
+          onChange={(e) => onChange({ static_fallback_url: e.target.value || undefined })}
+          placeholder="https://example.com/banner-static.png"
+        />
+        <span className="mt-1 block text-[10.5px] text-[var(--text-muted)]">
+          {__('Outlook 2007–2019 freezes GIFs on the first frame. Provide a static PNG/JPG and modern clients keep the animation while old Outlook shows this instead.')}
+        </span>
+      </label>
+    )}
+
     <ImageCropperModal
       open={cropping}
       src={block.src}
@@ -135,13 +153,66 @@ function compile(block: ImageBlock, _ctx: CompileContext): string {
     : '0';
   const widthAttr = block.width ? ` width="${block.width}"` : '';
   const heightAttr = block.height ? ` height="${block.height}"` : '';
-  const radius = block.border_radius
-    ? `;border-radius:${block.border_radius}px`
-    : '';
-  const img = `<img src="${block.src}" alt="${escapeAttr(block.alt)}"${widthAttr}${heightAttr} style="display:block;max-width:100%;height:auto;border:0${radius}" />`;
-  const inner = block.link ? `<a href="${block.link}">${img}</a>` : img;
+  const radius = block.border_radius ? `;border-radius:${block.border_radius}px` : '';
+  const baseStyle = `display:block;max-width:100%;height:auto;border:0${radius}`;
+
+  const inner = withOutlookFallback(
+    block.src,
+    block.static_fallback_url,
+    block.alt,
+    widthAttr + heightAttr,
+    baseStyle,
+    block.link,
+  );
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}">${inner}</td></tr></table>`;
+}
+
+/**
+ * Returns true when `src` looks like an animated-GIF URL — used to
+ * show / hide the Static fallback URL input. Best-effort by file
+ * extension only (we can't sniff arbitrary remote URLs from the
+ * editor without a CORS round-trip).
+ */
+export function isAnimatedGif(src: string): boolean {
+  if (!src) return false;
+  // Strip query string, then test extension.
+  const noQuery = src.split('?')[0]?.toLowerCase() ?? '';
+  return noQuery.endsWith('.gif');
+}
+
+/**
+ * Builds the `<img>` (optionally wrapped in `<a>`) with an Outlook
+ * 2007–2019 fallback when `fallback` is set. Pattern:
+ *
+ *   <!--[if !mso]><!--><img src=ANIMATED ...><!--<![endif]-->
+ *   <!--[if mso]><img src=STATIC ...><![endif]-->
+ *
+ * Modern clients ignore the conditional comments and render the
+ * first `<img>`; Outlook desktop only renders what's inside
+ * `[if mso]` so it gets the static frame.
+ */
+export function withOutlookFallback(
+  src: string,
+  fallback: string | undefined,
+  alt: string,
+  dimAttrs: string,
+  styles: string,
+  link: string | undefined,
+): string {
+  const wrap = (img: string): string => (link ? `<a href="${link}">${img}</a>` : img);
+
+  if (!fallback) {
+    const img = `<img src="${src}" alt="${escapeAttr(alt)}"${dimAttrs} style="${styles}" />`;
+    return wrap(img);
+  }
+
+  const animated = `<img src="${src}" alt="${escapeAttr(alt)}"${dimAttrs} style="${styles}" />`;
+  const staticImg = `<img src="${fallback}" alt="${escapeAttr(alt)}"${dimAttrs} style="${styles}" />`;
+  return (
+    `<!--[if !mso]><!-->${wrap(animated)}<!--<![endif]-->` +
+    `<!--[if mso]>${wrap(staticImg)}<![endif]-->`
+  );
 }
 
 function escapeAttr(value: string): string {

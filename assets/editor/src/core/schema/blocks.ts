@@ -42,6 +42,16 @@ export interface ImageBlock extends BlockBase {
   height?: number;
   link?: string;
   border_radius?: number;
+  /**
+   * Optional URL of a static image used as a graceful fallback for
+   * Outlook 2007–2019 (which freezes animated GIFs on the first
+   * frame, often a transparent placeholder). When set, the compile
+   * pipeline emits an `<!--[if mso]>` block that swaps `src` for
+   * this URL on those clients while modern clients keep the
+   * animated original. Optional and only relevant when `src` is a
+   * GIF.
+   */
+  static_fallback_url?: string;
 }
 
 export interface AvatarBlock extends BlockBase {
@@ -132,6 +142,13 @@ export interface BannerBlock extends BlockBase {
   /** Width in px, capped to the canvas width at compile time. */
   width: number;
   border_radius?: number;
+  /**
+   * Optional static image URL used as a graceful Outlook 2007–2019
+   * fallback when `src` is an animated GIF. See `ImageBlock` for the
+   * mechanism (`<!--[if mso]>` swaps the `src` for this on those
+   * clients only).
+   */
+  static_fallback_url?: string;
 }
 
 export interface VCardBlock extends BlockBase {

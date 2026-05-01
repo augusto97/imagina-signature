@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.15
+Stable tag: 1.0.16
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,12 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.16 =
+* Track 5 (alternative path) — install flow + GIF polish.
+* **ExportModal redesigned**. Big "Copy HTML" + "Send to my email" + "Download .html" buttons in a single action row. The send-to-email button POSTs to a new `/signatures/test-send` REST endpoint, which uses `wp_mail` to deliver the compiled HTML to the WP user's own email so they can copy it from their real client without touching raw markup. Rate-limited at 6 sends/hour to stop abuse.
+* **Per-client install tabs**: Gmail / Outlook Web / Outlook Desktop / Apple Mail / Thunderbird. Each tab shows a deep-link button that opens the right settings screen (`https://mail.google.com/mail/u/0/#settings/general` for Gmail, etc.) plus 5 numbered steps. Skipped OAuth deploy entirely — it requires every WP admin to register Google Cloud + Azure apps (~1h each), the user's IT team to whitelist the app for corporate accounts (often blocked), and Google's "sensitive scope" verification (4-8 weeks). Copy-and-install covers 95% of cases without any of that.
+* **GIF polish.** Optional `static_fallback_url` field on Image and Banner blocks (only surfaces when the `src` is a `.gif`); compile pipeline emits a `<!--[if mso]>` conditional swap so Outlook 2007–2019 (which freezes GIFs on the first frame) shows the static PNG instead of a frozen frame, while modern clients keep the animation. ImageCropperModal now warns when cropping a GIF — the cropper renders to canvas and produces a static frame, so the warning gives the user a chance to cancel.
 
 = 1.0.15 =
 * Track 4 — banner campaigns with random rotation + scheduling.

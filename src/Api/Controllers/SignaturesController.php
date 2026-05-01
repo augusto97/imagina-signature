@@ -142,6 +142,28 @@ final class SignaturesController extends BaseController {
 				],
 			]
 		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/signatures/test-send',
+			[
+				[
+					'methods'             => 'POST',
+					'callback'            => [ $this, 'test_send' ],
+					'permission_callback' => $require_use,
+					'args'                => [
+						'html' => [
+							'type'     => 'string',
+							'required' => true,
+						],
+						'subject' => [
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -296,6 +318,89 @@ final class SignaturesController extends BaseController {
 		$response = rest_ensure_response( $copy->to_array() );
 		$response->set_status( 201 );
 		return $response;
+	}
+
+	/**
+	 * `POST /signatures/test-send` — emails the compiled HTML to the
+	 * current user's address so they can copy / paste from their real
+	 * mail client without having to mess with the raw markup.
+	 *
+	 * The frontend is the source of truth for the compiled HTML (the
+	 * compile pipeline is TypeScript-only); this endpoint just wraps
+	 * it in a tiny mail-shell and dispatches via `wp_mail`. We never
+	 * accept an arbitrary `to` address — only the WP user's own email.
+	 *
+	 * Rate-limited at 6 sends per hour to keep this from becoming a
+	 * spam channel for compromised accounts.
+	 *
+	 * @since 1.0.16
+	 *
+	 * @param \WP_REST_Request $request Inbound.
+	 *
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function test_send( \WP_REST_Request $request ) {
+		$user_id = get_current_user_id();
+		$user    = wp_get_current_user();
+
+		if ( ! $user || empty( $user->user_email ) ) {
+			return new \WP_Error(
+				'imgsig_no_email',
+				__( 'Your WordPress account has no email address on file.', 'imagina-signatures' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		try {
+			$this->rate_limiter->check( 'signatures_test_send', $user_id, 6, HOUR_IN_SECONDS );
+		} catch ( ImaginaSignaturesException $e ) {
+			return $this->exception_to_wp_error( $e );
+		}
+
+		$html    = (string) $request->get_param( 'html' );
+		$subject = (string) ( $request->get_param( 'subject' ) ?: __( 'Imagina Signatures — your signature preview', 'imagina-signatures' ) );
+
+		if ( '' === trim( $html ) ) {
+			return new \WP_Error(
+				'imgsig_empty_html',
+				__( 'No HTML supplied to send.', 'imagina-signatures' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// We trust the HTML because it came out of our own compile
+		// pipeline running in the user's browser, but wrap it in a
+		// mail-shell that explains what they're seeing.
+		$intro = sprintf(
+			/* translators: %s: user's display name. */
+			esc_html__( 'Hi %s — here is the signature you just designed in Imagina Signatures. Copy it from below and paste it into your email client.', 'imagina-signatures' ),
+			esc_html( $user->display_name )
+		);
+
+		$body = sprintf(
+			'<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#0f172a;max-width:640px;margin:0 auto;padding:24px"><p style="margin:0 0 18px;color:#475569">%s</p><div style="border-top:1px dashed #cbd5e1;margin:18px 0"></div>%s</div>',
+			$intro,
+			$html
+		);
+
+		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
+
+		$sent = wp_mail( $user->user_email, $subject, $body, $headers );
+
+		if ( ! $sent ) {
+			return new \WP_Error(
+				'imgsig_mail_failed',
+				__( 'wp_mail() failed. Check your site\'s email configuration.', 'imagina-signatures' ),
+				[ 'status' => 500 ]
+			);
+		}
+
+		return rest_ensure_response(
+			[
+				'sent'      => true,
+				'recipient' => $user->user_email,
+			]
+		);
 	}
 
 	/**

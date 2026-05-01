@@ -1,8 +1,15 @@
 import { useCallback, useState, type FC } from 'react';
 import Cropper from 'react-easy-crop';
 import type { Area, Point } from 'react-easy-crop';
+import { AlertTriangle } from 'lucide-react';
 import { Modal } from '@/components/shared/Modal';
 import { __ } from '@/i18n/helpers';
+
+function isGifSrc(src: string): boolean {
+  if (!src) return false;
+  const noQuery = src.split('?')[0]?.toLowerCase() ?? '';
+  return noQuery.endsWith('.gif');
+}
 
 interface Props {
   open: boolean;
@@ -102,6 +109,17 @@ export const ImageCropperModal: FC<Props> = ({
             {zoom.toFixed(2)}×
           </span>
         </label>
+
+        {isGifSrc(src) && (
+          <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800">
+            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+            <span>
+              {__(
+                'This is an animated GIF. Cropping flattens it to a single frame — the result will be a static image. Cancel and resize the original GIF in another tool if you want to keep the animation.',
+              )}
+            </span>
+          </div>
+        )}
 
         <div className="flex justify-end gap-2 pt-1 text-[12px]">
           <button
