@@ -2,6 +2,20 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.17] — 2026-05-01
+
+### Added
+
+- **"Copy visual" button** in the Export modal. Copies the rendered signature with a `text/html` MIME type so the OS clipboard carries rich content — pasting into a rich-text composer (Gmail compose, Outlook signature box, Apple Mail compose, Word, anywhere with a `contenteditable`) renders the signature visually instead of dumping the source. The use case is the inverse of "Copy HTML": a lot of webmail platforms don't expose an HTML / source-code mode in their signature settings, only a rich-text editor — those refuse a raw HTML paste and would render `<table>...` as literal text. "Copy visual" works there.
+- New `assets/editor/src/utils/clipboard.ts` with two helpers:
+  - `copyText(text)` — `navigator.clipboard.writeText` with a textarea + `execCommand('copy')` fallback for old browsers / restricted iframe contexts. Used by "Copy HTML".
+  - `copyRichHtml(html)` — `navigator.clipboard.write([new ClipboardItem({ 'text/html': blob, 'text/plain': blob })])` for the modern path; falls back to rendering the HTML into a hidden `contenteditable`, selecting it, and `execCommand('copy')` so the OS captures the rich selection. Both MIME types are written so a recipient who pastes into a plain-text field still gets readable content (a stripped-tags fallback derived from the HTML).
+
+### Changed
+
+- Per-client install tabs now flag which copy mode the steps assume via a small uppercase pill next to the deep-link button (`Use Copy visual` for Gmail / Outlook / Apple Mail; `Use Download .html` for Thunderbird, whose file-attached signature flow needs the raw HTML on disk). Each step list was rewritten so the first step explicitly says "Press Copy visual above" / "Press Download .html above" — no ambiguity about which of the four header buttons to start with.
+- Editor bundle: 674 KB → 676 KB (gzip 210 KB) — under the 600 KB gzip target.
+
 ## [1.0.16] — 2026-05-01
 
 ### Added — Track 5 (alternative path): install flow + GIF polish

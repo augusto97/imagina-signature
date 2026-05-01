@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.16
+Stable tag: 1.0.17
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,11 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.17 =
+* New **"Copy visual"** button in the Export modal — copies the rendered signature so it pastes visually into rich-text composers (Gmail compose, Outlook signature box, Apple Mail, Word). For platforms whose signature settings only accept rich text and refuse a raw HTML paste. Modern path uses `navigator.clipboard.write([new ClipboardItem({ 'text/html': …, 'text/plain': … })])`; falls back to a hidden contenteditable + `execCommand('copy')` for older browsers and locked-down iframe contexts.
+* "Copy HTML" button kept for HTML-mode signature settings (Thunderbird's file-attached signature, Gmail Labs HTML view, etc.).
+* Per-client install tabs now flag which copy mode they assume — a small "Use Copy visual" / "Use Download .html" pill next to the deep-link button. Steps were rewritten to start with "Press Copy visual / Download .html above…" so the user knows exactly which button to use first.
 
 = 1.0.16 =
 * Track 5 (alternative path) — install flow + GIF polish.
