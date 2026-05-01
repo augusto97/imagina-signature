@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace ImaginaSignatures\Setup;
 
 use ImaginaSignatures\Setup\Migrations\Migration_1_0_0;
+use ImaginaSignatures\Setup\Migrations\Migration_1_1_0;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -42,6 +43,7 @@ final class SchemaMigrator {
 	 */
 	private const SCHEMA_VERSIONS = [
 		'1.0.0' => Migration_1_0_0::class,
+		'1.1.0' => Migration_1_1_0::class,
 	];
 
 	/**

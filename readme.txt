@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.13
+Stable tag: 1.0.14
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,12 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.14 =
+* Track 3 (round 2) — templates por rol + bulk apply.
+* **Templates por rol**: each template now carries a `visible_to_roles` field. Empty = visible to everyone with `imgsig_use_signatures` (existing behaviour); populated = only users with one of the matching WP roles see it in the editor's TemplatePicker. Admins (`imgsig_manage_templates`) always see every template regardless of their own role. New schema migration 1.1.0 adds the column via dbDelta (idempotent and safe to re-run).
+* **Bulk apply**: new `POST /admin/templates/:id/apply` endpoint. Scope: `all` | `role:slug` | `users:1,2,3`. Creates a new signature seeded from the template for each user in scope; does NOT modify their existing signatures. `skip_existing=true` (default) suppresses creating a duplicate row for any user that already has a signature stamped with that `template_id` — re-running the same apply doesn't multiply rows.
+* Admin Templates page gets per-template **Edit** (name / category / description / role visibility chips) and **Apply** (scope picker with All / Role / Specific users + skip-existing toggle + result summary) buttons. Each card displays its visibility scope as a chip (`All roles` in green, or per-role chips in accent blue).
 
 = 1.0.13 =
 * Track 3 (round 1) — WordPress-native team management primitives that don't exist in any SaaS competitor because they piggyback on WP's user model directly.

@@ -92,6 +92,30 @@ class SignatureRepository extends BaseRepository {
 	}
 
 	/**
+	 * Returns true when the user already has at least one signature
+	 * row stamped with the given template_id. Used by the bulk-apply
+	 * flow to skip rows that would otherwise duplicate.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param int $user_id     Owner.
+	 * @param int $template_id The template the signature was seeded from.
+	 *
+	 * @return bool
+	 */
+	public function user_has_signature_from_template( int $user_id, int $template_id ): bool {
+		$count = $this->wpdb->get_var(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$this->wpdb->prepare(
+				"SELECT COUNT(*) FROM {$this->table()} WHERE user_id = %d AND template_id = %d",
+				$user_id,
+				$template_id
+			)
+		);
+		return (int) $count > 0;
+	}
+
+	/**
 	 * Lists signatures owned by the given user.
 	 *
 	 * Supported `$args`:

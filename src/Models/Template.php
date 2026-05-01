@@ -86,6 +86,15 @@ final class Template extends BaseModel {
 	public string $schema_version = '1.0';
 
 	/**
+	 * WP role slugs this template is visible to. Empty array = visible
+	 * to everyone with `imgsig_use_signatures`. Stored in the DB as a
+	 * comma-separated VARCHAR(500), exposed to PHP as a typed array.
+	 *
+	 * @var array<int, string>
+	 */
+	public array $visible_to_roles = [];
+
+	/**
 	 * Hydrates from a DB row.
 	 *
 	 * @since 1.0.0
@@ -106,6 +115,9 @@ final class Template extends BaseModel {
 		$model->is_system      = ! empty( $row['is_system'] );
 		$model->sort_order     = isset( $row['sort_order'] ) ? (int) $row['sort_order'] : 0;
 		$model->schema_version = isset( $row['schema_version'] ) ? (string) $row['schema_version'] : '1.0';
+		$model->visible_to_roles = isset( $row['visible_to_roles'] ) && '' !== (string) $row['visible_to_roles']
+			? array_values( array_filter( array_map( 'trim', explode( ',', (string) $row['visible_to_roles'] ) ) ) )
+			: [];
 		$model->created_at     = isset( $row['created_at'] ) ? (string) $row['created_at'] : '';
 		return $model;
 	}
@@ -117,17 +129,18 @@ final class Template extends BaseModel {
 		$decoded = json_decode( $this->json_content, true );
 
 		return [
-			'id'             => $this->id,
-			'slug'           => $this->slug,
-			'name'           => $this->name,
-			'category'       => $this->category,
-			'description'    => $this->description,
-			'preview_url'    => $this->preview_url,
-			'json_content'   => is_array( $decoded ) ? $decoded : [],
-			'is_system'      => $this->is_system,
-			'sort_order'     => $this->sort_order,
-			'schema_version' => $this->schema_version,
-			'created_at'     => $this->created_at,
+			'id'               => $this->id,
+			'slug'             => $this->slug,
+			'name'             => $this->name,
+			'category'         => $this->category,
+			'description'      => $this->description,
+			'preview_url'      => $this->preview_url,
+			'json_content'     => is_array( $decoded ) ? $decoded : [],
+			'is_system'        => $this->is_system,
+			'sort_order'       => $this->sort_order,
+			'schema_version'   => $this->schema_version,
+			'visible_to_roles' => $this->visible_to_roles,
+			'created_at'       => $this->created_at,
 		];
 	}
 }

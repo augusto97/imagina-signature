@@ -156,22 +156,23 @@ final class TemplateRepository extends BaseRepository {
 	 */
 	public function insert( array $data ): Template {
 		$row = [
-			'slug'           => (string) ( $data['slug'] ?? '' ),
-			'name'           => (string) ( $data['name'] ?? '' ),
-			'category'       => (string) ( $data['category'] ?? 'general' ),
-			'description'    => $data['description'] ?? null,
-			'preview_url'    => $data['preview_url'] ?? null,
-			'json_content'   => (string) ( $data['json_content'] ?? '' ),
-			'is_system'      => ! empty( $data['is_system'] ) ? 1 : 0,
-			'sort_order'     => (int) ( $data['sort_order'] ?? 0 ),
-			'schema_version' => (string) ( $data['schema_version'] ?? '1.0' ),
-			'created_at'     => $this->now(),
+			'slug'             => (string) ( $data['slug'] ?? '' ),
+			'name'             => (string) ( $data['name'] ?? '' ),
+			'category'         => (string) ( $data['category'] ?? 'general' ),
+			'description'      => $data['description'] ?? null,
+			'preview_url'      => $data['preview_url'] ?? null,
+			'json_content'     => (string) ( $data['json_content'] ?? '' ),
+			'is_system'        => ! empty( $data['is_system'] ) ? 1 : 0,
+			'sort_order'       => (int) ( $data['sort_order'] ?? 0 ),
+			'schema_version'   => (string) ( $data['schema_version'] ?? '1.0' ),
+			'visible_to_roles' => self::roles_to_storage( $data['visible_to_roles'] ?? [] ),
+			'created_at'       => $this->now(),
 		];
 
 		$this->wpdb->insert(
 			$this->table(),
 			$row,
-			[ '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s' ]
+			[ '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s' ]
 		);
 
 		$row['id'] = (int) $this->wpdb->insert_id;
@@ -190,23 +191,28 @@ final class TemplateRepository extends BaseRepository {
 	 */
 	public function update( int $id, array $data ): ?Template {
 		$updatable = [
-			'slug'           => '%s',
-			'name'           => '%s',
-			'category'       => '%s',
-			'description'    => '%s',
-			'preview_url'    => '%s',
-			'json_content'   => '%s',
-			'sort_order'     => '%d',
-			'schema_version' => '%s',
+			'slug'             => '%s',
+			'name'             => '%s',
+			'category'         => '%s',
+			'description'      => '%s',
+			'preview_url'      => '%s',
+			'json_content'     => '%s',
+			'sort_order'       => '%d',
+			'schema_version'   => '%s',
+			'visible_to_roles' => '%s',
 		];
 
 		$update  = [];
 		$formats = [];
 		foreach ( $updatable as $column => $format ) {
-			if ( array_key_exists( $column, $data ) ) {
-				$update[ $column ] = $data[ $column ];
-				$formats[]         = $format;
+			if ( ! array_key_exists( $column, $data ) ) {
+				continue;
 			}
+			$value = 'visible_to_roles' === $column
+				? self::roles_to_storage( $data[ $column ] )
+				: $data[ $column ];
+			$update[ $column ] = $value;
+			$formats[]         = $format;
 		}
 
 		if ( empty( $update ) ) {
@@ -215,6 +221,34 @@ final class TemplateRepository extends BaseRepository {
 
 		$this->wpdb->update( $this->table(), $update, [ 'id' => $id ], $formats, [ '%d' ] );
 		return $this->find( $id );
+	}
+
+	/**
+	 * Convert an array of role slugs into the comma-separated string
+	 * stored in the DB. Trims, dedupes, drops blanks, and clamps the
+	 * total length to fit the column (VARCHAR(500)).
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param mixed $roles Raw input.
+	 *
+	 * @return string
+	 */
+	private static function roles_to_storage( $roles ): string {
+		if ( ! is_array( $roles ) ) {
+			return '';
+		}
+		$clean = [];
+		foreach ( $roles as $role ) {
+			if ( ! is_string( $role ) ) {
+				continue;
+			}
+			$slug = sanitize_key( $role );
+			if ( '' !== $slug && ! in_array( $slug, $clean, true ) ) {
+				$clean[] = $slug;
+			}
+		}
+		return substr( implode( ',', $clean ), 0, 500 );
 	}
 
 	/**
@@ -247,6 +281,23 @@ final class TemplateRepository extends BaseRepository {
 		if ( ! empty( $args['category'] ) ) {
 			$clauses[] = 'category = %s';
 			$values[]  = (string) $args['category'];
+		}
+
+		// Visibility filter: when given, returns only templates whose
+		// visible_to_roles is empty (visible to everyone) OR contains
+		// at least one of the supplied roles. Implemented with FIND_IN_SET
+		// so the comma-separated storage stays a single column query.
+		if ( ! empty( $args['visible_to_roles'] ) && is_array( $args['visible_to_roles'] ) ) {
+			$role_clauses = [ '(visible_to_roles IS NULL OR visible_to_roles = %s)' ];
+			$values[]     = '';
+			foreach ( $args['visible_to_roles'] as $role ) {
+				if ( ! is_string( $role ) || '' === $role ) {
+					continue;
+				}
+				$role_clauses[] = 'FIND_IN_SET(%s, visible_to_roles) > 0';
+				$values[]       = sanitize_key( $role );
+			}
+			$clauses[] = '(' . implode( ' OR ', $role_clauses ) . ')';
 		}
 
 		if ( empty( $clauses ) ) {

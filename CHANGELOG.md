@@ -2,6 +2,21 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.14] — 2026-05-01
+
+### Added — Track 3 (round 2): role-scoped templates + bulk apply
+
+- **Templates por rol**. New `visible_to_roles` column on `imgsig_templates` (`VARCHAR(500) NULL`, comma-separated WP role slugs). Empty / NULL = visible to everyone with `imgsig_use_signatures`; populated = only users with at least one matching role see the template in the editor's TemplatePicker. Admins with `imgsig_manage_templates` always see every template regardless of their own role membership. New schema migration `1.1.0` adds the column via dbDelta (idempotent — safe to re-run on already-migrated installs because dbDelta diffs against the live schema).
+- **Bulk apply**. New `POST /admin/templates/:id/apply` endpoint accepting `scope` = `all` | `role:slug` | `users:1,2,3` and `skip_existing` (default `true`). Creates a new signature for each user in scope, seeded with the template's `json_content` and stamped with `template_id`. Does not modify existing signatures. `skip_existing` suppresses creating a duplicate row for any user that already has a signature with that `template_id` — re-running the same apply is safe and idempotent. New action `imgsig/template/bulk_applied` fires with the counts so other plugins can audit / notify.
+- **Admin Templates UI**. Each card now shows a visibility chip (green "All roles" badge or up to 3 per-role accent chips, "+N" overflow) plus per-card **Edit** and **Apply** buttons (admin-only). The Edit modal exposes a Visible-to-roles field as a row of toggle chips (Administrator / Editor / Author / Contributor / Subscriber). The Apply modal walks the admin through scope selection (radio + dependent input) and shows a created / skipped / failed summary after the request lands.
+
+### Changed
+
+- `TemplatesController` constructor now also takes `SignatureService` + `SignatureRepository` (needed for bulk-apply's per-user signature creation + dedupe). DI wiring updated.
+- `TemplatesController::index` filters by current user's roles for non-admins via the new `visible_to_roles` query arg on `TemplateRepository::list()`.
+- `Template` model gains a `visible_to_roles: string[]` field that round-trips through the comma-separated DB column. Repository's `insert` / `update` write the new column; the service's `prepare_for_save` sanitises each slug with `sanitize_key` and dedupes.
+- `SignatureRepository::user_has_signature_from_template(user_id, template_id)` — fast `COUNT(*)` used by bulk-apply to detect dupes without round-tripping all rows.
+
 ## [1.0.13] — 2026-05-01
 
 ### Added — Track 3 (round 1): WordPress-native team primitives

@@ -59,7 +59,19 @@ export interface TemplateRow {
   is_system: boolean;
   sort_order: number;
   schema_version: string;
+  /** Role slugs this template is visible to. Empty = visible to everyone. */
+  visible_to_roles: string[];
   created_at: string;
+}
+
+/** REST: the response from POST /admin/templates/:id/apply. */
+export interface BulkApplyResult {
+  template_id: number;
+  scope: string;
+  targeted: number;
+  created: number;
+  skipped: number;
+  failed: number;
 }
 
 /** REST: the storage state returned by /admin/storage. */

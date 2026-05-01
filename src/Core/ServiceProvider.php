@@ -160,7 +160,9 @@ final class ServiceProvider {
 			static function ( Container $c ): TemplatesController {
 				return new TemplatesController(
 					$c->make( TemplateService::class ),
-					$c->make( TemplateRepository::class )
+					$c->make( TemplateRepository::class ),
+					$c->make( SignatureService::class ),
+					$c->make( SignatureRepository::class )
 				);
 			}
 		);

@@ -207,6 +207,13 @@ final class TemplateService {
 			$prepared['sort_order'] = (int) $data['sort_order'];
 		}
 
+		if ( array_key_exists( 'visible_to_roles', $data ) ) {
+			$roles = $data['visible_to_roles'];
+			$prepared['visible_to_roles'] = is_array( $roles )
+				? array_values( array_filter( array_map( 'sanitize_key', array_map( 'strval', $roles ) ) ) )
+				: [];
+		}
+
 		if ( array_key_exists( 'json_content', $data ) ) {
 			$json    = $data['json_content'];
 			$decoded = is_array( $json ) ? $json : json_decode( (string) $json, true );
