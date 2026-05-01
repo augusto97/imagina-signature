@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.13 | [imagina-signatures-1.0.13.zip](imagina-signatures-1.0.13.zip) |
 | 1.0.12 | [imagina-signatures-1.0.12.zip](imagina-signatures-1.0.12.zip) |
 | 1.0.11 | [imagina-signatures-1.0.11.zip](imagina-signatures-1.0.11.zip) |
 | 1.0.10 | [imagina-signatures-1.0.10.zip](imagina-signatures-1.0.10.zip) |
@@ -25,6 +26,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.13.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.12.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.11.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.10.zip
@@ -75,6 +77,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.13
+Track 3 round 1 — three WP-native team primitives that don't exist in any SaaS competitor because they piggyback on WP's user model directly. **Auto-merge from `wp_users` / `wp_user_meta`**: read-only `wp_*` system variables (display_name, email, first_name, last_name, url) auto-populate from the current user's record, surface in the Variables editor as locked rows, compile pipeline merges them with user-defined variables; new `imgsig/editor/system_variables` filter lets host plugins expose custom user_meta keys. **Brand palette**: site-wide list of up to 12 hex colours edited in admin Settings → Branding, surfaces in every editor ColorInput as quick-pick swatches. **Compliance footer**: admin-only HTML disclaimer (kses-sanitised) appended to every signature on compile, edited in admin Settings → Compliance with toggle + textarea + live preview + GDPR / CAN-SPAM starter templates. Settings page now tabbed (Storage / Branding / Compliance); storage form unchanged, just moved into the first tab.
 
 ### 1.0.12
 Track 2 — visual polish round. **Image cropper** wired into Image and Avatar property panels via a Crop button (Avatar locked to 1:1 round, Image free-aspect rectangular); output is a cropped data URI written to `block.src`. **Template picker filtering** in the editor — search field + horizontal category-chip strip derived from loaded templates, plus per-card category badges. **Multi-device preview** — PreviewModal exposes Desktop / Tablet / Mobile width presets that lock the iframe so the user can verify reflow at each breakpoint, plus a payload-size pill that turns amber past Gmail's 102KB clipping threshold and a collapsible compile-warnings panel listing every issue (missing alt / width / href, undefined `{{variables}}`, oversized images). Bundle 631KB → 663KB (gzip 207KB), under target.
