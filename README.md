@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.11 | [imagina-signatures-1.0.11.zip](imagina-signatures-1.0.11.zip) |
 | 1.0.10 | [imagina-signatures-1.0.10.zip](imagina-signatures-1.0.10.zip) |
 | 1.0.9 | [imagina-signatures-1.0.9.zip](imagina-signatures-1.0.9.zip) |
 | 1.0.8 | [imagina-signatures-1.0.8.zip](imagina-signatures-1.0.8.zip) |
@@ -23,6 +24,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.11.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.10.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.9.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.8.zip
@@ -71,6 +73,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.11
+Track 1 — premium feature parity round 1. Five additions that close the basic-capability gap with HiHello / WiseStamp / Newoldstamp without a SaaS dependency: **QR Code block** (encodes any URL / mailto: / tel: / vCard string, rendered as base64 PNG with custom fg/bg colours, fully self-contained — no external CDN), **Banner block** (promotional image with click-through link, full canvas-width default), **vCard block** (renders "Save my contact" link with `data:text/vcard;base64,…` href; recipients click → contact opens in their address book; strict RFC 6350 vCard 3.0 output), **Save signature as template** (admin-only topbar button, POSTs current schema to /templates so admins seed real content instead of empty shells), and **Variables editor** (right-sidebar panel below Typography — add / rename / remove pairs, copy `{{token}}` to clipboard; compiler substitutes `{{varname}}` → HTML-escaped value at end of pipeline; missing names ship as literal text + compile warning, no silent data loss). Editor bundle 587KB → 631KB (gzip 184 → 198KB), under target.
 
 ### 1.0.10
 Container columns no longer locked at 50/50. New `left_width` field on `ContainerBlock` (percentage 10–90, optional, defaults to 50 for back-compat). Renderer + email-safe `compile()` both honour it. Properties panel gets a Column-widths control with a live preview bar, a 10–90% range slider, and quick-preset buttons (1/4, 1/3, 1/2, 2/3, 3/4) for common ratios like a logo cell + content cell.
