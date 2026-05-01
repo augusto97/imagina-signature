@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { Eye, EyeOff, Layers } from 'lucide-react';
+import { ChevronUp, ChevronDown, Eye, EyeOff, Layers, Trash2 } from 'lucide-react';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { rendererForBlock } from '@/core/blocks/registry';
@@ -8,27 +8,24 @@ import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 
 /**
- * Layers panel — flat list of every block on the canvas.
+ * Layers panel — hierarchical view of every block on the canvas.
  *
- * Each row shows the block's registered icon + label, the user's
- * custom label (best-guess: first words of text content / image alt /
- * social link, falls back to the block type), and a visibility toggle
- * that flips `block.visible`.
+ * Top-level blocks render as flat rows; Container children render
+ * indented under their parent. Each row exposes:
+ *   - click to select (highlights canvas + opens right-sidebar props)
+ *   - hover to highlight on canvas (mirrors SelectionOverlay)
+ *   - eye toggle to flip `block.visible`
+ *   - up / down arrows to swap with siblings (within the same parent
+ *     — top-level rows reorder among top-level, children reorder
+ *     within their own column array)
+ *   - trash to delete
  *
- * Clicking a row selects the block (mirrors the canvas SelectionOverlay
- * behaviour). Hover does the same — keeps the canvas overlay in sync
- * so it's easy to see "which block am I about to click on the layers
- * panel".
- *
- * Drag-to-reorder isn't wired in this panel yet (the canvas already
- * supports it via dnd-kit; surfacing it here too is a future
- * iteration). Nested children (Container) also fall to a flat
- * rendering for now.
+ * Drag-to-reorder isn't wired here yet — `moveBlockUp` /
+ * `moveBlockDown` cover the same intent and avoid a second
+ * SortableContext layer.
  */
 export const LayersPanel: FC = () => {
   const blocks = useSchemaStore((s) => s.schema.blocks);
-  const updateBlock = useSchemaStore((s) => s.updateBlock);
-  const { selectedBlockId, hoveredBlockId, select, hover } = useSelectionStore();
 
   if (blocks.length === 0) {
     return (
@@ -48,68 +45,164 @@ export const LayersPanel: FC = () => {
 
   return (
     <ul className="flex flex-col gap-0.5 p-2">
-      {blocks.map((block) => {
-        const def = rendererForBlock(block);
-        const Icon = def?.icon;
-        const isSelected = block.id === selectedBlockId;
-        const isHovered = block.id === hoveredBlockId;
-        const visible = block.visible !== false;
-
-        return (
-          <li key={block.id}>
-            <div
-              className={cn(
-                'group flex items-center gap-2 rounded-md px-2 py-1.5 text-[12px] transition-colors',
-                isSelected
-                  ? 'bg-[var(--bg-selected)] text-[var(--accent)]'
-                  : isHovered
-                    ? 'bg-[var(--bg-hover)] text-[var(--text-primary)]'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]',
-                !visible && 'opacity-50',
-              )}
-              onMouseEnter={() => hover(block.id)}
-              onMouseLeave={() => hover(null)}
-            >
-              <button
-                type="button"
-                className="flex flex-1 items-center gap-2 truncate text-left"
-                onClick={() => select(block.id)}
-              >
-                {Icon && (
-                  <Icon
-                    size={13}
-                    strokeWidth={1.8}
-                    className={cn(
-                      isSelected ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]',
-                    )}
-                  />
-                )}
-                <span className="truncate font-medium">
-                  {def?.label ?? block.type}
-                </span>
-                <span className="ml-1 truncate text-[11px] font-normal text-[var(--text-muted)]">
-                  {labelForBlock(block)}
-                </span>
-              </button>
-              <button
-                type="button"
-                title={visible ? __('Hide') : __('Show')}
-                className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[var(--text-muted)] opacity-0 transition-opacity hover:bg-[var(--bg-panel)] hover:text-[var(--text-secondary)] group-hover:opacity-100"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  updateBlock(block.id, { visible: !visible });
-                }}
-                style={{ opacity: visible ? undefined : 1 }}
-              >
-                {visible ? <Eye size={12} /> : <EyeOff size={12} />}
-              </button>
-            </div>
-          </li>
-        );
-      })}
+      {blocks.map((block, index) => (
+        <LayerRow
+          key={block.id}
+          block={block}
+          depth={0}
+          index={index}
+          siblingsCount={blocks.length}
+        />
+      ))}
     </ul>
   );
 };
+
+interface LayerRowProps {
+  block: Block;
+  depth: number;
+  index: number;
+  siblingsCount: number;
+}
+
+const LayerRow: FC<LayerRowProps> = ({ block, depth, index, siblingsCount }) => {
+  const updateBlock = useSchemaStore((s) => s.updateBlock);
+  const deleteBlock = useSchemaStore((s) => s.deleteBlock);
+  const moveBlockUp = useSchemaStore((s) => s.moveBlockUp);
+  const moveBlockDown = useSchemaStore((s) => s.moveBlockDown);
+  const { selectedBlockId, hoveredBlockId, select, hover } = useSelectionStore();
+
+  const def = rendererForBlock(block);
+  const Icon = def?.icon;
+  const isSelected = block.id === selectedBlockId;
+  const isHovered = block.id === hoveredBlockId;
+  const visible = block.visible !== false;
+  const canMoveUp = index > 0;
+  const canMoveDown = index < siblingsCount - 1;
+
+  const isContainer = block.type === 'container';
+  const children = isContainer ? (block as { children: Block[] }).children : [];
+
+  return (
+    <li>
+      <div
+        className={cn(
+          'group flex items-center gap-1 rounded-md py-1 pr-1 text-[12px] transition-colors',
+          isSelected
+            ? 'bg-[var(--bg-selected)] text-[var(--accent)]'
+            : isHovered
+              ? 'bg-[var(--bg-hover)] text-[var(--text-primary)]'
+              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]',
+          !visible && 'opacity-50',
+        )}
+        style={{ paddingLeft: 8 + depth * 14 }}
+        onMouseEnter={() => hover(block.id)}
+        onMouseLeave={() => hover(null)}
+      >
+        <button
+          type="button"
+          className="flex flex-1 items-center gap-2 truncate text-left"
+          onClick={() => select(block.id)}
+        >
+          {Icon && (
+            <Icon
+              size={13}
+              strokeWidth={1.8}
+              className={cn(
+                isSelected ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]',
+              )}
+            />
+          )}
+          <span className="truncate font-medium">{def?.label ?? block.type}</span>
+          <span className="ml-1 truncate text-[11px] font-normal text-[var(--text-muted)]">
+            {labelForBlock(block)}
+          </span>
+        </button>
+
+        <RowAction
+          title={__('Move up')}
+          disabled={!canMoveUp}
+          onClick={() => moveBlockUp(block.id)}
+        >
+          <ChevronUp size={12} />
+        </RowAction>
+        <RowAction
+          title={__('Move down')}
+          disabled={!canMoveDown}
+          onClick={() => moveBlockDown(block.id)}
+        >
+          <ChevronDown size={12} />
+        </RowAction>
+        <RowAction
+          title={visible ? __('Hide') : __('Show')}
+          alwaysVisible={!visible}
+          onClick={() => updateBlock(block.id, { visible: !visible })}
+        >
+          {visible ? <Eye size={12} /> : <EyeOff size={12} />}
+        </RowAction>
+        <RowAction
+          title={__('Delete')}
+          danger
+          onClick={() => deleteBlock(block.id)}
+        >
+          <Trash2 size={12} />
+        </RowAction>
+      </div>
+
+      {isContainer && children.length > 0 && (
+        <ul className="flex flex-col gap-0.5">
+          {children.map((child, childIndex) => (
+            <LayerRow
+              key={child.id}
+              block={child}
+              depth={depth + 1}
+              index={childIndex}
+              siblingsCount={children.length}
+            />
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+};
+
+interface RowActionProps {
+  title: string;
+  onClick: () => void;
+  disabled?: boolean;
+  alwaysVisible?: boolean;
+  danger?: boolean;
+  children: React.ReactNode;
+}
+
+const RowAction: FC<RowActionProps> = ({
+  title,
+  onClick,
+  disabled,
+  alwaysVisible,
+  danger,
+  children,
+}) => (
+  <button
+    type="button"
+    title={title}
+    disabled={disabled}
+    onClick={(e) => {
+      e.stopPropagation();
+      onClick();
+    }}
+    className={cn(
+      'inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[var(--text-muted)] transition-opacity',
+      'group-hover:opacity-100',
+      alwaysVisible ? 'opacity-100' : 'opacity-0',
+      'hover:bg-[var(--bg-panel)]',
+      danger ? 'hover:text-[var(--danger)]' : 'hover:text-[var(--text-secondary)]',
+      'disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent',
+    )}
+  >
+    {children}
+  </button>
+);
 
 /**
  * Best-effort short label for the layer row.
@@ -141,6 +234,11 @@ function labelForBlock(block: Block): string {
     case 'contact_row': {
       const rows = (block as { rows: Array<{ icon: string }> }).rows;
       raw = rows.map((r) => r.icon).join(' · ');
+      break;
+    }
+    case 'container': {
+      const c = block as { columns: 1 | 2; children: Block[] };
+      raw = `${c.columns}-col, ${c.children.length} item${c.children.length === 1 ? '' : 's'}`;
       break;
     }
     default:

@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.8
+Stable tag: 1.0.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,9 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.9 =
+* Layers panel is a real tree now. Container children render indented under their parent — previously the panel only walked the top-level array, so column contents were invisible there. Each row gets up / down chevrons that swap with siblings within the same parent (top-level rows reorder among top-level, nested children reorder within their column array), an eye toggle for visibility, and a trash icon for delete. New `moveBlockUp` / `moveBlockDown` schemaStore actions back the chevrons and use a `findParentAndIndex` helper that locates a block whether it lives at the top level or inside a Container.
 
 = 1.0.8 =
 * Real persistence engine. The 1.0.7 autosave still lost work when the user clicked the back-arrow during the 1500ms debounce window — the browser navigates away and aborts the in-flight POST before the server commits the row. Refactored into a module-level `persistenceEngine` singleton: (a) the very first save (when `signatureId === 0`) fires immediately, not on debounce, so the new row + URL update happen ASAP; (b) the back-arrow now `await persistenceEngine.flushNow()` before navigating, so any pending / in-flight save lands first; (c) `Cmd/Ctrl + S` triggers a manual flush; (d) `beforeunload` warns if anything is unsaved when the user tries to close the tab. Coalesces concurrent edits (saves during in-flight POST get re-scheduled, never doubled).

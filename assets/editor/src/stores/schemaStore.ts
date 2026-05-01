@@ -35,6 +35,12 @@ interface SchemaState {
   /** Append a block to a Container's children list. */
   addChildToContainer: (parent_id: string, child: Block) => void;
 
+  /** Swap a block with its previous sibling (within its current parent). */
+  moveBlockUp: (id: string) => void;
+
+  /** Swap a block with its next sibling (within its current parent). */
+  moveBlockDown: (id: string) => void;
+
   updateCanvas: (updates: Partial<CanvasConfig>) => void;
   setVariable: (key: string, value: string) => void;
 }
@@ -77,6 +83,27 @@ function removeBlockByIdDeep(blocks: Block[], id: string): boolean {
     }
   }
   return false;
+}
+
+/**
+ * Locate the array a block lives in (top-level or a container's children)
+ * along with its index. Used by sibling-swap actions so the Layers panel
+ * can move nested blocks up / down within their own parent.
+ */
+function findParentAndIndex(
+  blocks: Block[],
+  id: string,
+): { parent: Block[]; index: number } | null {
+  const topIdx = blocks.findIndex((b) => b.id === id);
+  if (topIdx >= 0) return { parent: blocks, index: topIdx };
+
+  for (const block of blocks) {
+    if (block.type === 'container') {
+      const childIdx = block.children.findIndex((c) => c.id === id);
+      if (childIdx >= 0) return { parent: block.children, index: childIdx };
+    }
+  }
+  return null;
 }
 
 function pushSnapshot(): void {
@@ -161,6 +188,37 @@ export const useSchemaStore = create<SchemaState>()(
           parent.children.push(child);
           bumpUpdatedAt(state.schema);
         }
+      });
+    },
+
+    moveBlockUp: (id) => {
+      pushSnapshot();
+      set((state) => {
+        const found = findParentAndIndex(state.schema.blocks, id);
+        if (!found || found.index === 0) return;
+        const { parent, index } = found;
+        const above = parent[index - 1];
+        const current = parent[index];
+        if (above === undefined || current === undefined) return;
+        parent[index - 1] = current;
+        parent[index] = above;
+        bumpUpdatedAt(state.schema);
+      });
+    },
+
+    moveBlockDown: (id) => {
+      pushSnapshot();
+      set((state) => {
+        const found = findParentAndIndex(state.schema.blocks, id);
+        if (!found) return;
+        const { parent, index } = found;
+        if (index >= parent.length - 1) return;
+        const below = parent[index + 1];
+        const current = parent[index];
+        if (below === undefined || current === undefined) return;
+        parent[index + 1] = current;
+        parent[index] = below;
+        bumpUpdatedAt(state.schema);
       });
     },
 

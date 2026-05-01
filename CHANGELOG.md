@@ -2,6 +2,14 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] — 2026-05-01
+
+### Changed
+
+- Layers panel is a real tree now. Top-level blocks render flat as before; Container children render indented under their parent. The previous flat-list version was walking only `schema.blocks`, which made column contents invisible there — you could see a Container row but had no way to inspect / reorder the blocks inside.
+- Each row gets a small toolbar that fades in on hover: up / down chevrons (swap with sibling within the same parent — top-level reorders among top-level, container children reorder within their own column array), eye toggle for `block.visible`, trash for delete. Selection + hover behaviour is unchanged (click selects, hover highlights the canvas via `selectionStore`).
+- `schemaStore` gained `moveBlockUp(id)` / `moveBlockDown(id)` actions that swap a block with its previous / next sibling. Backed by a new `findParentAndIndex` helper that locates a block whether it lives at the top level or inside a Container, so nested reorders just work without the caller knowing about parents.
+
 ## [1.0.8] — 2026-05-01
 
 ### Fixed
