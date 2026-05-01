@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.17
+Stable tag: 1.0.18
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,9 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.18 =
+* **Fix: Button block invisible in non-Outlook clients** (Gmail, Apple Mail, Outlook Web, multi-device preview, "Copy visual" paste). The minifier was stripping the closing half of the Button's downlevel-revealed conditional comment (`<!--<![endif]-->`), which left the opener `<!--[if !mso]>` orphaned. Browsers then read everything after the opener as one long unterminated comment and the `<a>` got swallowed. Same root cause for the GIF static-fallback `<img>` shipped in 1.0.16. Minifier now extracts every conditional comment block (`<!--[if …]>` … `<![endif]-->`) into a placeholder before stripping plain comments, then restores them verbatim. Seven regression tests added in `tests/js/compiler/minify.test.ts`.
 
 = 1.0.17 =
 * New **"Copy visual"** button in the Export modal — copies the rendered signature so it pastes visually into rich-text composers (Gmail compose, Outlook signature box, Apple Mail, Word). For platforms whose signature settings only accept rich text and refuse a raw HTML paste. Modern path uses `navigator.clipboard.write([new ClipboardItem({ 'text/html': …, 'text/plain': … })])`; falls back to a hidden contenteditable + `execCommand('copy')` for older browsers and locked-down iframe contexts.

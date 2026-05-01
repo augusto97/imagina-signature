@@ -2,6 +2,26 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.18] — 2026-05-01
+
+### Fixed
+
+- **Button block invisible in non-Outlook clients.** Reported as "no se ve el bloque de botón en algunas vistas previas." The Button block compiles to a downlevel-revealed conditional comment for non-Outlook clients:
+
+  ```html
+  <!--[if !mso]><!--><a href="…">Book</a><!--<![endif]-->
+  ```
+
+  The pair `<!--[if !mso]><!-->` … `<!--<![endif]-->` is mandatory: the inner `<!-->` ends the comment in non-Outlook so the `<a>` becomes visible, and the closing `<!--<![endif]-->` re-opens a comment in non-Outlook just to terminate the Outlook conditional. The minifier in `core/compiler/minify.ts` only protected comments that **opened** with `<!--[if`, so it stripped the `<!--<![endif]-->` closer (which opens with `<!--<`), leaving an orphaned `<!--[if !mso]>` that swallowed everything after it as one long unterminated comment in non-Outlook clients. The button — and anything that came after it — disappeared from the multi-device preview, "Copy visual" paste, and any non-Outlook email client.
+
+  Same root cause hit the `static_fallback_url` `<img>` swap shipped in 1.0.16 (Image / Banner blocks with GIF fallback for old Outlook).
+
+  Fix: minifier now extracts every conditional comment block (matched from `<!--[if …]>` to the corresponding `<![endif]-->`) into a placeholder before stripping plain comments, then restores the blocks verbatim. Both downlevel-hidden (`<!--[if mso]>…<![endif]-->`) and downlevel-revealed forms survive intact.
+
+### Added
+
+- `tests/js/compiler/minify.test.ts` — seven regression tests covering plain-comment stripping, both conditional comment forms, the full Button compile-output roundtrip, whitespace collapse rules, and the two-siblings-must-not-merge case.
+
 ## [1.0.17] — 2026-05-01
 
 ### Added
