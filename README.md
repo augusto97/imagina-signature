@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.14 | [imagina-signatures-1.0.14.zip](imagina-signatures-1.0.14.zip) |
 | 1.0.13 | [imagina-signatures-1.0.13.zip](imagina-signatures-1.0.13.zip) |
 | 1.0.12 | [imagina-signatures-1.0.12.zip](imagina-signatures-1.0.12.zip) |
 | 1.0.11 | [imagina-signatures-1.0.11.zip](imagina-signatures-1.0.11.zip) |
@@ -26,6 +27,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.14.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.13.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.12.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.11.zip
@@ -77,6 +79,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.14
+Track 3 round 2. **Templates por rol**: each template gains a `visible_to_roles` field. Empty = visible to everyone with `imgsig_use_signatures` (existing behaviour); populated = only users with one of the matching WP roles see it in the editor's TemplatePicker. Admins always see every template. New schema migration `1.1.0` adds the column via dbDelta (idempotent, safe to re-run). **Bulk apply**: new `POST /admin/templates/:id/apply` endpoint with scope = `all` | `role:slug` | `users:1,2,3`. Creates a new signature per user in scope seeded from the template; doesn't touch existing signatures. `skip_existing` (default true) prevents duplicates when re-running. Admin Templates page gains per-card visibility chip + Edit modal (with role toggle chips) + Apply modal (radio scope picker + result summary).
 
 ### 1.0.13
 Track 3 round 1 — three WP-native team primitives that don't exist in any SaaS competitor because they piggyback on WP's user model directly. **Auto-merge from `wp_users` / `wp_user_meta`**: read-only `wp_*` system variables (display_name, email, first_name, last_name, url) auto-populate from the current user's record, surface in the Variables editor as locked rows, compile pipeline merges them with user-defined variables; new `imgsig/editor/system_variables` filter lets host plugins expose custom user_meta keys. **Brand palette**: site-wide list of up to 12 hex colours edited in admin Settings → Branding, surfaces in every editor ColorInput as quick-pick swatches. **Compliance footer**: admin-only HTML disclaimer (kses-sanitised) appended to every signature on compile, edited in admin Settings → Compliance with toggle + textarea + live preview + GDPR / CAN-SPAM starter templates. Settings page now tabbed (Storage / Branding / Compliance); storage form unchanged, just moved into the first tab.
