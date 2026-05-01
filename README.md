@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.17 | [imagina-signatures-1.0.17.zip](imagina-signatures-1.0.17.zip) |
 | 1.0.16 | [imagina-signatures-1.0.16.zip](imagina-signatures-1.0.16.zip) |
 | 1.0.15 | [imagina-signatures-1.0.15.zip](imagina-signatures-1.0.15.zip) |
 | 1.0.14 | [imagina-signatures-1.0.14.zip](imagina-signatures-1.0.14.zip) |
@@ -29,6 +30,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.17.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.16.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.15.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.14.zip
@@ -83,6 +85,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.17
+New **"Copy visual"** button in the Export modal — copies the rendered signature with `text/html` MIME type so it pastes visually into rich-text composers (Gmail compose, Outlook signature box, Apple Mail, Word, anywhere with a `contenteditable`). For platforms whose signature settings don't expose an HTML / source mode and refuse a raw HTML paste. Modern path uses `navigator.clipboard.write([new ClipboardItem({...})])`; falls back to a hidden contenteditable + `execCommand('copy')` for old browsers / locked-down iframes. "Copy HTML" kept for HTML-mode flows. Per-client install tabs now flag which copy mode the steps assume (`Use Copy visual` / `Use Download .html` pill) and start each list with "Press [button] above" so there's no ambiguity.
 
 ### 1.0.16
 Track 5 (alternative path) — install flow + GIF polish. Replaced OAuth deploy (C2) with a polished copy-and-install flow because OAuth requires every WP admin to register Google Cloud + Azure AD apps (~1h each) and end users' IT teams to whitelist for corporate accounts (often refused). Copy-and-install covers 95%+ of cases without that friction. ExportModal redesigned: three primary actions (Copy HTML / Send to my email / Download .html) + per-client install tabs (Gmail, Outlook Web, Outlook Desktop, Apple Mail, Thunderbird) with deep-links to each client's signature settings + 5 numbered paste-here steps. New `POST /signatures/test-send` endpoint dispatches the compiled HTML via `wp_mail` to the user's own `user_email` only (rate-limited 6/hour). GIF polish: optional `static_fallback_url` field on Image / Banner blocks (only surfaces when `src` is `.gif`); compile emits `<!--[if mso]>` conditional swap so Outlook 2007–2019 shows the static PNG while modern clients keep the animation. ImageCropperModal warns when cropping a GIF (cropper renders to canvas → kills animation).
