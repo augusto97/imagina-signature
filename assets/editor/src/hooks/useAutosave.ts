@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { usePersistenceStore } from '@/stores/persistenceStore';
 import { persistence } from '@/services/persistence';
@@ -10,18 +10,26 @@ import { persistence } from '@/services/persistence';
  *
  * Three effects:
  *   1. Bind the engine to the bootstrap config once.
- *   2. On every schema change (once `isLoaded`), schedule a save.
+ *   2. On every schema change, schedule a save IF the user has
+ *      actually edited (`hasUserEdited` flag in schemaStore).
+ *      Without that gate, opening the editor without doing
+ *      anything could trigger a POST that creates an empty
+ *      signature row in the listing — that's how the user reported
+ *      "deleted everything, created one signature, ended up with
+ *      two empty rows" in 1.0.21.
  *   3. Install a `beforeunload` warning while anything is pending so
  *      the user gets the browser's "leave / stay" dialog instead of
  *      silently losing work.
  *
- * Gates on `persistenceStore.isLoaded` so the load round-trip's
- * `setSchema` doesn't itself trigger a redundant save.
+ * Gates on `persistenceStore.isLoaded` AND `schemaStore.hasUserEdited`.
+ * The latter is the more important guard — it directly tracks whether
+ * the user did anything, regardless of which lifecycle event triggered
+ * the schema reference change.
  */
 export function useAutosave(): void {
   const schema = useSchemaStore((s) => s.schema);
+  const hasUserEdited = useSchemaStore((s) => s.hasUserEdited);
   const isLoaded = usePersistenceStore((s) => s.isLoaded);
-  const skipNextSave = useRef(true);
 
   useEffect(() => {
     persistence.initialize();
@@ -29,14 +37,13 @@ export function useAutosave(): void {
 
   useEffect(() => {
     if (!isLoaded) return;
-    // Skip the first run after `isLoaded` flips true — that change
-    // is the load itself bouncing through schemaStore, not a user edit.
-    if (skipNextSave.current) {
-      skipNextSave.current = false;
-      return;
-    }
+    // The user-edit gate is the safety net against empty-row POSTs.
+    // Loading a signature, applying a template, or any other
+    // non-user setSchema clears `hasUserEdited`, so this effect's
+    // dependency change doesn't translate into a save.
+    if (!hasUserEdited) return;
     persistence.scheduleSave();
-  }, [schema, isLoaded]);
+  }, [schema, isLoaded, hasUserEdited]);
 
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {

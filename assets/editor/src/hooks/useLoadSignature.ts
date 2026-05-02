@@ -10,6 +10,7 @@ import { __ } from '@/i18n/helpers';
 interface SignatureRow {
   id: number;
   name: string;
+  status: 'draft' | 'ready' | 'archived';
   json_content: SignatureSchema;
 }
 
@@ -32,6 +33,7 @@ interface LoadState {
 export function useLoadSignature(): LoadState {
   const setSchema = useSchemaStore((s) => s.setSchema);
   const markLoaded = usePersistenceStore((s) => s.markLoaded);
+  const hydrateRowMeta = usePersistenceStore((s) => s.hydrateRowMeta);
   const showToast = useToastStore((s) => s.show);
   const [state, setState] = useState<LoadState>({
     loading: getConfig().signatureId > 0,
@@ -53,6 +55,13 @@ export function useLoadSignature(): LoadState {
         if (row.json_content && typeof row.json_content === 'object') {
           setSchema(row.json_content);
         }
+        // Populate the topbar's Name + Status from the loaded row so
+        // the user can edit them. Status defaults to 'draft' when the
+        // server didn't include it (back-compat with very old rows).
+        hydrateRowMeta({
+          name: row.name || 'Untitled',
+          status: row.status ?? 'draft',
+        });
         setState({ loading: false, notFound: false, error: null });
         markLoaded();
       })

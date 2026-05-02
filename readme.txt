@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.21
+Stable tag: 1.0.22
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,12 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.22 =
+* **Two empty-row guards.** The user reported "deleted everything, created one signature, ended up with two empty rows in the listing". Two complementary fixes so an empty signature row literally cannot be POSTed:
+  1. New `hasUserEdited` flag on the schemaStore. Every mutation action (addBlock, deleteBlock, updateBlock, etc.) flips it to `true`. `setSchema()` clears it because loading isn't editing. The autosave hook gates `scheduleSave()` on this flag — without it, opening the editor without doing anything could trigger an empty POST through whatever indirect schema reference change.
+  2. Engine-side guard: when `signatureId === 0` AND `schema.blocks.length === 0`, skip the POST and exit the save loop without creating a row. Catches the path where only the topbar Name input is changed (which legitimately bypasses `hasUserEdited`).
+* **Signature Name + Status inputs in the editor topbar.** Replaces the static "Imagina Signatures" label. The Name field is an inline-editable text input; the Status is a colour-coded pill dropdown (Draft amber / Ready emerald / Archived grey). Edits write through to `persistenceStore` and trigger an autosave. Loaded signatures populate both fields from the server response.
 
 = 1.0.21 =
 * **Real cache busting via hashed filenames + manifest.** The user reported "fixes don't seem to land after upgrading the plugin" — the root cause was that previous releases output `editor.js` and `admin.js` with no content hash in the filename. Browsers, CDNs, and page-cache plugins ignored the `?ver=` query string and served stale bundles. Vite now emits hashed filenames (`editor.[hash].js`, `admin.[hash].js`, etc.) and a `build/.vite/manifest.json` mapping each entry to its current hashed name. PHP's `AdminAssetEnqueuer` and `EditorAssetEnqueuer` read the manifest at request time. **Every release ships completely different URLs** — no cache layer can possibly serve stale code on the upgrade boundary.

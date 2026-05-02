@@ -166,17 +166,40 @@ class Persistence {
           this.dirty = false;
           persistence.markSaving();
 
+          // Read the latest values inside the loop iteration so
+          // edits made while the previous save was awaiting an
+          // API response land on this iteration.
           const schema = useSchemaStore.getState().schema;
+          const meta = usePersistenceStore.getState();
+          const rowName = meta.signatureName.trim() || 'Untitled';
+          const rowStatus = meta.signatureStatus;
 
           if (this.signatureId > 0) {
             await apiCall(`/signatures/${this.signatureId}`, {
               method: 'PATCH',
-              body: { json_content: schema },
+              body: {
+                name: rowName,
+                status: rowStatus,
+                json_content: schema,
+              },
             });
           } else {
+            // Engine-side empty-schema guard. The schemaStore-side
+            // `hasUserEdited` gate stops most empty saves, but
+            // changing only the Name input bypasses it (a name
+            // tweak isn't a schema edit). We still don't want the
+            // listing to fill up with rows that have no blocks.
+            // Skip the POST until at least one block exists.
+            if (schema.blocks.length === 0) {
+              continue;
+            }
             const created = await apiCall<{ id: number }>('/signatures', {
               method: 'POST',
-              body: { name: 'Untitled', json_content: schema },
+              body: {
+                name: rowName,
+                status: rowStatus,
+                json_content: schema,
+              },
             });
 
             // Persist the new id IMMEDIATELY before the next iteration

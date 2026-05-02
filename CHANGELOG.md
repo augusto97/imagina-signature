@@ -2,6 +2,31 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.22] — 2026-05-02
+
+### Fixed — Empty-row creation
+
+User reported (with the cache-bust fix from 1.0.21 already in place): "deleted everything, created one signature, ended up with two empty rows in the listing". Two complementary guards now make it impossible for an empty signature to be POSTed by accident:
+
+1. **`hasUserEdited` flag on the schemaStore.** Every mutation action (`addBlock`, `insertBlockBefore`, `updateBlock`, `deleteBlock`, `duplicateBlock`, `addChildToContainer`, `moveBlock`, `moveBlockUp`, `moveBlockDown`, `moveBlock`, `updateCanvas`, `setVariable`, `removeVariable`, `renameVariable`) flips it to `true` via the new `markEdited(state)` helper that subsumes the old `bumpUpdatedAt`. `setSchema()` clears it because loading is not editing. `useAutosave` gates its `persistence.scheduleSave()` call on this flag, so any indirect schema reference change (template apply, undo replay, useLoadSignature setSchema, future side-effects we haven't predicted) doesn't translate into a POST.
+
+2. **Engine-side guard in `performSave()`.** Even with `hasUserEdited` working, the topbar Name input legitimately calls `persistence.scheduleSave()` directly — a name tweak is a real edit. But it shouldn't create a row whose `json_content.blocks` is empty. The save loop now `continue`s out of the iteration when `signatureId === 0` AND `schema.blocks.length === 0`, draining `dirty` without making the POST. The first time the user adds an actual block, the next iteration goes through normally.
+
+### Added — Name + Status in the editor topbar
+
+Reported as: "no tiene donde editar el nombre de la firma ni cambiar el estado". The static "Imagina Signatures" label is replaced with two inline controls:
+
+- **Name input** — text field, max 120 chars, inherits the topbar's heading typography. Default placeholder "Untitled signature". On focus it gets a subtle border so the user knows it's editable. On change, writes to `persistenceStore.signatureName` + calls `persistence.scheduleSave()`.
+- **Status dropdown** — three options (Draft amber, Ready emerald, Archived grey), rendered as a colour-coded pill that visually doubles as a status badge. Same write-through autosave path as the name input.
+
+Loaded signatures populate both fields from the server response (`useLoadSignature` calls a new `hydrateRowMeta({name, status})` action). The save engine reads both at every PATCH/POST, so changes to either are persisted on the next autosave.
+
+### Internal
+
+- New `markEdited(state)` helper in schemaStore replaces the old `bumpUpdatedAt(schema)` helper. Single touchpoint that bumps the timestamp AND flips the dirty flag.
+- `persistenceStore` gained `signatureName`, `signatureStatus`, `setSignatureName`, `setSignatureStatus`, `hydrateRowMeta`. Type `SignatureStatus` exported.
+- Editor bundle: 679 KB → 681 KB (gzip 212 KB → 213 KB).
+
 ## [1.0.21] — 2026-05-01
 
 ### Fixed — The reason past fixes appeared not to land

@@ -104,16 +104,15 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
         >
           <ArrowLeft size={16} />
         </a>
-        <div className="flex items-center gap-2 truncate">
+        <div className="flex min-w-0 items-center gap-2">
           <span
             aria-hidden
             className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--accent)] text-white"
           >
             <FileSignature size={14} />
           </span>
-          <span className="truncate text-[13px] font-semibold text-[var(--text-primary)]">
-            {__('Imagina Signatures')}
-          </span>
+          <SignatureNameInput />
+          <SignatureStatusSelect />
           <VersionPill />
         </div>
       </div>
@@ -327,5 +326,79 @@ const VersionPill: FC = () => {
     >
       v{BUNDLE_VERSION} → {runtimeVersion} ↻
     </button>
+  );
+};
+
+/**
+ * Inline-editable signature name. Replaces the static "Imagina
+ * Signatures" label that used to sit in the topbar — gives the user
+ * a clear place to rename the row without leaving the editor.
+ *
+ * Edits write through to `persistenceStore.signatureName` and call
+ * `persistence.scheduleSave()` to flag the engine dirty so the
+ * autosave eventually PATCHes the new name.
+ */
+const SignatureNameInput: FC = () => {
+  const name = usePersistenceStore((s) => s.signatureName);
+  const setSignatureName = usePersistenceStore((s) => s.setSignatureName);
+
+  const onChange = (value: string): void => {
+    setSignatureName(value);
+    persistence.scheduleSave();
+  };
+
+  return (
+    <input
+      type="text"
+      value={name}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={__('Untitled signature')}
+      maxLength={120}
+      className="!h-7 min-w-[120px] max-w-[260px] flex-1 truncate !border-transparent !bg-transparent !px-1.5 text-[13px] font-semibold text-[var(--text-primary)] hover:!bg-[var(--bg-hover)] focus:!border-[var(--border-default)] focus:!bg-[var(--bg-panel)]"
+      aria-label={__('Signature name')}
+      title={__('Click to rename')}
+    />
+  );
+};
+
+/**
+ * Status picker. Three states: Draft (default for new rows), Ready
+ * (the user finished editing and considers it shippable), Archived
+ * (hidden from the default listing but not deleted).
+ *
+ * Same write-through pattern as the name input: updates the store
+ * and asks the persistence engine to schedule a save.
+ */
+const SignatureStatusSelect: FC = () => {
+  const status = usePersistenceStore((s) => s.signatureStatus);
+  const setSignatureStatus = usePersistenceStore((s) => s.setSignatureStatus);
+
+  const onChange = (value: 'draft' | 'ready' | 'archived'): void => {
+    setSignatureStatus(value);
+    persistence.scheduleSave();
+  };
+
+  const tone =
+    status === 'ready'
+      ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+      : status === 'archived'
+        ? 'bg-slate-100 text-slate-600 ring-slate-200'
+        : 'bg-amber-50 text-amber-700 ring-amber-200';
+
+  return (
+    <select
+      value={status}
+      onChange={(e) => onChange(e.target.value as 'draft' | 'ready' | 'archived')}
+      className={cn(
+        '!h-7 !w-auto cursor-pointer rounded-full !border-0 !px-2 !py-0 text-[10.5px] font-semibold uppercase tracking-wide ring-1 ring-inset transition-colors',
+        tone,
+      )}
+      aria-label={__('Signature status')}
+      title={__('Status — controls how the row is grouped on the listing.')}
+    >
+      <option value="draft">{__('Draft')}</option>
+      <option value="ready">{__('Ready')}</option>
+      <option value="archived">{__('Archived')}</option>
+    </select>
   );
 };

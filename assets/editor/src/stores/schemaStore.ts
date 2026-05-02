@@ -21,6 +21,17 @@ import { useHistoryStore } from './historyStore';
 interface SchemaState {
   schema: SignatureSchema;
 
+  /**
+   * `true` once any user-initiated mutation has happened against the
+   * schema (addBlock, updateBlock, deleteBlock, …). Cleared by
+   * `setSchema()` because loading isn't editing. The autosave hook
+   * gates on this — without it, opening the editor without doing
+   * anything could trigger a POST that creates an empty signature
+   * row in the listing. (User report 1.0.21: deleted everything,
+   * created one signature, ended up with two empty rows.)
+   */
+  hasUserEdited: boolean;
+
   /** Replace the entire schema (e.g. after loading from REST). */
   setSchema: (schema: SignatureSchema) => void;
 
@@ -47,8 +58,15 @@ interface SchemaState {
   renameVariable: (old_key: string, new_key: string) => void;
 }
 
-function bumpUpdatedAt(schema: SignatureSchema): void {
-  schema.meta.updated_at = new Date().toISOString();
+/**
+ * Marks the schema as user-edited: bumps `meta.updated_at` AND flips
+ * `hasUserEdited = true`. Every mutation action calls this so the
+ * autosave hook can gate on the flag and never POST an empty
+ * signature row that the user never actually touched.
+ */
+function markEdited(state: { schema: SignatureSchema; hasUserEdited: boolean }): void {
+  state.schema.meta.updated_at = new Date().toISOString();
+  state.hasUserEdited = true;
 }
 
 function findIndexById(blocks: Block[], id: string): number {
@@ -115,10 +133,14 @@ function pushSnapshot(): void {
 export const useSchemaStore = create<SchemaState>()(
   immer((set) => ({
     schema: createEmptySchema(),
+    hasUserEdited: false,
 
     setSchema: (schema) => {
       set((state) => {
         state.schema = schema;
+        // Loading is not editing — clear the flag so the autosave
+        // doesn't immediately fire a POST/PATCH for the loaded data.
+        state.hasUserEdited = false;
       });
       useHistoryStore.getState().clear();
     },
@@ -131,7 +153,7 @@ export const useSchemaStore = create<SchemaState>()(
         } else {
           state.schema.blocks.splice(position, 0, block);
         }
-        bumpUpdatedAt(state.schema);
+        markEdited(state);
       });
     },
 
@@ -144,7 +166,7 @@ export const useSchemaStore = create<SchemaState>()(
         } else {
           state.schema.blocks.splice(index, 0, block);
         }
-        bumpUpdatedAt(state.schema);
+        markEdited(state);
       });
     },
 
@@ -157,7 +179,7 @@ export const useSchemaStore = create<SchemaState>()(
         } else {
           state.schema.blocks.splice(index + 1, 0, block);
         }
-        bumpUpdatedAt(state.schema);
+        markEdited(state);
       });
     },
 
@@ -169,7 +191,7 @@ export const useSchemaStore = create<SchemaState>()(
         const block = findBlockByIdDeep(state.schema.blocks, id);
         if (block) {
           Object.assign(block, updates);
-          bumpUpdatedAt(state.schema);
+          markEdited(state);
         }
       });
     },
@@ -178,7 +200,7 @@ export const useSchemaStore = create<SchemaState>()(
       pushSnapshot();
       set((state) => {
         removeBlockByIdDeep(state.schema.blocks, id);
-        bumpUpdatedAt(state.schema);
+        markEdited(state);
       });
     },
 
@@ -188,7 +210,7 @@ export const useSchemaStore = create<SchemaState>()(
         const parent = findBlockByIdDeep(state.schema.blocks, parent_id);
         if (parent && parent.type === 'container') {
           parent.children.push(child);
-          bumpUpdatedAt(state.schema);
+          markEdited(state);
         }
       });
     },
@@ -204,7 +226,7 @@ export const useSchemaStore = create<SchemaState>()(
         if (above === undefined || current === undefined) return;
         parent[index - 1] = current;
         parent[index] = above;
-        bumpUpdatedAt(state.schema);
+        markEdited(state);
       });
     },
 
@@ -220,7 +242,7 @@ export const useSchemaStore = create<SchemaState>()(
         if (below === undefined || current === undefined) return;
         parent[index + 1] = current;
         parent[index] = below;
-        bumpUpdatedAt(state.schema);
+        markEdited(state);
       });
     },
 
@@ -239,7 +261,7 @@ export const useSchemaStore = create<SchemaState>()(
         } else {
           blocks.splice(position === 'before' ? targetIndex : targetIndex + 1, 0, moving);
         }
-        bumpUpdatedAt(state.schema);
+        markEdited(state);
       });
     },
 
@@ -253,28 +275,28 @@ export const useSchemaStore = create<SchemaState>()(
         const cloned = JSON.parse(JSON.stringify(original)) as Block;
         cloned.id = `${original.id}_copy_${Date.now().toString(36)}`;
         state.schema.blocks.splice(index + 1, 0, cloned);
-        bumpUpdatedAt(state.schema);
+        markEdited(state);
       });
     },
 
     updateCanvas: (updates) => {
       set((state) => {
         Object.assign(state.schema.canvas, updates);
-        bumpUpdatedAt(state.schema);
+        markEdited(state);
       });
     },
 
     setVariable: (key, value) => {
       set((state) => {
         state.schema.variables[key] = value;
-        bumpUpdatedAt(state.schema);
+        markEdited(state);
       });
     },
 
     removeVariable: (key) => {
       set((state) => {
         delete state.schema.variables[key];
-        bumpUpdatedAt(state.schema);
+        markEdited(state);
       });
     },
 
@@ -287,7 +309,7 @@ export const useSchemaStore = create<SchemaState>()(
         if (value !== undefined) {
           state.schema.variables[new_key] = value;
         }
-        bumpUpdatedAt(state.schema);
+        markEdited(state);
       });
     },
   })),
