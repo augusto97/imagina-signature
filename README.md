@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.27 | [imagina-signatures-1.0.27.zip](imagina-signatures-1.0.27.zip) |
 | 1.0.26 | [imagina-signatures-1.0.26.zip](imagina-signatures-1.0.26.zip) |
 | 1.0.25 | [imagina-signatures-1.0.25.zip](imagina-signatures-1.0.25.zip) |
 | 1.0.23 | [imagina-signatures-1.0.23.zip](imagina-signatures-1.0.23.zip) |
@@ -38,6 +39,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.27.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.26.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.25.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.23.zip
@@ -101,6 +103,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.27
+**Edit links opened the editor with `?id=id` instead of the row's real id.** Reported by the user — every "Edit" button in the signatures listing was producing URLs like `/wp-admin/admin.php?page=imagina-signatures-editor&id=id` (literal string "id"). The editor read that as `id=0` and started a fresh signature, making every saved row effectively unreachable through the listing. Root cause: `AdminAssetEnqueuer::build_config()` was building the editor URL template with `{id}` as the placeholder and passing it through `esc_url_raw()`, which strips `{` and `}` (reserved URL characters) on some WP / PHP combinations — the placeholder arrived in the frontend already stripped to `id=id`. The TS `String#replace('{id}', …)` then found nothing to replace. Switched to `__ID__` (alphanumeric, no special chars) on both PHP and TS sides; `esc_url_raw` leaves it intact and the replace lands correctly.
 
 ### 1.0.26
 **Save path rebuilt from scratch — autosave deleted, read-after-write hash verify added.** User feedback: "deshabilita eso de guardado por ajax y construye uno que sí sirva". Across 1.0.20 → 1.0.25 the autosave engine produced a sequence of false-positive "Saved" toasts that lied to the user about whether their work was actually persisted. 1.0.26 deletes the autosave entirely. Saves now run only when the user explicitly asks: Save button, Cmd-S, back-arrow, or `beforeunload` (which warns when dirty so accidental tab-close can't drop work). The new engine is ~190 lines (was ~270) and has no timers, no `inFlight`/`dirty` race surface, no autosave loop. **Read-after-write verification at three layers**: (1) `SignatureRepository::insert`/`::update` throw `\RuntimeException` on `$wpdb->insert`/`::update` returning false (was silently producing `id=0` models the caller round-tripped to the user as "Saved"). (2) The repository re-fetches the row from disk after writing (was returning a model built from the in-memory `$row`). (3) `SignatureService` canonicalises the JSON we asked the DB to store, canonicalises the DB-returned JSON the same way, compares SHA-256 hashes — mismatch throws with both 12-char hash prefixes + lengths. Frontend compares `JSON.stringify(sentSchema)` against the response's `json_content` and surfaces an info toast if they differ. **Activation hardened**: `Activator` wraps `Installer::install` in `try/catch \Throwable`, logs the full stack trace, `wp_die`s with the exception message and auto-deactivates so a half-activated state doesn't linger. `flush_rewrite_rules` removed from both `Activator` and `Deactivator` (REST routes don't use rewrite rules). Tests: `persistence.test.ts` rewritten with 5 cases for the new model; 32/32 vitest pass; tsc strict-clean.
