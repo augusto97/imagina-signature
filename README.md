@@ -7,6 +7,8 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.25 | [imagina-signatures-1.0.25.zip](imagina-signatures-1.0.25.zip) |
+| 1.0.23 | [imagina-signatures-1.0.23.zip](imagina-signatures-1.0.23.zip) |
 | 1.0.22 | [imagina-signatures-1.0.22.zip](imagina-signatures-1.0.22.zip) |
 | 1.0.21 | [imagina-signatures-1.0.21.zip](imagina-signatures-1.0.21.zip) |
 | 1.0.20 | [imagina-signatures-1.0.20.zip](imagina-signatures-1.0.20.zip) |
@@ -35,6 +37,8 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.25.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.23.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.22.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.21.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.20.zip
@@ -96,7 +100,13 @@ bash scripts/build-zip.sh
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
 
-### 1.0.22
+### 1.0.25
+**Full audit pass — 16 issues fixed.** Most-impactful: (1) **XSS via Tiptap content** — `TextBlock` and `compileText` interpolated `block.content` raw; `sanitizeEmailHtml` existed but was never called. Now called in both renderer and compiler. (2) **`block.visible === false` ignored at compile time** — Layers panel "eye" toggle visually hid blocks but the export still included them; fixed in `compile.ts` and Container compile (filters hidden children before the half-split). (3) **Undo/redo collapsed to single-step** — Topbar Undo and Cmd-Z called `setSchema(previous)` which clears history; new `replaceSchemaForHistory` action preserves both stacks. (4) **`moveBlock` corrupted nested schemas** — only walked top-level, so dragging a nested block could `splice(-1, 1)` and remove the LAST top-level block. Fixed in `insertBlockBefore`/`insertBlockAfter`/`moveBlock`/`duplicateBlock`. (5) **`SignatureService::create` user_id hijack** — `data_before_save` filter ran AFTER user_id was set, letting any listener overwrite ownership. Now stamped after the filter with a defensive `unset()`. (6) **`RateLimitStore::increment` race** — read-modify-write through transients defeated rate limits under concurrency; now uses atomic `wp_cache_incr` on hosts with persistent object cache. (7) **Attribute-context injection in every block compiler** — local helpers escaped only `"`, leaving `&`/`<`/`>` raw; centralised `escapeAttr` in compile.ts now used by every interpolation. (8) **Campaign banner re-rolled on every keystroke** — `Math.random()` inside the compile path; now stable per page-load. Plus: `JsonSchemaValidator` block-type allowlist (with new `imgsig/schema/allowed_block_types` filter), `S3Driver::verify_object_exists` only accepts 200/204 (was 2xx-3xx), `UploadController::finalize` rate-limited and validates size, encrypted credentials option set with `autoload=false`, Uninstaller scrubs the 3 site-settings options that were leaking + safety-net SQL DELETE for any `imgsig_*` row, `.gitignore` un-ignores `build/.vite/manifest.json`, ManifestReader stops returning dead fallback filenames + surfaces a clear admin notice, `useSelectionStore()` destructure replaced with granular selectors (kills whole-canvas re-renders), Cmd-S no longer eaten by the input-focus bail, Toaster timer leak on manual dismiss fixed, admin pages validate `Array.isArray(data)` before assuming response shape. Seven new regression tests; all 30 vitest cases pass.
+
+### 1.0.24
+**Persistence false-positive fix + branding hardening.** Internal release. The autosave loop was calling `markSaved()` even when the empty-blocks guard caused it to skip the POST — topbar showed "Saved · HH:MM" while the listing stayed empty. Fixed with `wroteAtLeastOnce` flag + new `markDrainedNoOp()` action. Site-settings PATCH endpoints switched to `WP_REST_Server::EDITABLE` (POST/PUT/PATCH) so shared-hosting WAFs that strip PATCH at the proxy layer can't silently noop the save. Brand-palette round-trip verification uses `array_values()` so object-cache backends that coerce numeric keys to strings don't false-fail. `BrandingTab` validates the response shape and surfaces a banner if the server returns no `brand_palette` array. (No published ZIP — superseded by 1.0.25 the same day.)
+
+### 1.0.23
 **Empty-row guard + Name/Status in topbar.** User reported (with cache-bust from 1.0.21 already in place): "deleted everything, created one signature, ended up with two empty rows". Two complementary guards: (1) new `hasUserEdited` flag on schemaStore, flipped true by every mutation action via the new `markEdited(state)` helper; cleared by `setSchema` because loading isn't editing. `useAutosave` gates `scheduleSave()` on it, so any indirect schema reference change can't translate into a POST. (2) Engine-side guard: when `signatureId === 0` AND `schema.blocks.length === 0`, the save loop `continue`s past the POST, draining `dirty` without creating a row. Plus the Name + Status the user explicitly asked for — inline-editable Name input replaces the static "Imagina Signatures" label, and a colour-coded Status pill dropdown (Draft amber / Ready emerald / Archived grey). Both write through `persistenceStore` and trigger an autosave; loaded signatures populate both fields from the server response.
 
 ### 1.0.21
