@@ -56,8 +56,13 @@ export const SignaturesPage: FC = () => {
     });
   }, [items, statusFilter, search]);
 
-  const editorUrl = (id: number): string => config.urls.editor.replace('{id}', String(id));
-  const newSignatureUrl = config.urls.editor.replace('{id}', '0');
+  // The editor URL template carries `__ID__` as the placeholder
+  // (alphanumeric so `esc_url_raw` on the PHP side doesn't strip it
+  // — the previous `{id}` placeholder lost its braces, leaving the
+  // literal string "id" as the id parameter and breaking every Edit
+  // link in the listing).
+  const editorUrl = (id: number): string => config.urls.editor.replace('__ID__', String(id));
+  const newSignatureUrl = config.urls.editor.replace('__ID__', '0');
 
   const onDuplicate = async (row: SignatureRow): Promise<void> => {
     setBusyId(row.id);

@@ -164,7 +164,15 @@ final class AdminAssetEnqueuer {
 				'signatures' => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures' ) ),
 				'templates'  => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures-templates' ) ),
 				'settings'   => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures-settings' ) ),
-				'editor'     => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures-editor&id={id}' ) ),
+				// Use `__ID__` (alphanumeric, no special chars) as the
+				// placeholder so `esc_url_raw` doesn't strip it. The
+				// previous `{id}` template lost its braces because
+				// `esc_url_raw` URL-encodes / drops them depending on
+				// the WP build, leaving the literal string "id" as the
+				// id parameter — every "Edit" link in the listing
+				// opened the editor with `?id=id` instead of the row's
+				// real id.
+				'editor'     => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures-editor&id=__ID__' ) ),
 			],
 			'brandPalette'     => $site_opts['brand_palette'],
 			'complianceFooter' => $site_opts['compliance_footer'],

@@ -4,7 +4,7 @@
     "name": "bundle-mjs"
   },
   "assets/admin/src/main.tsx": {
-    "file": "admin.SzJJ5cEq.js",
+    "file": "admin.hSAoXGPR.js",
     "name": "admin",
     "src": "assets/admin/src/main.tsx",
     "isEntry": true,
@@ -16,7 +16,7 @@
     ]
   },
   "assets/editor/src/main.tsx": {
-    "file": "editor.Bf9Y25b3.js",
+    "file": "editor.BxNI6jST.js",
     "name": "editor",
     "src": "assets/editor/src/main.tsx",
     "isEntry": true,

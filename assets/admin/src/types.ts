@@ -27,7 +27,13 @@ export interface AdminConfig {
     signatures: string;
     templates: string;
     settings: string;
-    /** Pattern that takes a `{id}` placeholder and routes to the iframe editor. */
+    /**
+     * Pattern that takes an `__ID__` placeholder and routes to the
+     * editor. Fill via `.replace('__ID__', String(id))`. The
+     * placeholder is alphanumeric so `esc_url_raw` on the PHP side
+     * leaves it intact — the original `{id}` template lost its
+     * braces and broke every Edit link in the listing.
+     */
     editor: string;
   };
 }

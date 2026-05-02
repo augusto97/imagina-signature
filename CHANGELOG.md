@@ -2,6 +2,21 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.27] — 2026-05-02
+
+### Fixed — Edit links opened the editor with `?id=id` instead of the row's real id
+
+User reported the Edit button in the signatures listing was producing URLs like `/wp-admin/admin.php?page=imagina-signatures-editor&id=id` — the literal string "id" instead of the row's primary key. Every saved signature was effectively unreachable through the listing because the editor would treat `id=id` as `id=0` (new signature) and start fresh.
+
+Root cause: `AdminAssetEnqueuer::build_config()` was building the editor URL template as `admin_url('admin.php?page=imagina-signatures-editor&id={id}')` and passing it through `esc_url_raw()`. Some WP / PHP combinations strip `{` and `}` from URLs (they're reserved characters), so the template arrived in the frontend as `…&id=id`. The `String#replace('{id}', …)` call in `SignaturesPage` then found nothing to replace, so the URL went out unchanged with the literal "id" sitting where the placeholder used to be.
+
+Switched the placeholder to `__ID__` (alphanumeric, no special chars) on both the PHP and TS sides. `esc_url_raw` leaves alphanumeric strings alone, so the template arrives intact and the replace lands on the right substring.
+
+### Internal
+
+- Editor bundle: 682 KB → 682 KB (gzip 213.50 KB). Identical content; only admin bundle hash changed.
+- Plugin version bumped to 1.0.27.
+
 ## [1.0.26] — 2026-05-02
 
 User reported the plugin still wasn't saving anything reliably even after the 1.0.25 audit, plus an activation failure on a fresh site. This release rebuilds the save path from scratch and hardens activation.
