@@ -234,6 +234,18 @@ final class SignaturesController extends BaseController {
 			$signature = $this->service->create( $user_id, $this->read_payload( $request ) );
 		} catch ( ImaginaSignaturesException $e ) {
 			return $this->exception_to_wp_error( $e );
+		} catch ( \Throwable $e ) {
+			// Catch the read-after-write verify failures (and anything
+			// else that bubbles up from the service / repository) so
+			// the REST layer always returns a structured WP_Error
+			// instead of letting WP turn it into an opaque 500.
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( '[imagina-signatures] create failed: ' . $e->getMessage() );
+			return new \WP_Error(
+				'imgsig_persistence_failed',
+				$e->getMessage(),
+				[ 'status' => 500 ]
+			);
 		}
 
 		$response = rest_ensure_response( $signature->to_array() );
@@ -280,6 +292,14 @@ final class SignaturesController extends BaseController {
 			);
 		} catch ( ImaginaSignaturesException $e ) {
 			return $this->exception_to_wp_error( $e );
+		} catch ( \Throwable $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( '[imagina-signatures] update failed: ' . $e->getMessage() );
+			return new \WP_Error(
+				'imgsig_persistence_failed',
+				$e->getMessage(),
+				[ 'status' => 500 ]
+			);
 		}
 
 		return rest_ensure_response( $signature->to_array() );

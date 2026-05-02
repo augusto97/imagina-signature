@@ -218,14 +218,40 @@ class SignatureRepository extends BaseRepository {
 			'updated_at'     => $now,
 		];
 
-		$this->wpdb->insert(
+		$inserted = $this->wpdb->insert(
 			$this->table(),
 			$row,
 			[ '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s' ]
 		);
 
-		$row['id'] = (int) $this->wpdb->insert_id;
-		return Signature::from_row( $row );
+		// `$wpdb->insert` returns false on actual SQL failure (vs zero
+		// rows affected, which is impossible for INSERT). Surface the
+		// last_error explicitly — until 1.0.26 a failed insert silently
+		// produced a Signature model with `id = 0` that the caller
+		// happily round-tripped to the user as "Saved".
+		if ( false === $inserted ) {
+			throw new \RuntimeException(
+				'Database INSERT failed for imgsig_signatures: ' . ( $this->wpdb->last_error ?: 'unknown error' )
+			);
+		}
+
+		$insert_id = (int) $this->wpdb->insert_id;
+		if ( $insert_id <= 0 ) {
+			throw new \RuntimeException( 'Database INSERT returned no insert_id for imgsig_signatures.' );
+		}
+
+		// Re-fetch from the DB instead of trusting `$row`. This catches
+		// silent corruption (charset mismatch, column truncation,
+		// missing column after a failed migration) — the in-memory
+		// `$row` would otherwise look fine even when the persisted
+		// row differs from what we tried to write.
+		$persisted = $this->find( $insert_id );
+		if ( null === $persisted ) {
+			throw new \RuntimeException(
+				sprintf( 'Inserted row %d disappeared on read-back. The save did not persist.', $insert_id )
+			);
+		}
+		return $persisted;
 	}
 
 	/**
@@ -268,8 +294,27 @@ class SignatureRepository extends BaseRepository {
 		$update['updated_at'] = $this->now();
 		$formats[]            = '%s';
 
-		$this->wpdb->update( $this->table(), $update, [ 'id' => $id ], $formats, [ '%d' ] );
+		// `$wpdb->update` returns false on SQL failure or int (rows
+		// affected) on success. Zero rows affected is fine — it means
+		// the new values matched the stored values, NOT that the write
+		// silently dropped. Treating false as a hard error and zero as
+		// success matches the WP REST conventions.
+		$result = $this->wpdb->update( $this->table(), $update, [ 'id' => $id ], $formats, [ '%d' ] );
 
+		if ( false === $result ) {
+			throw new \RuntimeException(
+				sprintf(
+					'Database UPDATE failed for signature %d: %s',
+					$id,
+					$this->wpdb->last_error ?: 'unknown error'
+				)
+			);
+		}
+
+		// Read-back: the canonical answer for "what's actually on disk"
+		// is the row we read after writing, not the values we tried to
+		// write. The service layer compares hashes to detect silent
+		// corruption.
 		return $this->find( $id );
 	}
 

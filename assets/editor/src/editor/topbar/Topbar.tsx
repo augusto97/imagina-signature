@@ -337,21 +337,21 @@ const VersionPill: FC = () => {
 };
 
 /**
- * Inline-editable signature name. Replaces the static "Imagina
- * Signatures" label that used to sit in the topbar — gives the user
- * a clear place to rename the row without leaving the editor.
+ * Inline-editable signature name.
  *
- * Edits write through to `persistenceStore.signatureName` and call
- * `persistence.scheduleSave()` to flag the engine dirty so the
- * autosave eventually PATCHes the new name.
+ * Edits write through to `persistenceStore.signatureName` and flip
+ * `isDirty` so the topbar Save button switches to its accent state.
+ * No network call here — the user commits via the Save button or
+ * Cmd-S, which is the one path that goes to the server.
  */
 const SignatureNameInput: FC = () => {
   const name = usePersistenceStore((s) => s.signatureName);
   const setSignatureName = usePersistenceStore((s) => s.setSignatureName);
+  const markDirty = usePersistenceStore((s) => s.markDirty);
 
   const onChange = (value: string): void => {
     setSignatureName(value);
-    persistence.scheduleSave();
+    markDirty();
   };
 
   return (
@@ -379,10 +379,11 @@ const SignatureNameInput: FC = () => {
 const SignatureStatusSelect: FC = () => {
   const status = usePersistenceStore((s) => s.signatureStatus);
   const setSignatureStatus = usePersistenceStore((s) => s.setSignatureStatus);
+  const markDirty = usePersistenceStore((s) => s.markDirty);
 
   const onChange = (value: 'draft' | 'ready' | 'archived'): void => {
     setSignatureStatus(value);
-    persistence.scheduleSave();
+    markDirty();
   };
 
   const tone =

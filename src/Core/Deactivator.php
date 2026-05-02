@@ -49,8 +49,8 @@ final class Deactivator {
 			wp_clear_scheduled_hook( $hook );
 		}
 
-		// Drop our REST routes from the rewrite cache.
-		flush_rewrite_rules();
+		// `flush_rewrite_rules()` was removed in 1.0.26 — REST routes
+		// don't use rewrite rules, so the call was dead weight.
 
 		/**
 		 * Fires after the plugin has finished deactivating.

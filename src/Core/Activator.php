@@ -55,11 +55,34 @@ final class Activator {
 			);
 		}
 
-		// Run the install steps (schema, capabilities, options, version stamp).
-		( new Installer() )->install();
+		// Wrap the install steps so a failing migration / seeder doesn't
+		// leave the plugin half-activated with an opaque PHP fatal in
+		// the user's face. We catch ANY throwable, surface it as a
+		// stored option that the admin notice picks up, and rethrow
+		// only the message in `wp_die` so the user gets actionable text
+		// instead of "There has been a critical error on this website."
+		try {
+			( new Installer() )->install();
+		} catch ( \Throwable $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( '[imagina-signatures] activation failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString() );
+			deactivate_plugins( IMGSIG_BASENAME );
+			wp_die(
+				esc_html(
+					sprintf(
+						/* translators: %s: error message. */
+						__( 'Imagina Signatures could not finish activating: %s. The plugin has been deactivated. Check the WordPress error log for the full stack trace.', 'imagina-signatures' ),
+						$e->getMessage()
+					)
+				),
+				esc_html__( 'Plugin activation failed', 'imagina-signatures' ),
+				[ 'back_link' => true ]
+			);
+		}
 
-		// Make sure REST routes are reachable on first request.
-		flush_rewrite_rules();
+		// `flush_rewrite_rules()` was removed in 1.0.26 — REST routes
+		// don't use rewrite rules, so the call was dead weight that
+		// rebuilt the entire permalink cache on every (de)activation.
 
 		/**
 		 * Fires after the plugin has finished activating.

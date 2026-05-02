@@ -2,6 +2,72 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.26] — 2026-05-02
+
+User reported the plugin still wasn't saving anything reliably even after the 1.0.25 audit, plus an activation failure on a fresh site. This release rebuilds the save path from scratch and hardens activation.
+
+### Removed — Autosave (deliberate)
+
+The autosave engine that lived in `services/persistence.ts` from 1.0.20 onwards is gone. Across 1.0.20 → 1.0.25 the design produced a sequence of false-positive "Saved · HH:MM" toasts in subtle edge cases (debounce racing navigation, empty-blocks guard draining `dirty` then calling `markSaved`, in-flight save promise chain leaving a timer stranded, etc.). Each release fixed the latest reported symptom and surfaced a new one. The user's feedback was direct: "deshabilita eso de guardado por ajax y construye uno que sí sirva".
+
+The new model has no timers, no `inFlight`/`dirty` race surface, and no autosave loop. Saves run only when the user explicitly asks:
+
+- The Save button in the topbar.
+- The Cmd/Ctrl + S keyboard shortcut.
+- The back-arrow click handler (awaits saveNow before navigating).
+- A `beforeunload` listener that pops the browser's "Leave / Stay" dialog when the document is dirty so accidental tab-close can't drop work.
+
+If the Save button doesn't toast "Saved", nothing landed. The dirty flag stays on. The only state the engine tracks is `inFlight: Promise<number> | null` so concurrent `saveNow()` calls (rapid Cmd-S double-tap, button click during the back-arrow's own save) chain off the same network request rather than launching duplicates.
+
+### Added — Read-after-write hash verification (CRITICAL hardening)
+
+The repository now refuses to silently accept a write. Three layers:
+
+1. **`SignatureRepository::insert` and `::update`** treat `false` from `$wpdb->insert` / `$wpdb->update` as a hard error (was silently producing a Signature model with `id = 0` that the caller round-tripped to the user as "Saved"). Every write throws `\RuntimeException` with `$wpdb->last_error` on failure.
+2. **The repository re-fetches the row from the DB** after insert and after update (was returning a model built from the in-memory `$row` array, which would look fine even if MySQL truncated a column / charset-converted a string / a missing column from a botched migration silently dropped data).
+3. **`SignatureService::create` and `::update` hash-verify** the `json_content` round-trip. The JSON we asked the DB to store is canonicalised (decode → re-encode), the DB-returned JSON is canonicalised the same way, and the SHA-256 hashes are compared. Mismatch throws `\RuntimeException` with both 12-char hash prefixes + lengths so the user gets `imgsig_persistence_failed` with actionable detail instead of a generic "Saved" lie.
+
+The REST controller catches `\Throwable` (was only catching `ImaginaSignaturesException`) and converts to a `WP_Error` with code `imgsig_persistence_failed` and HTTP 500. The frontend persistence engine surfaces the message directly in the failure toast.
+
+### Frontend — Manual-save engine + response shape verification
+
+`assets/editor/src/services/persistence.ts` rewritten from ~270 lines to ~190 lines. The single entry point is `saveNow()`:
+
+1. Reads the latest schema + name + status from the stores.
+2. Refuses to POST a brand-new row whose canvas has zero blocks (toast: "add at least one block before saving").
+3. POSTs (new) or PATCHes (existing).
+4. Compares `JSON.stringify(sentSchema)` against `JSON.stringify(response.json_content)`. If they differ, surface an info-level toast — the server-side hash-verify already passed, so it's a non-fatal "filter / sanitiser changed your input" advisory.
+5. Stamps the new id in memory + URL via `replaceState` BEFORE toasting success so a refresh during the toast lands on the right row.
+6. Calls `markSaved()` on success or `setError(message)` on failure. The Save button reads these directly.
+
+`useAutosave` is now `useDirtyTracker`: same name (callers don't change), but the body just initialises the engine, listens to `hasUserEdited` to flip `isDirty`, and installs the `beforeunload` warning. NO network call.
+
+The Topbar Name + Status inputs now call `markDirty()` instead of the deleted `persistence.scheduleSave()`. The Save button is the only path to commit.
+
+### Hardened — Activation no longer fails silently
+
+The activator wraps `Installer::install()` in a try/catch around `\Throwable`. Any failure (DB migration error, missing template file, wpdb returning false on a CREATE TABLE) now logs the full stack trace via `error_log` and `wp_die`s with the exception message — the user sees actionable text instead of "There has been a critical error on this website" with no detail. The plugin is also auto-deactivated on failure so a half-activated state doesn't linger.
+
+`flush_rewrite_rules()` removed from both `Activator` and `Deactivator` — REST routes don't use rewrite rules, so the call rebuilt the entire permalink cache on every (de)activation for nothing.
+
+### Tests added / updated
+
+`tests/js/services/persistence.test.ts` rewritten for the new manual-save model. Five regression tests pin the contract:
+
+1. Empty signature with no blocks does NOT POST (no phantom rows).
+2. New signature with at least one block POSTs and stamps `lastSavedAt`.
+3. Existing signature PATCHes and clears `isDirty` on success.
+4. Server 500 surfaces in `lastError` + does NOT mark saved.
+5. Concurrent `saveNow()` calls coalesce onto the same in-flight request.
+
+All 32 vitest cases pass; tsc strict-clean.
+
+### Internal
+
+- Editor bundle: 683 KB → 682 KB (gzip 213.47 → 213.50 KB). Slightly smaller because the autosave + self-coalescing-loop code is gone.
+- `markDrainedNoOp` action removed from `persistenceStore` — it existed only to handle the "loop ran without writing" autosave edge case that no longer exists.
+- Plugin version bumped to 1.0.26. After upgrading, hard-refresh the editor.
+
 ## [1.0.25] — 2026-05-02
 
 A full audit pass identified and fixed sixteen latent bugs across the editor, the REST backend, the admin app, the build pipeline, and the uninstaller. Three categories:

@@ -87,6 +87,16 @@ class SignatureService {
 
 		$signature = $this->repo->insert( $prepared );
 
+		// Read-after-write verify: hash the JSON we asked the DB to
+		// store, hash the JSON the DB gave back, compare. PHP's
+		// `json_encode → json_decode → json_encode` is idempotent for
+		// well-formed data, so any mismatch points to silent
+		// corruption (charset issue, column truncation, broken filter,
+		// failed migration). Throwing here gives the user a definite
+		// "save failed" instead of the autosave-era "Saved · HH:MM"
+		// false positive.
+		$this->assert_persisted_json( $signature, $prepared, 'create' );
+
 		do_action( 'imgsig/signature/created', $signature );
 
 		return $signature;
@@ -124,9 +134,97 @@ class SignatureService {
 		// `update()` always returns a row when the original existed.
 		$updated = $updated ?? $existing;
 
+		// Read-after-write verify (only when the json_content was part
+		// of the change set — name-only / status-only updates don't
+		// touch the schema blob).
+		if ( array_key_exists( 'json_content', $prepared ) ) {
+			$this->assert_persisted_json( $updated, $prepared, 'update' );
+		}
+
 		do_action( 'imgsig/signature/updated', $updated );
 
 		return $updated;
+	}
+
+	/**
+	 * Verifies that the JSON we asked the DB to store round-tripped
+	 * intact. The repository now re-fetches the row after every write,
+	 * so `$persisted->json_content` is the canonical "what's actually
+	 * on disk" string. We compare its SHA-256 against the SHA-256 of
+	 * the JSON we just sent to the DB.
+	 *
+	 * Throws on mismatch instead of silently letting the user think
+	 * their save landed — that's the false positive the autosave was
+	 * producing in 1.0.22 / 1.0.23 (the topbar showed "Saved · HH:MM"
+	 * while the listing stayed empty).
+	 *
+	 * @since 1.0.26
+	 *
+	 * @param Signature                 $persisted Row freshly read from disk.
+	 * @param array<string, mixed>      $prepared  Field map handed to repo.
+	 * @param string                    $context   `create` or `update`.
+	 *
+	 * @throws \RuntimeException When the hashes don't match.
+	 *
+	 * @return void
+	 */
+	private function assert_persisted_json( Signature $persisted, array $prepared, string $context ): void {
+		if ( ! array_key_exists( 'json_content', $prepared ) ) {
+			return;
+		}
+
+		$expected = (string) $prepared['json_content'];
+		$actual   = (string) $persisted->json_content;
+
+		if ( '' === $actual ) {
+			throw new \RuntimeException(
+				sprintf( 'Signature %d %s: stored json_content is empty after write.', $persisted->id, $context )
+			);
+		}
+
+		// Normalise both sides through decode→encode so insertion-order
+		// equivalent JSON compares equal even if the DB driver
+		// reformatted whitespace (it shouldn't for LONGTEXT, but defence
+		// in depth — we want the verify to fail on real mismatches, not
+		// formatting artefacts).
+		$expected_canonical = self::canonicalise( $expected );
+		$actual_canonical   = self::canonicalise( $actual );
+
+		if ( $expected_canonical !== $actual_canonical ) {
+			$expected_hash = substr( hash( 'sha256', $expected_canonical ), 0, 12 );
+			$actual_hash   = substr( hash( 'sha256', $actual_canonical ), 0, 12 );
+			throw new \RuntimeException(
+				sprintf(
+					'Signature %d %s: persisted json_content does not match the input. expected=%s actual=%s expected_len=%d actual_len=%d',
+					$persisted->id,
+					$context,
+					$expected_hash,
+					$actual_hash,
+					strlen( $expected_canonical ),
+					strlen( $actual_canonical )
+				)
+			);
+		}
+	}
+
+	/**
+	 * Decodes a JSON string and re-encodes it so insertion-order
+	 * equivalent inputs produce identical bytes. Used to compare a
+	 * payload we just wrote to the DB against what the DB returned.
+	 *
+	 * @since 1.0.26
+	 *
+	 * @param string $json Raw JSON string.
+	 *
+	 * @return string
+	 */
+	private static function canonicalise( string $json ): string {
+		$decoded = json_decode( $json, true );
+		if ( ! is_array( $decoded ) ) {
+			return $json;
+		}
+		$encoded = wp_json_encode( $decoded );
+		return is_string( $encoded ) ? $encoded : $json;
 	}
 
 	/**

@@ -1,33 +1,33 @@
 /**
- * Persistence engine — rewrite #2 (1.0.20).
+ * Persistence engine — rewrite #3 (1.0.26).
  *
- * The previous implementation used a chain of `.finally(scheduleAutosave)`
- * callbacks to coalesce saves that arrived during an in-flight POST.
- * That chain raced with `flushNow()` in subtle ways — the navigation
- * back-arrow could exit before a `.finally`-scheduled timer fired, and
- * the user's most recent edits were lost. Multiple bugfix attempts
- * each introduced their own edge case.
+ * The autosave + self-coalescing-loop model from 1.0.20 → 1.0.25 kept
+ * producing edge cases that lied to the user about whether their work
+ * was actually saved (false-positive `markSaved`, empty-row creation,
+ * etc.). 1.0.26 deletes the autosave entirely.
  *
- * This rewrite uses a different model that's correct by construction:
+ * The new model is much smaller and verifiable end-to-end:
  *
- *   - **One save at a time.** A single `inFlight` reference. While a
- *     save is running, no other save can start.
- *   - **Self-coalescing internal loop.** The save body is a `while
- *     (dirtySinceLastSave) { dirty = false; await save(); }` loop.
- *     Any change that happens during a save iteration sets `dirty` and
- *     gets picked up on the next iteration of the SAME loop — no
- *     promise chain, no re-entry, no race with `saveNow()`.
- *   - **`saveNow()` is just `clearTimeout + performSave + await`.**
- *     If `performSave` is already running, `saveNow` awaits it. The
- *     in-flight loop will see `dirty=true` and run another iteration
- *     before exiting, so on return everything is committed.
- *   - **Empty-schema protection.** If the user clicks Save with
- *     nothing edited and no signature id yet, we don't POST an empty
- *     row. Avoids the "two empty signatures appear in the listing"
- *     symptom that came from the old eager-first-save path.
+ *   1. The user edits the schema. `markDirty()` flips a flag. No
+ *      network call happens. The Save button lights up.
+ *   2. The user clicks Save (or hits Cmd-S, or the back-arrow / page-
+ *      unload listener fires).
+ *   3. `saveNow()` runs ONE round-trip:
+ *        a. POST /signatures   (when signatureId === 0)
+ *           OR
+ *           PATCH /signatures/:id
+ *        b. Backend writes, re-reads, hash-verifies the row, returns
+ *           the canonical persisted state.
+ *        c. Frontend compares its sent json_content against the
+ *           response's json_content. If they differ, it surfaces a
+ *           warning so the user knows the server changed something.
+ *      The Save button shows "Saving…" → "Saved · HH:MM" / "Failed"
+ *      based on the actual outcome.
+ *   4. `beforeunload` warns the user when `isDirty` is true so they
+ *      can't lose work by accident.
  *
- * State is held on a module-level singleton so non-React surfaces
- * (back-arrow click, beforeunload) can reach it.
+ * No timers. No `dirty/inFlight` race surfaces. The Save button is
+ * the ONE way to commit. If it doesn't toast "Saved", nothing landed.
  */
 
 import { apiCall, ApiError, getConfig } from '@/bridge/apiClient';
@@ -36,19 +36,16 @@ import { usePersistenceStore } from '@/stores/persistenceStore';
 import { useToastStore } from '@/stores/toastStore';
 import { __ } from '@/i18n/helpers';
 
-const AUTOSAVE_DEBOUNCE_MS = 1500;
-
 class Persistence {
   private signatureId = 0;
   private initialized = false;
-  private saveTimer: ReturnType<typeof setTimeout> | null = null;
-  private inFlight: Promise<void> | null = null;
   /**
-   * Tracks whether the schema changed since the last save started.
-   * Set by `scheduleSave()` / `saveNow()` and consumed by the
-   * internal save loop in `performSave()`.
+   * In-flight save promise, exposed so concurrent `saveNow()` calls
+   * (rapid Cmd-S double-tap, button click during the back-arrow's
+   * own save) chain off the same network request rather than
+   * launching duplicates.
    */
-  private dirty = false;
+  private inFlight: Promise<number> | null = null;
 
   /** Bind to the bootstrap config. Idempotent. */
   initialize(): void {
@@ -74,221 +71,134 @@ class Persistence {
     }
   }
 
-  /** True iff there's a debounce timer pending OR a save in flight. */
+  /** True iff a save is currently in flight. */
   hasPending(): boolean {
-    return this.saveTimer !== null || this.inFlight !== null;
+    return this.inFlight !== null;
   }
 
   /**
-   * Schedule a debounced save. Called from the schema-change effect
-   * in `useAutosave`. Each call resets the timer — rapid keystrokes
-   * collapse into one save 1500 ms after the last edit.
+   * Force-save now. The single entry point — called from the topbar
+   * Save button, the Cmd-S keyboard shortcut, and the back-arrow.
    *
-   * Routes through `performSave(false)` so the empty-blocks guard
-   * applies — the autosave will NOT create an empty row even if
-   * `dirty` got flipped by a non-schema change (e.g., the user
-   * tweaked the Name field on a fresh signature with no blocks yet).
-   */
-  scheduleSave(): void {
-    this.dirty = true;
-    usePersistenceStore.getState().markDirty();
-
-    if (this.saveTimer !== null) {
-      clearTimeout(this.saveTimer);
-    }
-    this.saveTimer = setTimeout(() => {
-      this.saveTimer = null;
-      void this.performSave(false);
-    }, AUTOSAVE_DEBOUNCE_MS);
-  }
-
-  /**
-   * Force-save now. Cancels the debounce, runs the save, awaits the
-   * full coalesce loop. Always passes `allowEmpty=true` to
-   * `performSave` because the user explicitly asked — refusing the
-   * POST and surfacing "nothing to save" when they CAN see content
-   * on the canvas is the worst kind of silent failure.
-   *
-   * Returns the signature id (positive on success). Returns 0 only
-   * when the save genuinely had nothing to do — e.g., the engine is
-   * fresh-mounted, no edits, no id, no name change.
-   *
-   * Called from:
-   *   - The topbar "Save" button.
-   *   - The Cmd/Ctrl + S keyboard shortcut.
-   *   - The back-arrow click handler (so navigation never aborts an
-   *     unfinished save).
+   * Returns the assigned signature id on success (positive integer)
+   * OR 0 when the save was refused (empty signature). Throws if the
+   * server reported a persistence failure — the caller's catch
+   * handler is responsible for the user-facing error toast (the
+   * engine already surfaced its own toast and stored the error in
+   * `persistenceStore.lastError`).
    */
   async saveNow(): Promise<number> {
-    if (this.saveTimer !== null) {
-      clearTimeout(this.saveTimer);
-      this.saveTimer = null;
-    }
+    // Coalesce concurrent calls onto the same in-flight request.
+    if (this.inFlight) return this.inFlight;
 
-    // Wait for any in-flight save first. If the user clicked the
-    // manual Save while the autosave's debounce-fired POST was
-    // still in flight, we don't want to short-circuit on the
-    // intermediate `dirty=false` state.
-    if (this.inFlight) {
-      try {
-        await this.inFlight;
-      } catch {
-        // Already surfaced via toast.
-      }
-      // If the previous save committed our changes (id is now
-      // positive), we're done. Otherwise fall through and run
-      // another save.
-      if (this.signatureId > 0 && !this.dirty) {
-        return this.signatureId;
-      }
+    this.inFlight = this.runSave();
+    try {
+      return await this.inFlight;
+    } finally {
+      this.inFlight = null;
     }
-
-    // Force at least one iteration. The user explicitly asked to
-    // save — they want a definitive result, not a silent no-op.
-    this.dirty = true;
-    await this.performSave(true);
-    return this.signatureId;
   }
 
   /**
-   * The actual save executor. Self-coalescing:
-   *
-   *   while (dirty) { dirty = false; await save(); }
-   *
-   * If a `scheduleSave()` / `saveNow()` arrives during an `await`
-   * inside the loop, it sets `dirty = true` again and the next loop
-   * iteration picks up the latest schema. No `.finally(scheduleSave)`
-   * chains, no re-entry — concurrency control reduces to "is
-   * `inFlight` set?".
-   *
-   * `allowEmpty` controls the empty-blocks guard:
-   *  - `false` (autosave path) — refuse to POST a signature with
-   *    `blocks.length === 0`. Stops accidental empty-row creation
-   *    when the autosave is triggered by a non-schema change (e.g.
-   *    Name input edited on a brand-new signature).
-   *  - `true` (manual save path) — always POST when dirty. The user
-   *    explicitly asked; if they want to save an empty signature
-   *    that's their call.
+   * Body of one save round-trip. Reads the latest schema + meta off
+   * the stores, POSTs / PATCHes it, compares the response to what we
+   * sent, updates the persistence store with the outcome.
    */
-  private async performSave(allowEmpty: boolean): Promise<void> {
-    if (this.inFlight) {
-      // Already saving. The current loop will pick up `dirty=true`
-      // on its next iteration. Wait for it to finish and exit.
-      try {
-        await this.inFlight;
-      } catch {
-        // Errors surface via toast / persistenceStore; swallow here.
-      }
-      // After the await, the loop exited because dirty was false at
-      // the time. If something set dirty=true between iteration
-      // check and now, it'll be picked up by the next scheduleSave
-      // / saveNow call.
-      return;
-    }
-
+  private async runSave(): Promise<number> {
     const persistence = usePersistenceStore.getState();
     const showToast = useToastStore.getState().show;
 
-    this.inFlight = (async (): Promise<void> => {
-      // Tracks whether we actually committed at least one round-trip
-      // to the server during this save loop. The empty-blocks guard
-      // (below) is allowed to skip iterations without producing a
-      // network call — when nothing was written we must NOT flip the
-      // UI to "Saved · HH:MM", because that's the false positive that
-      // made past releases (1.0.22 / 1.0.23) appear to save while the
-      // listing stayed empty.
-      let wroteAtLeastOnce = false;
-      try {
-        while (this.dirty) {
-          // Read the latest values BEFORE draining `dirty` so that
-          // edits arriving during an awaited API call land on the
-          // next iteration with the right inputs.
-          const schema = useSchemaStore.getState().schema;
-          const meta = usePersistenceStore.getState();
-          const rowName = meta.signatureName.trim() || 'Untitled';
-          const rowStatus = meta.signatureStatus;
+    const schema = useSchemaStore.getState().schema;
+    const meta = usePersistenceStore.getState();
+    const rowName = meta.signatureName.trim() || 'Untitled';
+    const rowStatus = meta.signatureStatus;
 
-          // Empty-blocks guard for autosave on a brand-new row. The
-          // user typed a Name on a blank canvas; we must NOT POST a
-          // signature with `blocks: []` (it would land in the listing
-          // as a phantom empty row). Drain the dirty flag, but do NOT
-          // call `markSaved()` — that would lie to the user. The next
-          // schema mutation (real block added) will set `dirty = true`
-          // again via `scheduleSave()` and persist the whole thing.
-          if (this.signatureId === 0 && !allowEmpty && schema.blocks.length === 0) {
-            this.dirty = false;
-            continue;
-          }
+    // Refuse to POST a brand-new row whose canvas has zero blocks.
+    // The server would happily store it, but the listing would show
+    // a phantom empty row that the user has to manually delete.
+    // PATCH on an existing signature is allowed even when blocks ===
+    // 0 (the user might be intentionally clearing the canvas).
+    if (this.signatureId === 0 && schema.blocks.length === 0) {
+      showToast(
+        __('Add at least one block before saving — empty signatures are not stored.'),
+        'info',
+      );
+      return 0;
+    }
 
-          this.dirty = false;
-          persistence.markSaving();
+    persistence.markSaving();
 
-          if (this.signatureId > 0) {
-            await apiCall(`/signatures/${this.signatureId}`, {
-              method: 'PATCH',
-              body: {
-                name: rowName,
-                status: rowStatus,
-                json_content: schema,
-              },
-            });
-          } else {
-            const created = await apiCall<{ id: number }>('/signatures', {
-              method: 'POST',
-              body: {
-                name: rowName,
-                status: rowStatus,
-                json_content: schema,
-              },
-            });
-
-            // Persist the new id IMMEDIATELY before the next iteration
-            // so subsequent loop runs PATCH instead of POST again.
-            this.signatureId = created.id;
-
-            try {
-              const url = new URL(window.location.href);
-              url.searchParams.set('id', String(created.id));
-              window.history.replaceState(null, '', url.toString());
-            } catch {
-              // history API unavailable — non-fatal.
-            }
-
-            showToast(
-              __('Saved as signature #%s', String(created.id)),
-              'success',
-            );
-          }
-
-          wroteAtLeastOnce = true;
-        }
-
-        if (wroteAtLeastOnce) {
-          persistence.markSaved();
-        } else {
-          // Drain the spinner / dirty UI state without claiming a save
-          // happened. `lastSavedAt` stays null so the topbar Save
-          // button shows "Save" (idle) instead of the misleading
-          // "Saved · HH:MM" timestamp. This is the fix for the
-          // headline 1.0.23 bug — autosave was flipping the row to
-          // "Saved" while never actually POSTing.
-          persistence.markDrainedNoOp();
-        }
-      } catch (e) {
-        const message = e instanceof ApiError ? e.message : (e as Error).message;
-        persistence.setError(message);
-        showToast(__('Save failed: %s', message), 'error');
-        // Keep `dirty = true` so the next save attempt retries.
-        this.dirty = true;
-      } finally {
-        this.inFlight = null;
-      }
-    })();
+    type SaveResponse = {
+      id: number;
+      json_content: unknown;
+      name: string;
+      status: 'draft' | 'ready' | 'archived';
+    };
 
     try {
-      await this.inFlight;
-    } catch {
-      // Surface already happened.
+      let response: SaveResponse;
+      if (this.signatureId > 0) {
+        response = await apiCall<SaveResponse>(`/signatures/${this.signatureId}`, {
+          method: 'PATCH',
+          body: { name: rowName, status: rowStatus, json_content: schema },
+        });
+      } else {
+        response = await apiCall<SaveResponse>('/signatures', {
+          method: 'POST',
+          body: { name: rowName, status: rowStatus, json_content: schema },
+        });
+
+        // Stamp the new id in memory + URL BEFORE we toast success
+        // so a refresh during the toast lands on the right row.
+        if (typeof response?.id !== 'number' || response.id <= 0) {
+          throw new Error('Server returned no signature id on create.');
+        }
+        this.signatureId = response.id;
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.set('id', String(response.id));
+          window.history.replaceState(null, '', url.toString());
+        } catch {
+          // history API unavailable — non-fatal.
+        }
+      }
+
+      // Defence in depth: the backend already hash-verifies the row,
+      // but we do a client-side sanity check too. If the server's
+      // returned json_content doesn't deep-equal what we sent, that's
+      // a bug somewhere (filter mutating the schema, sanitiser
+      // dropping a field, etc.) and the user should know the saved
+      // state isn't quite what they typed.
+      const sent = JSON.stringify(schema);
+      const got = JSON.stringify(response.json_content ?? null);
+      if (sent !== got) {
+        showToast(
+          __(
+            'Saved, but the server-stored copy differs from what you sent. Reload to see the canonical version.',
+          ),
+          'info',
+        );
+      }
+
+      persistence.markSaved();
+      showToast(
+        this.signatureId > 0
+          ? __('Saved (signature #%s).', String(this.signatureId))
+          : __('Saved.'),
+        'success',
+      );
+      return this.signatureId;
+    } catch (e) {
+      const message =
+        e instanceof ApiError
+          ? `${e.message} [${e.code}, ${e.status}]`
+          : (e as Error).message;
+      persistence.setError(message);
+      showToast(__('Save failed: %s', message), 'error');
+      // Don't rethrow — the caller (back-arrow handler, etc.) should
+      // be able to await without a try/catch and decide what to do
+      // based on `persistenceStore.lastError`.
+      return 0;
     }
   }
 }

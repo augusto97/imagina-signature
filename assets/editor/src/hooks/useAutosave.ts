@@ -4,32 +4,34 @@ import { usePersistenceStore } from '@/stores/persistenceStore';
 import { persistence } from '@/services/persistence';
 
 /**
- * Wires schemaStore changes → persistence engine. The engine
- * handles debouncing + the self-coalescing save loop; this hook
- * is just the React-side glue.
+ * Dirty-tracker hook (1.0.26).
  *
- * Three effects:
- *   1. Bind the engine to the bootstrap config once.
- *   2. On every schema change, schedule a save IF the user has
- *      actually edited (`hasUserEdited` flag in schemaStore).
- *      Without that gate, opening the editor without doing
- *      anything could trigger a POST that creates an empty
- *      signature row in the listing — that's how the user reported
- *      "deleted everything, created one signature, ended up with
- *      two empty rows" in 1.0.21.
- *   3. Install a `beforeunload` warning while anything is pending so
- *      the user gets the browser's "leave / stay" dialog instead of
- *      silently losing work.
+ * Replaces the old autosave hook. The autosave was deleted in 1.0.26
+ * because it kept producing false-positive "Saved · HH:MM" toasts in
+ * subtle edge cases that lied to the user about whether their work
+ * was actually persisted (1.0.20 → 1.0.25 chased these one at a time
+ * and never quite got there).
  *
- * Gates on `persistenceStore.isLoaded` AND `schemaStore.hasUserEdited`.
- * The latter is the more important guard — it directly tracks whether
- * the user did anything, regardless of which lifecycle event triggered
- * the schema reference change.
+ * What this hook does instead:
+ *   1. Initialise the persistence engine with the bootstrap config.
+ *   2. Watch for schema mutations (via `hasUserEdited`). When the
+ *      user touches anything, flip the persistence store's `isDirty`
+ *      flag so the topbar Save button lights up. NO network call.
+ *   3. Install a `beforeunload` warning that fires whenever the user
+ *      tries to leave with unsaved work — so the browser shows its
+ *      "Leave / Stay" dialog and they don't lose anything by closing
+ *      the tab. The back-arrow click handler awaits `saveNow()`
+ *      explicitly; this listener is the safety net for everything
+ *      else (address-bar nav, browser back, tab close).
+ *
+ * The user is now the source of truth for "should this save now?"
+ * via the explicit Save button + Cmd-S shortcut. If they don't press
+ * either, nothing is saved. The button label tells them honestly.
  */
 export function useAutosave(): void {
-  const schema = useSchemaStore((s) => s.schema);
   const hasUserEdited = useSchemaStore((s) => s.hasUserEdited);
   const isLoaded = usePersistenceStore((s) => s.isLoaded);
+  const markDirty = usePersistenceStore((s) => s.markDirty);
 
   useEffect(() => {
     persistence.initialize();
@@ -37,13 +39,12 @@ export function useAutosave(): void {
 
   useEffect(() => {
     if (!isLoaded) return;
-    // The user-edit gate is the safety net against empty-row POSTs.
-    // Loading a signature, applying a template, or any other
-    // non-user setSchema clears `hasUserEdited`, so this effect's
-    // dependency change doesn't translate into a save.
     if (!hasUserEdited) return;
-    persistence.scheduleSave();
-  }, [schema, isLoaded, hasUserEdited]);
+    // Flip `isDirty` so the topbar Save button switches to its
+    // "unsaved changes" tone. No network call here — the user
+    // commits via the explicit Save button or Cmd-S.
+    markDirty();
+  }, [hasUserEdited, isLoaded, markDirty]);
 
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
