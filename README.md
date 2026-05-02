@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.22 | [imagina-signatures-1.0.22.zip](imagina-signatures-1.0.22.zip) |
 | 1.0.21 | [imagina-signatures-1.0.21.zip](imagina-signatures-1.0.21.zip) |
 | 1.0.20 | [imagina-signatures-1.0.20.zip](imagina-signatures-1.0.20.zip) |
 | 1.0.19 | [imagina-signatures-1.0.19.zip](imagina-signatures-1.0.19.zip) |
@@ -34,6 +35,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.22.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.21.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.20.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.19.zip
@@ -93,6 +95,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.22
+**Empty-row guard + Name/Status in topbar.** User reported (with cache-bust from 1.0.21 already in place): "deleted everything, created one signature, ended up with two empty rows". Two complementary guards: (1) new `hasUserEdited` flag on schemaStore, flipped true by every mutation action via the new `markEdited(state)` helper; cleared by `setSchema` because loading isn't editing. `useAutosave` gates `scheduleSave()` on it, so any indirect schema reference change can't translate into a POST. (2) Engine-side guard: when `signatureId === 0` AND `schema.blocks.length === 0`, the save loop `continue`s past the POST, draining `dirty` without creating a row. Plus the Name + Status the user explicitly asked for — inline-editable Name input replaces the static "Imagina Signatures" label, and a colour-coded Status pill dropdown (Draft amber / Ready emerald / Archived grey). Both write through `persistenceStore` and trigger an autosave; loaded signatures populate both fields from the server response.
 
 ### 1.0.21
 **Real cache busting.** User reported "fixes don't seem to land after upgrading" — root cause was Vite outputting `editor.js`/`admin.js` without content hashes. Browsers, CDNs, page-cache plugins ignored `?ver=` and kept serving stale bundles. Vite now emits hashed filenames (`editor.[hash].js`, etc.) and a `manifest.json`; PHP's enqueuers read the manifest at request time. Every release ships brand-new URLs — no cache layer can possibly serve stale code. Plus a runtime check: Vite reads `IMGSIG_VERSION` from the PHP main file and bakes it into the bundle as `__BUNDLE_VERSION__`; PHP injects the runtime version as `pluginVersion`. Topbar pill compares both — match shows quiet grey, mismatch shows red clickable "stale bundle" pill that hard-refreshes with a unique query string. The next time the upgrade appears not to land, the editor tells the user directly.
