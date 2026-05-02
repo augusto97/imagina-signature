@@ -46,6 +46,14 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
 
   const blockChunks: string[] = [];
   for (const block of schema.blocks) {
+    // Hidden blocks (Layers panel "eye" toggle flips `block.visible`
+    // to false) must NOT ship in the exported HTML. Until 1.0.24 the
+    // visible flag was honored on the canvas only — the user thought
+    // they had hidden a banner / disclaimer, hit Export, and the
+    // recipient still saw it. Compile-time skip closes that gap.
+    if (block.visible === false) {
+      continue;
+    }
     const definition = rendererForBlock(block);
     if (!definition) {
       ctx.warnings.push(`Unknown block type "${block.type}" was skipped.`);
@@ -141,7 +149,15 @@ function appendBannerCampaign(html: string, canvasWidth: number): string {
   }
   if (!campaigns || campaigns.length === 0) return html;
 
-  const pick = campaigns[Math.floor(Math.random() * campaigns.length)];
+  // Stable pick instead of `Math.random()`: each compile of the same
+  // session deterministically chooses the same banner. The previous
+  // version re-rolled on every keystroke (compileSignature is invoked
+  // from a useMemo keyed on schema), so the user could see one banner
+  // in the Preview modal and a DIFFERENT banner the second time they
+  // hit "Copy HTML". The session-stable pick still rotates between
+  // editor sessions / page reloads — that's the rotation the spec
+  // promises.
+  const pick = campaigns[stablePickIndex(campaigns.length)];
   if (!pick || !pick.image_url) return html;
 
   const marker = '</td></tr>\n</table>';
@@ -149,10 +165,48 @@ function appendBannerCampaign(html: string, canvasWidth: number): string {
   if (idx === -1) return html;
 
   const width = Math.max(100, Math.min(canvasWidth, pick.width || canvasWidth));
-  const safeAlt = String(pick.alt || pick.name || '').replace(/"/g, '&quot;');
-  const img = `<img src="${pick.image_url}" alt="${safeAlt}" width="${width}" style="display:block;max-width:100%;height:auto;border:0;margin:0 auto" />`;
-  const inner = pick.link_url ? `<a href="${pick.link_url}">${img}</a>` : img;
+  // Escape EVERY interpolated attribute. Banner image_url / link_url
+  // / alt come from admin input that's only loosely sanitised on the
+  // server. A `"` in any field would break out of the attribute and
+  // ship arbitrary HTML in the recipient's inbox. Use a strict
+  // attribute-context escaper.
+  const img = `<img src="${escapeAttr(pick.image_url)}" alt="${escapeAttr(pick.alt || pick.name || '')}" width="${width}" style="display:block;max-width:100%;height:auto;border:0;margin:0 auto" />`;
+  const inner = pick.link_url
+    ? `<a href="${escapeAttr(pick.link_url)}">${img}</a>`
+    : img;
 
-  const campaignRow = `</td></tr><tr><td style="padding-top:14px;text-align:center" data-imgsig-campaign="${pick.id}">${inner}</td></tr>\n</table>`;
+  const campaignRow = `</td></tr><tr><td style="padding-top:14px;text-align:center" data-imgsig-campaign="${escapeAttr(String(pick.id))}">${inner}</td></tr>\n</table>`;
   return html.slice(0, idx) + campaignRow + html.slice(idx + marker.length);
+}
+
+/**
+ * Session-stable picker: one random index per page-load, then reused
+ * for every subsequent compile in the same tab. Means "Preview" and
+ * "Copy HTML" agree on which banner ships, while a fresh tab still
+ * gets a different rotation. Stored on a module-level slot rather
+ * than session storage — module re-runs only on page load.
+ */
+let bannerPickIndex: number | null = null;
+function stablePickIndex(length: number): number {
+  if (bannerPickIndex === null || bannerPickIndex >= length) {
+    bannerPickIndex = Math.floor(Math.random() * length);
+  }
+  return bannerPickIndex;
+}
+
+/**
+ * Strict HTML attribute-context escaper. Handles the four characters
+ * that can break out of a double-quoted attribute (`&`, `<`, `>`,
+ * `"`). Used by every block compile function that interpolates
+ * user-controlled strings (URLs, alt text, names, hrefs).
+ *
+ * Exported for re-use across block compilers — see image, banner,
+ * social-icons, contact-row, button-cta, vcard, avatar definitions.
+ */
+export function escapeAttr(value: string): string {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

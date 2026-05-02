@@ -20,8 +20,9 @@ export function useKeyboardShortcuts(): void {
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
-      if (target?.isContentEditable) return;
+      const inField =
+        (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) ||
+        target?.isContentEditable === true;
 
       const meta = event.metaKey || event.ctrlKey;
       const selection = useSelectionStore.getState();
@@ -29,22 +30,31 @@ export function useKeyboardShortcuts(): void {
       const history = useHistoryStore.getState();
 
       // Manual save (Cmd/Ctrl + S) — bypasses the autosave debounce
-      // and awaits the full save round-trip.
+      // and awaits the full save round-trip. Handled BEFORE the
+      // input-focus bail so the user can hit Cmd-S while typing in
+      // the Name input or any property field; otherwise the browser's
+      // own "Save Page As" dialog wins.
       if (meta && (event.key === 's' || event.key === 'S')) {
         event.preventDefault();
         void persistence.saveNow();
         return;
       }
 
-      // Undo / Redo.
+      // Below this line: shortcuts that would conflict with normal
+      // typing in a focused input. Bail.
+      if (inField) return;
+
+      // Undo / Redo. MUST go through `replaceSchemaForHistory` (not
+      // `setSchema`), otherwise setSchema clears the history stack
+      // and undo collapses to single-step.
       if (meta && (event.key === 'z' || event.key === 'Z')) {
         event.preventDefault();
         if (event.shiftKey) {
           const next = history.redo(schema.schema);
-          if (next) schema.setSchema(next);
+          if (next) schema.replaceSchemaForHistory(next);
         } else {
           const previous = history.undo(schema.schema);
-          if (previous) schema.setSchema(previous);
+          if (previous) schema.replaceSchemaForHistory(previous);
         }
         return;
       }

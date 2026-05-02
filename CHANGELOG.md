@@ -2,6 +2,69 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.25] — 2026-05-02
+
+A full audit pass identified and fixed sixteen latent bugs across the editor, the REST backend, the admin app, the build pipeline, and the uninstaller. Three categories:
+
+### Security & data integrity
+
+1. **XSS via Tiptap content (CRITICAL).** `TextBlock.tsx` renderer and `compileText.ts` were both interpolating `block.content` into HTML without sanitisation. The `sanitizeEmailHtml()` helper existed in `core/compiler/sanitize.ts` but was never called. A corrupted JSON row, a tampered template, or a Tiptap regression that let through `<script>` / `onerror` / `javascript:` would have shipped in every export and executed inside the editor (which holds the WP REST nonce). Both call sites now sanitise; `TextBlock` memoises by `block.content`. Defence in depth — Tiptap is one trust layer, the canvas + compiler are now two more.
+
+2. **Attribute-context injection in every block compiler (HIGH).** Image / Banner / Avatar / Button / Social Icons / Contact Row / vCard / banner campaigns all interpolated user-controlled URLs / alt text / labels / colours into HTML attributes without escaping `&`, `<`, `>`, or `"`. Local helpers escaped only `"`. A user with `imgsig_use_signatures` could enter `" onerror="alert(1)" foo="` as alt text and break out of the attribute. Centralised `escapeAttr()` exported from `core/compiler/compile.ts`; every block compiler now uses it for every interpolated attribute.
+
+3. **`SignatureService::create` filter ordering let `data_before_save` hijack ownership (CRITICAL).** `$prepared['user_id'] = $user_id` ran BEFORE `apply_filters('imgsig/signature/data_before_save', …)`, so a third-party plugin (or a future internal bug) could overwrite `user_id` and silently re-assign ownership of a fresh row to another user. Now sets `user_id` AFTER the filter, with an `unset()` to strip any listener-injected value first.
+
+4. **`RateLimitStore::increment` was non-atomic (CRITICAL on hosts with persistent object cache).** Read-modify-write through `get_transient` → `+1` → `set_transient`. Two concurrent requests both observed `count=N` and both wrote `N+1`, advancing the counter by 1 instead of 2. Defeats `upload` (10/min) and `signatures_create` (30/hr) limits. Fixed for hosts with a persistent object cache via atomic `wp_cache_incr()` (Redis Object Cache, Memcached, APCu); transient mirror still written for back-compat with code paths that use `get()`. Documented limitation: hosts WITHOUT an external object cache still race — separate hardening exercise.
+
+5. **`UploadController::finalize` lacked rate-limit + trusted client metadata (HIGH).** The `init` and `direct` paths were rate-limited (10/min), but `finalize` was wide open — an attacker could spam thousands of HEAD + DB-INSERT cycles. Added the same `RL_ACTION` check. Also added a positive `size_bytes` validation (reject 0 or > max).
+
+6. **`S3Driver::verify_object_exists` accepted 3xx as "exists" (HIGH).** S3 misconfiguration / hostile DNS / redirect to an error page would still register the row. Now restricted to 200 / 204 only — combined with `redirection => 0` in the request layer, 3xx is meaningless.
+
+7. **`JsonSchemaValidator` had no block-type allowlist (HIGH).** A block with `type:"system_command"` would persist successfully, polluting the DB and possibly being trusted by third-party renderers. Added `KNOWN_BLOCK_TYPES` covering all 14 shipped block types, with new `imgsig/schema/allowed_block_types` filter for extensions.
+
+8. **Storage credentials option was autoloaded (HIGH).** `update_option(OPTION_CONFIG, $encoded)` used the default `autoload = true`, loading the encrypted S3 credentials blob into the `alloptions` cache on every page load. Now passes `false`.
+
+### Editor correctness
+
+9. **`block.visible === false` was ignored at compile time (CRITICAL).** The Layers panel "eye" toggle visually faded the block but the export still included it. User reports flagged this as "I hid my disclaimer and the recipient still saw it". `compile.ts` and `container/definition.tsx` both now skip blocks where `visible === false`. Hidden children inside a Container are filtered before the half-split so the layout doesn't reflow with empty cells. SortableBlock canvas opacity also drops to 0.35 when hidden.
+
+10. **Undo / redo collapsed to single-step (CRITICAL).** Topbar Undo/Redo and the Cmd-Z keyboard shortcut both called `setSchema(previous)`, which clears the history stack — so one Undo wiped the redo stack and Redo became permanently disabled. New `replaceSchemaForHistory()` action preserves both history stacks AND `hasUserEdited` (undo IS a user edit, autosave should persist it). Topbar + keyboard shortcut both updated.
+
+11. **`moveBlock` corrupted the schema for nested blocks (CRITICAL).** Only walked top-level `state.schema.blocks`. Dragging a block from inside a Container produced one of: silent no-op (source not found), or `splice(-1, 1)` removing the LAST top-level block. `insertBlockBefore` / `insertBlockAfter` / `duplicateBlock` had the same flat-only bug. All four now use `findParentAndIndex` to walk container children.
+
+12. **Container clone re-used child ids (HIGH).** Duplicating a container produced children with ids identical to the original's children, breaking React keys, dnd-kit, and selection. New `reidNestedBlocks()` helper recursively re-stamps every nested id during duplication.
+
+13. **Campaign banner re-rolled on every keystroke (HIGH).** `Math.random()` inside `appendBannerCampaign()` was called from a `useMemo` keyed on `[modal, schema]`, so any edit produced a fresh banner pick. The user clicked "Copy HTML", then "Copy HTML" again, and silently got a different banner. Now picks once per page-load and reuses; rotation still happens between sessions / reloads.
+
+14. **`useSelectionStore()` non-selector destructure caused whole-canvas re-renders (HIGH).** `SortableBlock` and `LayersPanel` both destructured the whole store instead of using granular selectors; every selection / hover change re-rendered every SortableBlock + LayerRow on the canvas, making drag stutter and Tiptap typing feel laggy. Both files now use individual selectors per CLAUDE.md §6.4.
+
+15. **Cmd-S in a focused input fell through to the browser's Save Page As (MEDIUM).** The early-bail on input focus ran BEFORE the Cmd-S handler, so typing in the Name input and pressing Cmd-S triggered the browser's native dialog instead of `persistence.saveNow()`. Cmd-S now handled before the input-focus bail.
+
+16. **Toaster timer leak on manual dismiss (LOW).** Auto-dismiss `setTimeout` ids were not tracked; clicking the X to dismiss a toast left the timer pending, which fired later and called `dismiss(id)` on a missing entry. Per-toast timer Map cleared on manual dismiss.
+
+### Build / lifecycle / housekeeping
+
+17. **Uninstaller leaked three options (HIGH).** `imgsig_brand_palette`, `imgsig_compliance_footer`, `imgsig_banner_campaigns` (all added in 1.0.13 / 1.0.15) were never on the `OPTIONS` constant, so they survived plugin removal. Added to the explicit list AND added a safety-net SQL sweep that DELETEs every remaining `imgsig_*` row from `wp_options` so any future option a patch forgets to declare gets cleaned up.
+
+18. **`.gitignore` swallowed the Vite manifest (HIGH).** `.vite/` matched `build/.vite/` anywhere in the tree, so `build/.vite/manifest.json` (the source of truth for `ManifestReader`) could not be committed. The `ManifestReader` fallback to `editor.js` / `admin.js` was a dead path because Vite always emits hashed filenames — a build without a committed manifest 404'd in production. Added `!build/.vite/` and `!build/.vite/manifest.json` exceptions.
+
+19. **`ManifestReader` fallback was a lie (HIGH).** Returned `editor.js` / `admin.js` when manifest was missing — those URLs don't exist in the build output. Now returns empty string and queues an admin notice ("build manifest missing — re-build the plugin or re-install from a fresh ZIP"). Asset enqueuers refuse to emit a dead `<script>` URL when the manifest can't resolve the entry.
+
+### Defensive UX
+
+20. **Admin pages didn't validate API response shape (MEDIUM).** `SignaturesPage` and `TemplatesPage` cast the response to an array. If the server ever returned a different shape (proxy mangling, future paginated envelope), `items.filter(...)` would throw a confusing "filter is not a function". Both pages now `Array.isArray()`-check and surface a flash banner asking the user to reload.
+
+### Tests added
+
+- `tests/js/compiler/visibility.test.ts` — three regression tests for `block.visible === false` skipping at the top level and inside Containers, plus default-visible behaviour.
+- `tests/js/stores/nested-move.test.ts` — four regression tests for `insertBlockAfter`, `moveBlock`, missing-target safety, and `duplicateBlock` on nested blocks.
+
+### Internal
+
+- Editor bundle: 681 KB → 683 KB (gzip 213 KB → 213.47 KB). Negligible — the new escapeAttr helper + sanitise call sites add only a few hundred bytes against the 600 KB target.
+- All 30 vitest cases pass (was 23). All TypeScript compiles cleanly under strict mode.
+- Plugin version bumped to 1.0.25. After upgrading, hard-refresh the editor to invalidate any cached `editor.[hash].js` — the version pill in the topbar will tell you if the bundle and plugin agree.
+
 ## [1.0.24] — 2026-05-02
 
 ### Fixed — The `Saved · HH:MM` lie (the headline 1.0.23 bug)

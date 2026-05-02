@@ -25,13 +25,25 @@ export const SortableBlock: FC<Props> = ({ block }) => {
     id: block.id,
   });
 
-  const { selectedBlockId, hoveredBlockId, select, hover } = useSelectionStore();
+  // Granular selectors per CLAUDE.md §6.4. Destructuring the whole
+  // store re-rendered every SortableBlock on every selection / hover
+  // change, which made dragging stutter when a signature had many
+  // blocks (and made Tiptap typing feel laggy through the cascade).
+  const selectedBlockId = useSelectionStore((s) => s.selectedBlockId);
+  const hoveredBlockId = useSelectionStore((s) => s.hoveredBlockId);
+  const select = useSelectionStore((s) => s.select);
+  const hover = useSelectionStore((s) => s.hover);
   const isSelected = block.id === selectedBlockId;
+
+  // Hidden blocks (Layers panel eye toggle flips `block.visible` to
+  // false) get a faded canvas treatment and are skipped entirely by
+  // the export compiler — see compileSignature in core/compiler/compile.
+  const isHidden = block.visible === false;
 
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.4 : isHidden ? 0.35 : 1,
     position: 'relative',
   };
 

@@ -35,6 +35,21 @@ interface SchemaState {
   /** Replace the entire schema (e.g. after loading from REST). */
   setSchema: (schema: SignatureSchema) => void;
 
+  /**
+   * Replace the schema during undo / redo replay.
+   *
+   * Differs from `setSchema()` in two ways:
+   *   1. Does NOT clear the history stack — undo/redo move a cursor
+   *      through past/future and the consumer needs the redo stack
+   *      to survive. Until 1.0.24 the topbar's Undo handler was
+   *      calling `setSchema` which clears history → undo became
+   *      single-step (one Undo wiped the redo stack so Redo was
+   *      permanently disabled).
+   *   2. Does NOT clear `hasUserEdited` — undo IS a user edit
+   *      (autosave should persist the result).
+   */
+  replaceSchemaForHistory: (schema: SignatureSchema) => void;
+
   addBlock: (block: Block, position?: number) => void;
   insertBlockBefore: (target_id: string, block: Block) => void;
   insertBlockAfter: (target_id: string, block: Block) => void;
@@ -67,10 +82,6 @@ interface SchemaState {
 function markEdited(state: { schema: SignatureSchema; hasUserEdited: boolean }): void {
   state.schema.meta.updated_at = new Date().toISOString();
   state.hasUserEdited = true;
-}
-
-function findIndexById(blocks: Block[], id: string): number {
-  return blocks.findIndex((b) => b.id === id);
 }
 
 /**
@@ -130,6 +141,22 @@ function pushSnapshot(): void {
   useHistoryStore.getState().push(useSchemaStore.getState().schema);
 }
 
+/**
+ * Recursively assign fresh ids to every block in a sub-tree. Used by
+ * `duplicateBlock` when cloning a Container so the duplicate's
+ * children don't share ids with the original's children (id
+ * collisions break React keys, dnd-kit, and selection).
+ */
+function reidNestedBlocks(blocks: Block[]): void {
+  const stamp = Date.now().toString(36);
+  for (const block of blocks) {
+    block.id = `${block.id}_copy_${stamp}_${Math.random().toString(36).slice(2, 6)}`;
+    if (block.type === 'container') {
+      reidNestedBlocks(block.children);
+    }
+  }
+}
+
 export const useSchemaStore = create<SchemaState>()(
   immer((set) => ({
     schema: createEmptySchema(),
@@ -143,6 +170,17 @@ export const useSchemaStore = create<SchemaState>()(
         state.hasUserEdited = false;
       });
       useHistoryStore.getState().clear();
+    },
+
+    replaceSchemaForHistory: (schema) => {
+      // Used by undo / redo paths. Preserves both history stacks AND
+      // hasUserEdited so the autosave still fires for the replayed
+      // state. See comment on the interface declaration above.
+      set((state) => {
+        state.schema = schema;
+        state.hasUserEdited = true;
+        state.schema.meta.updated_at = new Date().toISOString();
+      });
     },
 
     addBlock: (block, position) => {
@@ -160,11 +198,15 @@ export const useSchemaStore = create<SchemaState>()(
     insertBlockBefore: (target_id, block) => {
       pushSnapshot();
       set((state) => {
-        const index = findIndexById(state.schema.blocks, target_id);
-        if (index === -1) {
+        // Walk into Container children so dropping a library card
+        // onto a nested block inserts at the right depth instead of
+        // landing at the top level (which used to silently re-parent
+        // the new block to root before 1.0.25).
+        const found = findParentAndIndex(state.schema.blocks, target_id);
+        if (!found) {
           state.schema.blocks.push(block);
         } else {
-          state.schema.blocks.splice(index, 0, block);
+          found.parent.splice(found.index, 0, block);
         }
         markEdited(state);
       });
@@ -173,11 +215,11 @@ export const useSchemaStore = create<SchemaState>()(
     insertBlockAfter: (target_id, block) => {
       pushSnapshot();
       set((state) => {
-        const index = findIndexById(state.schema.blocks, target_id);
-        if (index === -1) {
+        const found = findParentAndIndex(state.schema.blocks, target_id);
+        if (!found) {
           state.schema.blocks.push(block);
         } else {
-          state.schema.blocks.splice(index + 1, 0, block);
+          found.parent.splice(found.index + 1, 0, block);
         }
         markEdited(state);
       });
@@ -250,17 +292,32 @@ export const useSchemaStore = create<SchemaState>()(
       if (id === target_id) return;
       pushSnapshot();
       set((state) => {
-        const blocks = state.schema.blocks;
-        const fromIndex = findIndexById(blocks, id);
-        if (fromIndex === -1) return;
-        const [moving] = blocks.splice(fromIndex, 1);
+        // Walk into Container children for BOTH the source and target
+        // — until 1.0.25 this only operated on `state.schema.blocks`,
+        // so dragging a nested block produced one of:
+        //   - silent no-op (source not found at top level)
+        //   - schema corruption (`splice(-1, 1)` removed the LAST
+        //     top-level block when the source resolved to index -1)
+        const source = findParentAndIndex(state.schema.blocks, id);
+        if (!source) return;
+        const [moving] = source.parent.splice(source.index, 1);
         if (!moving) return;
-        const targetIndex = findIndexById(blocks, target_id);
-        if (targetIndex === -1) {
-          blocks.push(moving);
-        } else {
-          blocks.splice(position === 'before' ? targetIndex : targetIndex + 1, 0, moving);
+
+        // Resolve target AFTER removal so target indices in the same
+        // parent array stay correct.
+        const target = findParentAndIndex(state.schema.blocks, target_id);
+        if (!target) {
+          // Target gone — re-insert the moving block where it was
+          // rather than corrupting any other location.
+          source.parent.splice(source.index, 0, moving);
+          return;
         }
+
+        target.parent.splice(
+          position === 'before' ? target.index : target.index + 1,
+          0,
+          moving,
+        );
         markEdited(state);
       });
     },
@@ -268,13 +325,23 @@ export const useSchemaStore = create<SchemaState>()(
     duplicateBlock: (id) => {
       pushSnapshot();
       set((state) => {
-        const index = findIndexById(state.schema.blocks, id);
-        if (index === -1) return;
-        const original = state.schema.blocks[index];
+        // Walk into Container children so duplicating a nested block
+        // inserts the copy next to the original instead of silently
+        // no-opping (which is what the flat lookup did before 1.0.25).
+        const found = findParentAndIndex(state.schema.blocks, id);
+        if (!found) return;
+        const original = found.parent[found.index];
         if (!original) return;
         const cloned = JSON.parse(JSON.stringify(original)) as Block;
+        // Recursively re-id every nested block inside the clone too —
+        // otherwise duplicating a Container produces children whose
+        // ids match the original's children, and React keys / dnd-kit
+        // both break on the resulting collisions.
         cloned.id = `${original.id}_copy_${Date.now().toString(36)}`;
-        state.schema.blocks.splice(index + 1, 0, cloned);
+        if (cloned.type === 'container') {
+          reidNestedBlocks(cloned.children);
+        }
+        found.parent.splice(found.index + 1, 0, cloned);
         markEdited(state);
       });
     },

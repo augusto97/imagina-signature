@@ -32,8 +32,14 @@ phpunit.xml
 # OS
 *~
 
-# Vite
+# Vite — ignore the dev-cache `.vite/` (lives in node_modules) but
+# explicitly KEEP `build/.vite/manifest.json`. The manifest is the
+# source of truth for the asset enqueuers (`ManifestReader`) and MUST
+# ship in the plugin ZIP, otherwise hashed asset URLs can't be
+# resolved at runtime and the editor / admin pages 404 on their JS.
 .vite/
+!build/.vite/
+!build/.vite/manifest.json
 stats.html
 
 # TypeScript

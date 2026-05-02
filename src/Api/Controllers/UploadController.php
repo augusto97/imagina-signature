@@ -364,6 +364,16 @@ final class UploadController extends BaseController {
 	public function finalize( \WP_REST_Request $request ) {
 		$user_id = get_current_user_id();
 
+		// Rate-limit `finalize` the same way `init` is throttled. Without
+		// this, an authenticated attacker could spam the endpoint —
+		// each call does a HEAD against the storage backend + a DB
+		// insert and was not bounded.
+		try {
+			$this->rate_limiter->check( self::RL_ACTION, $user_id, 10, MINUTE_IN_SECONDS );
+		} catch ( ImaginaSignaturesException $e ) {
+			return $this->exception_to_wp_error( $e );
+		}
+
 		$key        = (string) $request->get_param( 'key' );
 		$mime_type  = sanitize_text_field( (string) $request->get_param( 'mime_type' ) );
 		$size_bytes = (int) $request->get_param( 'size_bytes' );
@@ -376,6 +386,17 @@ final class UploadController extends BaseController {
 				'imgsig_unsupported_mime',
 				__( 'Unsupported file type.', 'imagina-signatures' ),
 				[ 'status' => 400 ]
+			);
+		}
+
+		if ( $size_bytes <= 0 || $size_bytes > $this->max_size() ) {
+			return new \WP_Error(
+				'imgsig_invalid_size',
+				__( 'Reported file size is missing or exceeds the configured limit.', 'imagina-signatures' ),
+				[
+					'status'   => 400,
+					'max_size' => $this->max_size(),
+				]
 			);
 		}
 

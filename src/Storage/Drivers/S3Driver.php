@@ -453,6 +453,12 @@ final class S3Driver implements StorageDriverInterface {
 		}
 
 		$code = (int) $response['code'];
-		return $code >= 200 && $code < 400;
+		// Only treat 200 / 204 as "exists". A 3xx (S3 misconfiguration,
+		// hostile DNS, redirect to an error page) does NOT prove the
+		// object is at the requested key — accepting it would let a
+		// `finalize()` call register a row pointing at a key that
+		// isn't actually there. Combined with `redirection => 0` in
+		// `S3Client::execute` (no follow), 3xx is meaningless here.
+		return 200 === $code || 204 === $code;
 	}
 }

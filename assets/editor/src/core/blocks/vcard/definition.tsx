@@ -5,6 +5,7 @@ import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
+import { escapeAttr } from '@/core/compiler/compile';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 /**
@@ -197,8 +198,11 @@ function compile(block: VCardBlock, _ctx: CompileContext): string {
   const styles = [
     'display:inline-block',
     'padding:8px 14px',
-    `background:${block.background_color}`,
-    `color:${block.text_color}`,
+    // Colour values are interpolated into a CSS string. Strict
+    // attribute-context escaping defends against a corrupted JSON
+    // row containing `"` or `;` injection.
+    `background:${escapeAttr(block.background_color)}`,
+    `color:${escapeAttr(block.text_color)}`,
     `border-radius:${block.border_radius}px`,
     'text-decoration:none',
     'font-size:13px',
@@ -210,9 +214,6 @@ function compile(block: VCardBlock, _ctx: CompileContext): string {
 
 function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-function escapeAttr(value: string): string {
-  return value.replace(/"/g, '&quot;');
 }
 
 const definition: BlockDefinition<VCardBlock> = {

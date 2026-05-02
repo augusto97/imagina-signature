@@ -78,8 +78,15 @@ final class EditorAssetEnqueuer {
 
 		// Hashed filenames from the Vite manifest — every release ships
 		// fresh URLs so caches can't possibly serve a stale bundle.
-		$js_file  = ManifestReader::file_for( 'assets/editor/src/main.tsx', 'editor.js' );
+		// Empty string means the manifest is missing or the entry is
+		// not registered. ManifestReader has already queued an admin
+		// notice; we refuse to emit a dead `<script>` URL here.
+		$js_file  = ManifestReader::file_for( 'assets/editor/src/main.tsx' );
 		$css_file = ManifestReader::css_for( 'assets/editor/src/main.tsx' );
+
+		if ( '' === $js_file ) {
+			return;
+		}
 
 		if ( '' !== $css_file ) {
 			wp_enqueue_style(

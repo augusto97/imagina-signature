@@ -4,6 +4,7 @@ import type { ContactRowBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
+import { escapeAttr } from '@/core/compiler/compile';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 type RowIcon = 'email' | 'phone' | 'web';
@@ -130,11 +131,15 @@ function compile(block: ContactRowBlock, _ctx: CompileContext): string {
     `padding:${padding}`,
   ].join(';');
 
+  const safeColor = escapeAttr(block.style.color);
   const rows = block.rows.map((row) => {
-    const safeLabel = String(row.label).replace(/[<>&]/g, (c) =>
-      c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&amp;',
-    );
-    return `<tr><td style="${baseStyle}"><span style="margin-right:6px">${ICON_SVG[row.icon]}</span><a href="${row.href}" style="color:${block.style.color};text-decoration:none">${safeLabel}</a></td></tr>`;
+    // Strict escapers — label was missing `"` and href was completely
+    // unescaped, so user-controlled `mailto:` / `tel:` strings could
+    // break out of the attribute and inject HTML in the recipient's
+    // inbox.
+    const safeLabel = escapeAttr(row.label);
+    const safeHref = escapeAttr(row.href);
+    return `<tr><td style="${baseStyle}"><span style="margin-right:6px">${ICON_SVG[row.icon]}</span><a href="${safeHref}" style="color:${safeColor};text-decoration:none">${safeLabel}</a></td></tr>`;
   });
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%">${rows.join('')}</table>`;

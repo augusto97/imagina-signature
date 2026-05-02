@@ -70,6 +70,16 @@ final class RateLimitStore {
 	 * window slides — i.e. the counter only resets after
 	 * `$window_seconds` have passed since the last call.
 	 *
+	 * Atomicity: when the host runs a persistent object cache (Redis,
+	 * Memcached, APCu) `wp_cache_incr` is atomic at the cache layer,
+	 * so two concurrent increments cannot both observe the same
+	 * pre-increment value. Without an external object cache WP
+	 * transients land in `wp_options` and the read-modify-write is
+	 * non-atomic — we still write a transient there as a TTL anchor,
+	 * but on hosts with no persistent cache the rate limit can be
+	 * defeated under high concurrency. That's a separate hardening
+	 * exercise (DB row lock or `INSERT … ON DUPLICATE KEY`).
+	 *
 	 * @since 1.0.0
 	 *
 	 * @param string $key            Transient key.
@@ -78,6 +88,32 @@ final class RateLimitStore {
 	 * @return int New counter value.
 	 */
 	public function increment( string $key, int $window_seconds ): int {
+		// Persistent-cache fast path. `wp_using_ext_object_cache()`
+		// returns true when a drop-in is wired (Redis Object Cache,
+		// W3 Total Cache memcached, etc.). `wp_cache_incr` is atomic
+		// in those backends — concurrent calls return correctly
+		// sequential values rather than re-reading the pre-increment
+		// state.
+		if ( function_exists( 'wp_using_ext_object_cache' ) && wp_using_ext_object_cache() ) {
+			$cache_group = 'imgsig_rl';
+			$next        = wp_cache_incr( $key, 1, $cache_group );
+			if ( false === $next ) {
+				// Key didn't exist yet — seed it and refresh the TTL.
+				wp_cache_set( $key, 1, $cache_group, $window_seconds );
+				$next = 1;
+			} else {
+				// Refresh the TTL so the window stays sliding.
+				wp_cache_set( $key, (int) $next, $cache_group, $window_seconds );
+			}
+			// Mirror to a transient so other code paths that call
+			// `get()` (which still uses `get_transient`) see something
+			// consistent. The transient TTL is the same window.
+			set_transient( $key, (int) $next, $window_seconds );
+			return (int) $next;
+		}
+
+		// No external cache available — fall back to the read-modify-
+		// write transient path. Best effort; documented limitation.
 		$next = $this->get( $key ) + 1;
 		set_transient( $key, $next, $window_seconds );
 		return $next;

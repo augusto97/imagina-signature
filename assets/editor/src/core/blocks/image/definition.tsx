@@ -4,6 +4,7 @@ import type { ImageBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
+import { escapeAttr } from '@/core/compiler/compile';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: ImageBlock }> = ({ block }) => {
@@ -200,23 +201,27 @@ export function withOutlookFallback(
   styles: string,
   link: string | undefined,
 ): string {
-  const wrap = (img: string): string => (link ? `<a href="${link}">${img}</a>` : img);
+  // Use the strict attribute-context escaper from compile.ts. The
+  // local helper that lived here only escaped `"` — leaving `&`,
+  // `<`, `>` raw, which let user-controlled URLs / alt text break out
+  // of the attribute and inject HTML.
+  const safeSrc = escapeAttr(src);
+  const safeAlt = escapeAttr(alt);
+  const safeLink = link ? escapeAttr(link) : '';
+  const wrap = (img: string): string => (link ? `<a href="${safeLink}">${img}</a>` : img);
 
   if (!fallback) {
-    const img = `<img src="${src}" alt="${escapeAttr(alt)}"${dimAttrs} style="${styles}" />`;
+    const img = `<img src="${safeSrc}" alt="${safeAlt}"${dimAttrs} style="${styles}" />`;
     return wrap(img);
   }
 
-  const animated = `<img src="${src}" alt="${escapeAttr(alt)}"${dimAttrs} style="${styles}" />`;
-  const staticImg = `<img src="${fallback}" alt="${escapeAttr(alt)}"${dimAttrs} style="${styles}" />`;
+  const safeFallback = escapeAttr(fallback);
+  const animated = `<img src="${safeSrc}" alt="${safeAlt}"${dimAttrs} style="${styles}" />`;
+  const staticImg = `<img src="${safeFallback}" alt="${safeAlt}"${dimAttrs} style="${styles}" />`;
   return (
     `<!--[if !mso]><!-->${wrap(animated)}<!--<![endif]-->` +
     `<!--[if mso]>${wrap(staticImg)}<![endif]-->`
   );
-}
-
-function escapeAttr(value: string): string {
-  return value.replace(/"/g, '&quot;');
 }
 
 const definition: BlockDefinition<ImageBlock> = {

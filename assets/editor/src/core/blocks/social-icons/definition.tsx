@@ -5,6 +5,7 @@ import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
+import { escapeAttr } from '@/core/compiler/compile';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const PLATFORMS = ['linkedin', 'twitter', 'facebook', 'instagram', 'github', 'youtube'] as const;
@@ -103,10 +104,16 @@ const Properties: FC<{ block: SocialIconsBlock; onChange: (u: Partial<SocialIcon
 };
 
 function compile(block: SocialIconsBlock, _ctx: CompileContext): string {
+  // Strict colour escape — colours come from a ColorInput today but
+  // the schema field is a string and a corrupted JSON could embed
+  // anything. Treat as untrusted at compile time.
+  const safeColor = escapeAttr(block.color);
   const cells = block.networks.map((net, i) => {
     const padRight = i < block.networks.length - 1 ? block.gap : 0;
-    const initial = net.platform.charAt(0).toUpperCase();
-    return `<td style="padding-right:${padRight}px"><a href="${net.url}" style="text-decoration:none;color:${block.color}"><span style="display:inline-block;width:${block.icon_size}px;height:${block.icon_size}px;line-height:${block.icon_size}px;text-align:center;font-size:${Math.round(block.icon_size * 0.45)}px;background:${block.color};color:#fff;border-radius:50%;font-family:Arial,sans-serif;font-weight:700">${initial}</span></a></td>`;
+    const initial = (net.platform.charAt(0) || '?').toUpperCase();
+    const safeUrl = escapeAttr(net.url);
+    const safeInitial = escapeAttr(initial);
+    return `<td style="padding-right:${padRight}px"><a href="${safeUrl}" style="text-decoration:none;color:${safeColor}"><span style="display:inline-block;width:${block.icon_size}px;height:${block.icon_size}px;line-height:${block.icon_size}px;text-align:center;font-size:${Math.round(block.icon_size * 0.45)}px;background:${safeColor};color:#fff;border-radius:50%;font-family:Arial,sans-serif;font-weight:700">${safeInitial}</span></a></td>`;
   });
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr>${cells.join('')}</tr></table>`;

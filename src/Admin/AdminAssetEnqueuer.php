@@ -75,13 +75,19 @@ final class AdminAssetEnqueuer {
 		$page    = $this->hook_pages[ $hook_suffix ];
 		$version = defined( 'IMGSIG_VERSION' ) ? IMGSIG_VERSION : '1.0.0';
 
-		// Resolve the hashed filenames Vite emits — every release has
-		// fresh URLs so caches can't possibly serve a stale bundle.
-		// `file_for` falls back to the un-hashed legacy name so the
-		// page still loads if someone's running off an old build that
-		// pre-dates the manifest convention.
-		$js_file  = ManifestReader::file_for( 'assets/admin/src/main.tsx', 'admin.js' );
+		// Resolve the hashed filenames Vite emits. Empty string means
+		// the manifest is missing (`build/.vite/manifest.json` not
+		// shipped) or the entry isn't registered. ManifestReader has
+		// already queued an admin notice; we refuse to emit a dead
+		// script tag here. The legacy fallback ('admin.js') was
+		// removed in 1.0.25 — Vite always emits hashed filenames so
+		// the fallback URL would 404.
+		$js_file  = ManifestReader::file_for( 'assets/admin/src/main.tsx' );
 		$css_file = ManifestReader::css_for( 'assets/admin/src/main.tsx' );
+
+		if ( '' === $js_file ) {
+			return;
+		}
 
 		if ( '' !== $css_file ) {
 			wp_enqueue_style(

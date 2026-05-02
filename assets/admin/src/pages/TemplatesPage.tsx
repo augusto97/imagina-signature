@@ -45,7 +45,17 @@ export const TemplatesPage: FC = () => {
 
   const refetch = (): void => {
     apiCall<TemplateRow[]>('/templates?per_page=100')
-      .then((data) => setItems(data))
+      .then((data) => {
+        // Defensive shape check — without this guard, downstream
+        // `.filter()` / `.map()` calls would throw on a malformed
+        // response and the page would render the empty state with no
+        // useful diagnostic.
+        if (!Array.isArray(data)) {
+          setError(__('Server returned an unexpected response shape. Reload to retry.'));
+          return;
+        }
+        setItems(data);
+      })
       .catch((e: Error) => setError(e.message));
   };
 

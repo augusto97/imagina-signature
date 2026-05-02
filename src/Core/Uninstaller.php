@@ -49,7 +49,13 @@ final class Uninstaller {
 	/**
 	 * Options written by the plugin.
 	 *
-	 * Keep in sync with CLAUDE.md §7.3.
+	 * Keep in sync with CLAUDE.md §7.3 + every `OPT_*` constant added
+	 * by `SiteSettingsController` and friends. The catch-all sweep in
+	 * `delete_options()` (DELETE … LIKE 'imgsig\_%') is the safety net
+	 * for any new option a future patch forgets to add to this list,
+	 * but the explicit list still matters: it documents intent and
+	 * routes through `delete_option()` so Multisite + filters fire
+	 * properly per-key.
 	 */
 	private const OPTIONS = [
 		'imgsig_version',
@@ -57,6 +63,12 @@ final class Uninstaller {
 		'imgsig_storage_driver',
 		'imgsig_storage_config',
 		'imgsig_settings',
+		// Site-settings options added in 1.0.13 / 1.0.15 — these were
+		// silently leaking on uninstall until 1.0.25 because they
+		// weren't on this list (the audit caught the leak).
+		'imgsig_brand_palette',
+		'imgsig_compliance_footer',
+		'imgsig_banner_campaigns',
 	];
 
 	/**
@@ -109,15 +121,37 @@ final class Uninstaller {
 	/**
 	 * Deletes all plugin-owned options.
 	 *
+	 * Two passes:
+	 *  1. Explicit allow-list above so `delete_option()` filters fire
+	 *     correctly per known key, and the site-option variant is
+	 *     called in case the plugin was active under multisite.
+	 *  2. A safety-net SQL sweep that removes any remaining
+	 *     `imgsig_*` row from `wp_options` — covers any option a
+	 *     future patch writes without adding to {@see OPTIONS}.
+	 *
 	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
 	private static function delete_options(): void {
+		global $wpdb;
+
 		foreach ( self::OPTIONS as $option ) {
 			delete_option( $option );
 			delete_site_option( $option );
 		}
+
+		// Safety net: scrub any straggler `imgsig_*` option that didn't
+		// make it into the allow-list. Covers options that future
+		// patches add without remembering to update this constant.
+		$like = $wpdb->esc_like( 'imgsig_' ) . '%';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+				$like
+			)
+		);
 	}
 
 	/**

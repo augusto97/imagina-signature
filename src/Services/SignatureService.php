@@ -73,7 +73,14 @@ class SignatureService {
 	 * @throws ValidationException When the JSON schema check fails.
 	 */
 	public function create( int $user_id, array $data ): Signature {
-		$prepared            = $this->prepare_for_save( $data, 'create' );
+		// `prepare_for_save()` runs the `imgsig/signature/data_before_save`
+		// filter on the payload. Listeners can normalise / augment fields,
+		// but they must NOT be allowed to set `user_id` — that would let
+		// a third-party plugin (or a future internal bug) silently re-
+		// assign ownership of a fresh row to another user. Strip any
+		// listener-injected `user_id` and stamp ours AFTER the filter.
+		$prepared = $this->prepare_for_save( $data, 'create' );
+		unset( $prepared['user_id'] );
 		$prepared['user_id'] = $user_id;
 
 		do_action( 'imgsig/signature/before_create', $prepared, $user_id );

@@ -27,7 +27,19 @@ export const SignaturesPage: FC = () => {
 
   const load = (): Promise<void> => {
     return apiCall<SignatureRow[]>('/signatures?per_page=100')
-      .then((data) => setItems(data))
+      .then((data) => {
+        // Defensive shape check — the cast above is a type-system
+        // promise the server is free to break (proxy mangling, a
+        // future endpoint that wraps the list in `{ items: [...] }`,
+        // a hostile filter). Without this guard, `items.filter(...)`
+        // later would throw a confusing "filter is not a function"
+        // and the page would render the empty state.
+        if (!Array.isArray(data)) {
+          setError(__('Server returned an unexpected response shape. Reload to retry.'));
+          return;
+        }
+        setItems(data);
+      })
       .catch((e: Error) => setError(e.message));
   };
 

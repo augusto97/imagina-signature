@@ -1,5 +1,6 @@
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
 import type { TextBlock as TextBlockType } from '@/core/schema/blocks';
+import { sanitizeEmailHtml } from '@/core/compiler/sanitize';
 
 interface Props {
   block: TextBlockType;
@@ -11,9 +12,12 @@ interface Props {
  *
  * Produces a single-cell table that mirrors the email-safe shape
  * the compiler emits, so what the user sees on the canvas is
- * pixel-faithful to the export. `dangerouslySetInnerHTML` is OK
- * here because the content is whitelisted by Tiptap on the way in
- * (Sprint 7) and HtmlSanitizer on the server.
+ * pixel-faithful to the export. `block.content` is sanitised through
+ * the same email-safe whitelist used at compile time before being
+ * passed to `dangerouslySetInnerHTML` — Tiptap is one trust layer,
+ * but a corrupted JSON row / template-pick / undo replay could put
+ * arbitrary HTML in the store, and the canvas renderer must not be
+ * the path that executes it.
  */
 export const TextBlock: FC<Props> = ({ block }) => {
   const padding = block.padding;
@@ -29,6 +33,8 @@ export const TextBlock: FC<Props> = ({ block }) => {
       : '0',
   };
 
+  const safeContent = useMemo(() => sanitizeEmailHtml(block.content), [block.content]);
+
   return (
     <table
       role="presentation"
@@ -39,7 +45,7 @@ export const TextBlock: FC<Props> = ({ block }) => {
     >
       <tbody>
         <tr>
-          <td style={td} dangerouslySetInnerHTML={{ __html: block.content }} />
+          <td style={td} dangerouslySetInnerHTML={{ __html: safeContent }} />
         </tr>
       </tbody>
     </table>

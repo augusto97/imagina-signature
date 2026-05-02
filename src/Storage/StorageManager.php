@@ -248,7 +248,12 @@ final class StorageManager {
 			$encoded = is_string( $json ) ? $this->encryption->encrypt( $json ) : '';
 		}
 
-		update_option( self::OPTION_CONFIG, $encoded );
+		// `autoload = false` for the encrypted secrets blob — there's
+		// no reason to load S3 credentials into `alloptions` cache on
+		// every page load. Until 1.0.25 this used the default
+		// (`autoload = true`), which kept the encrypted blob in the
+		// permanent options cache for every request.
+		update_option( self::OPTION_CONFIG, $encoded, false );
 		update_option( self::OPTION_DRIVER, $driver_id );
 
 		// Invalidate the cached driver so the next call rebuilds.

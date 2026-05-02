@@ -344,7 +344,12 @@ const ColumnWidthControl: FC<{
 };
 
 function compile(block: ContainerBlock, ctx: CompileContext): string {
-  const half = Math.ceil(block.children.length / 2);
+  // Filter hidden children before splitting into halves. Otherwise a
+  // hidden block on the left would still occupy a slot in the
+  // `Math.ceil(length/2)` computation, leaving an empty cell that
+  // reflows the layout in the recipient's client.
+  const visibleChildren = block.children.filter((c) => c.visible !== false);
+  const half = Math.ceil(visibleChildren.length / 2);
 
   const compileChild = (child: Block): string => {
     const def = rendererForBlock(child);
@@ -356,17 +361,24 @@ function compile(block: ContainerBlock, ctx: CompileContext): string {
   };
 
   if (block.columns === 1) {
-    const inner = block.children.map(compileChild).join('\n');
+    const inner = visibleChildren.map(compileChild).join('\n');
     return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="vertical-align:top">${inner}</td></tr></table>`;
   }
 
-  const left = block.children.slice(0, half).map(compileChild).join('\n');
-  const right = block.children.slice(half).map(compileChild).join('\n');
+  const left = visibleChildren.slice(0, half).map(compileChild).join('\n');
+  const right = visibleChildren.slice(half).map(compileChild).join('\n');
+  // Empty cells get a `&nbsp;` so Outlook doesn't collapse the row to
+  // zero height (which mis-aligns the surviving column relative to
+  // the rest of the signature). When BOTH cells are empty the parent
+  // container is effectively invisible — but we still emit the table
+  // shell so undo can restore quickly without a re-render dance.
+  const leftHtml = left || '&nbsp;';
+  const rightHtml = right || '&nbsp;';
   const leftPct = leftWidth(block);
   const rightPct = 100 - leftPct;
   const padRight = `padding-right:${block.gap / 2}px`;
   const padLeft = `padding-left:${block.gap / 2}px`;
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="vertical-align:top;width:${leftPct}%;${padRight}">${left}</td><td style="vertical-align:top;width:${rightPct}%;${padLeft}">${right}</td></tr></table>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="vertical-align:top;width:${leftPct}%;${padRight}">${leftHtml}</td><td style="vertical-align:top;width:${rightPct}%;${padLeft}">${rightHtml}</td></tr></table>`;
 }
 
 const definition: BlockDefinition<ContainerBlock> = {

@@ -42,28 +42,102 @@ final class ManifestReader {
 	 * for our setup, `assets/editor/src/main.tsx` and
 	 * `assets/admin/src/main.tsx`.
 	 *
-	 * Falls back to a sensible default if the manifest is missing
-	 * (e.g. someone is running off a build that pre-dates the
-	 * manifest convention) so the editor still loads, just without
-	 * the cache-busting guarantee.
+	 * The `$fallback` argument is kept for API compatibility but is
+	 * NOT used: Vite always emits hashed filenames (`editor.[hash].js`),
+	 * so a fallback like `editor.js` would 404 in production. Until
+	 * 1.0.25 the fallback path was returned silently, leading to
+	 * confusing "the editor won't load" reports — now we surface a
+	 * loud admin notice and an explicit empty string so the asset
+	 * enqueuer can decide to skip enqueueing rather than emit a dead
+	 * `<script src="editor.js">` URL.
 	 *
 	 * @since 1.0.21
 	 *
-	 * @param string $entry    Source-tree path Vite uses as the key.
-	 * @param string $fallback Filename to return when the manifest
-	 *                          can't resolve the entry.
+	 * @param string $entry     Source-tree path Vite uses as the key.
+	 * @param string $_fallback Legacy fallback (unused since 1.0.25).
 	 *
-	 * @return string The hashed output filename relative to `build/`.
+	 * @return string Hashed output filename relative to `build/`, or
+	 *                empty string when unresolved.
 	 */
-	public static function file_for( string $entry, string $fallback ): string {
+	public static function file_for( string $entry, string $_fallback = '' ): string {
 		$manifest = self::load();
 		if ( null === $manifest ) {
-			return $fallback;
+			self::notice_missing_manifest();
+			return '';
 		}
 		if ( isset( $manifest[ $entry ]['file'] ) && is_string( $manifest[ $entry ]['file'] ) ) {
 			return $manifest[ $entry ]['file'];
 		}
-		return $fallback;
+		self::notice_missing_entry( $entry );
+		return '';
+	}
+
+	/**
+	 * Surfaces a one-time admin notice when the Vite manifest can't be
+	 * found. Operators see "the editor doesn't load"; this tells them
+	 * exactly why — they need to run `npm run build` (or their CI
+	 * pipeline forgot to ship the manifest in the ZIP).
+	 *
+	 * Idempotent: only the first call per request actually enqueues
+	 * the notice; subsequent calls are no-ops.
+	 *
+	 * @return void
+	 */
+	private static function notice_missing_manifest(): void {
+		static $shown = false;
+		if ( $shown || ! is_admin() ) {
+			return;
+		}
+		$shown = true;
+
+		add_action(
+			'admin_notices',
+			static function (): void {
+				if ( ! current_user_can( 'manage_options' ) ) {
+					return;
+				}
+				echo '<div class="notice notice-error"><p>';
+				echo esc_html__(
+					'Imagina Signatures: build manifest missing (build/.vite/manifest.json). The editor and admin pages will not load. Re-build the plugin (npm run build) or re-install from a fresh ZIP.',
+					'imagina-signatures'
+				);
+				echo '</p></div>';
+			}
+		);
+	}
+
+	/**
+	 * Surfaces an admin notice when an entry isn't in the manifest
+	 * (manifest exists but doesn't include the requested entry). Hints
+	 * at a build / config drift between the PHP enqueuer and the Vite
+	 * `rollupOptions.input` map.
+	 *
+	 * @param string $entry The unresolved entry path.
+	 *
+	 * @return void
+	 */
+	private static function notice_missing_entry( string $entry ): void {
+		static $reported = [];
+		if ( isset( $reported[ $entry ] ) || ! is_admin() ) {
+			return;
+		}
+		$reported[ $entry ] = true;
+
+		add_action(
+			'admin_notices',
+			static function () use ( $entry ): void {
+				if ( ! current_user_can( 'manage_options' ) ) {
+					return;
+				}
+				echo '<div class="notice notice-warning"><p>';
+				printf(
+					/* translators: %s: source-tree entry path. */
+					esc_html__( 'Imagina Signatures: manifest entry "%s" not found. Re-build the plugin to refresh the manifest.', 'imagina-signatures' ),
+					esc_html( $entry )
+				);
+				echo '</p></div>';
+			}
+		);
 	}
 
 	/**

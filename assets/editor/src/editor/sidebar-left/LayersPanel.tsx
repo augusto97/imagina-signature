@@ -70,7 +70,13 @@ const LayerRow: FC<LayerRowProps> = ({ block, depth, index, siblingsCount }) => 
   const deleteBlock = useSchemaStore((s) => s.deleteBlock);
   const moveBlockUp = useSchemaStore((s) => s.moveBlockUp);
   const moveBlockDown = useSchemaStore((s) => s.moveBlockDown);
-  const { selectedBlockId, hoveredBlockId, select, hover } = useSelectionStore();
+  // Granular selectors per CLAUDE.md §6.4. Destructuring the full
+  // store re-rendered every LayerRow on every selection / hover
+  // change.
+  const selectedBlockId = useSelectionStore((s) => s.selectedBlockId);
+  const hoveredBlockId = useSelectionStore((s) => s.hoveredBlockId);
+  const select = useSelectionStore((s) => s.select);
+  const hover = useSelectionStore((s) => s.hover);
 
   const def = rendererForBlock(block);
   const Icon = def?.icon;

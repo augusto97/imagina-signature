@@ -49,7 +49,10 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
   const undo = useHistoryStore((s) => s.undo);
   const redo = useHistoryStore((s) => s.redo);
   const schema = useSchemaStore((s) => s.schema);
-  const setSchema = useSchemaStore((s) => s.setSchema);
+  // Undo / redo MUST go through `replaceSchemaForHistory`, not
+  // `setSchema`, otherwise calling setSchema clears the history stack
+  // and undo collapses to single-step (one Undo wipes the redo stack).
+  const replaceSchemaForHistory = useSchemaStore((s) => s.replaceSchemaForHistory);
   const showToast = useToastStore((s) => s.show);
   const [manualSaving, setManualSaving] = useState(false);
 
@@ -76,11 +79,11 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
 
   const onUndo = () => {
     const previous = undo(schema);
-    if (previous) setSchema(previous);
+    if (previous) replaceSchemaForHistory(previous);
   };
   const onRedo = () => {
     const next = redo(schema);
-    if (next) setSchema(next);
+    if (next) replaceSchemaForHistory(next);
   };
 
   return (

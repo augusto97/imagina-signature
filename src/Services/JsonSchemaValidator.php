@@ -47,6 +47,37 @@ final class JsonSchemaValidator {
 	private const REQUIRED_KEYS = [ 'schema_version', 'meta', 'canvas', 'blocks', 'variables' ];
 
 	/**
+	 * Allowlist of block `type` strings the editor knows how to render
+	 * and the compiler knows how to emit. Mirrors CLAUDE.md §10.2 + the
+	 * 1.0.11 / 1.0.15 additions (qr_code, banner, vcard).
+	 *
+	 * Rejecting unknown types at validation time stops a malicious
+	 * payload from persisting `type:"system_command"` blocks that a
+	 * third-party extension might trust later.
+	 *
+	 * Extensions can broaden this set via the
+	 * `imgsig/schema/allowed_block_types` filter (added 1.0.25).
+	 *
+	 * @var string[]
+	 */
+	private const KNOWN_BLOCK_TYPES = [
+		'text',
+		'heading',
+		'image',
+		'avatar',
+		'divider',
+		'spacer',
+		'social_icons',
+		'contact_row',
+		'button_cta',
+		'disclaimer',
+		'container',
+		'qr_code',
+		'banner',
+		'vcard',
+	];
+
+	/**
 	 * Validates the decoded signature payload.
 	 *
 	 * Throws on any failure; returns void on success. Errors are
@@ -154,6 +185,25 @@ final class JsonSchemaValidator {
 				'path'    => $path . '.type',
 				'message' => 'Block must carry a non-empty string type.',
 			];
+		} else {
+			/**
+			 * Filters the allowed block-type list.
+			 *
+			 * Extensions that register custom block types client-side
+			 * must add the same type strings here so the server-side
+			 * validator doesn't reject them on save.
+			 *
+			 * @since 1.0.25
+			 *
+			 * @param string[] $known Default allowed types.
+			 */
+			$allowed = apply_filters( 'imgsig/schema/allowed_block_types', self::KNOWN_BLOCK_TYPES );
+			if ( ! in_array( $block['type'], (array) $allowed, true ) ) {
+				$errors[] = [
+					'path'    => $path . '.type',
+					'message' => sprintf( 'Unknown block type "%s".', (string) $block['type'] ),
+				];
+			}
 		}
 
 		return $errors;

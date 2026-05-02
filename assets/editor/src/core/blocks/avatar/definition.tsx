@@ -6,6 +6,7 @@ import { __ } from '@/i18n/helpers';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
 import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
+import { escapeAttr } from '@/core/compiler/compile';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: AvatarBlock }> = ({ block }) => {
@@ -92,8 +93,12 @@ const Properties: FC<{ block: AvatarBlock; onChange: (u: Partial<AvatarBlock>) =
 function compile(block: AvatarBlock, _ctx: CompileContext): string {
   const p = block.padding;
   const padding = p ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px` : '0';
-  const alt = String(block.alt).replace(/"/g, '&quot;');
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><img src="${block.src}" alt="${alt}" width="${block.size}" height="${block.size}" style="display:block;width:${block.size}px;height:${block.size}px;border-radius:50%;object-fit:cover;border:0" /></td></tr></table>`;
+  // Escape EVERY interpolated attribute (src, alt). The previous
+  // local replace only handled `"` for alt — leaving src raw and
+  // letting `&`/`<`/`>` corrupt the output.
+  const safeSrc = escapeAttr(block.src);
+  const safeAlt = escapeAttr(block.alt);
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><img src="${safeSrc}" alt="${safeAlt}" width="${block.size}" height="${block.size}" style="display:block;width:${block.size}px;height:${block.size}px;border-radius:50%;object-fit:cover;border:0" /></td></tr></table>`;
 }
 
 const definition: BlockDefinition<AvatarBlock> = {
