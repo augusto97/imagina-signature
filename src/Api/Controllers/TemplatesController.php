@@ -106,7 +106,9 @@ final class TemplatesController extends BaseController {
 					'permission_callback' => $require_use,
 				],
 				[
-					'methods'             => 'PATCH',
+					// `EDITABLE` = POST | PUT | PATCH — defends against
+					// hosting WAFs that strip PATCH at the proxy layer.
+					'methods'             => \WP_REST_Server::EDITABLE,
 					'callback'            => [ $this, 'update' ],
 					'permission_callback' => $require_manage,
 					'args'                => $this->write_args( false ),

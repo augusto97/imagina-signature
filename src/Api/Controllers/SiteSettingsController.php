@@ -66,7 +66,16 @@ final class SiteSettingsController extends BaseController {
 					'permission_callback' => $require_use,
 				],
 				[
-					'methods'             => 'PATCH',
+					// Accept POST / PUT / PATCH (`WP_REST_Server::EDITABLE`)
+					// rather than just PATCH. Some shared-hosting WAFs
+					// (LiteSpeed default profile, mod_security CRS,
+					// certain Cloudflare configs) silently strip PATCH
+					// at the proxy layer — the request never reaches
+					// WordPress and "Save" silently noops, which is
+					// what the user reported as "no guarda los colores
+					// de branding". POST is universally accepted, so
+					// the frontend can fall back when PATCH fails.
+					'methods'             => \WP_REST_Server::EDITABLE,
 					'callback'            => [ $this, 'update' ],
 					'permission_callback' => $require_admin,
 				],
@@ -154,7 +163,16 @@ final class SiteSettingsController extends BaseController {
 
 		if ( null !== $request->get_param( 'brand_palette' ) ) {
 			$expected = self::sanitize_palette( (array) $request->get_param( 'brand_palette' ) );
-			if ( $expected !== $current['brand_palette'] ) {
+			// `array_values()` normalises the keys before comparison.
+			// Some object-cache backends (Redis Object Cache with
+			// igbinary, certain msgpack adapters) coerce numeric array
+			// keys to strings during serialise / deserialise, so a
+			// strict `!==` between `[0=>'#fff']` and `['0'=>'#fff']`
+			// reports a spurious "persistence failed" even though the
+			// data round-tripped correctly. Comparing values + length
+			// gives us the same correctness guarantee without the
+			// false negative.
+			if ( array_values( $expected ) !== array_values( $current['brand_palette'] ) ) {
 				return new \WP_Error(
 					'imgsig_brand_palette_persist_failed',
 					__( 'Brand palette did not persist on the server. Check the WordPress error log for details.', 'imagina-signatures' ),

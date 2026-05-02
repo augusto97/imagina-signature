@@ -118,7 +118,12 @@ final class SignaturesController extends BaseController {
 					'permission_callback' => $ownership,
 				],
 				[
-					'methods'             => 'PATCH',
+					// `WP_REST_Server::EDITABLE` = POST | PUT | PATCH.
+					// Accepting all three keeps autosave's PATCH
+					// working on hosts where a WAF (LiteSpeed,
+					// mod_security CRS, Cloudflare default rules)
+					// strips PATCH at the proxy layer.
+					'methods'             => \WP_REST_Server::EDITABLE,
 					'callback'            => [ $this, 'update' ],
 					'permission_callback' => $ownership,
 					'args'                => $this->write_args( false ),

@@ -190,18 +190,38 @@ class Persistence {
     const showToast = useToastStore.getState().show;
 
     this.inFlight = (async (): Promise<void> => {
+      // Tracks whether we actually committed at least one round-trip
+      // to the server during this save loop. The empty-blocks guard
+      // (below) is allowed to skip iterations without producing a
+      // network call — when nothing was written we must NOT flip the
+      // UI to "Saved · HH:MM", because that's the false positive that
+      // made past releases (1.0.22 / 1.0.23) appear to save while the
+      // listing stayed empty.
+      let wroteAtLeastOnce = false;
       try {
         while (this.dirty) {
-          this.dirty = false;
-          persistence.markSaving();
-
-          // Read the latest values inside the loop iteration so
-          // edits made while the previous save was awaiting an
-          // API response land on this iteration.
+          // Read the latest values BEFORE draining `dirty` so that
+          // edits arriving during an awaited API call land on the
+          // next iteration with the right inputs.
           const schema = useSchemaStore.getState().schema;
           const meta = usePersistenceStore.getState();
           const rowName = meta.signatureName.trim() || 'Untitled';
           const rowStatus = meta.signatureStatus;
+
+          // Empty-blocks guard for autosave on a brand-new row. The
+          // user typed a Name on a blank canvas; we must NOT POST a
+          // signature with `blocks: []` (it would land in the listing
+          // as a phantom empty row). Drain the dirty flag, but do NOT
+          // call `markSaved()` — that would lie to the user. The next
+          // schema mutation (real block added) will set `dirty = true`
+          // again via `scheduleSave()` and persist the whole thing.
+          if (this.signatureId === 0 && !allowEmpty && schema.blocks.length === 0) {
+            this.dirty = false;
+            continue;
+          }
+
+          this.dirty = false;
+          persistence.markSaving();
 
           if (this.signatureId > 0) {
             await apiCall(`/signatures/${this.signatureId}`, {
@@ -213,16 +233,6 @@ class Persistence {
               },
             });
           } else {
-            // Empty-blocks guard. Only the autosave path
-            // (`allowEmpty = false`) refuses to POST when the
-            // signature has no blocks — that's the path that was
-            // creating spurious empty rows when the dirty flag got
-            // flipped by a non-schema change. The manual-save path
-            // (`allowEmpty = true`) always POSTs because the user
-            // explicitly asked.
-            if (!allowEmpty && schema.blocks.length === 0) {
-              continue;
-            }
             const created = await apiCall<{ id: number }>('/signatures', {
               method: 'POST',
               body: {
@@ -249,9 +259,21 @@ class Persistence {
               'success',
             );
           }
+
+          wroteAtLeastOnce = true;
         }
 
-        persistence.markSaved();
+        if (wroteAtLeastOnce) {
+          persistence.markSaved();
+        } else {
+          // Drain the spinner / dirty UI state without claiming a save
+          // happened. `lastSavedAt` stays null so the topbar Save
+          // button shows "Save" (idle) instead of the misleading
+          // "Saved · HH:MM" timestamp. This is the fix for the
+          // headline 1.0.23 bug — autosave was flipping the row to
+          // "Saved" while never actually POSTing.
+          persistence.markDrainedNoOp();
+        }
       } catch (e) {
         const message = e instanceof ApiError ? e.message : (e as Error).message;
         persistence.setError(message);

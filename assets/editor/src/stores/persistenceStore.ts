@@ -43,6 +43,16 @@ interface PersistenceState {
   markDirty: () => void;
   markSaving: () => void;
   markSaved: () => void;
+  /**
+   * Drain the saving / dirty UI state without flipping `lastSavedAt`.
+   * Used when the persistence engine's loop ran without producing a
+   * network call (e.g. the empty-blocks guard refused to POST a fresh
+   * signature with no content). Calling `markSaved()` in that case
+   * would put the misleading "Saved · HH:MM" timestamp in the topbar
+   * even though nothing landed on the server — that's how the
+   * headline 1.0.23 "saves silently fail" bug surfaced.
+   */
+  markDrainedNoOp: () => void;
   setError: (message: string | null) => void;
 
   /**
@@ -74,6 +84,12 @@ export const usePersistenceStore = create<PersistenceState>((set) => ({
       isDirty: false,
       isSaving: false,
       lastSavedAt: new Date().toISOString(),
+      lastError: null,
+    }),
+  markDrainedNoOp: () =>
+    set({
+      isDirty: false,
+      isSaving: false,
       lastError: null,
     }),
   setError: (message) => set({ lastError: message, isSaving: false }),

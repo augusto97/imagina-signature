@@ -70,7 +70,9 @@ final class StorageController extends BaseController {
 					'permission_callback' => $require_manage,
 				],
 				[
-					'methods'             => 'PATCH',
+					// `EDITABLE` = POST | PUT | PATCH — defends against
+					// hosting WAFs that strip PATCH at the proxy layer.
+					'methods'             => \WP_REST_Server::EDITABLE,
 					'callback'            => [ $this, 'update' ],
 					'permission_callback' => $require_manage,
 				],

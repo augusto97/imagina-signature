@@ -2,6 +2,50 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.24] — 2026-05-02
+
+### Fixed — The `Saved · HH:MM` lie (the headline 1.0.23 bug)
+
+User reported: "no guarda nada ni signatures ni colores del menu de branding en settings". Root cause for the signature half:
+
+The persistence engine's autosave loop was calling `markSaved()` even when no network call had happened. Concretely, on a brand-new signature the user typed something in the topbar Name field. That fired `persistence.scheduleSave()` which set `dirty = true` and armed the 1500ms debounce timer. When the timer fired, `performSave(false)` ran. Inside the loop:
+
+1. `this.dirty = false` (drain at the top of the iteration).
+2. `markSaving()` fired → topbar shows "Saving…".
+3. `signatureId === 0` AND `schema.blocks.length === 0` → empty-blocks guard hit → `continue`.
+4. Loop checked `while (this.dirty)` — now false because of step 1 — and exited.
+5. `markSaved()` fired unconditionally on loop exit → topbar showed "Saved · HH:MM" with a fresh timestamp.
+
+The user thought the signature had been saved (the topbar said so), navigated back to the listing, and found nothing. **No POST ever went out.** This had been latent since 1.0.20 and the 1.0.22 / 1.0.23 fixes added more layers around it without addressing the false-positive `markSaved()`.
+
+Three complementary changes:
+
+1. **`wroteAtLeastOnce` flag in `performSave()`.** Tracks whether the loop body actually completed a POST or PATCH. `markSaved()` only fires when the flag is true. When the loop drains via the empty-blocks guard with no network call, we instead call the new `markDrainedNoOp()` action that flips `isSaving` / `isDirty` to false WITHOUT updating `lastSavedAt`. The Save button shows "Save" (idle) instead of the misleading "Saved · HH:MM".
+
+2. **Empty-blocks guard moved ahead of the dirty drain.** The guard now runs BEFORE `dirty = false` and BEFORE `markSaving()`, so a "save attempt with nothing to save" doesn't even flash the spinner. The next real schema mutation will set `dirty = true` again and the next iteration POSTs the whole thing.
+
+3. **Defensive `setSchema` validation in `useLoadSignature`.** The previous `typeof === 'object'` check let through arrays (`Signature::to_array()` falls back to `[]` when the stored `json_content` blob can't be decoded — a bare `[]` would crash the canvas because `schema.blocks` and `schema.canvas` are undefined). The check now requires an object that has a `schema_version` field AND a `blocks` array, with an info-level toast surfaced when the row is unusable so the user knows to start fresh.
+
+### Fixed — Branding palette save: WAF-stripped PATCH + array-key normalisation
+
+User reported branding colours in Settings were not persisting either. Three complementary defences:
+
+1. **`PATCH` accepted via `WP_REST_Server::EDITABLE`.** The `/admin/site-settings`, `/signatures/:id`, `/templates/:id`, and `/admin/storage` routes now register `WP_REST_Server::EDITABLE` (= `POST | PUT | PATCH`) instead of just `'PATCH'`. Some shared-hosting WAFs (LiteSpeed default profile, mod_security CRS, certain Cloudflare configs) silently strip PATCH at the proxy layer — the request never reached WordPress and "Save" silently noopped. The frontend keeps using PATCH; the broader allowlist is a safety net so hosts that block PATCH can still receive the same logical edit via POST.
+
+2. **Array-key-normalised round-trip comparison.** The brand-palette persist verification was using strict `!==` between arrays. Some object-cache backends (Redis Object Cache with igbinary, certain msgpack adapters) coerce numeric array keys to strings during serialise / deserialise, so a strict comparison between `[0=>'#fff']` and `['0'=>'#fff']` would report "persistence failed" even though the data round-tripped. Switched to `array_values($expected) !== array_values($current)` — same correctness guarantee, no false negatives.
+
+3. **`BrandingTab` validates the response shape.** If the server returns a 200 without a `brand_palette` array (proxy mangled the response, alternative response shape from a filter), the UI now surfaces an error banner instead of silently overwriting `palette` with `undefined`. Length-mismatch between sent vs. readback (sanitisation rejected an entry) also surfaces an error so the user knows which colours actually landed.
+
+### Added
+
+- **`tests/js/services/persistence.test.ts`** — three regression tests pinning the contract: autosave on an empty signature drains dirty without setting `lastSavedAt`, a non-empty schema POSTs and updates `lastSavedAt`, and `saveNow()` POSTs even on an empty schema (manual-save path).
+- New `markDrainedNoOp()` action on `persistenceStore` for the no-op drain semantics. Documented in the store's interface so future callers don't reach for `markSaved()` by accident.
+
+### Internal
+
+- Editor bundle: 681 KB → 681 KB (gzip 213 KB → 212.62 KB). One new conditional path in the engine; the `markSaved` call is just guarded.
+- Plugin version bumped to 1.0.24. After upgrading, hard-refresh the editor (`Ctrl/Cmd + Shift + R`) to invalidate any cached `editor.[hash].js` — the version pill will tell you if the bundle and plugin agree.
+
 ## [1.0.23] — 2026-05-02
 
 ### Fixed — Manual Save rejecting non-empty canvases

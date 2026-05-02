@@ -52,8 +52,26 @@ export function useLoadSignature(): LoadState {
     apiCall<SignatureRow>(`/signatures/${signatureId}`)
       .then((row) => {
         if (cancelled) return;
-        if (row.json_content && typeof row.json_content === 'object') {
+        // Tighter validation than the previous `typeof === 'object'`
+        // check, which let through arrays (`Signature::to_array()`
+        // falls back to `[]` when the stored `json_content` blob can't
+        // be decoded). A bare `[]` would crash the canvas because
+        // `schema.blocks` and `schema.canvas` are undefined; bail out
+        // and let the user start fresh instead.
+        const isUsableSchema =
+          row.json_content !== null &&
+          typeof row.json_content === 'object' &&
+          !Array.isArray(row.json_content) &&
+          'schema_version' in row.json_content &&
+          Array.isArray((row.json_content as { blocks?: unknown }).blocks);
+
+        if (isUsableSchema) {
           setSchema(row.json_content);
+        } else {
+          showToast(
+            __('This signature has no readable content yet. Start adding blocks to populate it.'),
+            'info',
+          );
         }
         // Populate the topbar's Name + Status from the loaded row so
         // the user can edit them. Status defaults to 'draft' when the

@@ -65,11 +65,46 @@ export const BrandingTab: FC = () => {
     if (palette === null) return;
     setBusy('saving');
     setFlash(null);
+    const sent = [...palette];
     try {
       const next = await apiCall<SiteSettings>('/admin/site-settings', {
         method: 'PATCH',
-        body: { brand_palette: palette },
+        body: { brand_palette: sent },
       });
+
+      // Defensive: verify the response actually contains the palette
+      // shape we expected. If `next.brand_palette` is missing or not
+      // an array, something between the WP REST stack and the proxy
+      // mangled the response — surface it to the user instead of
+      // silently wiping the local palette to `undefined`.
+      if (!Array.isArray(next?.brand_palette)) {
+        setFlash({
+          type: 'error',
+          message: __(
+            'Server response did not include a palette. The save may not have been persisted — please reload and verify.',
+          ),
+        });
+        return;
+      }
+
+      // Length mismatch between sent + readback means sanitisation on
+      // the server dropped one or more colours (regex rejected them)
+      // OR an object-cache layer is hiding a write failure. Either
+      // way the user needs to know the saved palette differs from
+      // what they picked.
+      if (next.brand_palette.length !== sent.length) {
+        setPalette(next.brand_palette);
+        setFlash({
+          type: 'error',
+          message: __(
+            'Saved %s of %s colours. Some entries were rejected by the server — verify the swatches above.',
+            String(next.brand_palette.length),
+            String(sent.length),
+          ),
+        });
+        return;
+      }
+
       setPalette(next.brand_palette);
       setFlash({ type: 'success', message: __('Brand palette saved.') });
     } catch (e) {
