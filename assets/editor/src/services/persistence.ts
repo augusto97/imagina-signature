@@ -83,6 +83,11 @@ class Persistence {
    * Schedule a debounced save. Called from the schema-change effect
    * in `useAutosave`. Each call resets the timer — rapid keystrokes
    * collapse into one save 1500 ms after the last edit.
+   *
+   * Routes through `performSave(false)` so the empty-blocks guard
+   * applies — the autosave will NOT create an empty row even if
+   * `dirty` got flipped by a non-schema change (e.g., the user
+   * tweaked the Name field on a fresh signature with no blocks yet).
    */
   scheduleSave(): void {
     this.dirty = true;
@@ -93,14 +98,20 @@ class Persistence {
     }
     this.saveTimer = setTimeout(() => {
       this.saveTimer = null;
-      void this.performSave();
+      void this.performSave(false);
     }, AUTOSAVE_DEBOUNCE_MS);
   }
 
   /**
    * Force-save now. Cancels the debounce, runs the save, awaits the
-   * full coalesce loop. Resolves with the signature id (positive on
-   * success, 0 if there was nothing to save).
+   * full coalesce loop. Always passes `allowEmpty=true` to
+   * `performSave` because the user explicitly asked — refusing the
+   * POST and surfacing "nothing to save" when they CAN see content
+   * on the canvas is the worst kind of silent failure.
+   *
+   * Returns the signature id (positive on success). Returns 0 only
+   * when the save genuinely had nothing to do — e.g., the engine is
+   * fresh-mounted, no edits, no id, no name change.
    *
    * Called from:
    *   - The topbar "Save" button.
@@ -114,19 +125,28 @@ class Persistence {
       this.saveTimer = null;
     }
 
-    // Nothing dirty, already have an id → done.
-    if (!this.dirty && this.signatureId > 0) {
-      return this.signatureId;
+    // Wait for any in-flight save first. If the user clicked the
+    // manual Save while the autosave's debounce-fired POST was
+    // still in flight, we don't want to short-circuit on the
+    // intermediate `dirty=false` state.
+    if (this.inFlight) {
+      try {
+        await this.inFlight;
+      } catch {
+        // Already surfaced via toast.
+      }
+      // If the previous save committed our changes (id is now
+      // positive), we're done. Otherwise fall through and run
+      // another save.
+      if (this.signatureId > 0 && !this.dirty) {
+        return this.signatureId;
+      }
     }
 
-    // Nothing dirty, no id → no row to create. Refuse to POST an
-    // empty signature — that's how the "two empty rows" symptom
-    // happened in earlier versions.
-    if (!this.dirty && this.signatureId === 0) {
-      return 0;
-    }
-
-    await this.performSave();
+    // Force at least one iteration. The user explicitly asked to
+    // save — they want a definitive result, not a silent no-op.
+    this.dirty = true;
+    await this.performSave(true);
     return this.signatureId;
   }
 
@@ -140,8 +160,17 @@ class Persistence {
    * iteration picks up the latest schema. No `.finally(scheduleSave)`
    * chains, no re-entry — concurrency control reduces to "is
    * `inFlight` set?".
+   *
+   * `allowEmpty` controls the empty-blocks guard:
+   *  - `false` (autosave path) — refuse to POST a signature with
+   *    `blocks.length === 0`. Stops accidental empty-row creation
+   *    when the autosave is triggered by a non-schema change (e.g.
+   *    Name input edited on a brand-new signature).
+   *  - `true` (manual save path) — always POST when dirty. The user
+   *    explicitly asked; if they want to save an empty signature
+   *    that's their call.
    */
-  private async performSave(): Promise<void> {
+  private async performSave(allowEmpty: boolean): Promise<void> {
     if (this.inFlight) {
       // Already saving. The current loop will pick up `dirty=true`
       // on its next iteration. Wait for it to finish and exit.
@@ -184,13 +213,14 @@ class Persistence {
               },
             });
           } else {
-            // Engine-side empty-schema guard. The schemaStore-side
-            // `hasUserEdited` gate stops most empty saves, but
-            // changing only the Name input bypasses it (a name
-            // tweak isn't a schema edit). We still don't want the
-            // listing to fill up with rows that have no blocks.
-            // Skip the POST until at least one block exists.
-            if (schema.blocks.length === 0) {
+            // Empty-blocks guard. Only the autosave path
+            // (`allowEmpty = false`) refuses to POST when the
+            // signature has no blocks — that's the path that was
+            // creating spurious empty rows when the dirty flag got
+            // flipped by a non-schema change. The manual-save path
+            // (`allowEmpty = true`) always POSTs because the user
+            // explicitly asked.
+            if (!allowEmpty && schema.blocks.length === 0) {
               continue;
             }
             const created = await apiCall<{ id: number }>('/signatures', {

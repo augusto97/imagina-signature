@@ -57,11 +57,15 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
     if (manualSaving) return;
     setManualSaving(true);
     try {
-      const id = await persistence.saveNow();
-      if (id > 0) {
+      await persistence.saveNow();
+      // The engine surfaces a "Save failed" toast on its own when
+      // the API call throws, so we only need to confirm success
+      // here. We intentionally don't second-guess by checking the
+      // returned id — the user clicked Save, the engine ran the
+      // save, that's "Saved" from their perspective.
+      const { lastError } = usePersistenceStore.getState();
+      if (!lastError) {
         showToast(__('Saved'), 'success');
-      } else {
-        showToast(__('Nothing to save yet — add a block first.'), 'info');
       }
     } catch {
       // Errors already surfaced as a toast inside the engine.

@@ -101,31 +101,55 @@ final class SiteSettingsController extends BaseController {
 		// through an extra encode/decode layer for no benefit and made
 		// silent corruption hard to spot. Switching to native arrays
 		// also matches how `compliance_footer` was always stored.
+		//
+		// `update_option` returns `false` in two distinct situations:
+		//  (a) the new value is identical to the stored value (no-op),
+		//  (b) the write actually failed.
+		// Telling them apart matters for the diagnostic log below — we
+		// compare the pre-write value against the post-sanitize value
+		// to figure out which case we're in.
 		if ( null !== $request->get_param( 'brand_palette' ) ) {
-			$palette = (array) $request->get_param( 'brand_palette' );
-			$palette = self::sanitize_palette( $palette );
-			update_option( self::OPT_BRAND_PALETTE, $palette, false );
+			$palette  = self::sanitize_palette( (array) $request->get_param( 'brand_palette' ) );
+			$previous = self::current_palette();
+			$updated  = update_option( self::OPT_BRAND_PALETTE, $palette, false );
+			self::log_update( 'brand_palette', $previous, $palette, $updated );
 		}
 
 		if ( null !== $request->get_param( 'compliance_footer' ) ) {
-			$raw = (array) $request->get_param( 'compliance_footer' );
+			$raw    = (array) $request->get_param( 'compliance_footer' );
 			$footer = [
 				'enabled' => ! empty( $raw['enabled'] ),
 				'html'    => isset( $raw['html'] ) ? self::sanitize_compliance_html( (string) $raw['html'] ) : '',
 			];
-			update_option( self::OPT_COMPLIANCE_FOOTER, $footer, false );
+			$previous = self::current_compliance_footer();
+			$updated  = update_option( self::OPT_COMPLIANCE_FOOTER, $footer, false );
+			self::log_update( 'compliance_footer', $previous, $footer, $updated );
 		}
 
 		if ( null !== $request->get_param( 'banner_campaigns' ) ) {
-			$raw = (array) $request->get_param( 'banner_campaigns' );
+			$raw       = (array) $request->get_param( 'banner_campaigns' );
 			$campaigns = self::sanitize_campaigns( $raw );
-			update_option( self::OPT_BANNER_CAMPAIGNS, $campaigns, false );
+			$previous  = self::current_banner_campaigns();
+			$updated   = update_option( self::OPT_BANNER_CAMPAIGNS, $campaigns, false );
+			self::log_update( 'banner_campaigns', $previous, $campaigns, $updated );
 		}
 
 		// Round-trip verification: read each option back and compare
 		// against what we just wrote. If anything diverges (silent
 		// `update_option` failure, conflicting filter, broken cache),
 		// surface a 500 instead of returning a misleading "Saved" toast.
+		//
+		// We force a cache miss before reading. Any object cache plugin
+		// (Redis, Memcached) that the host runs would otherwise hand us
+		// back the value our own `update_option` call just primed — a
+		// useless tautology. Deleting the cache entry first makes the
+		// readback an actual database round trip, which is the only
+		// thing that proves persistence to disk.
+		wp_cache_delete( self::OPT_BRAND_PALETTE, 'options' );
+		wp_cache_delete( self::OPT_COMPLIANCE_FOOTER, 'options' );
+		wp_cache_delete( self::OPT_BANNER_CAMPAIGNS, 'options' );
+		wp_cache_delete( 'alloptions', 'options' );
+
 		$current = self::current_settings();
 
 		if ( null !== $request->get_param( 'brand_palette' ) ) {
@@ -159,6 +183,38 @@ final class SiteSettingsController extends BaseController {
 		}
 
 		return rest_ensure_response( $current );
+	}
+
+	/**
+	 * Diagnostic log for `update_option` calls. Only fires when
+	 * `WP_DEBUG` is on — keeps production logs clean while giving us
+	 * a paper trail when a user reports "the colours don't save".
+	 *
+	 * Logs every save with: option name, whether the value actually
+	 * changed, and `update_option`'s raw return value. The combination
+	 * tells us which of the three failure modes we're in:
+	 *
+	 *  - no-op (previous === next, update_option returned false): fine.
+	 *  - write succeeded (previous !== next, returned true): fine.
+	 *  - write failed (previous !== next, returned false): bug to find.
+	 *
+	 * @since 1.0.23
+	 *
+	 * @param string $name     Short option name for the log line.
+	 * @param mixed  $previous Stored value before the write attempt.
+	 * @param mixed  $next     Value we tried to write.
+	 * @param bool   $updated  Return value of `update_option`.
+	 *
+	 * @return void
+	 */
+	private static function log_update( string $name, $previous, $next, bool $updated ): void {
+		if ( ! ( defined( 'WP_DEBUG' ) && WP_DEBUG ) ) {
+			return;
+		}
+		$changed = $previous !== $next;
+		$status  = $updated ? 'WRITTEN' : ( $changed ? 'FAILED' : 'NOOP' );
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		error_log( sprintf( '[imgsig] site-settings.%s %s', $name, $status ) );
 	}
 
 	/**

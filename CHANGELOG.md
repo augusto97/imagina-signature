@@ -2,6 +2,48 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.23] — 2026-05-02
+
+### Fixed — Manual Save rejecting non-empty canvases
+
+User reported: "no deja guardar ahora, coloco y edito contenido y sale 'Nothing to save yet — add a block first.'"
+
+The empty-blocks guard added in 1.0.22 to stop autosave from POSTing empty rows was also firing on the manual Save button. The two callers — debounced autosave and explicit Save click — were going through the same code path with the same guard, so a Save click that arrived while the engine's `dirty` flag was momentarily `false` (e.g. just after the in-flight autosave's POST returned but before the next mutation flipped it back) would short-circuit and surface "Nothing to save yet" even though the canvas had content.
+
+Two complementary changes:
+
+1. **`performSave(allowEmpty: boolean)` parameter.** The save loop's empty-blocks guard now reads:
+   ```ts
+   if (!allowEmpty && schema.blocks.length === 0) continue;
+   ```
+   Autosave (`scheduleSave`) calls `performSave(false)` — guard active, refuses to POST when there's nothing on the canvas, drains the dirty flag without creating a row. Manual save (`saveNow`) calls `performSave(true)` — guard bypassed, always POSTs. The user explicitly clicked Save: that's a deliberate choice, and the engine's job is to honour it, not to second-guess.
+
+2. **`saveNow()` rewritten to handle overlapping saves correctly.** Previous logic could short-circuit on the intermediate `!dirty` state in the middle of an in-flight save:
+   - Old: if a user clicked Save during the autosave's POST round trip, `saveNow()` would await the in-flight promise, see `!dirty` (the autosave had already drained it), and return `signatureId=0`.
+   - New: await any in-flight save first; if it fully committed (`signatureId > 0 && !dirty`), return immediately with the assigned id; otherwise force `dirty = true` and run another iteration. The engine reads the latest schema/name/status inside the new iteration so any edits made during the in-flight POST land on disk.
+
+3. **Topbar manual-save handler simplified.** The previous version checked the returned `signatureId` and conditionally showed "Nothing to save yet" when it came back as 0. That second-guessing is gone — the handler now shows a "Saved" toast unconditionally on completion (unless the engine surfaced its own error toast). The engine is the source of truth about whether a save happened; the UI shouldn't second-guess.
+
+### Hardened — Branding palette persistence verification
+
+User reported (still): "y en branding no guarda todavía colores, revisa todo tu proceso y vase de datos a ver por qué algo tan sencillo como guardar no te funciona". The 1.0.20 round-trip verification was already in place but the user was still seeing failures. Two reinforcements that should make the next debug session conclusive:
+
+1. **Object-cache invalidation before readback.** `PATCH /admin/site-settings` now calls `wp_cache_delete` for each option key plus the `alloptions` cache before re-reading. Without this, an aggressive object cache (Redis, Memcached) could hand back the value our own `update_option` just primed in the cache layer — a tautology that would mask a real database write failure. Forcing a cache miss makes the readback an actual round trip to disk, which is what verification requires.
+
+2. **`WP_DEBUG`-gated diagnostic log lines.** New `log_update()` helper records each `update_option` call with: option name, whether the value actually changed against the previous stored value, and `update_option`'s raw return value. This produces three distinct log statuses:
+   - `WRITTEN` — value changed and DB write succeeded.
+   - `NOOP`    — value identical to stored; `update_option` returned false but that's expected.
+   - `FAILED`  — value changed but DB write returned false. Bug to find.
+
+   The next time a user reports "the colours don't save", checking the WordPress error log will tell us which option got which status, which categorically distinguishes "the user is on a stale browser cache" from "WP rejected the write" from "the cache layer is hiding a write failure".
+
+### Internal
+
+- New private `log_update()` helper in `SiteSettingsController`. Static, only fires when `WP_DEBUG` is on, no performance impact in production.
+- `performSave()` signature changed from `()` to `(allowEmpty: boolean)`. All call sites updated (`scheduleSave` passes `false`, `saveNow` passes `true`).
+- `saveNow()` rewritten — no longer has the `dirty=false && id=0 → return 0` short-circuit that produced the false "Nothing to save yet".
+- Editor bundle: 681 KB → 681 KB (gzip 213 KB). Identical size; only call-site changes inside the engine.
+
 ## [1.0.22] — 2026-05-02
 
 ### Fixed — Empty-row creation

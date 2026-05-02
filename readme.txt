@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.22
+Stable tag: 1.0.23
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,11 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.23 =
+* **Manual Save no longer rejected with "Nothing to save yet".** The empty-blocks guard added in 1.0.22 (which prevents accidental empty-row creation by autosave) was also firing on the manual Save button — clicking Save when the canvas had content but the engine's `dirty` flag had momentarily dropped to `false` would surface the "Nothing to save yet — add a block first." toast even though the canvas was full. The engine's `performSave()` now takes an `allowEmpty` parameter: autosave path stays guarded (`allowEmpty=false`), manual Save path always runs the POST (`allowEmpty=true`). The user explicitly clicking Save bypasses the guard because they've made a deliberate choice. The Topbar's manual-save handler also no longer second-guesses the engine's response — it shows "Saved" on completion unless the engine surfaced an error toast on its own.
+* **`saveNow()` correctness during overlapping saves.** When the user clicks Save while an autosave is already in flight, the new path awaits the in-flight promise first, checks if the in-flight save fully committed the user's pending edits (`signatureId > 0 && !dirty`), and only forces another iteration if more work remains. Eliminates the previous edge case where clicking Save during the autosave debounce window could short-circuit on the intermediate `dirty=false` state and return `signatureId=0`.
+* **Branding palette save: cache-bypass on round-trip verification + diagnostic logging.** The `PATCH /admin/site-settings` endpoint now explicitly invalidates the object cache (`wp_cache_delete` for each option key + `alloptions`) before reading the option back to verify persistence. Without this, an aggressive object cache (Redis, Memcached) could hand us back the value our own write just primed in the cache layer — a useless tautology that would mask a real DB write failure. Also added `WP_DEBUG`-gated `error_log` lines that record `update_option`'s return value and whether the value actually changed for each save, so the next time a user reports "the colours don't save" we can read the WordPress error log and see exactly which option failed and why (NOOP / WRITTEN / FAILED).
 
 = 1.0.22 =
 * **Two empty-row guards.** The user reported "deleted everything, created one signature, ended up with two empty rows in the listing". Two complementary fixes so an empty signature row literally cannot be POSTed:
