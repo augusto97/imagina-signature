@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.32 | [imagina-signatures-1.0.32.zip](imagina-signatures-1.0.32.zip) |
 | 1.0.31 | [imagina-signatures-1.0.31.zip](imagina-signatures-1.0.31.zip) |
 | 1.0.30 (hotfix) | [imagina-signatures-1.0.30.zip](imagina-signatures-1.0.30.zip) |
 | ~~1.0.29~~ — DO NOT USE, fatal error on activation | [imagina-signatures-1.0.29.zip](imagina-signatures-1.0.29.zip) |
@@ -43,6 +44,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.32.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.31.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.30.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.29.zip
@@ -111,6 +113,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.32
+**Duplicate primary button + 3 multi-column templates.** User asked for a Duplicate button next to Edit in the signatures listing (was hidden under the kebab "more" menu) — surfaced it as a primary ghost button between Edit and the kebab. Three new templates show off the 1.0.31 left/right cell schema: **`logo-left`** (25% logo cell + name / role / company / divider / contacts / socials right — exactly the 1-vs-N layout the user said was missing), **`avatar-pro`** (18% round avatar + name / role / contacts / socials right), and **`two-col-balanced`** (50/50 split: headline + tagline + divider on the left, company + contacts + Book-a-call CTA on the right). All three live in a new `multi-column` category. New regression test parameterised over the `templates/` directory compiles every shipped template through the full pipeline + asserts both cells render in `logo-left` so future drift in `compile()` fails CI. 54/54 vitest pass.
 
 ### 1.0.31
 **Container columns: explicit left vs right + cell-aware drag-and-drop + Layers DnD.** User reported: "no tengo forma de seleccionar cuáles imágenes van a ir en el lado izquierdo y cuáles en el derecho" — the Container compile was splitting children via `Math.ceil(length/2)`, so a layout with 1 logo on the left + 4 contact rows on the right was impossible. Plus drag-and-drop didn't work into cells, and Layers had no drag at all. **Schema**: new `right_children: Block[]` field on `ContainerBlock`; `children` is now the LEFT cell of 2-col containers (and the only cell when 1-col). Migration walker rewrites legacy 2-col rows on load using the old half-by-half rule so the user sees the same layout they had before. **Renderer**: each cell is its own dnd-kit `useDroppable` zone wrapping a `SortableContext`. Empty cells render a "Drop blocks here" outline. **Canvas DnD**: drop a library card or canvas block onto a specific cell to land in that cell. New `container-cell:{id}:{left|right}` drop-target id; `findParentAndIndex` / `moveBlock` walk both cells so cross-cell drag works. **Layers DnD**: own `DndContext` independent of canvas; per-row drag handle (grip icon); container rows expose two cell drop zones (1 in 1-col mode); drop on a row → moveBlock after, drop on a cell zone → moveBlockToContainerCell. **Properties**: 2-col mode shows two side-by-side Left / Right subpanels with own Add buttons + child lists. Toggle 2→1 merges right_children back into children; 1→2 leaves everything in left cell. 8 new regression tests; 40/40 vitest pass.
