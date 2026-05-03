@@ -1,31 +1,127 @@
-import type { FC } from 'react';
-import { ChevronUp, ChevronDown, Eye, EyeOff, Layers, Trash2 } from 'lucide-react';
-import { useSchemaStore } from '@/stores/schemaStore';
+import { useState, type FC } from 'react';
+import { ChevronUp, ChevronDown, Eye, EyeOff, GripVertical, Layers, Trash2 } from 'lucide-react';
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { useSchemaStore, type ContainerCell } from '@/stores/schemaStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { rendererForBlock } from '@/core/blocks/registry';
-import type { Block } from '@/core/schema/blocks';
+import type { Block, ContainerBlock } from '@/core/schema/blocks';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 
 /**
  * Layers panel — hierarchical view of every block on the canvas.
  *
- * Top-level blocks render as flat rows; Container children render
- * indented under their parent. Each row exposes:
- *   - click to select (highlights canvas + opens right-sidebar props)
- *   - hover to highlight on canvas (mirrors SelectionOverlay)
- *   - eye toggle to flip `block.visible`
- *   - up / down arrows to swap with siblings (within the same parent
- *     — top-level rows reorder among top-level, children reorder
- *     within their own column array)
- *   - trash to delete
+ * 1.0.31 added drag-and-drop: every layer row is a dnd-kit
+ * sortable, and Container rows expose two "drop zone" rows (one
+ * per cell, only one in 1-col mode) so the user can drag a top-
+ * level block INTO a specific cell. The panel hosts its own
+ * `<DndContext>` independent of the canvas DnD; that keeps the two
+ * UIs from racing on collision detection (each context has its own
+ * pointer sensor and ID space).
  *
- * Drag-to-reorder isn't wired here yet — `moveBlockUp` /
- * `moveBlockDown` cover the same intent and avoid a second
- * SortableContext layer.
+ * Drop semantics inside the panel:
+ *   - Drop on a regular block row    → move AFTER that row's block
+ *     (uses `moveBlock` which walks both Container cells via
+ *     `findParentAndIndex`).
+ *   - Drop on a "Left cell" / "Right cell" zone of a Container →
+ *     append to that cell.
+ *
+ * The chevron + eye + trash buttons stay around — drag is not
+ * always faster than a one-click "move up" when the next row is
+ * adjacent, and chevrons are accessible to keyboard users by
+ * default.
  */
+const CELL_DROP_PREFIX = 'layers-cell:';
+function layersCellDropId(containerId: string, cell: ContainerCell): string {
+  return `${CELL_DROP_PREFIX}${containerId}:${cell}`;
+}
+
+function parseLayersCellDropId(id: string): {
+  containerId: string;
+  cell: ContainerCell;
+} | null {
+  if (!id.startsWith(CELL_DROP_PREFIX)) return null;
+  const parts = id.substring(CELL_DROP_PREFIX.length).split(':');
+  if (parts.length !== 2) return null;
+  const cell = parts[1];
+  if (cell !== 'left' && cell !== 'right') return null;
+  return { containerId: parts[0] ?? '', cell };
+}
+
+/**
+ * Walks the schema tree and emits every block id in pre-order
+ * (top-level, then each Container's left children, then its
+ * right children). Used to build a single flat `SortableContext`
+ * `items` array — dnd-kit needs to know about every sortable id
+ * that participates in the same context.
+ */
+function flattenBlockIds(blocks: Block[]): string[] {
+  const ids: string[] = [];
+  for (const block of blocks) {
+    ids.push(block.id);
+    if (block.type === 'container') {
+      ids.push(...flattenBlockIds(block.children));
+      if (Array.isArray(block.right_children)) {
+        ids.push(...flattenBlockIds(block.right_children));
+      }
+    }
+  }
+  return ids;
+}
+
 export const LayersPanel: FC = () => {
   const blocks = useSchemaStore((s) => s.schema.blocks);
+  const moveBlock = useSchemaStore((s) => s.moveBlock);
+  const moveBlockToContainerCell = useSchemaStore((s) => s.moveBlockToContainerCell);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const onDragStart = (event: DragStartEvent): void => {
+    setDraggingId(String(event.active.id));
+  };
+
+  const onDragEnd = (event: DragEndEvent): void => {
+    const { active, over } = event;
+    setDraggingId(null);
+    if (!over) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    if (activeId === overId) return;
+
+    // Drop on a cell zone → move to that cell.
+    const cellTarget = parseLayersCellDropId(overId);
+    if (cellTarget) {
+      moveBlockToContainerCell(activeId, cellTarget.containerId, cellTarget.cell);
+      return;
+    }
+
+    // Drop on another block row → reorder after it. `moveBlock`
+    // walks both cells of every container, so this works for top-
+    // level AND cross-cell drags.
+    moveBlock(activeId, overId, 'after');
+  };
 
   if (blocks.length === 0) {
     return (
@@ -43,18 +139,30 @@ export const LayersPanel: FC = () => {
     );
   }
 
+  const allIds = flattenBlockIds(blocks);
+
   return (
-    <ul className="flex flex-col gap-0.5 p-2">
-      {blocks.map((block, index) => (
-        <LayerRow
-          key={block.id}
-          block={block}
-          depth={0}
-          index={index}
-          siblingsCount={blocks.length}
-        />
-      ))}
-    </ul>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+    >
+      <SortableContext items={allIds} strategy={verticalListSortingStrategy}>
+        <ul className="flex flex-col gap-0.5 p-2">
+          {blocks.map((block, index) => (
+            <LayerRow
+              key={block.id}
+              block={block}
+              depth={0}
+              index={index}
+              siblingsCount={blocks.length}
+              draggingId={draggingId}
+            />
+          ))}
+        </ul>
+      </SortableContext>
+    </DndContext>
   );
 };
 
@@ -63,20 +171,22 @@ interface LayerRowProps {
   depth: number;
   index: number;
   siblingsCount: number;
+  draggingId: string | null;
 }
 
-const LayerRow: FC<LayerRowProps> = ({ block, depth, index, siblingsCount }) => {
+const LayerRow: FC<LayerRowProps> = ({ block, depth, index, siblingsCount, draggingId }) => {
   const updateBlock = useSchemaStore((s) => s.updateBlock);
   const deleteBlock = useSchemaStore((s) => s.deleteBlock);
   const moveBlockUp = useSchemaStore((s) => s.moveBlockUp);
   const moveBlockDown = useSchemaStore((s) => s.moveBlockDown);
-  // Granular selectors per CLAUDE.md §6.4. Destructuring the full
-  // store re-rendered every LayerRow on every selection / hover
-  // change.
   const selectedBlockId = useSelectionStore((s) => s.selectedBlockId);
   const hoveredBlockId = useSelectionStore((s) => s.hoveredBlockId);
   const select = useSelectionStore((s) => s.select);
   const hover = useSelectionStore((s) => s.hover);
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: block.id,
+  });
 
   const def = rendererForBlock(block);
   const Icon = def?.icon;
@@ -87,10 +197,16 @@ const LayerRow: FC<LayerRowProps> = ({ block, depth, index, siblingsCount }) => 
   const canMoveDown = index < siblingsCount - 1;
 
   const isContainer = block.type === 'container';
-  const children = isContainer ? (block as { children: Block[] }).children : [];
+  const container = isContainer ? (block as ContainerBlock) : null;
+
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
 
   return (
-    <li>
+    <li ref={setNodeRef} style={style}>
       <div
         className={cn(
           'group flex items-center gap-1 rounded-md py-1 pr-1 text-[12px] transition-colors',
@@ -105,6 +221,19 @@ const LayerRow: FC<LayerRowProps> = ({ block, depth, index, siblingsCount }) => 
         onMouseEnter={() => hover(block.id)}
         onMouseLeave={() => hover(null)}
       >
+        {/* Drag handle — only this element triggers a drag, so
+            clicking on the row body still selects the block. */}
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label={__('Drag layer')}
+          title={__('Drag to reorder')}
+          className="inline-flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
+        >
+          <GripVertical size={11} />
+        </button>
+
         <button
           type="button"
           className="flex flex-1 items-center gap-2 truncate text-left"
@@ -155,20 +284,92 @@ const LayerRow: FC<LayerRowProps> = ({ block, depth, index, siblingsCount }) => 
         </RowAction>
       </div>
 
-      {isContainer && children.length > 0 && (
-        <ul className="flex flex-col gap-0.5">
-          {children.map((child, childIndex) => (
-            <LayerRow
-              key={child.id}
-              block={child}
-              depth={depth + 1}
-              index={childIndex}
-              siblingsCount={children.length}
-            />
-          ))}
-        </ul>
+      {/* Container children — rendered once per cell so the user
+          can drop a layer into an explicit column. */}
+      {container && (
+        <CellGroup
+          containerId={container.id}
+          cell="left"
+          label={container.columns === 2 ? __('Left cell') : undefined}
+          items={container.children}
+          depth={depth + 1}
+          draggingId={draggingId}
+        />
+      )}
+      {container && container.columns === 2 && (
+        <CellGroup
+          containerId={container.id}
+          cell="right"
+          label={__('Right cell')}
+          items={Array.isArray(container.right_children) ? container.right_children : []}
+          depth={depth + 1}
+          draggingId={draggingId}
+        />
       )}
     </li>
+  );
+};
+
+/**
+ * Render one cell of a container as an indented sub-list with its
+ * own drop target. Empty cells still render the dashed drop zone so
+ * the user has somewhere to release a dragged layer.
+ */
+const CellGroup: FC<{
+  containerId: string;
+  cell: ContainerCell;
+  label: string | undefined;
+  items: Block[];
+  depth: number;
+  draggingId: string | null;
+}> = ({ containerId, cell, label, items, depth, draggingId }) => {
+  const dropId = layersCellDropId(containerId, cell);
+  const { setNodeRef, isOver } = useDroppable({ id: dropId, data: { containerId, cell } });
+  // Highlight the drop zone whenever a drag is active and the
+  // dragged block isn't already a direct child of this cell — that
+  // tells the user "yes, you can drop here".
+  const showDropTarget = draggingId !== null && !items.some((c) => c.id === draggingId);
+
+  return (
+    <>
+      {label && (
+        <div
+          style={{ paddingLeft: 8 + depth * 14 }}
+          className="mt-0.5 flex items-center text-[10px] uppercase tracking-wide text-[var(--text-muted)]"
+        >
+          {label}
+        </div>
+      )}
+      <ul className="flex flex-col gap-0.5">
+        {items.map((child, childIndex) => (
+          <LayerRow
+            key={child.id}
+            block={child}
+            depth={depth}
+            index={childIndex}
+            siblingsCount={items.length}
+            draggingId={draggingId}
+          />
+        ))}
+      </ul>
+      <div
+        ref={setNodeRef}
+        style={{ marginLeft: 8 + depth * 14 }}
+        className={cn(
+          'mt-0.5 rounded-md border border-dashed px-2 py-1 text-[10.5px] transition-colors',
+          isOver && showDropTarget
+            ? 'border-[var(--accent)] bg-[var(--bg-selected)] text-[var(--accent)]'
+            : 'border-transparent text-[var(--text-muted)]',
+          showDropTarget ? 'border-[var(--border-default)]' : '',
+        )}
+      >
+        {showDropTarget
+          ? __('Drop into this cell')
+          : items.length === 0
+            ? __('Empty')
+            : ''}
+      </div>
+    </>
   );
 };
 
@@ -211,11 +412,10 @@ const RowAction: FC<RowActionProps> = ({
 );
 
 /**
- * Best-effort short label for the layer row.
- *
- * Returns the first ~30 chars of content / alt / first social URL,
- * falling back to nothing when the block type doesn't expose any
- * obvious user-facing string.
+ * Best-effort short label for the layer row. Returns the first
+ * ~30 chars of content / alt / first social URL, falling back to
+ * nothing when the block type doesn't expose any obvious user-
+ * facing string.
  */
 function labelForBlock(block: Block): string {
   let raw = '';
@@ -243,8 +443,9 @@ function labelForBlock(block: Block): string {
       break;
     }
     case 'container': {
-      const c = block as { columns: 1 | 2; children: Block[] };
-      raw = `${c.columns}-col, ${c.children.length} item${c.children.length === 1 ? '' : 's'}`;
+      const c = block as ContainerBlock;
+      const total = c.children.length + (Array.isArray(c.right_children) ? c.right_children.length : 0);
+      raw = `${c.columns}-col, ${total} item${total === 1 ? '' : 's'}`;
       break;
     }
     default:

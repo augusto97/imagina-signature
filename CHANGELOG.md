@@ -2,6 +2,41 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.31] — 2026-05-03
+
+### Changed — Container columns: explicit left vs right + drag-and-drop into cells
+
+User reported the Container block had no way to choose which children went in which column — the compile pipeline was splitting a single flat `children` array via `Math.ceil(length/2)`, so a layout with 1 logo on the left + 4 contact rows on the right was impossible (the split rule forced 3 left / 2 right). Plus drag-and-drop didn't work into cells, and the Layers panel had no drag at all.
+
+This release rewrites the Container block end-to-end:
+
+- **Schema**: new `right_children: Block[]` field on `ContainerBlock`. The existing `children` array is now the LEFT cell when `columns === 2` (and the only cell when `columns === 1`). `right_children` is optional for back-compat.
+- **Migration**: `core/schema/migrate.ts` walks every container in a freshly-loaded signature and, when it finds a 2-col container with no `right_children` field yet, splits the existing `children` array using the legacy half-by-half rule so the user sees the same layout they had before. Idempotent. Also defensively merges stray `right_children` back into `children` for 1-col containers.
+- **Renderer**: each cell is now its own dnd-kit `useDroppable` zone wrapping a `SortableContext` of that cell's children. Empty cells render a dashed "Drop blocks here" outline so the user knows the cell is a target.
+- **Canvas drag-and-drop**: drop a library card or an existing canvas block onto a specific cell to land in that cell. New `container-cell:{id}:{left|right}` drop-target id format. `useDragAndDrop` recognises it and routes to `addChildToContainer(parent_id, fresh, cell)` for library cards or `moveBlockToContainerCell(...)` for existing blocks. Reorder within a cell + drag-cross-cell both work because `findParentAndIndex` / `moveBlock` walk both cell arrays.
+- **Toggle 1↔2**: new `setContainerColumns(id, columns)` action. Going 2→1 merges `right_children` back into `children` so no block is silently lost; going 1→2 leaves everything in the LEFT cell + creates an empty right cell so the user can drag pieces over deliberately.
+- **Properties panel**: 2-col mode shows two side-by-side "Left cell" / "Right cell" subpanels with their own Add buttons + child lists. 1-col mode keeps the single "Children" list.
+
+### Added — Layers panel drag-and-drop with cell drop zones
+
+User reported they couldn't drag-drop in the Layers tab to move elements into a cell. Added:
+
+- Each layer row gets a drag handle (grip icon) that triggers a sortable drag.
+- The panel hosts its own `DndContext` independent of the canvas DnD — keeps the two UIs from racing on collision detection (each context has its own pointer sensor + ID space).
+- Container rows expose two "drop zone" rows (one per cell, only one in 1-col mode) so the user can drag a top-level block INTO a specific column from the Layers panel.
+- Drop on a regular row → move AFTER that row's block. Drop on a "Left cell" / "Right cell" zone → append to that cell. Both flows go through the same `moveBlock` / `moveBlockToContainerCell` actions the canvas uses, so the schema only ever has one truth.
+- Existing chevron + eye + trash buttons stayed (drag isn't always faster than a one-click "move up", and chevrons stay accessible to keyboard users).
+
+### Tests
+
+- `tests/js/stores/container-cells.test.ts` — 8 cases pinning the new contract: addChildToContainer cell routing, moveBlockToContainerCell, setContainerColumns 1↔2 merge / split, cross-cell moveBlock, migration of legacy 2-col rows + idempotence, 1-col stray-right-children fold-back.
+
+### Internal
+
+- Editor bundle: 683 KB → 689 KB (gzip 213 → 215 KB). Slightly larger because of the extra dnd-kit `SortableContext` per cell + the LayersPanel DndContext. Still well under the 600 KB gzip target in CLAUDE.md §2.3.
+- All 40 vitest cases pass; tsc strict-clean.
+- Plugin version bumped to 1.0.31.
+
 ## [1.0.30] — 2026-05-03
 
 ### Fixed — Critical: 1.0.29 fatal-errored every page after activation

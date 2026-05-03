@@ -1,9 +1,33 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import type { Block } from '@/core/schema/blocks';
+import type { Block, ContainerBlock } from '@/core/schema/blocks';
 import type { CanvasConfig, SignatureSchema } from '@/core/schema/signature';
 import { createEmptySchema } from '@/core/schema/signature';
+import { migrateContainersInPlace } from '@/core/schema/migrate';
 import { useHistoryStore } from './historyStore';
+
+/**
+ * Identifier for the cell side inside a 2-column container. The
+ * Container schema stores left-cell children under `children` and
+ * right-cell children under `right_children`; helper actions use
+ * this string to pick the right array.
+ */
+export type ContainerCell = 'left' | 'right';
+
+/**
+ * Returns the children array for the given cell side. For 1-col
+ * containers (or the "left" side of any container), this is just
+ * `children`. For the right cell, returns the `right_children`
+ * array, lazy-initialising it as an empty array if missing so
+ * callers can splice into it directly.
+ */
+function cellChildren(container: ContainerBlock, cell: ContainerCell): Block[] {
+  if (cell === 'left') return container.children;
+  if (!Array.isArray(container.right_children)) {
+    container.right_children = [];
+  }
+  return container.right_children;
+}
 
 /**
  * Schema store — the canonical source of truth for the signature
@@ -58,8 +82,35 @@ interface SchemaState {
   moveBlock: (id: string, target_id: string, position: 'before' | 'after') => void;
   duplicateBlock: (id: string) => void;
 
-  /** Append a block to a Container's children list. */
-  addChildToContainer: (parent_id: string, child: Block) => void;
+  /**
+   * Append a block to a Container cell. The optional `cell` argument
+   * defaults to `'left'` (back-compat with old call sites that
+   * didn't know about cells). Use `'right'` to drop into the right
+   * cell of a 2-column container.
+   */
+  addChildToContainer: (parent_id: string, child: Block, cell?: ContainerCell) => void;
+
+  /**
+   * Move an existing block into a specific container cell at a
+   * specific position. Used by canvas drag-and-drop when the user
+   * drops on an empty cell or between two siblings inside a cell.
+   * The block is removed from its current parent and spliced into
+   * the destination cell at `position` (defaults to end-of-cell).
+   */
+  moveBlockToContainerCell: (
+    block_id: string,
+    parent_id: string,
+    cell: ContainerCell,
+    position?: number,
+  ) => void;
+
+  /**
+   * Toggle a Container between 1 and 2 columns. Going 1→2 leaves
+   * everything in the left cell (so the user can drag pieces into
+   * the new right cell). Going 2→1 merges right_children back into
+   * children so no block is silently lost.
+   */
+  setContainerColumns: (container_id: string, columns: 1 | 2) => void;
 
   /** Swap a block with its previous sibling (within its current parent). */
   moveBlockUp: (id: string) => void;
@@ -85,15 +136,30 @@ function markEdited(state: { schema: SignatureSchema; hasUserEdited: boolean }):
 }
 
 /**
+ * Returns both child arrays of a container as a single flat list of
+ * arrays to walk. Order is left, right — used by the recursive
+ * helpers below so they don't have to special-case each call site.
+ */
+function containerCellArrays(c: ContainerBlock): Block[][] {
+  const arrays: Block[][] = [c.children];
+  if (Array.isArray(c.right_children)) arrays.push(c.right_children);
+  return arrays;
+}
+
+/**
  * Recursive lookup — walks into Container children so nested blocks
  * are reachable by id without callers needing to know the parent.
+ * Walks BOTH the left cell (`children`) and the right cell
+ * (`right_children`) so 2-column nested blocks are reachable too.
  */
 export function findBlockByIdDeep(blocks: Block[], id: string): Block | undefined {
   for (const block of blocks) {
     if (block.id === id) return block;
-    if (block.type === 'container' && block.children.length > 0) {
-      const found = findBlockByIdDeep(block.children, id);
-      if (found) return found;
+    if (block.type === 'container') {
+      for (const cell of containerCellArrays(block)) {
+        const found = findBlockByIdDeep(cell, id);
+        if (found) return found;
+      }
     }
   }
   return undefined;
@@ -101,6 +167,7 @@ export function findBlockByIdDeep(blocks: Block[], id: string): Block | undefine
 
 /**
  * Recursive splice — returns true on first hit, mutates `blocks` in place.
+ * Also walks both cells of every container.
  */
 function removeBlockByIdDeep(blocks: Block[], id: string): boolean {
   const idx = blocks.findIndex((b) => b.id === id);
@@ -109,17 +176,19 @@ function removeBlockByIdDeep(blocks: Block[], id: string): boolean {
     return true;
   }
   for (const block of blocks) {
-    if (block.type === 'container' && removeBlockByIdDeep(block.children, id)) {
-      return true;
+    if (block.type === 'container') {
+      for (const cell of containerCellArrays(block)) {
+        if (removeBlockByIdDeep(cell, id)) return true;
+      }
     }
   }
   return false;
 }
 
 /**
- * Locate the array a block lives in (top-level or a container's children)
- * along with its index. Used by sibling-swap actions so the Layers panel
- * can move nested blocks up / down within their own parent.
+ * Locate the array a block lives in (top-level or any container cell)
+ * along with its index. Used by sibling-swap actions, the canvas drag-
+ * and-drop reorder, and the Layers panel.
  */
 function findParentAndIndex(
   blocks: Block[],
@@ -130,8 +199,14 @@ function findParentAndIndex(
 
   for (const block of blocks) {
     if (block.type === 'container') {
-      const childIdx = block.children.findIndex((c) => c.id === id);
-      if (childIdx >= 0) return { parent: block.children, index: childIdx };
+      for (const cell of containerCellArrays(block)) {
+        const idx = cell.findIndex((c) => c.id === id);
+        if (idx >= 0) return { parent: cell, index: idx };
+        // Recurse into nested containers (defence — UI doesn't expose
+        // nesting but a hand-edited or imported template might).
+        const inner = findParentAndIndex(cell, id);
+        if (inner) return inner;
+      }
     }
   }
   return null;
@@ -153,6 +228,9 @@ function reidNestedBlocks(blocks: Block[]): void {
     block.id = `${block.id}_copy_${stamp}_${Math.random().toString(36).slice(2, 6)}`;
     if (block.type === 'container') {
       reidNestedBlocks(block.children);
+      if (Array.isArray(block.right_children)) {
+        reidNestedBlocks(block.right_children);
+      }
     }
   }
 }
@@ -163,6 +241,12 @@ export const useSchemaStore = create<SchemaState>()(
     hasUserEdited: false,
 
     setSchema: (schema) => {
+      // Run the in-place container migration BEFORE the schema lands
+      // in state. Older 2-col rows used a single `children` array
+      // the compiler split in half; 1.0.31+ stores left vs right as
+      // explicit arrays. The walker only mutates rows that need it
+      // (idempotent), so re-loading a fresh signature is a no-op.
+      migrateContainersInPlace(schema);
       set((state) => {
         state.schema = schema;
         // Loading is not editing — clear the flag so the autosave
@@ -176,6 +260,7 @@ export const useSchemaStore = create<SchemaState>()(
       // Used by undo / redo paths. Preserves both history stacks AND
       // hasUserEdited so the autosave still fires for the replayed
       // state. See comment on the interface declaration above.
+      migrateContainersInPlace(schema);
       set((state) => {
         state.schema = schema;
         state.hasUserEdited = true;
@@ -246,14 +331,81 @@ export const useSchemaStore = create<SchemaState>()(
       });
     },
 
-    addChildToContainer: (parent_id, child) => {
+    addChildToContainer: (parent_id, child, cell = 'left') => {
       pushSnapshot();
       set((state) => {
         const parent = findBlockByIdDeep(state.schema.blocks, parent_id);
         if (parent && parent.type === 'container') {
-          parent.children.push(child);
+          // 1-col containers ignore `cell` — there's only one cell.
+          // 2-col containers route to the requested cell.
+          const target = parent.columns === 2 ? cellChildren(parent as ContainerBlock, cell) : parent.children;
+          target.push(child);
           markEdited(state);
         }
+      });
+    },
+
+    moveBlockToContainerCell: (block_id, parent_id, cell, position) => {
+      if (block_id === parent_id) return;
+      pushSnapshot();
+      set((state) => {
+        // Resolve the destination FIRST so we know it's reachable
+        // before pulling the block from its current parent.
+        const parent = findBlockByIdDeep(state.schema.blocks, parent_id);
+        if (!parent || parent.type !== 'container') return;
+
+        const source = findParentAndIndex(state.schema.blocks, block_id);
+        if (!source) return;
+
+        const [moving] = source.parent.splice(source.index, 1);
+        if (!moving) return;
+
+        // Re-resolve the destination cell AFTER removal — the source
+        // cell and the destination cell can be the same array, in
+        // which case the index we computed earlier shifted by one.
+        const target =
+          parent.columns === 2
+            ? cellChildren(parent as ContainerBlock, cell)
+            : parent.children;
+
+        const insertAt =
+          typeof position === 'number'
+            ? Math.max(0, Math.min(position, target.length))
+            : target.length;
+
+        target.splice(insertAt, 0, moving);
+        markEdited(state);
+      });
+    },
+
+    setContainerColumns: (container_id, columns) => {
+      pushSnapshot();
+      set((state) => {
+        const container = findBlockByIdDeep(state.schema.blocks, container_id);
+        if (!container || container.type !== 'container') return;
+        const c = container as ContainerBlock;
+
+        if (c.columns === columns) return;
+
+        if (columns === 1) {
+          // Going 2 → 1: merge right_children back into children so
+          // no block is silently lost when the right cell goes away.
+          if (Array.isArray(c.right_children) && c.right_children.length > 0) {
+            c.children.push(...c.right_children);
+          }
+          c.right_children = [];
+        } else {
+          // Going 1 → 2: keep everything in the LEFT cell. The user
+          // can drag pieces over to the new right cell from there.
+          // We don't auto-split because the user just chose to add a
+          // right column — they want to place things deliberately.
+          if (!Array.isArray(c.right_children)) {
+            c.right_children = [];
+          }
+        }
+
+        c.columns = columns;
+        markEdited(state);
       });
     },
 

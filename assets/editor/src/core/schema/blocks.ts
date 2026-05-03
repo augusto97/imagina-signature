@@ -117,7 +117,20 @@ export interface ContainerBlock extends BlockBase {
    * (even split) at render / compile time.
    */
   left_width?: number;
+  /**
+   * Children of the LEFT cell when `columns === 2`. Also the only
+   * cell when `columns === 1`. Always present. Reorderable
+   * independently from `right_children`.
+   */
   children: Block[];
+  /**
+   * Children of the RIGHT cell when `columns === 2`. Empty / absent
+   * when `columns === 1`. Optional for back-compat with rows saved
+   * before 1.0.31 — older 2-col rows used a single `children` array
+   * the compiler split in half. `migrateContainersInPlace` rewrites
+   * those into explicit left / right arrays on load.
+   */
+  right_children?: Block[];
 }
 
 export interface QrCodeBlock extends BlockBase {
