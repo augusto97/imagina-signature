@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.33 | [imagina-signatures-1.0.33.zip](imagina-signatures-1.0.33.zip) |
 | 1.0.32 | [imagina-signatures-1.0.32.zip](imagina-signatures-1.0.32.zip) |
 | 1.0.31 | [imagina-signatures-1.0.31.zip](imagina-signatures-1.0.31.zip) |
 | 1.0.30 (hotfix) | [imagina-signatures-1.0.30.zip](imagina-signatures-1.0.30.zip) |
@@ -44,6 +45,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.33.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.32.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.31.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.30.zip
@@ -113,6 +115,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.33
+**Fixed: multi-column templates didn't appear after upgrading from 1.0.31.** Root cause: `register_activation_hook` only fires when the user clicks **Activate** in `wp-admin/plugins.php`. Replacing the plugin via "Upload Plugin → Replace current with uploaded" does NOT re-run the activation hook, so when 1.0.32 shipped with three new template JSON files + three new entries in `DefaultTemplatesSeeder::META`, the seeder never ran on existing installs and the templates never landed in `wp_imgsig_templates`. Fix: `Plugin::boot()` now compares the stored `imgsig_version` option against the current `IMGSIG_VERSION` constant on every page load and re-runs `Installer::install()` when stored < current. Every step inside is idempotent (dbDelta diffs the schema, role-cap adds are no-op when present, the seeder skips existing slugs, options use add_option which doesn't overwrite). Wrapped in try/catch so a failed upgrade logs to error_log without crashing the site. **After installing 1.0.33, the next admin page load will detect the upgrade and the three multi-column templates will appear in the Template Picker.**
 
 ### 1.0.32
 **Duplicate primary button + 3 multi-column templates.** User asked for a Duplicate button next to Edit in the signatures listing (was hidden under the kebab "more" menu) — surfaced it as a primary ghost button between Edit and the kebab. Three new templates show off the 1.0.31 left/right cell schema: **`logo-left`** (25% logo cell + name / role / company / divider / contacts / socials right — exactly the 1-vs-N layout the user said was missing), **`avatar-pro`** (18% round avatar + name / role / contacts / socials right), and **`two-col-balanced`** (50/50 split: headline + tagline + divider on the left, company + contacts + Book-a-call CTA on the right). All three live in a new `multi-column` category. New regression test parameterised over the `templates/` directory compiles every shipped template through the full pipeline + asserts both cells render in `logo-left` so future drift in `compile()` fails CI. 54/54 vitest pass.
