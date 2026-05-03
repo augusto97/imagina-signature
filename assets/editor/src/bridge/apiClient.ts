@@ -20,6 +20,20 @@ export function getConfig(): AppConfig {
 }
 
 /**
+ * Returns true when the active storage backend allows uploads. False
+ * only in URL-only mode (1.0.29). Default true for back-compat with
+ * bootstrap configs that pre-date the flag.
+ */
+export function isUploadEnabled(): boolean {
+  try {
+    const cfg = getConfig();
+    return cfg.uploadEnabled !== false;
+  } catch {
+    return true;
+  }
+}
+
+/**
  * Typed REST error. Mirrors the WP_Error JSON shape that
  * BaseController::exception_to_wp_error() emits.
  */

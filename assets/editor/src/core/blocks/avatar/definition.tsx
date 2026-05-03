@@ -7,6 +7,7 @@ import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
 import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
 import { escapeAttr } from '@/core/compiler/compile';
+import { isUploadEnabled } from '@/bridge/apiClient';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: AvatarBlock }> = ({ block }) => {
@@ -54,15 +55,20 @@ const Properties: FC<{ block: AvatarBlock; onChange: (u: Partial<AvatarBlock>) =
           onChange={(e) => onChange({ src: e.target.value })}
         />
       </label>
-      <button
-        type="button"
-        disabled={!block.src}
-        onClick={() => setCropping(true)}
-        className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-2 text-[12px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <Crop size={12} />
-        {__('Crop image')}
-      </button>
+      {/* Crop emits a data-URL into block.src — disabled in URL-only
+          mode (1.0.29) since that would defeat the no-uploads
+          contract. */}
+      {isUploadEnabled() && (
+        <button
+          type="button"
+          disabled={!block.src}
+          onClick={() => setCropping(true)}
+          className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-2 text-[12px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Crop size={12} />
+          {__('Crop image')}
+        </button>
+      )}
       <label className="block">
         <span className="mb-1 block text-[var(--text-secondary)]">{__('Alt text')}</span>
         <input

@@ -120,8 +120,22 @@ export const StorageTab: FC = () => {
               <select value={form.driver} onChange={(e) => update('driver', e.target.value)}>
                 <option value="media_library">{__('WordPress Media Library (default)')}</option>
                 <option value="s3">{__('S3-compatible (R2, S3, Spaces, …)')}</option>
+                <option value="url_only">{__('External URLs only (no uploads)')}</option>
               </select>
             </Field>
+
+            {form.driver === 'url_only' && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-[12.5px] text-amber-900">
+                <strong className="block font-semibold">
+                  {__('URL-only mode')}
+                </strong>
+                <p className="mt-1">
+                  {__(
+                    'No files will be hosted by this site. Users can paste external image URLs (e.g. from a CDN you already run) but the editor will not show upload, crop, or media-picker buttons. Existing assets stored under previous drivers stay readable.',
+                  )}
+                </p>
+              </div>
+            )}
           </Section>
 
           {form.driver === 's3' && (

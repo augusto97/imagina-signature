@@ -5,6 +5,7 @@ import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
 import { escapeAttr } from '@/core/compiler/compile';
+import { isUploadEnabled } from '@/bridge/apiClient';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: ImageBlock }> = ({ block }) => {
@@ -66,15 +67,21 @@ const Properties: FC<{ block: ImageBlock; onChange: (updates: Partial<ImageBlock
         onChange={(e) => onChange({ src: e.target.value })}
       />
     </label>
-    <button
-      type="button"
-      disabled={!block.src}
-      onClick={() => setCropping(true)}
-      className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-2 text-[12px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      <Crop size={12} />
-      {__('Crop image')}
-    </button>
+    {/* Cropping produces a data-URL that gets stored in the schema —
+        effectively the editor "hosting" image bytes inside the
+        signature row. URL-only mode (1.0.29) forbids that, so the
+        Crop button is hidden when uploads are disabled. */}
+    {isUploadEnabled() && (
+      <button
+        type="button"
+        disabled={!block.src}
+        onClick={() => setCropping(true)}
+        className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-2 text-[12px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <Crop size={12} />
+        {__('Crop image')}
+      </button>
+    )}
     <label className="block">
       <span className="mb-1 block text-[var(--text-secondary)]">{__('Alt text')}</span>
       <input

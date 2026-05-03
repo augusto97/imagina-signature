@@ -139,9 +139,16 @@ final class EditorAssetEnqueuer {
 	 * @return array<string, mixed>
 	 */
 	private function build_config( int $signature_id ): array {
-		$user_id   = get_current_user_id();
-		$user      = wp_get_current_user();
-		$site_opts = SiteSettingsController::current_settings();
+		$user_id        = get_current_user_id();
+		$user           = wp_get_current_user();
+		$site_opts      = SiteSettingsController::current_settings();
+		// Read the active driver ID directly from the option rather
+		// than spinning up a `StorageManager` instance (which would
+		// also instantiate `Encryption` just to know the driver ID).
+		// The frontend only needs to know "is URL-only mode active?"
+		// so we compare against the `url_only` driver id.
+		$active_driver  = (string) get_option( 'imgsig_storage_driver', 'media_library' );
+		$upload_enabled = 'url_only' !== $active_driver;
 
 		return [
 			'pluginVersion'    => defined( 'IMGSIG_VERSION' ) ? IMGSIG_VERSION : '0.0.0',
@@ -156,6 +163,12 @@ final class EditorAssetEnqueuer {
 				'use'              => current_user_can( CapabilitiesInstaller::CAP_USE ),
 				'manage_templates' => current_user_can( CapabilitiesInstaller::CAP_MANAGE_TEMPLATES ),
 			],
+			// 1.0.29: false when the active storage driver is
+			// `url_only` — the editor reads this to hide upload
+			// affordances (Crop button, image picker) and surface
+			// only URL inputs in the Image / Avatar / Banner property
+			// panels.
+			'uploadEnabled'    => $upload_enabled,
 			'systemVariables'  => self::system_variables_for( $user ),
 			'brandPalette'     => $site_opts['brand_palette'],
 			'complianceFooter' => $site_opts['compliance_footer'],

@@ -17,6 +17,7 @@ use ImaginaSignatures\Storage\Contracts\StorageDriverInterface;
 use ImaginaSignatures\Storage\Dto\TestResult;
 use ImaginaSignatures\Storage\Drivers\MediaLibraryDriver;
 use ImaginaSignatures\Storage\Drivers\S3Driver;
+use ImaginaSignatures\Storage\Drivers\UrlOnlyDriver;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -143,7 +144,7 @@ final class StorageManager {
 	 * @return string[]
 	 */
 	public function available_driver_ids(): array {
-		$ids = [ MediaLibraryDriver::ID, S3Driver::ID ];
+		$ids = [ MediaLibraryDriver::ID, S3Driver::ID, UrlOnlyDriver::ID ];
 
 		/**
 		 * Filters the list of available storage driver IDs.
@@ -179,6 +180,13 @@ final class StorageManager {
 
 			case S3Driver::ID:
 				return S3Driver::from_config( $config );
+
+			case UrlOnlyDriver::ID:
+				// URL-only mode takes no configuration — every
+				// upload throws `StorageException` so the editor's
+				// `uploadEnabled = false` flag is the actual UX
+				// gate. See {@see UrlOnlyDriver}.
+				return new UrlOnlyDriver();
 
 			default:
 				throw new StorageException( sprintf( 'Unknown storage driver: "%s".', $id ) );

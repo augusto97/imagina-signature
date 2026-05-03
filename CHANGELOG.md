@@ -2,6 +2,27 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.29] — 2026-05-03
+
+### Added — `url_only` storage mode (no local file hosting)
+
+User asked for a third storage mode where the plugin doesn't host any files at all — admins want to allow signatures with images, but only via external URLs (CDN they already run, public asset bucket on a different host, etc.). Use cases: GDPR compliance, avoiding `wp-content/uploads` bloat, or forcing all assets through an existing CDN.
+
+The new path:
+
+- **`UrlOnlyDriver`** registered alongside `MediaLibraryDriver` and `S3Driver`. Every upload method throws `StorageException` (`upload`, `get_presigned_upload_url`). `is_configured()` returns true so the manager doesn't refuse to instantiate it; `test_connection()` always passes (nothing to test).
+- **`UploadController` short-circuits** at the top of `init`, `direct`, and `finalize` when the active driver ID is `url_only` — returns `imgsig_uploads_disabled` (HTTP 403) with a clear message ("Uploads are disabled on this site (URL-only mode). Paste an external image URL instead.").
+- **Bootstrap config** now includes `uploadEnabled: boolean`. False when `imgsig_storage_driver === 'url_only'`. The editor reads it via the new `isUploadEnabled()` helper.
+- **Image and Avatar property panels** hide the "Crop image" button when uploads are disabled. Cropping emits a data-URL into `block.src`, which would defeat the no-uploads contract. The URL text input remains as the only way to set `src`.
+- **Admin Settings → Storage tab** exposes the third option in the Driver dropdown. Selecting it surfaces an amber explainer card: "URL-only mode — no files will be hosted by this site…"
+- **Existing assets still readable.** `UrlOnlyDriver::get_public_url` returns empty string rather than throwing, so rows persisted under a previous driver keep their cached `public_url` and continue rendering in compiled signatures.
+
+### Internal
+
+- Editor bundle: 683 KB → 683 KB (gzip 213.65 KB). One new helper + a couple of conditionals.
+- Plugin version bumped to 1.0.29.
+- All 32 vitest cases pass; tsc strict-clean.
+
 ## [1.0.28] — 2026-05-02
 
 User reports: branding palette save reports success but doesn't persist on reload; can't add or edit colours, only delete; need bulk-delete in the signatures listing; please bring autosave back.

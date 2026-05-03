@@ -40,6 +40,15 @@ export interface AppConfig {
     manage_templates: boolean;
   };
   /**
+   * Whether file uploads are allowed on this site. False when the
+   * admin selected URL-only storage mode (1.0.29) — the editor
+   * hides the cropper, the image picker, and any "upload" affordance,
+   * leaving only URL inputs. Default true for back-compat: missing
+   * field = uploads allowed (legacy bootstrap that pre-dates
+   * url_only mode).
+   */
+  uploadEnabled?: boolean;
+  /**
    * Read-only `wp_*` variables auto-populated from the current
    * WP user record (display_name, email, first_name, last_name,
    * url) plus any extras a host plugin added via the

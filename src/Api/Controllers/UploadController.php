@@ -16,6 +16,7 @@ use ImaginaSignatures\Exceptions\ImaginaSignaturesException;
 use ImaginaSignatures\Exceptions\StorageException;
 use ImaginaSignatures\Repositories\AssetRepository;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
+use ImaginaSignatures\Storage\Drivers\UrlOnlyDriver;
 use ImaginaSignatures\Storage\StorageManager;
 
 defined( 'ABSPATH' ) || exit;
@@ -179,6 +180,20 @@ final class UploadController extends BaseController {
 	public function init( \WP_REST_Request $request ) {
 		$user_id = get_current_user_id();
 
+		// URL-only mode short-circuit. The driver itself would throw
+		// a `StorageException` later in the flow, but bailing here
+		// gives the user a clearer error code (`imgsig_uploads_disabled`)
+		// and a 403 status the frontend can match on to surface a
+		// "paste a URL instead" toast — without burning a rate-limit
+		// slot for a request the server was always going to refuse.
+		if ( UrlOnlyDriver::ID === $this->storage->active_driver_id() ) {
+			return new \WP_Error(
+				'imgsig_uploads_disabled',
+				__( 'Uploads are disabled on this site (URL-only mode). Paste an external image URL instead.', 'imagina-signatures' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		try {
 			$this->rate_limiter->check( self::RL_ACTION, $user_id, 10, MINUTE_IN_SECONDS );
 		} catch ( ImaginaSignaturesException $e ) {
@@ -273,6 +288,14 @@ final class UploadController extends BaseController {
 	public function direct( \WP_REST_Request $request ) {
 		$user_id = get_current_user_id();
 
+		if ( UrlOnlyDriver::ID === $this->storage->active_driver_id() ) {
+			return new \WP_Error(
+				'imgsig_uploads_disabled',
+				__( 'Uploads are disabled on this site (URL-only mode).', 'imagina-signatures' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		try {
 			$this->rate_limiter->check( self::RL_ACTION, $user_id, 10, MINUTE_IN_SECONDS );
 		} catch ( ImaginaSignaturesException $e ) {
@@ -363,6 +386,14 @@ final class UploadController extends BaseController {
 	 */
 	public function finalize( \WP_REST_Request $request ) {
 		$user_id = get_current_user_id();
+
+		if ( UrlOnlyDriver::ID === $this->storage->active_driver_id() ) {
+			return new \WP_Error(
+				'imgsig_uploads_disabled',
+				__( 'Uploads are disabled on this site (URL-only mode).', 'imagina-signatures' ),
+				[ 'status' => 403 ]
+			);
+		}
 
 		// Rate-limit `finalize` the same way `init` is throttled. Without
 		// this, an authenticated attacker could spam the endpoint —
