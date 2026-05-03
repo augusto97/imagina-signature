@@ -7,7 +7,8 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
-| 1.0.29 | [imagina-signatures-1.0.29.zip](imagina-signatures-1.0.29.zip) |
+| 1.0.30 (hotfix) | [imagina-signatures-1.0.30.zip](imagina-signatures-1.0.30.zip) |
+| ~~1.0.29~~ — DO NOT USE, fatal error on activation | [imagina-signatures-1.0.29.zip](imagina-signatures-1.0.29.zip) |
 | 1.0.28 | [imagina-signatures-1.0.28.zip](imagina-signatures-1.0.28.zip) |
 | 1.0.27 | [imagina-signatures-1.0.27.zip](imagina-signatures-1.0.27.zip) |
 | 1.0.26 | [imagina-signatures-1.0.26.zip](imagina-signatures-1.0.26.zip) |
@@ -41,6 +42,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.30.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.29.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.28.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.27.zip
@@ -107,6 +109,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.30 (hotfix)
+**Critical: 1.0.29 fatal-errored every page after activation.** User reported "There has been a critical error on this website." after upgrading. Root cause: `UrlOnlyDriver` (added in 1.0.29) implemented every method of `StorageDriverInterface` EXCEPT `verify_object_exists`. PHP let the file parse (syntax was valid) but the autoloader's class-resolution call during `Plugin::boot()` triggered `Cannot instantiate abstract class` and brought down every wp-admin page — even on sites that never selected `url_only` mode. Fix: implemented the missing method (returns `false` since the driver hosts nothing). New PHP regression test `DriversInstantiableTest` instantiates every shipped driver and asserts each implements the full interface, so a future driver that forgets any method fails CI rather than crashing sites. **If your site is currently broken on 1.0.29: delete the plugin folder via FTP (`wp-content/plugins/imagina-signatures/`), re-upload the 1.0.30 ZIP, and activate. Every previously-saved setting is preserved.**
 
 ### 1.0.29
 **`url_only` storage mode — disable local uploads, force external URLs.** New third option in the Storage settings dropdown alongside Media Library and S3. When active: every upload endpoint short-circuits with `imgsig_uploads_disabled` (HTTP 403), the editor's bootstrap config sets `uploadEnabled = false`, and the Image / Avatar property panels hide the "Crop image" button (cropping emits a data-URL into `block.src` which would defeat the no-uploads contract). The URL text input remains as the only way to set image sources. Use cases: GDPR compliance, avoiding `wp-content/uploads` bloat, or forcing all assets through an existing CDN. Existing assets uploaded under previous drivers stay readable — `UrlOnlyDriver::get_public_url` returns empty rather than throwing, so cached `public_url` values on `imgsig_assets` rows continue rendering.
