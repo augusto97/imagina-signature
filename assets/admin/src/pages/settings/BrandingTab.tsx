@@ -5,10 +5,11 @@ import { Spinner } from '@admin/components/Spinner';
 import { apiCall, ApiError } from '@admin/api';
 import { __ } from '@admin/i18n';
 import type { SiteSettings } from '@admin/types';
-import { Banner, Field, Section, type Flash } from './_shared';
+import { Banner, Section, type Flash } from './_shared';
 
 const HEX_REGEX = /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3}([0-9a-fA-F]{2})?)?$/;
 const MAX_PALETTE = 12;
+const DEFAULT_NEW_COLOR = '#2563eb';
 
 const STARTER_PALETTE = [
   '#2563eb', // accent blue
@@ -21,30 +22,46 @@ const STARTER_PALETTE = [
 /**
  * Branding tab — manages the site-wide brand palette that surfaces
  * in every editor's ColorInput as quick-pick swatches.
+ *
+ * 1.0.28 UX rewrite. The previous version separated the colour
+ * picker from the "Add" button and required the user to type a hex
+ * code or pick + click — the user reported they "couldn't add
+ * colours". The new flow:
+ *
+ *   - "+ Add colour" button appends a default swatch (#2563eb).
+ *     Click feels instant.
+ *   - Every existing swatch is itself a `<input type="color">`
+ *     styled to look like a colour block. Click opens the OS picker;
+ *     on change the entry's hex updates in place.
+ *   - Trash button still removes a swatch.
+ *   - "Save palette" persists everything in one PATCH.
+ *
+ * The Add and Edit affordances are now visually obvious. There's no
+ * hidden text input that required hex syntax.
  */
 export const BrandingTab: FC = () => {
   const [palette, setPalette] = useState<string[] | null>(null);
-  const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState<'idle' | 'saving'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [flash, setFlash] = useState<Flash | null>(null);
 
   useEffect(() => {
     void apiCall<SiteSettings>('/admin/site-settings')
-      .then((s) => setPalette(s.brand_palette))
-      .catch((e: Error) => setError(e.message));
+      .then((s) => {
+        // Defensive: if the server response doesn't include a palette
+        // array (corrupted option, malformed response), default to
+        // empty rather than leaving palette === null forever (which
+        // would keep the spinner up indefinitely).
+        setPalette(Array.isArray(s?.brand_palette) ? s.brand_palette : []);
+      })
+      .catch((e: Error) => {
+        setError(e.message);
+        setPalette([]);
+      });
   }, []);
 
-  const addColor = (value: string): void => {
-    const v = value.trim().toLowerCase();
-    if (!HEX_REGEX.test(v)) {
-      setFlash({ type: 'error', message: __('Use a valid hex colour (e.g. #2563eb).') });
-      return;
-    }
-    if ((palette ?? []).includes(v)) {
-      setFlash({ type: 'error', message: __('That colour is already in the palette.') });
-      return;
-    }
+  const addBlankColor = (): void => {
+    setFlash(null);
     if ((palette ?? []).length >= MAX_PALETTE) {
       setFlash({
         type: 'error',
@@ -52,13 +69,26 @@ export const BrandingTab: FC = () => {
       });
       return;
     }
-    setPalette((prev) => [...(prev ?? []), v]);
-    setDraft('');
+    // Append a default colour. The user clicks the swatch to open
+    // the native picker and customise it.
+    setPalette((prev) => [...(prev ?? []), DEFAULT_NEW_COLOR]);
+  };
+
+  const updateColorAt = (index: number, hex: string): void => {
+    const v = hex.trim().toLowerCase();
+    if (!HEX_REGEX.test(v)) return;
+    setPalette((prev) => {
+      if (!prev) return prev;
+      const next = [...prev];
+      next[index] = v;
+      return next;
+    });
     setFlash(null);
   };
 
-  const removeColor = (color: string): void => {
-    setPalette((prev) => (prev ?? []).filter((c) => c !== color));
+  const removeColorAt = (index: number): void => {
+    setPalette((prev) => (prev ?? []).filter((_, i) => i !== index));
+    setFlash(null);
   };
 
   const onSave = async (): Promise<void> => {
@@ -72,32 +102,25 @@ export const BrandingTab: FC = () => {
         body: { brand_palette: sent },
       });
 
-      // Defensive: verify the response actually contains the palette
-      // shape we expected. If `next.brand_palette` is missing or not
-      // an array, something between the WP REST stack and the proxy
-      // mangled the response — surface it to the user instead of
-      // silently wiping the local palette to `undefined`.
       if (!Array.isArray(next?.brand_palette)) {
         setFlash({
           type: 'error',
           message: __(
-            'Server response did not include a palette. The save may not have been persisted — please reload and verify.',
+            'Server response did not include a palette. The save may not have persisted — please reload and verify.',
           ),
         });
         return;
       }
 
-      // Length mismatch between sent + readback means sanitisation on
-      // the server dropped one or more colours (regex rejected them)
-      // OR an object-cache layer is hiding a write failure. Either
-      // way the user needs to know the saved palette differs from
-      // what they picked.
+      // Server-side sanitisation may dedupe or drop entries. Reflect
+      // exactly what's stored.
+      setPalette(next.brand_palette);
+
       if (next.brand_palette.length !== sent.length) {
-        setPalette(next.brand_palette);
         setFlash({
           type: 'error',
           message: __(
-            'Saved %s of %s colours. Some entries were rejected by the server — verify the swatches above.',
+            'Saved %s of %s colours. Duplicates / invalid entries were rejected by the server.',
             String(next.brand_palette.length),
             String(sent.length),
           ),
@@ -105,10 +128,10 @@ export const BrandingTab: FC = () => {
         return;
       }
 
-      setPalette(next.brand_palette);
       setFlash({ type: 'success', message: __('Brand palette saved.') });
     } catch (e) {
-      const message = e instanceof ApiError ? e.message : (e as Error).message;
+      const message =
+        e instanceof ApiError ? `${e.message} [${e.code}, ${e.status}]` : (e as Error).message;
       setFlash({ type: 'error', message });
     } finally {
       setBusy('idle');
@@ -133,7 +156,7 @@ export const BrandingTab: FC = () => {
           <Section
             title={__('Brand palette')}
             description={__(
-              'Up to %s colours that appear as quick-pick swatches under every ColorInput in the editor. Stored site-wide.',
+              'Up to %s colours that appear as quick-pick swatches under every ColorInput in the editor. Click a swatch to edit; click "+ Add colour" to append a new one.',
               String(MAX_PALETTE),
             )}
           >
@@ -142,31 +165,40 @@ export const BrandingTab: FC = () => {
                 <p className="flex-1 text-[12px] text-[var(--text-muted)]">
                   {__('No swatches yet. Use a starter set or add your own below.')}
                 </p>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => setPalette(STARTER_PALETTE)}
-                >
+                <Button size="sm" variant="secondary" onClick={() => setPalette(STARTER_PALETTE)}>
                   {__('Use starter palette')}
                 </Button>
               </div>
             ) : (
               <ul className="flex flex-wrap gap-2">
-                {palette.map((color) => (
+                {palette.map((color, index) => (
                   <li
-                    key={color}
-                    className="group flex items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] py-1 pl-1 pr-2 transition-colors hover:border-[var(--border-strong)]"
+                    // Index-keyed because identical colours are valid
+                    // mid-edit (a fresh swatch defaults to the same
+                    // colour every time); a value-keyed list would
+                    // collapse two entries into one React node.
+                    key={`${index}-${color}`}
+                    className="group relative flex items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] py-1 pl-1 pr-2 transition-colors hover:border-[var(--border-strong)]"
                   >
-                    <span
-                      className="h-7 w-7 rounded ring-1 ring-inset ring-black/10"
+                    <label
+                      className="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center overflow-hidden rounded ring-1 ring-inset ring-black/10"
                       style={{ backgroundColor: color }}
-                    />
+                      title={__('Click to edit colour')}
+                    >
+                      <input
+                        type="color"
+                        value={HEX_REGEX.test(color) ? color : DEFAULT_NEW_COLOR}
+                        onChange={(e) => updateColorAt(index, e.target.value)}
+                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        aria-label={__('Edit colour %s', color)}
+                      />
+                    </label>
                     <code className="font-mono text-[11.5px] uppercase text-[var(--text-secondary)]">
                       {color}
                     </code>
                     <button
                       type="button"
-                      onClick={() => removeColor(color)}
+                      onClick={() => removeColorAt(index)}
                       title={__('Remove')}
                       className="inline-flex h-5 w-5 items-center justify-center rounded text-[var(--text-muted)] opacity-0 hover:bg-red-50 hover:text-[var(--danger)] group-hover:opacity-100"
                     >
@@ -177,41 +209,20 @@ export const BrandingTab: FC = () => {
               </ul>
             )}
 
-            <Field
-              label={__('Add a colour')}
-              hint={__('Hex format: #abc, #aabbcc, or #aabbccdd. Press Enter to add.')}
-            >
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={HEX_REGEX.test(draft) ? draft : '#2563eb'}
-                  onChange={(e) => setDraft(e.target.value)}
-                  className="!h-9 !w-12 !p-1"
-                />
-                <input
-                  type="text"
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addColor(draft);
-                    }
-                  }}
-                  placeholder="#2563eb"
-                  className="flex-1 font-mono"
-                />
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  icon={<Plus size={12} />}
-                  onClick={() => addColor(draft)}
-                  disabled={!draft.trim()}
-                >
-                  {__('Add')}
-                </Button>
-              </div>
-            </Field>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<Plus size={12} />}
+                onClick={addBlankColor}
+                disabled={(palette ?? []).length >= MAX_PALETTE}
+              >
+                {__('Add colour')}
+              </Button>
+              <span className="text-[11px] text-[var(--text-muted)]">
+                {__('%s of %s used', String(palette.length), String(MAX_PALETTE))}
+              </span>
+            </div>
           </Section>
 
           <div className="flex justify-end gap-2 border-t border-[var(--border-default)] bg-[var(--bg-panel-soft)] px-5 py-4">

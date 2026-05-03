@@ -104,24 +104,36 @@ final class SiteSettingsController extends BaseController {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function update( \WP_REST_Request $request ) {
-		// Persist directly as PHP arrays — WordPress's `update_option`
-		// runs `maybe_serialize` automatically. The previous code stored
-		// `wp_json_encode($palette)` as a string, which roundtripped
-		// through an extra encode/decode layer for no benefit and made
-		// silent corruption hard to spot. Switching to native arrays
-		// also matches how `compliance_footer` was always stored.
+		// 1.0.28: bypass `update_option` entirely. The previous code
+		// relied on `update_option` + `wp_cache_delete` + the verify
+		// readback through `get_option`, which kept producing
+		// false-positive "Saved" toasts on hosts with aggressive
+		// option caching (WP Engine, Kinsta, persistent Redis with
+		// stale replicas). The read-back inside the SAME request
+		// would hit the freshly-primed cache, return the new value,
+		// and pass the verify — but the next request would read
+		// from a replica / cache layer that hadn't received the
+		// write and serve the OLD value. The user reported "se
+		// guardó" but reload showed empty.
 		//
-		// `update_option` returns `false` in two distinct situations:
-		//  (a) the new value is identical to the stored value (no-op),
-		//  (b) the write actually failed.
-		// Telling them apart matters for the diagnostic log below — we
-		// compare the pre-write value against the post-sanitize value
-		// to figure out which case we're in.
+		// Switching to direct `$wpdb` writes against `wp_options`
+		// (with explicit `autoload = 'no'`) + a cache-bypassing
+		// `$wpdb->get_var` readback removes every WP-level cache
+		// from the path. If THIS write doesn't persist, it's at
+		// the DB layer (broken connection, permission, replication
+		// lag) and we surface that exception directly.
+		$payload    = [];
+		$persist_ok = true;
+		$persist_errors = [];
+
 		if ( null !== $request->get_param( 'brand_palette' ) ) {
-			$palette  = self::sanitize_palette( (array) $request->get_param( 'brand_palette' ) );
-			$previous = self::current_palette();
-			$updated  = update_option( self::OPT_BRAND_PALETTE, $palette, false );
-			self::log_update( 'brand_palette', $previous, $palette, $updated );
+			$palette = self::sanitize_palette( (array) $request->get_param( 'brand_palette' ) );
+			$ok      = self::force_save_option( self::OPT_BRAND_PALETTE, $palette );
+			if ( ! $ok ) {
+				$persist_ok       = false;
+				$persist_errors[] = 'brand_palette';
+			}
+			$payload['brand_palette_sent'] = $palette;
 		}
 
 		if ( null !== $request->get_param( 'compliance_footer' ) ) {
@@ -130,77 +142,205 @@ final class SiteSettingsController extends BaseController {
 				'enabled' => ! empty( $raw['enabled'] ),
 				'html'    => isset( $raw['html'] ) ? self::sanitize_compliance_html( (string) $raw['html'] ) : '',
 			];
-			$previous = self::current_compliance_footer();
-			$updated  = update_option( self::OPT_COMPLIANCE_FOOTER, $footer, false );
-			self::log_update( 'compliance_footer', $previous, $footer, $updated );
+			$ok = self::force_save_option( self::OPT_COMPLIANCE_FOOTER, $footer );
+			if ( ! $ok ) {
+				$persist_ok       = false;
+				$persist_errors[] = 'compliance_footer';
+			}
+			$payload['compliance_footer_sent'] = $footer;
 		}
 
 		if ( null !== $request->get_param( 'banner_campaigns' ) ) {
 			$raw       = (array) $request->get_param( 'banner_campaigns' );
 			$campaigns = self::sanitize_campaigns( $raw );
-			$previous  = self::current_banner_campaigns();
-			$updated   = update_option( self::OPT_BANNER_CAMPAIGNS, $campaigns, false );
-			self::log_update( 'banner_campaigns', $previous, $campaigns, $updated );
+			$ok        = self::force_save_option( self::OPT_BANNER_CAMPAIGNS, $campaigns );
+			if ( ! $ok ) {
+				$persist_ok       = false;
+				$persist_errors[] = 'banner_campaigns';
+			}
+			$payload['banner_campaigns_sent'] = $campaigns;
 		}
 
-		// Round-trip verification: read each option back and compare
-		// against what we just wrote. If anything diverges (silent
-		// `update_option` failure, conflicting filter, broken cache),
-		// surface a 500 instead of returning a misleading "Saved" toast.
-		//
-		// We force a cache miss before reading. Any object cache plugin
-		// (Redis, Memcached) that the host runs would otherwise hand us
-		// back the value our own `update_option` call just primed — a
-		// useless tautology. Deleting the cache entry first makes the
-		// readback an actual database round trip, which is the only
-		// thing that proves persistence to disk.
-		wp_cache_delete( self::OPT_BRAND_PALETTE, 'options' );
-		wp_cache_delete( self::OPT_COMPLIANCE_FOOTER, 'options' );
-		wp_cache_delete( self::OPT_BANNER_CAMPAIGNS, 'options' );
-		wp_cache_delete( 'alloptions', 'options' );
-
-		$current = self::current_settings();
-
-		if ( null !== $request->get_param( 'brand_palette' ) ) {
-			$expected = self::sanitize_palette( (array) $request->get_param( 'brand_palette' ) );
-			// `array_values()` normalises the keys before comparison.
-			// Some object-cache backends (Redis Object Cache with
-			// igbinary, certain msgpack adapters) coerce numeric array
-			// keys to strings during serialise / deserialise, so a
-			// strict `!==` between `[0=>'#fff']` and `['0'=>'#fff']`
-			// reports a spurious "persistence failed" even though the
-			// data round-tripped correctly. Comparing values + length
-			// gives us the same correctness guarantee without the
-			// false negative.
-			if ( array_values( $expected ) !== array_values( $current['brand_palette'] ) ) {
-				return new \WP_Error(
-					'imgsig_brand_palette_persist_failed',
-					__( 'Brand palette did not persist on the server. Check the WordPress error log for details.', 'imagina-signatures' ),
-					[
-						'status'   => 500,
-						'sent'     => $expected,
-						'readback' => $current['brand_palette'],
-					]
-				);
-			}
+		if ( ! $persist_ok ) {
+			global $wpdb;
+			return new \WP_Error(
+				'imgsig_persist_failed',
+				sprintf(
+					/* translators: %s: comma-separated list of option keys that failed to save. */
+					__( 'Failed to persist site settings (%s) at the database layer.', 'imagina-signatures' ),
+					implode( ', ', $persist_errors )
+				),
+				[
+					'status'   => 500,
+					'last_db_error' => $wpdb->last_error,
+					'failed'   => $persist_errors,
+				]
+			);
 		}
 
-		if ( null !== $request->get_param( 'banner_campaigns' ) ) {
-			$expected_count = count( self::sanitize_campaigns( (array) $request->get_param( 'banner_campaigns' ) ) );
-			if ( count( $current['banner_campaigns'] ) !== $expected_count ) {
-				return new \WP_Error(
-					'imgsig_banner_campaigns_persist_failed',
-					__( 'Banner campaigns did not persist on the server.', 'imagina-signatures' ),
-					[
-						'status'   => 500,
-						'expected' => $expected_count,
-						'readback' => count( $current['banner_campaigns'] ),
-					]
-				);
-			}
+		// Cache-bypassing readback. Goes straight to wp_options
+		// rather than `get_option()`, which would hit any active
+		// object-cache or alloptions blob. If the write committed,
+		// this read sees it.
+		$current = [
+			'brand_palette'     => self::read_option_uncached( self::OPT_BRAND_PALETTE, [] ),
+			'compliance_footer' => self::read_option_uncached( self::OPT_COMPLIANCE_FOOTER, [ 'enabled' => false, 'html' => '' ] ),
+			'banner_campaigns'  => self::read_option_uncached( self::OPT_BANNER_CAMPAIGNS, [] ),
+		];
+
+		// Normalise the readback through the same sanitisers we used
+		// going in. This way any difference between what we sent and
+		// what came back is a real divergence, not a sanitisation
+		// artefact.
+		$current['brand_palette']     = self::sanitize_palette( is_array( $current['brand_palette'] ) ? $current['brand_palette'] : [] );
+		$current['banner_campaigns']  = self::sanitize_campaigns( is_array( $current['banner_campaigns'] ) ? $current['banner_campaigns'] : [] );
+		$footer_raw                   = is_array( $current['compliance_footer'] ) ? $current['compliance_footer'] : [];
+		$current['compliance_footer'] = [
+			'enabled' => ! empty( $footer_raw['enabled'] ),
+			'html'    => isset( $footer_raw['html'] ) ? (string) $footer_raw['html'] : '',
+		];
+
+		// Verify what we just wrote actually came back.
+		if ( isset( $payload['brand_palette_sent'] )
+			&& array_values( $payload['brand_palette_sent'] ) !== array_values( $current['brand_palette'] ) ) {
+			return new \WP_Error(
+				'imgsig_brand_palette_persist_failed',
+				__( 'Brand palette write did not round-trip. Check the WordPress error log.', 'imagina-signatures' ),
+				[
+					'status'   => 500,
+					'sent'     => $payload['brand_palette_sent'],
+					'readback' => $current['brand_palette'],
+				]
+			);
+		}
+
+		if ( isset( $payload['banner_campaigns_sent'] )
+			&& count( $payload['banner_campaigns_sent'] ) !== count( $current['banner_campaigns'] ) ) {
+			return new \WP_Error(
+				'imgsig_banner_campaigns_persist_failed',
+				__( 'Banner campaigns write did not round-trip.', 'imagina-signatures' ),
+				[
+					'status'   => 500,
+					'expected' => count( $payload['banner_campaigns_sent'] ),
+					'readback' => count( $current['banner_campaigns'] ),
+				]
+			);
 		}
 
 		return rest_ensure_response( $current );
+	}
+
+	/**
+	 * Direct-to-DB option write that bypasses `update_option` and
+	 * every WP-level cache. Forces `autoload = 'no'`. Used by
+	 * {@see update()} so the save path is immune to cache layers
+	 * that were producing the "saved but reload shows empty" symptom
+	 * the user reported in 1.0.27.
+	 *
+	 * Returns false on SQL error so the controller can surface a
+	 * 500 with `$wpdb->last_error` instead of returning a misleading
+	 * 200.
+	 *
+	 * @since 1.0.28
+	 *
+	 * @param string $name  Option name (must already be sanitised).
+	 * @param mixed  $value Option value (will be `maybe_serialize`d).
+	 *
+	 * @return bool True on success, false on SQL error.
+	 */
+	private static function force_save_option( string $name, $value ): bool {
+		global $wpdb;
+
+		$serialized = maybe_serialize( $value );
+
+		// Try UPDATE first.
+		$rows = $wpdb->update(
+			$wpdb->options,
+			[
+				'option_value' => $serialized,
+				'autoload'     => 'no',
+			],
+			[ 'option_name' => $name ],
+			[ '%s', '%s' ],
+			[ '%s' ]
+		);
+
+		if ( false === $rows ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( "[imagina-signatures] UPDATE failed for {$name}: " . $wpdb->last_error );
+			return false;
+		}
+
+		if ( 0 === (int) $rows ) {
+			// Row didn't exist — INSERT it. Note: `$wpdb->update`
+			// also returns 0 when the new value is identical to the
+			// stored one; that's not an error. We handle both cases
+			// the same way: try INSERT, ignore duplicate-key errors.
+			$existing = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT option_id FROM {$wpdb->options} WHERE option_name = %s LIMIT 1",
+					$name
+				)
+			);
+
+			if ( null === $existing ) {
+				// Genuinely new — INSERT.
+				$inserted = $wpdb->insert(
+					$wpdb->options,
+					[
+						'option_name'  => $name,
+						'option_value' => $serialized,
+						'autoload'     => 'no',
+					],
+					[ '%s', '%s', '%s' ]
+				);
+				if ( false === $inserted ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( "[imagina-signatures] INSERT failed for {$name}: " . $wpdb->last_error );
+					return false;
+				}
+			}
+			// else: row exists, value was identical — fine, no-op.
+		}
+
+		// Invalidate every cache layer we know of so the next
+		// `get_option()` call (e.g. from inside `EditorAssetEnqueuer`
+		// when bootstrapping the editor) sees the new value.
+		wp_cache_delete( $name, 'options' );
+		wp_cache_delete( 'alloptions', 'options' );
+		wp_cache_delete( 'notoptions', 'options' );
+
+		return true;
+	}
+
+	/**
+	 * Cache-bypassing option read. `get_option()` consults
+	 * `wp_cache_get` first, which on hosts with aggressive object
+	 * cache plugins can serve a stale value that doesn't match the
+	 * row we just wrote. This goes straight to `wp_options`.
+	 *
+	 * @since 1.0.28
+	 *
+	 * @param string $name    Option name.
+	 * @param mixed  $default Returned when no row exists.
+	 *
+	 * @return mixed
+	 */
+	private static function read_option_uncached( string $name, $default ) {
+		global $wpdb;
+
+		$raw = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s LIMIT 1",
+				$name
+			)
+		);
+
+		if ( null === $raw ) {
+			return $default;
+		}
+
+		return maybe_unserialize( $raw );
 	}
 
 	/**

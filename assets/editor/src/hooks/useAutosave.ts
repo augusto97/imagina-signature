@@ -4,31 +4,30 @@ import { usePersistenceStore } from '@/stores/persistenceStore';
 import { persistence } from '@/services/persistence';
 
 /**
- * Dirty-tracker hook (1.0.26).
+ * Autosave hook (1.0.28 — autosave restored).
  *
- * Replaces the old autosave hook. The autosave was deleted in 1.0.26
- * because it kept producing false-positive "Saved · HH:MM" toasts in
- * subtle edge cases that lied to the user about whether their work
- * was actually persisted (1.0.20 → 1.0.25 chased these one at a time
- * and never quite got there).
+ * 1.0.26 deleted the autosave because the in-engine self-coalescing
+ * loop kept producing false-positive "Saved" toasts in subtle edge
+ * cases. 1.0.28 restores it but on the explicit-save model:
+ * `scheduleSave()` is just a debounced wrapper around the same
+ * `saveNow()` that the manual button uses. The backend hash-verify
+ * (1.0.26) still catches any silent corruption, so no false-positive
+ * toast can sneak through.
  *
- * What this hook does instead:
+ * What this hook does:
  *   1. Initialise the persistence engine with the bootstrap config.
- *   2. Watch for schema mutations (via `hasUserEdited`). When the
- *      user touches anything, flip the persistence store's `isDirty`
- *      flag so the topbar Save button lights up. NO network call.
- *   3. Install a `beforeunload` warning that fires whenever the user
- *      tries to leave with unsaved work — so the browser shows its
- *      "Leave / Stay" dialog and they don't lose anything by closing
- *      the tab. The back-arrow click handler awaits `saveNow()`
- *      explicitly; this listener is the safety net for everything
- *      else (address-bar nav, browser back, tab close).
+ *   2. Watch for schema mutations (via `hasUserEdited`). On every
+ *      change, flip `isDirty` so the topbar Save button lights up
+ *      AND schedule an autosave 1500 ms after the last edit.
+ *   3. Install a `beforeunload` warning that fires whenever the
+ *      document is dirty / a save is in flight / a save is pending,
+ *      so accidental tab-close can't drop work.
  *
- * The user is now the source of truth for "should this save now?"
- * via the explicit Save button + Cmd-S shortcut. If they don't press
- * either, nothing is saved. The button label tells them honestly.
+ * The Save button + Cmd-S still preempt the autosave timer when the
+ * user wants to commit immediately.
  */
 export function useAutosave(): void {
+  const schema = useSchemaStore((s) => s.schema);
   const hasUserEdited = useSchemaStore((s) => s.hasUserEdited);
   const isLoaded = usePersistenceStore((s) => s.isLoaded);
   const markDirty = usePersistenceStore((s) => s.markDirty);
@@ -40,11 +39,15 @@ export function useAutosave(): void {
   useEffect(() => {
     if (!isLoaded) return;
     if (!hasUserEdited) return;
-    // Flip `isDirty` so the topbar Save button switches to its
-    // "unsaved changes" tone. No network call here — the user
-    // commits via the explicit Save button or Cmd-S.
+    // Two parallel signals: flip `isDirty` so the topbar reflects
+    // unsaved state, AND schedule the debounced autosave so the
+    // user doesn't have to remember to click Save for incremental
+    // edits. The schedule is reset on every dependency change, so
+    // a burst of typing collapses into one save 1500 ms after the
+    // last keystroke.
     markDirty();
-  }, [hasUserEdited, isLoaded, markDirty]);
+    persistence.scheduleSave();
+  }, [schema, hasUserEdited, isLoaded, markDirty]);
 
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {

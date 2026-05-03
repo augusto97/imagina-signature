@@ -2,6 +2,57 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.28] — 2026-05-02
+
+User reports: branding palette save reports success but doesn't persist on reload; can't add or edit colours, only delete; need bulk-delete in the signatures listing; please bring autosave back.
+
+### Fixed — Branding palette persistence
+
+User reported the Save button shows "Saved" but reload comes up empty. Replaced `update_option` + `wp_cache_delete` + readback through `get_option` with direct `$wpdb` writes against `wp_options` and a cache-bypassing `$wpdb->get_var` readback. The new path:
+
+1. Writes directly to `wp_options` via `$wpdb->update` / `$wpdb->insert` with explicit `autoload = 'no'`. False return surfaces a 500 with `$wpdb->last_error`.
+2. Reads back via raw SQL (no `get_option`, no `wp_cache_get`). Whatever `$wpdb` returns IS the canonical "what's actually persisted" answer.
+3. Verifies the round-trip and returns 500 with `{sent, readback}` on mismatch.
+
+This removes every WP-level caching layer from the save path, so the "saved but reload shows empty" symptom can't recur from any cache-related cause. If the write still doesn't land, the `$wpdb->last_error` surfaces directly to the user. The same direct-DB reader is also used inside the verify so we're never comparing a freshly-primed cache value against itself.
+
+### Fixed / Changed — Branding UX rewrite
+
+User reported: "no me deja agregar colores ni editar los que ya hay sino solo eliminarlos". The previous flow separated the colour picker from the "Add" button and required typing a hex code or pick + click — confusing. The new flow:
+
+- **`+ Add colour` button** appends a new swatch (default `#2563eb`) instantly — no separate hex field, no Add button to remember.
+- **Every existing swatch is itself a clickable colour picker.** Click opens the OS native picker; on change the entry's hex updates in place. The hex code is shown next to the swatch as a label.
+- **Trash button** still removes a swatch (unchanged).
+- **`Save palette` button** persists everything in one PATCH (unchanged).
+
+The Add and Edit affordances are now visually obvious. Removed the orphan text input that required hex syntax knowledge.
+
+### Added — Bulk delete in signatures listing
+
+User reported they couldn't select multiple signatures to delete. Added:
+
+- **Per-row checkbox** in the leftmost column.
+- **Header checkbox** with three states: empty, indeterminate (some visible rows selected), checked (all visible rows selected). Toggling it selects / deselects only the rows currently visible under the active filter + search — hidden rows aren't touched so the user can't accidentally delete an archived row they can't see.
+- **Bulk action bar** appears above the table when at least one row is selected: shows the count, "Clear" button, and a destructive "Delete selected" button.
+- **Parallel DELETEs** via `Promise.allSettled` so a partial failure (e.g. a row already deleted in another tab) doesn't abort the whole batch — the alert shows the count delivered + the first failure's message.
+- Selected rows get a subtle accent background so the user can see which ones are flagged.
+
+### Restored — Autosave (with the verify path from 1.0.26)
+
+User asked for autosave back. Restored on the explicit-save model from 1.0.26:
+
+- `persistence.scheduleSave()` is a debounced wrapper (1500 ms) around the same `persistence.saveNow()` that the Save button calls.
+- `useAutosave` hook calls `scheduleSave()` on every schema mutation. A burst of typing collapses into one save 1500 ms after the last keystroke.
+- The Save button + Cmd-S still preempt the timer when the user wants to commit immediately. `saveNow()` cancels any pending autosave before running.
+- Backend hash-verify (1.0.26) still in place — silent failure path is closed.
+- `beforeunload` warning fires for `isDirty || isSaving || hasPending()`, so the back-arrow / tab-close dialog covers both in-flight saves AND debounced ones.
+
+### Internal
+
+- Editor bundle: 682 KB → 683 KB (gzip 213.54 KB). Slightly larger because `scheduleSave` came back; still well under the 600 KB gzip target in CLAUDE.md §2.3.
+- Plugin version bumped to 1.0.28.
+- All 32 vitest cases still pass; tsc strict-clean.
+
 ## [1.0.27] — 2026-05-02
 
 ### Fixed — Edit links opened the editor with `?id=id` instead of the row's real id

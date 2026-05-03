@@ -36,6 +36,14 @@ import { usePersistenceStore } from '@/stores/persistenceStore';
 import { useToastStore } from '@/stores/toastStore';
 import { __ } from '@/i18n/helpers';
 
+/**
+ * Debounce window between the user's last edit and the autosave
+ * firing. 1500 ms balances "saves often enough that the user can't
+ * lose much by closing the tab" against "doesn't slam the server on
+ * every keystroke".
+ */
+const AUTOSAVE_DEBOUNCE_MS = 1500;
+
 class Persistence {
   private signatureId = 0;
   private initialized = false;
@@ -46,6 +54,12 @@ class Persistence {
    * launching duplicates.
    */
   private inFlight: Promise<number> | null = null;
+  /**
+   * Timer handle for the pending autosave. `scheduleSave()` resets
+   * it on every call, so a burst of edits collapses into one save
+   * 1500 ms after the LAST edit. `saveNow()` clears it.
+   */
+  private autosaveTimer: ReturnType<typeof setTimeout> | null = null;
 
   /** Bind to the bootstrap config. Idempotent. */
   initialize(): void {
@@ -71,9 +85,38 @@ class Persistence {
     }
   }
 
-  /** True iff a save is currently in flight. */
+  /**
+   * Schedule a debounced autosave. `useAutosave` calls this on every
+   * schema mutation (1.0.28 — autosave restored after 1.0.26 deleted
+   * it). Each call resets the timer; rapid edits collapse into one
+   * save AUTOSAVE_DEBOUNCE_MS ms after the last edit.
+   *
+   * The save itself goes through the same `saveNow()` path as the
+   * manual Save button, so the backend hash-verify still catches any
+   * silent corruption — but the user no longer has to remember to
+   * click Save for incremental edits to land.
+   */
+  scheduleSave(): void {
+    if (this.autosaveTimer !== null) {
+      clearTimeout(this.autosaveTimer);
+    }
+    this.autosaveTimer = setTimeout(() => {
+      this.autosaveTimer = null;
+      void this.saveNow();
+    }, AUTOSAVE_DEBOUNCE_MS);
+  }
+
+  /** Cancel any pending autosave. Used by the back-arrow handler. */
+  cancelScheduledSave(): void {
+    if (this.autosaveTimer !== null) {
+      clearTimeout(this.autosaveTimer);
+      this.autosaveTimer = null;
+    }
+  }
+
+  /** True iff a save is currently in flight or queued. */
   hasPending(): boolean {
-    return this.inFlight !== null;
+    return this.inFlight !== null || this.autosaveTimer !== null;
   }
 
   /**
@@ -88,6 +131,11 @@ class Persistence {
    * `persistenceStore.lastError`).
    */
   async saveNow(): Promise<number> {
+    // Cancel any pending autosave — `saveNow` always preempts the
+    // debounced timer to avoid a back-to-back save right after a
+    // manual one.
+    this.cancelScheduledSave();
+
     // Coalesce concurrent calls onto the same in-flight request.
     if (this.inFlight) return this.inFlight;
 

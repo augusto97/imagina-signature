@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FC } from 'react';
-import { Plus, Search, FileSignature, Pencil, Copy, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, FileSignature, Pencil, Copy, Trash2, MoreHorizontal, X } from 'lucide-react';
 import { Topbar } from '@admin/components/Topbar';
 import { Button } from '@admin/components/Button';
 import { StatusPill } from '@admin/components/StatusPill';
@@ -14,7 +14,7 @@ type StatusFilter = 'all' | SignatureRow['status'];
 /**
  * Signatures listing — fetches `/signatures`, renders the table,
  * supports a status filter and a name search, plus per-row
- * Edit / Duplicate / Delete actions.
+ * Edit / Duplicate / Delete actions and bulk-delete via row checkboxes.
  */
 export const SignaturesPage: FC = () => {
   const config = getConfig();
@@ -24,6 +24,14 @@ export const SignaturesPage: FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [busyId, setBusyId] = useState<number | null>(null);
+  /**
+   * Set of signature ids currently selected for bulk operations.
+   * Cleared on successful bulk action and on every list refresh so
+   * stale ids (rows that were deleted by another tab / user) can't
+   * accumulate.
+   */
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const load = (): Promise<void> => {
     return apiCall<SignatureRow[]>('/signatures?per_page=100')
@@ -39,6 +47,7 @@ export const SignaturesPage: FC = () => {
           return;
         }
         setItems(data);
+        setSelected(new Set());
       })
       .catch((e: Error) => setError(e.message));
   };
@@ -93,6 +102,89 @@ export const SignaturesPage: FC = () => {
     }
   };
 
+  /** Toggle selection for a single row. */
+  const toggleSelected = (id: number, on: boolean): void => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  /**
+   * Header checkbox: select / deselect every row that's currently
+   * VISIBLE under the active filter + search. Hidden rows aren't
+   * touched so the user can't accidentally bulk-delete an archived
+   * signature they can't see.
+   */
+  const allVisibleSelected =
+    filtered.length > 0 && filtered.every((row) => selected.has(row.id));
+  const someVisibleSelected =
+    filtered.some((row) => selected.has(row.id)) && !allVisibleSelected;
+
+  const toggleAllVisible = (on: boolean): void => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (on) {
+        for (const row of filtered) next.add(row.id);
+      } else {
+        for (const row of filtered) next.delete(row.id);
+      }
+      return next;
+    });
+  };
+
+  const onBulkDelete = async (): Promise<void> => {
+    if (selected.size === 0) return;
+    const count = selected.size;
+    if (
+      !window.confirm(
+        __(
+          'Delete %s signature(s)? This cannot be undone.',
+          String(count),
+        ),
+      )
+    ) {
+      return;
+    }
+
+    setBulkBusy(true);
+    const ids = Array.from(selected);
+    // Run the DELETEs in parallel — the server is the bottleneck and
+    // the rows are independent. `allSettled` so one bad row doesn't
+    // abort the whole batch (e.g. a row already deleted in another
+    // tab returning 404).
+    const results = await Promise.allSettled(
+      ids.map((id) => apiCall(`/signatures/${id}`, { method: 'DELETE' })),
+    );
+    setBulkBusy(false);
+
+    const failures = results
+      .map((r, i) => ({ id: ids[i]!, r }))
+      .filter((x) => x.r.status === 'rejected');
+
+    if (failures.length > 0) {
+      const first = failures[0]!.r as PromiseRejectedResult;
+      const message =
+        first.reason instanceof ApiError
+          ? first.reason.message
+          : (first.reason as Error).message;
+      window.alert(
+        __(
+          'Deleted %s of %s. First failure: %s',
+          String(count - failures.length),
+          String(count),
+          message,
+        ),
+      );
+    }
+
+    await load();
+  };
+
+  const clearSelection = (): void => setSelected(new Set());
+
   return (
     <div className="flex h-full flex-col">
       <Topbar
@@ -134,6 +226,37 @@ export const SignaturesPage: FC = () => {
               : __('%s signature(s)', String(filtered.length))}
           </span>
         </div>
+
+        {/* Bulk action bar — only visible when at least one row is
+            selected. Sticks visually above the table so the user can
+            see the count + action without scrolling. */}
+        {selected.size > 0 && (
+          <div className="mb-3 flex items-center gap-3 rounded-lg border border-[var(--accent)]/30 bg-[var(--bg-selected)] px-4 py-2.5">
+            <span className="text-[13px] font-medium text-[var(--text-primary)]">
+              {__('%s selected', String(selected.size))}
+            </span>
+            <div className="ml-auto flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={<X size={12} />}
+                onClick={clearSelection}
+                disabled={bulkBusy}
+              >
+                {__('Clear')}
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                icon={bulkBusy ? <Spinner size={12} /> : <Trash2 size={12} />}
+                onClick={() => void onBulkDelete()}
+                disabled={bulkBusy}
+              >
+                {__('Delete selected')}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Body */}
         <div className="flex-1 overflow-auto rounded-lg border border-[var(--border-default)] bg-[var(--bg-panel)] shadow-[var(--shadow-xs)]">
@@ -180,6 +303,22 @@ export const SignaturesPage: FC = () => {
             <table className="w-full text-left text-[13px]">
               <thead className="border-b border-[var(--border-default)] bg-[var(--bg-panel-soft)]">
                 <tr>
+                  <th className="w-10 px-4 py-2.5">
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      ref={(node) => {
+                        // The "indeterminate" state isn't a React
+                        // attribute — set it imperatively so the
+                        // header checkbox shows the dash when SOME
+                        // (but not all) visible rows are selected.
+                        if (node) node.indeterminate = someVisibleSelected;
+                      }}
+                      onChange={(e) => toggleAllVisible(e.target.checked)}
+                      aria-label={__('Select all visible')}
+                      className="!h-4 !w-4 cursor-pointer"
+                    />
+                  </th>
                   <Th>{__('Name')}</Th>
                   <Th>{__('Status')}</Th>
                   <Th>{__('Last edited')}</Th>
@@ -189,11 +328,24 @@ export const SignaturesPage: FC = () => {
               <tbody>
                 {filtered.map((row) => {
                   const busy = busyId === row.id;
+                  const checked = selected.has(row.id);
                   return (
                     <tr
                       key={row.id}
-                      className="border-b border-[var(--border-subtle)] last:border-b-0 hover:bg-[var(--bg-panel-soft)]"
+                      className={
+                        'border-b border-[var(--border-subtle)] last:border-b-0 hover:bg-[var(--bg-panel-soft)] ' +
+                        (checked ? 'bg-[var(--bg-selected)]' : '')
+                      }
                     >
+                      <td className="w-10 px-4 py-4">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => toggleSelected(row.id, e.target.checked)}
+                          aria-label={__('Select %s', row.name || __('Untitled'))}
+                          className="!h-4 !w-4 cursor-pointer"
+                        />
+                      </td>
                       <td className="px-5 py-4">
                         <a
                           href={editorUrl(row.id)}
