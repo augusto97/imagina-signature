@@ -370,6 +370,24 @@ export const SignaturesPage: FC = () => {
                           >
                             {__('Edit')}
                           </Button>
+                          {/* Duplicate is a frequent-enough action
+                              that hiding it under the "more" menu
+                              hurts discoverability — surface it as
+                              a primary affordance next to Edit. The
+                              kebab menu still has the entry as a
+                              fallback for keyboard users / narrow
+                              viewports. */}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            icon={<Copy size={12} />}
+                            disabled={busy}
+                            onClick={() => void onDuplicate(row)}
+                            title={__('Duplicate')}
+                            aria-label={__('Duplicate %s', row.name || __('Untitled'))}
+                          >
+                            {__('Duplicate')}
+                          </Button>
                           <RowMenu
                             disabled={busy}
                             onDuplicate={() => void onDuplicate(row)}

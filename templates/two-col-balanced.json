@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "meta": {
+    "created_at": "2026-05-03T00:00:00Z",
+    "updated_at": "2026-05-03T00:00:00Z",
+    "editor_version": "1.0.31"
+  },
+  "canvas": {
+    "width": 600,
+    "background_color": "#ffffff",
+    "font_family": "Helvetica, Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#1d4ed8"
+  },
+  "variables": {},
+  "blocks": [
+    {
+      "id": "split",
+      "type": "container",
+      "columns": 2,
+      "gap": 24,
+      "left_width": 50,
+      "children": [
+        {
+          "id": "name",
+          "type": "heading",
+          "content": "Jane Doe",
+          "style": {
+            "font_family": "Helvetica, Arial, sans-serif",
+            "font_size": 22,
+            "font_weight": 700,
+            "color": "#111827",
+            "line_height": 1.1,
+            "text_align": "left"
+          },
+          "padding": { "top": 0, "right": 0, "bottom": 4, "left": 0 }
+        },
+        {
+          "id": "tagline",
+          "type": "text",
+          "content": "<strong>Head of Customer Success</strong><br>Helping teams ship faster.",
+          "style": {
+            "font_family": "Helvetica, Arial, sans-serif",
+            "font_size": 13,
+            "font_weight": 400,
+            "color": "#475569",
+            "line_height": 1.5,
+            "text_align": "left"
+          },
+          "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
+        },
+        {
+          "id": "divider",
+          "type": "divider",
+          "border": { "width": 2, "color": "#1d4ed8", "style": "solid" },
+          "width_percent": 30,
+          "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 }
+        }
+      ],
+      "right_children": [
+        {
+          "id": "company",
+          "type": "text",
+          "content": "<strong>ACME, Inc.</strong>",
+          "style": {
+            "font_family": "Helvetica, Arial, sans-serif",
+            "font_size": 13,
+            "font_weight": 600,
+            "color": "#111827",
+            "line_height": 1.4,
+            "text_align": "left"
+          },
+          "padding": { "top": 0, "right": 0, "bottom": 6, "left": 0 }
+        },
+        {
+          "id": "contact",
+          "type": "contact_row",
+          "rows": [
+            { "icon": "email", "label": "jane@acme.com", "href": "mailto:jane@acme.com" },
+            { "icon": "phone", "label": "+1 555 300 4000", "href": "tel:+15553004000" },
+            { "icon": "web", "label": "acme.com/jane", "href": "https://acme.com/jane" }
+          ],
+          "style": {
+            "font_family": "Helvetica, Arial, sans-serif",
+            "font_size": 12.5,
+            "font_weight": 400,
+            "color": "#475569"
+          },
+          "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
+        },
+        {
+          "id": "cta",
+          "type": "button_cta",
+          "label": "Book a call",
+          "href": "https://acme.com/book",
+          "background_color": "#1d4ed8",
+          "text_color": "#ffffff",
+          "border_radius": 6,
+          "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 }
+        }
+      ]
+    }
+  ]
+}

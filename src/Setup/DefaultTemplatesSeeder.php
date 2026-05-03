@@ -98,6 +98,28 @@ final class DefaultTemplatesSeeder {
 			'sort_order'  => 100,
 			'description' => 'Shop CTA + social icons for storefront teams.',
 		],
+		// Multi-column templates added in 1.0.32. Each one uses the
+		// ContainerBlock left/right cells (1.0.31 schema) so the user
+		// can place a different number of elements on each side
+		// without the legacy half-by-half split rule fighting them.
+		'logo-left'         => [
+			'name'        => 'Logo + info (2-column)',
+			'category'    => 'multi-column',
+			'sort_order'  => 110,
+			'description' => 'Square logo on the left, name / role / contact / socials on the right.',
+		],
+		'avatar-pro'        => [
+			'name'        => 'Avatar + info (2-column)',
+			'category'    => 'multi-column',
+			'sort_order'  => 120,
+			'description' => 'Round profile photo + role on the left, contacts and socials on the right.',
+		],
+		'two-col-balanced'  => [
+			'name'        => 'Balanced split (2-column)',
+			'category'    => 'multi-column',
+			'sort_order'  => 130,
+			'description' => 'Headline + tagline on the left, contacts + Book-a-call CTA on the right.',
+		],
 	];
 
 	/**

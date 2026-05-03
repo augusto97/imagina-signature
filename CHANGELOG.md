@@ -2,6 +2,36 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.32] — 2026-05-03
+
+### Added — Duplicate as a primary action in the signatures list
+
+User asked for a Duplicate button next to Edit. The action existed already inside the kebab "more" menu, but hiding it there hurt discoverability. Now `SignaturesPage` shows a `Duplicate` ghost button between Edit and the kebab. The kebab still has the entry as a fallback for keyboard users / narrow viewports.
+
+### Added — Three new multi-column templates
+
+The 1.0.31 ContainerBlock rewrite let users pick which children go in each column independently, but every shipped template was still single-column. Three new templates show off the cell-aware layout the user said was previously impossible (1 element on the left + 5 on the right):
+
+- **`logo-left`** — *"Logo + info (2-column)"* — 25% logo cell on the left, the rest of the signature (heading, role, company, divider, contact row, social icons) on the right. Exactly the layout the user described as missing.
+- **`avatar-pro`** — *"Avatar + info (2-column)"* — round profile photo on the left (18% cell), name + role + contacts + socials on the right.
+- **`two-col-balanced`** — *"Balanced split (2-column)"* — 50/50 split: headline + tagline + accent divider on the left, company + contacts + Book-a-call CTA on the right.
+
+All three live in a new `multi-column` category so they're easy to find in the Template Picker. They use the new `right_children` schema field directly (no migration round-trip).
+
+### Tests
+
+- `tests/js/compiler/seeded-templates.test.ts` — compiles every JSON file under `templates/` (now 13 templates) through the full pipeline and asserts the result is non-empty + free of "Unknown block type" warnings. Catches JSON syntax errors, schema mismatches, and Container schema drift in one CI step. The suite is parameterised over the directory listing so adding a new template auto-extends the test.
+- A targeted assertion on `logo-left` makes sure both cells render — left cell's image alt AND the right cell's heading + contact strings appear in the compiled HTML. If a future change to `compile()` accidentally drops `right_children`, this test catches it.
+
+54/54 vitest cases pass (14 new from `seeded-templates`).
+
+### Internal
+
+- Editor bundle unchanged (only PHP + admin TS + JSON templates changed; admin bundle hash bumped).
+- Plugin version bumped to 1.0.32.
+
+
+
 ## [1.0.31] — 2026-05-03
 
 ### Changed — Container columns: explicit left vs right + drag-and-drop into cells
