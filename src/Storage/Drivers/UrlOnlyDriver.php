@@ -126,4 +126,20 @@ final class UrlOnlyDriver implements StorageDriverInterface {
 		// Always considered configured — there's no config to fill.
 		return true;
 	}
+
+	/**
+	 * @inheritDoc
+	 *
+	 * Always false — this driver hosts nothing, so there's never an
+	 * object to verify. The upload flow short-circuits at the
+	 * `UploadController` (HTTP 403 `imgsig_uploads_disabled`) before
+	 * any code path could call this — but the interface still requires
+	 * a concrete implementation. Forgetting it in 1.0.29 left the
+	 * class abstract-by-inference, which fatal-errored on every page
+	 * load (autoloader resolved the class name but PHP refused to
+	 * instantiate it).
+	 */
+	public function verify_object_exists( string $key ): bool {
+		return false;
+	}
 }

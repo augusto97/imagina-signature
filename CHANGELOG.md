@@ -2,6 +2,28 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.30] — 2026-05-03
+
+### Fixed — Critical: 1.0.29 fatal-errored every page after activation
+
+User reported every wp-admin page showed "There has been a critical error on this website." after upgrading to 1.0.29.
+
+Root cause: `UrlOnlyDriver` (added in 1.0.29) implemented every method of `StorageDriverInterface` EXCEPT `verify_object_exists`. PHP let the file parse (no syntax error), but the moment any code path tried to instantiate the class — including the autoloader resolving the FQCN during a routine `Plugin::boot()` — PHP raised "contains 1 abstract method and must therefore be declared abstract or implement the remaining methods". The fatal happened at class-resolution time so even sites that never selected `url_only` mode crashed.
+
+Fix:
+- Added `UrlOnlyDriver::verify_object_exists()` returning `false`. The driver hosts nothing, so there's never an object to verify; the upload flow short-circuits at the controller before this method gets called anyway.
+- New regression test `tests/php/Unit/Storage/DriversInstantiableTest.php` instantiates every shipped driver, asserts it implements the interface, and checks every concrete driver class has an `ID` constant. Future drivers that forget any interface method will fail this test rather than crash sites.
+
+If your site is currently broken on 1.0.29:
+1. Delete the plugin folder via FTP / hosting file manager (`wp-content/plugins/imagina-signatures/`).
+2. Re-upload the 1.0.30 ZIP.
+3. Activate — every previously-working setting is preserved.
+
+### Internal
+
+- Editor bundle unchanged (only PHP changed).
+- Plugin version bumped to 1.0.30.
+
 ## [1.0.29] — 2026-05-03
 
 ### Added — `url_only` storage mode (no local file hosting)
