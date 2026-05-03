@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.28 | [imagina-signatures-1.0.28.zip](imagina-signatures-1.0.28.zip) |
 | 1.0.27 | [imagina-signatures-1.0.27.zip](imagina-signatures-1.0.27.zip) |
 | 1.0.26 | [imagina-signatures-1.0.26.zip](imagina-signatures-1.0.26.zip) |
 | 1.0.25 | [imagina-signatures-1.0.25.zip](imagina-signatures-1.0.25.zip) |
@@ -39,6 +40,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.28.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.27.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.26.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.25.zip
@@ -103,6 +105,14 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.28
+**Branding palette persistence + UX rewrite, bulk delete in signatures listing, autosave back.** User reported: branding save reports success but doesn't persist; can't add/edit colours, only delete; need bulk-delete in signatures; bring autosave back.
+
+- **Persistence**: replaced `update_option` + cache invalidation + readback through `get_option` with direct `$wpdb` writes against `wp_options` and a cache-bypassing `$wpdb->get_var` readback. The new path forces `autoload='no'` explicitly, surfaces `$wpdb->last_error` as a 500 on SQL failure, and verifies the round-trip with raw SQL so the verify isn't reading from any cache layer that the write just primed.
+- **UX rewrite**: every existing swatch IS a colour picker (click to edit), and `+ Add colour` appends a default swatch instantly. Removed the orphan hex text input and the separate Add button. Edit and Add are now both visually obvious.
+- **Bulk delete**: per-row checkbox, header checkbox with indeterminate state, bulk action bar shows count + Clear + destructive Delete button when ≥1 selected. Parallel DELETEs via `Promise.allSettled` so a partial failure doesn't abort the batch.
+- **Autosave**: restored on the explicit-save model from 1.0.26. `scheduleSave()` is a 1500 ms debounced wrapper around the same `saveNow()` the manual button calls. Save button + Cmd-S still preempt the timer. Backend hash-verify (1.0.26) still in place.
 
 ### 1.0.27
 **Edit links opened the editor with `?id=id` instead of the row's real id.** Reported by the user — every "Edit" button in the signatures listing was producing URLs like `/wp-admin/admin.php?page=imagina-signatures-editor&id=id` (literal string "id"). The editor read that as `id=0` and started a fresh signature, making every saved row effectively unreachable through the listing. Root cause: `AdminAssetEnqueuer::build_config()` was building the editor URL template with `{id}` as the placeholder and passing it through `esc_url_raw()`, which strips `{` and `}` (reserved URL characters) on some WP / PHP combinations — the placeholder arrived in the frontend already stripped to `id=id`. The TS `String#replace('{id}', …)` then found nothing to replace. Switched to `__ID__` (alphanumeric, no special chars) on both PHP and TS sides; `esc_url_raw` leaves it intact and the replace lands correctly.
