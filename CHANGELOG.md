@@ -2,6 +2,26 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.33] — 2026-05-03
+
+### Fixed — Multi-column templates didn't appear after upgrading from 1.0.31
+
+User reported the three new templates added in 1.0.32 (`logo-left`, `avatar-pro`, `two-col-balanced`) weren't showing up in the Template Picker after upgrading.
+
+Root cause: `register_activation_hook` only fires when the user clicks **Activate** in `wp-admin/plugins.php`. Replacing the plugin via "Upload Plugin → Replace current with uploaded" does NOT re-run the activation hook. So when 1.0.32 shipped with three new template JSON files + three new entries in `DefaultTemplatesSeeder::META`, the seeder never ran on existing installs and the templates never landed in `wp_imgsig_templates`.
+
+Fix: `Plugin::boot()` now reads the stored `imgsig_version` option and compares it against the current `IMGSIG_VERSION` constant on every page load. When the stored version is older, it re-runs `Installer::install()` — every step inside is idempotent (dbDelta diffs the schema, role->add_cap is no-op when the cap exists, the templates seeder skips slugs that already exist, options use add_option which doesn't overwrite). Wrapped in try/catch so a failed upgrade doesn't crash the site — it logs to `error_log` and lets the user continue. The upgrade trigger only fires when an `imgsig_version` option already exists; a fresh activation skips it (the activation hook handles that path).
+
+After installing 1.0.33, the next admin page load will detect the upgrade, run the seeder, and the three multi-column templates will appear.
+
+### Internal
+
+- New PHPUnit `WP_REST_Server` stub so integration tests against controllers that reference `WP_REST_Server::EDITABLE` constants autoload cleanly.
+- `SignaturesControllerTest::test_item_route_supports_get_patch_delete` updated to accept either `'PATCH'` (legacy) or `'POST, PUT, PATCH'` (1.0.24+ EDITABLE bundle string) as the editable-method declaration.
+- 54/54 PHPUnit + 54/54 vitest cases pass.
+
+
+
 ## [1.0.32] — 2026-05-03
 
 ### Added — Duplicate as a primary action in the signatures list

@@ -113,6 +113,23 @@ final class Plugin {
 		// repositories, services, controllers).
 		ServiceProvider::register( $this->container );
 
+		// Upgrade hook (1.0.32). `register_activation_hook` only fires
+		// when the user clicks Activate — NOT when they overwrite the
+		// plugin via "Upload Plugin → Replace current". So bumping the
+		// plugin from one version to another in place leaves any new
+		// install steps un-executed (new shipped templates never seed,
+		// new schema migrations never run, new capabilities never
+		// register). We compare the stored `imgsig_version` option
+		// against the current `IMGSIG_VERSION` constant on every boot
+		// and re-run `Installer::install()` when they differ. Every
+		// step inside `install()` is idempotent (dbDelta diffs the
+		// schema, role->add_cap is no-op when the cap exists, the
+		// templates seeder skips slugs that already exist, options are
+		// `add_option` which doesn't overwrite). Wrapped in try/catch
+		// so a failed upgrade doesn't crash the site — it logs and
+		// lets the user continue with the previous state.
+		$this->run_upgrade_if_needed();
+
 		// REST API: register every controller's routes on rest_api_init.
 		$this->boot_rest();
 
@@ -133,6 +150,43 @@ final class Plugin {
 		 * @param Container $container The plugin's DI container.
 		 */
 		do_action( Actions::PLUGIN_BOOTED, $this->container );
+	}
+
+	/**
+	 * Compare stored `imgsig_version` against the current constant; if
+	 * they differ, run `Installer::install()` so any new install steps
+	 * shipped with the new release land on this site even when the
+	 * upgrade was a "Upload Plugin → Replace current" flow that
+	 * doesn't trigger the activation hook.
+	 *
+	 * @since 1.0.32
+	 *
+	 * @return void
+	 */
+	private function run_upgrade_if_needed(): void {
+		$current_version = defined( 'IMGSIG_VERSION' ) ? (string) IMGSIG_VERSION : '0.0.0';
+		$stored_version  = (string) get_option( 'imgsig_version', '0.0.0' );
+
+		if ( '0.0.0' === $stored_version ) {
+			// Plugin has never been activated on this site. The
+			// activation hook will run when the user clicks Activate,
+			// or has just run if we're on the post-activate redirect.
+			// Either way, nothing for us to do here.
+			return;
+		}
+
+		if ( version_compare( $stored_version, $current_version, '>=' ) ) {
+			return;
+		}
+
+		try {
+			( new Installer() )->install();
+		} catch ( \Throwable $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log(
+				'[imagina-signatures] upgrade install (' . $stored_version . ' → ' . $current_version . ') failed: ' . $e->getMessage()
+			);
+		}
 	}
 
 	/**

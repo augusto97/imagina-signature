@@ -219,3 +219,24 @@ if ( ! class_exists( 'WP_REST_Response' ) ) {
 		}
 	}
 }
+
+if ( ! class_exists( 'WP_REST_Server' ) ) {
+	/**
+	 * Minimal stand-in for `WP_REST_Server`. Real WordPress exposes
+	 * the EDITABLE / READABLE / etc. method-bundle constants used by
+	 * `register_rest_route`. Tests don't actually dispatch via the
+	 * server — they just need the constants to exist so controller
+	 * code that references `WP_REST_Server::EDITABLE` autoloads
+	 * cleanly.
+	 *
+	 * @phpstan-ignore-next-line
+	 */
+	class WP_REST_Server { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound
+
+		public const READABLE  = 'GET';
+		public const CREATABLE = 'POST';
+		public const EDITABLE  = 'POST, PUT, PATCH';
+		public const DELETABLE = 'DELETE';
+		public const ALLMETHODS = 'GET, POST, PUT, PATCH, DELETE';
+	}
+}

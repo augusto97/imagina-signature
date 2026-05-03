@@ -175,9 +175,20 @@ final class SignaturesControllerTest extends TestCase {
 			$entry['args']
 		);
 
+		// Accept either the literal 'PATCH' (legacy declaration) OR
+		// the `WP_REST_Server::EDITABLE` bundle string `'POST, PUT,
+		// PATCH'` (1.0.24+ — broadened to defend against shared-
+		// hosting WAFs that strip PATCH at the proxy layer).
 		$this->assertContains( 'GET', $methods );
-		$this->assertContains( 'PATCH', $methods );
 		$this->assertContains( 'DELETE', $methods );
+		$has_patch = false;
+		foreach ( $methods as $m ) {
+			if ( false !== strpos( $m, 'PATCH' ) ) {
+				$has_patch = true;
+				break;
+			}
+		}
+		$this->assertTrue( $has_patch, 'No method bundle exposes PATCH for the item route.' );
 	}
 
 	/**
