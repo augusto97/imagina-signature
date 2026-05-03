@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.29 | [imagina-signatures-1.0.29.zip](imagina-signatures-1.0.29.zip) |
 | 1.0.28 | [imagina-signatures-1.0.28.zip](imagina-signatures-1.0.28.zip) |
 | 1.0.27 | [imagina-signatures-1.0.27.zip](imagina-signatures-1.0.27.zip) |
 | 1.0.26 | [imagina-signatures-1.0.26.zip](imagina-signatures-1.0.26.zip) |
@@ -40,6 +41,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.29.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.28.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.27.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.26.zip
@@ -105,6 +107,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.29
+**`url_only` storage mode — disable local uploads, force external URLs.** New third option in the Storage settings dropdown alongside Media Library and S3. When active: every upload endpoint short-circuits with `imgsig_uploads_disabled` (HTTP 403), the editor's bootstrap config sets `uploadEnabled = false`, and the Image / Avatar property panels hide the "Crop image" button (cropping emits a data-URL into `block.src` which would defeat the no-uploads contract). The URL text input remains as the only way to set image sources. Use cases: GDPR compliance, avoiding `wp-content/uploads` bloat, or forcing all assets through an existing CDN. Existing assets uploaded under previous drivers stay readable — `UrlOnlyDriver::get_public_url` returns empty rather than throwing, so cached `public_url` values on `imgsig_assets` rows continue rendering.
 
 ### 1.0.28
 **Branding palette persistence + UX rewrite, bulk delete in signatures listing, autosave back.** User reported: branding save reports success but doesn't persist; can't add/edit colours, only delete; need bulk-delete in signatures; bring autosave back.
