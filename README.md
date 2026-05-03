@@ -7,6 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
+| 1.0.31 | [imagina-signatures-1.0.31.zip](imagina-signatures-1.0.31.zip) |
 | 1.0.30 (hotfix) | [imagina-signatures-1.0.30.zip](imagina-signatures-1.0.30.zip) |
 | ~~1.0.29~~ — DO NOT USE, fatal error on activation | [imagina-signatures-1.0.29.zip](imagina-signatures-1.0.29.zip) |
 | 1.0.28 | [imagina-signatures-1.0.28.zip](imagina-signatures-1.0.28.zip) |
@@ -42,6 +43,7 @@ Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Up
 
 ```
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-latest.zip
+https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.31.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.30.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.29.zip
 https://github.com/augusto97/imagina-signature/raw/release/imagina-signatures-1.0.28.zip
@@ -109,6 +111,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.0.31
+**Container columns: explicit left vs right + cell-aware drag-and-drop + Layers DnD.** User reported: "no tengo forma de seleccionar cuáles imágenes van a ir en el lado izquierdo y cuáles en el derecho" — the Container compile was splitting children via `Math.ceil(length/2)`, so a layout with 1 logo on the left + 4 contact rows on the right was impossible. Plus drag-and-drop didn't work into cells, and Layers had no drag at all. **Schema**: new `right_children: Block[]` field on `ContainerBlock`; `children` is now the LEFT cell of 2-col containers (and the only cell when 1-col). Migration walker rewrites legacy 2-col rows on load using the old half-by-half rule so the user sees the same layout they had before. **Renderer**: each cell is its own dnd-kit `useDroppable` zone wrapping a `SortableContext`. Empty cells render a "Drop blocks here" outline. **Canvas DnD**: drop a library card or canvas block onto a specific cell to land in that cell. New `container-cell:{id}:{left|right}` drop-target id; `findParentAndIndex` / `moveBlock` walk both cells so cross-cell drag works. **Layers DnD**: own `DndContext` independent of canvas; per-row drag handle (grip icon); container rows expose two cell drop zones (1 in 1-col mode); drop on a row → moveBlock after, drop on a cell zone → moveBlockToContainerCell. **Properties**: 2-col mode shows two side-by-side Left / Right subpanels with own Add buttons + child lists. Toggle 2→1 merges right_children back into children; 1→2 leaves everything in left cell. 8 new regression tests; 40/40 vitest pass.
 
 ### 1.0.30 (hotfix)
 **Critical: 1.0.29 fatal-errored every page after activation.** User reported "There has been a critical error on this website." after upgrading. Root cause: `UrlOnlyDriver` (added in 1.0.29) implemented every method of `StorageDriverInterface` EXCEPT `verify_object_exists`. PHP let the file parse (syntax was valid) but the autoloader's class-resolution call during `Plugin::boot()` triggered `Cannot instantiate abstract class` and brought down every wp-admin page — even on sites that never selected `url_only` mode. Fix: implemented the missing method (returns `false` since the driver hosts nothing). New PHP regression test `DriversInstantiableTest` instantiates every shipped driver and asserts each implements the full interface, so a future driver that forgets any method fails CI rather than crashing sites. **If your site is currently broken on 1.0.29: delete the plugin folder via FTP (`wp-content/plugins/imagina-signatures/`), re-upload the 1.0.30 ZIP, and activate. Every previously-saved setting is preserved.**
