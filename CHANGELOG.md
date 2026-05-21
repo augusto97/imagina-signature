@@ -2,6 +2,47 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.34] — 2026-05-21
+
+### Added — Frontend access for non-admin users
+
+User requested: "quiero que mis clientes o usuarios puedan acceder a esta herramienta, no se como hacerlo para que cada usuario tenga sus propias firmas, y que no tenga que acceder desde el admin para crearlas o editarlas sino que sea desde el front". The plugin now exposes a public-facing route that hosts the same React editor and dashboard, gated by WordPress login + a configurable role allowlist. Each user still only sees the signatures they own (per-user scoping, no schema changes).
+
+**New module: `src/Frontend/`**
+
+- **`FrontendAccess`** — settings model. Persists `{ enabled, slug, roles }` in the new `imgsig_frontend_access` option. Default off; default slug `signatures`; default role list `['subscriber']`. Writes also trigger capability sync + a conditional rewrite flush (only when slug or enabled flag transitioned, to avoid the expensive flush on role-only edits).
+- **`FrontendRouter`** — registers three rewrite rules:
+  - `^signatures/?$` → public dashboard (admin React bundle, `page='signatures'`).
+  - `^signatures/editor/?$` → new-signature editor (editor bundle, `signatureId=0`).
+  - `^signatures/editor/([0-9]+)/?$` → existing-signature editor.
+
+  Rules register on `init` (whether the feature is enabled or not) so the toggle doesn't require a permalinks flush; when disabled the dispatcher returns a 404 instead of rendering. `template_redirect` dispatches to `FrontendPage::render()` and `exit`s — WordPress's theme template loader is never reached.
+- **`FrontendPage`** — renders three views:
+  - `index` — full HTML shell that mounts the admin bundle at `#imagina-admin-root` with `IMGSIG_ADMIN_CONFIG.page='signatures'`. Same component tree as the wp-admin "My Signatures" page, just with `urls.*` pointing at the public dashboard so links don't dump the user into wp-admin.
+  - `editor` — same shell pattern but mounts the editor bundle at `#imagina-editor-root` with `IMGSIG_EDITOR_CONFIG.signaturesUrl` pointing to the public dashboard. Reuses the existing ownership check (`SignatureRepository::find_owned_by`) so users can't open other users' signatures by guessing the id.
+  - Login prompt + 403 page for unauthenticated / unauthorised requests. Standalone HTML (no theme, no React), centered card with primary CTA.
+
+  Security-relevant response headers (CSP, X-Frame-Options, Referrer-Policy) set explicitly because the route bypasses WordPress's normal template chain — anything not set here doesn't get set at all.
+
+**New REST endpoint: `GET/PATCH /admin/frontend-access`**
+
+`FrontendAccessController` (gated on `imgsig_manage_storage`, the same "site admin" cap that gates Storage settings). GET returns the persisted settings plus the full WP role list with display names so the React tab can render checkboxes without a second round trip. PATCH applies the side-effects via `FrontendAccess::update()`.
+
+**Capability sync**
+
+`CapabilitiesInstaller::sync_use_roles(array $desired_roles)` — new method that adds `CAP_USE` to newly-selected roles and removes it from previously-selected roles, with the install-time defaults (administrator / editor / author) ALWAYS preserved. Site admins can opt subscribers in without accidentally locking the editor + author roles out by un-checking them. Idempotent.
+
+**Settings UI — new Frontend tab**
+
+`assets/admin/src/pages/settings/FrontendTab.tsx`. Three sections: enable toggle, slug input (with live permalink preview + Open button), role checkboxes (administrator pre-checked + disabled because it's always preserved server-side). Save round-trips PATCH `/admin/frontend-access` and echoes the server response back into the form state.
+
+### Internal
+
+- `Plugin::boot()` calls `(new FrontendRouter())->boot()` unconditionally (not gated on `is_admin()`) — the public route runs on front-end requests.
+- `Activator::activate()` registers the rewrite rules and runs `flush_rewrite_rules()` so the public URL is reachable on first request post-activation. The 1.0.26 commit that removed `flush_rewrite_rules()` from activation was right for a plugin that had no rewrites; now that we do, the flush comes back, scoped to activation only.
+- `ServiceProvider` registers `FrontendAccessController` as a singleton.
+- New TypeScript type `FrontendAccess` in `assets/admin/src/types.ts`. URL helpers use the `__ID__` placeholder convention introduced in 1.0.27.
+
 ## [1.0.33] — 2026-05-03
 
 ### Fixed — Multi-column templates didn't appear after upgrading from 1.0.31

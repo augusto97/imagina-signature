@@ -105,6 +105,56 @@ final class CapabilitiesInstaller {
 	}
 
 	/**
+	 * Synchronises `CAP_USE` to match the given role list. Adds the
+	 * cap to roles in `$desired_roles` that don't already have it,
+	 * removes it from roles previously granted (via this method or
+	 * {@see install()}) that aren't in the new list.
+	 *
+	 * The "previously granted" set is computed by scanning the role
+	 * registry for any role that currently holds {@see CAP_USE} —
+	 * which catches both the default install grants (administrator,
+	 * editor, author) and any prior call to this method (e.g. a
+	 * subscriber that was opted in then opted out).
+	 *
+	 * The administrator role is ALWAYS kept in the granted set. The
+	 * "site admin" needs to be able to manage their own signatures
+	 * regardless of which front-end role list the admin saved, and
+	 * locking themselves out of the cap would be a silent footgun.
+	 *
+	 * @since 1.0.24
+	 *
+	 * @param array<int, string> $desired_roles Role slugs that should have CAP_USE.
+	 *
+	 * @return void
+	 */
+	public function sync_use_roles( array $desired_roles ): void {
+		$roles = wp_roles();
+
+		// Always preserve admin + the install-time defaults so the
+		// frontend-access settings can't accidentally remove a cap
+		// from a role that NEEDS it for the wp-admin UX to keep
+		// working. Subscribers / customers / etc. are opt-in via
+		// $desired_roles.
+		$preserved = array_merge( self::USE_ROLES, $desired_roles );
+		$preserved = array_values( array_unique( array_filter( array_map( 'sanitize_key', $preserved ) ) ) );
+
+		foreach ( array_keys( $roles->roles ) as $role_name ) {
+			$role = get_role( $role_name );
+			if ( null === $role ) {
+				continue;
+			}
+			$should_have = in_array( $role_name, $preserved, true );
+			$has_cap     = ! empty( $role->capabilities[ self::CAP_USE ] );
+
+			if ( $should_have && ! $has_cap ) {
+				$role->add_cap( self::CAP_USE );
+			} elseif ( ! $should_have && $has_cap ) {
+				$role->remove_cap( self::CAP_USE );
+			}
+		}
+	}
+
+	/**
 	 * Removes every plugin capability from every role.
 	 *
 	 * Iterates the full role registry so caps are scrubbed even from roles

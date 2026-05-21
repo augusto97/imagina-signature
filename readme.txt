@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.33
+Stable tag: 1.0.34
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,11 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.34 =
+* **Frontend access — users without wp-admin can now use the editor.** New Settings → Frontend tab adds three controls: master enable toggle, URL slug (default `signatures`), and a list of WordPress roles that receive the `imgsig_use_signatures` capability. With the feature enabled and `subscriber` checked, every subscriber on the site can visit `/signatures/` to see their own signature list and `/signatures/editor/{id}/` to edit one — without ever touching wp-admin. The page is rendered by the plugin directly (skipping the theme), runs the same React bundles, and respects the existing per-user ownership rules so users only see their own signatures.
+* **Capability sync on save.** Toggling roles in the Frontend tab calls a new `CapabilitiesInstaller::sync_use_roles()` that adds the cap to newly-selected roles AND removes it from previously-selected roles. Administrators are always preserved so the admin who configured this can't lock themselves out by accident.
+* **Logged-out + 403 fallback pages.** Hitting `/signatures/` without being logged in renders a centered "Log in" card with a redirect back to the URL after auth. A logged-in user without the cap sees a clean 403 page instead of WordPress's generic forbidden screen.
 
 = 1.0.23 =
 * **Manual Save no longer rejected with "Nothing to save yet".** The empty-blocks guard added in 1.0.22 (which prevents accidental empty-row creation by autosave) was also firing on the manual Save button — clicking Save when the canvas had content but the engine's `dirty` flag had momentarily dropped to `false` would surface the "Nothing to save yet — add a block first." toast even though the canvas was full. The engine's `performSave()` now takes an `allowEmpty` parameter: autosave path stays guarded (`allowEmpty=false`), manual Save path always runs the POST (`allowEmpty=true`). The user explicitly clicking Save bypasses the guard because they've made a deliberate choice. The Topbar's manual-save handler also no longer second-guesses the engine's response — it shows "Saved" on completion unless the engine surfaced an error toast on its own.

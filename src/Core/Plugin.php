@@ -12,8 +12,10 @@ namespace ImaginaSignatures\Core;
 use ImaginaSignatures\Admin\AdminAppPage;
 use ImaginaSignatures\Admin\AdminMenu;
 use ImaginaSignatures\Admin\Pages\EditorPage;
+use ImaginaSignatures\Frontend\FrontendRouter;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 use ImaginaSignatures\Api\Controllers\AssetsController;
+use ImaginaSignatures\Api\Controllers\FrontendAccessController;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Api\Controllers\MeController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
@@ -133,6 +135,12 @@ final class Plugin {
 		// REST API: register every controller's routes on rest_api_init.
 		$this->boot_rest();
 
+		// Public-facing route — runs on EVERY request, admin or not.
+		// The router self-gates on its own settings; when the feature
+		// is disabled (or the URL doesn't match its rewrite) it's a
+		// no-op so the boot cost is one `add_action` call.
+		( new FrontendRouter() )->boot();
+
 		// Admin-only wiring.
 		if ( is_admin() ) {
 			$this->boot_admin();
@@ -239,6 +247,7 @@ final class Plugin {
 				$this->container->make( UploadController::class ),
 				$this->container->make( AssetsController::class ),
 				$this->container->make( SiteSettingsController::class ),
+				$this->container->make( FrontendAccessController::class ),
 			]
 		);
 		$router->register();

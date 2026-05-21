@@ -107,3 +107,12 @@ export interface BannerCampaign {
   start_date: string;
   end_date: string;
 }
+
+/** REST: GET/PATCH /admin/frontend-access. */
+export interface FrontendAccess {
+  enabled: boolean;
+  slug: string;
+  roles: string[];
+  available_roles: { slug: string; label: string }[];
+  dashboard_url: string;
+}

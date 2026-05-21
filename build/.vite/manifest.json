@@ -1,30 +1,30 @@
 {
-  "_bundle-mjs-CQfrF62L.js": {
-    "file": "bundle-mjs-CQfrF62L.js",
+  "_bundle-mjs-B9pXxOha.js": {
+    "file": "bundle-mjs-B9pXxOha.js",
     "name": "bundle-mjs"
   },
   "assets/admin/src/main.tsx": {
-    "file": "admin.D-nYPmRk.js",
+    "file": "admin.JeaYCtyW.js",
     "name": "admin",
     "src": "assets/admin/src/main.tsx",
     "isEntry": true,
     "imports": [
-      "_bundle-mjs-CQfrF62L.js"
+      "_bundle-mjs-B9pXxOha.js"
     ],
     "css": [
-      "admin.qNkherPY.css"
+      "admin.ClYqsgK5.css"
     ]
   },
   "assets/editor/src/main.tsx": {
-    "file": "editor.oOkLI1zS.js",
+    "file": "editor.DgMinEAQ.js",
     "name": "editor",
     "src": "assets/editor/src/main.tsx",
     "isEntry": true,
     "imports": [
-      "_bundle-mjs-CQfrF62L.js"
+      "_bundle-mjs-B9pXxOha.js"
     ],
     "css": [
-      "editor.CHgOfgec.css"
+      "editor.BiFxhhC3.css"
     ]
   }
 }

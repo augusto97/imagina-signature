@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace ImaginaSignatures\Core;
 
 use ImaginaSignatures\Api\Controllers\AssetsController;
+use ImaginaSignatures\Api\Controllers\FrontendAccessController;
 use ImaginaSignatures\Api\Controllers\MeController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
@@ -195,6 +196,12 @@ final class ServiceProvider {
 			SiteSettingsController::class,
 			static function (): SiteSettingsController {
 				return new SiteSettingsController();
+			}
+		);
+		$container->singleton(
+			FrontendAccessController::class,
+			static function (): FrontendAccessController {
+				return new FrontendAccessController();
 			}
 		);
 	}

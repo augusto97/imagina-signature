@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Core;
 
+use ImaginaSignatures\Frontend\FrontendRouter;
 use ImaginaSignatures\Hooks\Actions;
 
 defined( 'ABSPATH' ) || exit;
@@ -80,9 +81,14 @@ final class Activator {
 			);
 		}
 
-		// `flush_rewrite_rules()` was removed in 1.0.26 — REST routes
-		// don't use rewrite rules, so the call was dead weight that
-		// rebuilt the entire permalink cache on every (de)activation.
+		// 1.0.26 removed `flush_rewrite_rules()` from activation because
+		// the plugin had no rewrites — REST routes don't need it. 1.0.34
+		// added the public `/signatures/` route, so we bring the flush
+		// back: register our rules first (the `init` hook hasn't run yet
+		// at activation time), then commit them to the permalink cache.
+		// Scoped to activation only — runtime stays flush-free.
+		FrontendRouter::register_rewrite_rules();
+		flush_rewrite_rules( false );
 
 		/**
 		 * Fires after the plugin has finished activating.

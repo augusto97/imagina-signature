@@ -1,5 +1,5 @@
 import { useState, type FC } from 'react';
-import { Cloud, Palette, FileText, Megaphone } from 'lucide-react';
+import { Cloud, Palette, FileText, Megaphone, Globe } from 'lucide-react';
 import { Topbar } from '@admin/components/Topbar';
 import { __ } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
@@ -7,8 +7,9 @@ import { StorageTab } from './settings/StorageTab';
 import { BrandingTab } from './settings/BrandingTab';
 import { ComplianceTab } from './settings/ComplianceTab';
 import { CampaignsTab } from './settings/CampaignsTab';
+import { FrontendTab } from './settings/FrontendTab';
 
-type Tab = 'storage' | 'branding' | 'compliance' | 'campaigns';
+type Tab = 'storage' | 'branding' | 'compliance' | 'campaigns' | 'frontend';
 
 const TABS: Array<{ id: Tab; label: string; icon: typeof Cloud; description: string }> = [
   {
@@ -34,6 +35,12 @@ const TABS: Array<{ id: Tab; label: string; icon: typeof Cloud; description: str
     label: 'Campaigns',
     icon: Megaphone,
     description: 'Promotional banners auto-injected at the bottom of every signature, with optional date scheduling and random rotation across active entries.',
+  },
+  {
+    id: 'frontend',
+    label: 'Frontend',
+    icon: Globe,
+    description: 'Expose the editor on a public-facing URL so non-admin users (e.g. subscribers) can manage their own signatures without entering wp-admin.',
   },
 ];
 
@@ -78,6 +85,7 @@ export const SettingsPage: FC = () => {
           {tab === 'branding' && <BrandingTab />}
           {tab === 'compliance' && <ComplianceTab />}
           {tab === 'campaigns' && <CampaignsTab />}
+          {tab === 'frontend' && <FrontendTab />}
         </div>
       </div>
     </div>
