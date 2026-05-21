@@ -22,6 +22,14 @@ export interface AdminConfig {
   locale: string;
   /** URL of the wp-admin home (so the breadcrumb back-link goes somewhere sensible). */
   wpAdminUrl: string;
+  /**
+   * Where the React app is being hosted. `admin` = wp-admin (default),
+   * `public` = the FrontendRouter `/signatures/` route. The sidebar's
+   * back-link uses this to swap "Back to WP Admin" for "Back to home"
+   * — non-admin subscribers don't have wp-admin access, so a wp-admin
+   * link in their footer is dead weight at best, a 403 wall at worst.
+   */
+  frontendContext?: 'admin' | 'public';
   /** URL templates for navigation between admin pages and the editor. */
   urls: {
     signatures: string;

@@ -307,11 +307,12 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 			'apiBase'          => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),
 			'restNonce'        => wp_create_nonce( 'wp_rest' ),
 			'locale'           => get_user_locale( $user_id ),
-			// wp-admin is irrelevant on the public route — point at
-			// the public dashboard so any "exit" affordance in the UI
-			// doesn't dump the user into a wp-admin page they may not
-			// even have access to.
-			'wpAdminUrl'       => FrontendAccess::dashboard_url(),
+			// Subscribers don't have wp-admin access — the sidebar's
+			// "back" link uses this as its destination, so point it at
+			// the WP site home. The SidebarNav reads `frontendContext`
+			// and swaps its label from "Back to WP Admin" to "Back to
+			// home" when this URL is in play.
+			'wpAdminUrl'       => esc_url_raw( home_url( '/' ) ),
 			'urls'             => [
 				'signatures' => FrontendAccess::dashboard_url(),
 				// Subscribers don't get manage_templates / manage_storage,

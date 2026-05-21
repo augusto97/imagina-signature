@@ -2,6 +2,21 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.35] — 2026-05-21
+
+### Changed — Trim the public-route sidebar to what subscribers actually need
+
+User feedback after 1.0.34: "en el front no creo que los usuarios normales necesiten el menu de settings y el de templates en ese menu lateral. eso es más para mi como admin… y el botón de regresar para ellos podría redirigir mejor al home". Two follow-ups:
+
+- **Templates entry now gated on `imgsig_manage_templates`.** The sidebar item was previously visible to everyone with `imgsig_use_signatures` — which made sense in wp-admin where the same item also doubles as a quick "browse the gallery" link, but on the public `/signatures/` route a subscriber doesn't manage templates; they pick from them inside the editor's TemplatePicker. Adding `requiresCap: 'manage_templates'` to the NAV entry hides it for subscribers without changing admin behaviour (admins still have the cap). Settings was already gated on `manage_storage`, so the public sidebar now contains only "My Signatures" for non-admin users.
+
+- **Back-link redirects to site home in public context.** `SidebarNav` now reads `config.frontendContext` (added in 1.0.34 but unused on the React side until now). When `frontendContext === 'public'` the bottom-of-rail link is relabelled "Back to home" and uses a Home icon instead of ExternalLink. Destination is whatever PHP set `wpAdminUrl` to — `FrontendPage::build_admin_config` now passes `home_url('/')` (was: the dashboard URL, which made the link useless since the user was already on it). The wp-admin code path is untouched.
+
+### Internal
+
+- `AdminConfig['frontendContext']` typed in `assets/admin/src/types.ts` (was being injected from PHP but the type contract didn't acknowledge it).
+- Admin bundle only — editor bundle is byte-identical, the hash carries over from 1.0.34.
+
 ## [1.0.34] — 2026-05-21
 
 ### Added — Frontend access for non-admin users

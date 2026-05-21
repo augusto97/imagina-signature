@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { FileSignature, LayoutTemplate, Settings, ExternalLink } from 'lucide-react';
+import { FileSignature, LayoutTemplate, Settings, ExternalLink, Home } from 'lucide-react';
 import { __ } from '@admin/i18n';
 import { getConfig } from '@admin/api';
 import { cn } from '@admin/utils/cn';
@@ -22,6 +22,7 @@ const NAV: NavItem[] = [
     label: 'Templates',
     icon: LayoutTemplate,
     href: 'templates',
+    requiresCap: 'manage_templates',
   },
   {
     key: 'settings',
@@ -46,10 +47,14 @@ interface Props {
  */
 export const SidebarNav: FC<Props> = ({ page }) => {
   const config = getConfig();
+  const isPublic = config.frontendContext === 'public';
 
   const visible = NAV.filter(
     (item) => !item.requiresCap || config.capabilities[item.requiresCap],
   );
+
+  const BackIcon = isPublic ? Home : ExternalLink;
+  const backLabel = isPublic ? __('Back to home') : __('Back to WP Admin');
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-[var(--border-default)] bg-[var(--bg-sidebar)]">
@@ -92,8 +97,8 @@ export const SidebarNav: FC<Props> = ({ page }) => {
           href={config.wpAdminUrl}
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-[12.5px] text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-secondary)]"
         >
-          <ExternalLink size={14} strokeWidth={1.9} />
-          <span>{__('Back to WP Admin')}</span>
+          <BackIcon size={14} strokeWidth={1.9} />
+          <span>{backLabel}</span>
         </a>
       </div>
     </aside>

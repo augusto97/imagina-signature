@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.34
+Stable tag: 1.0.35
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,10 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.35 =
+* **Hide Templates from non-admin sidebar.** On the public `/signatures/` route a subscriber doesn't manage templates — they pick from them. The Templates entry in the left sidebar is now gated on `imgsig_manage_templates` (same pattern as Settings), so subscribers see only "My Signatures" while admins keep the full nav.
+* **Back-link redirects to site home for public users.** The sidebar's bottom-of-rail "Back to WP Admin" link no longer dumps non-admin users into a wp-admin page they may not have access to — when the React app is mounted on the public route the link is relabeled "Back to home" and points at `home_url('/')`. Admin context is unchanged.
 
 = 1.0.34 =
 * **Frontend access — users without wp-admin can now use the editor.** New Settings → Frontend tab adds three controls: master enable toggle, URL slug (default `signatures`), and a list of WordPress roles that receive the `imgsig_use_signatures` capability. With the feature enabled and `subscriber` checked, every subscriber on the site can visit `/signatures/` to see their own signature list and `/signatures/editor/{id}/` to edit one — without ever touching wp-admin. The page is rendered by the plugin directly (skipping the theme), runs the same React bundles, and respects the existing per-user ownership rules so users only see their own signatures.
