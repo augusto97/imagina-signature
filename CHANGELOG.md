@@ -2,6 +2,23 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.39] — 2026-05-22
+
+### Fixed — 2-column container collapsed under content pressure in exported HTML
+
+User report (with screenshots) showed the editor canvas rendering the container at the configured 50/50 ratio while the **compiled HTML** — pasted into Gmail, and even rendered inside the Preview modal — collapsed the right cell into a narrow strip. "Senior Product Designer · ACME Studio" wrapped across three lines because the right column was ~140px wide instead of ~300px.
+
+Root cause: `table-layout` defaults to `auto` in email clients. Under auto layout, browsers allocate cell widths from content min/max widths rather than the inline `width:50%` style — a wide left-cell child (QR code at 120-200px, banner at 100-150px) pushed the left cell out, and the right cell took whatever was left.
+
+Fix is in `assets/editor/src/core/blocks/container/definition.tsx`:
+
+- The 2-column compile now emits `table-layout:fixed` on the outer `<table>`. Fixed layout honours the percentage widths exactly regardless of what the children measure. Wide children that exceed the cell width overflow visually instead of dragging the cell open — that's correct behaviour, and the user can adjust the column-width slider or scale the offending child block.
+- Each `<td>` gets the `width="N%"` **HTML attribute** in addition to inline `style="width:N%"`. Outlook on Windows has well-documented quirks where it reads the HTML attribute but skips the CSS — we belt-and-suspenders both.
+- `mso-table-lspace:0pt;mso-table-rspace:0pt` added to the outer table style to zero out Outlook's invisible default padding around tables (otherwise the configured gap measured tighter on Outlook than on every other client).
+- The canvas Renderer (the React component, not the compiled HTML) gets the same `tableLayout: 'fixed'` so the editor canvas matches the exported output. Previously the canvas was forgiving (browser auto-layout still hit 50/50 because the canvas root has a fixed pixel width and the children weren't excessive), which masked the bug from anyone testing in the editor alone — exactly the failure mode the user hit.
+
+The 1-column compile only got the `width="100%"` HTML attribute added (no `table-layout:fixed` because a single-cell table has no proportional allocation to break).
+
 ## [1.0.38] — 2026-05-22
 
 ### Changed — "Export HTML" topbar button renamed to "Export"

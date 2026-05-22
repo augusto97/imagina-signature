@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.38
+Stable tag: 1.0.39
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,9 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.39 =
+* **Multi-column container layout: cells now respect their configured width ratio in the exported HTML.** Default email-client table layout is `auto`, which allocates cell widths from content min/max — a wide QR-code child on the left would push the left cell wide and squeeze the right cell into a strip that wrapped "Senior Product Designer" across three lines. The 2-column compile now emits `table-layout:fixed` plus the `width="N%"` HTML attribute on each `<td>` (Outlook on Windows leans on the attribute when its CSS engine skips inline `width`). The editor canvas renderer matches, so what you see in the editor is what the email client shows. `mso-table-lspace/rspace` also zeroed to kill Outlook's invisible default table padding around the container.
 
 = 1.0.38 =
 * **"Export HTML" button renamed to "Export".** The button opens a modal that does much more than just export HTML (copy visual to clipboard, copy raw HTML, download .html, send-to-self via email, per-client install instructions). Calling it "Export HTML" misrepresented four of those five paths. Icon also swapped from `Code2` (very HTML-coded) to `Share2` (neutral "send this out").

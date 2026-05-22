@@ -100,7 +100,7 @@ const Renderer: FC<{ block: ContainerBlock; isPreview?: boolean }> = ({ block, i
       cellPadding={0}
       cellSpacing={0}
       border={0}
-      style={{ borderCollapse: 'collapse', width: '100%' }}
+      style={{ borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' }}
     >
       <tbody>
         <tr>
@@ -513,7 +513,7 @@ function compile(block: ContainerBlock, ctx: CompileContext): string {
 
   if (block.columns === 1) {
     const inner = visibleLeft.map(compileChild).join('\n');
-    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="vertical-align:top">${inner}</td></tr></table>`;
+    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%"><tr><td style="vertical-align:top">${inner}</td></tr></table>`;
   }
 
   const leftHtml = visibleLeft.map(compileChild).join('\n') || '&nbsp;';
@@ -522,7 +522,21 @@ function compile(block: ContainerBlock, ctx: CompileContext): string {
   const rightPct = 100 - leftPct;
   const padRight = `padding-right:${block.gap / 2}px`;
   const padLeft = `padding-left:${block.gap / 2}px`;
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="vertical-align:top;width:${leftPct}%;${padRight}">${leftHtml}</td><td style="vertical-align:top;width:${rightPct}%;${padLeft}">${rightHtml}</td></tr></table>`;
+
+  // `table-layout:fixed` is the key bit: without it the email
+  // client uses auto layout, which allocates cell widths based on
+  // content min/max — a QR code on the left ends up forcing the
+  // left cell wide and the right cell (text) collapses to a strip
+  // that wraps awkwardly. With fixed layout the percentages are
+  // honoured exactly regardless of what the children measure.
+  //
+  // We belt-and-suspenders the width on each <td>: the inline
+  // `style="width:N%"` is the modern path; the HTML `width="N%"`
+  // attribute is what Outlook on Windows looks at when its CSS
+  // engine gets selective. `mso-table-lspace/rspace` zero out
+  // Outlook's invisible default padding around tables so the gap
+  // we compute is the gap the user sees.
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;table-layout:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt"><tr><td width="${leftPct}%" style="vertical-align:top;width:${leftPct}%;${padRight}">${leftHtml}</td><td width="${rightPct}%" style="vertical-align:top;width:${rightPct}%;${padLeft}">${rightHtml}</td></tr></table>`;
 }
 
 const definition: BlockDefinition<ContainerBlock> = {
