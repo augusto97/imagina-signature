@@ -2,6 +2,22 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.36] — 2026-05-22
+
+### Changed — Public route sidebar hides everything except "My Signatures"
+
+User feedback after 1.0.35: "sigo viendo los otros menus en /signatures, no se si es porque soy admin, pero igual le doy click a esos otros menus y solo recarga la página, creo que es mejor simplemente quitarlos de esa vista de usuario." Right — gating Templates / Settings on caps still leaves admins seeing those entries on the public route, where the URLs all resolve to the dashboard (a "click that just reloads the page" experience). So:
+
+- `SidebarNav` now applies a second filter on top of capability: when `frontendContext === 'public'`, only the `signatures` entry is rendered. Admins visiting `/signatures/` see exactly what a subscriber sees — they can still go to wp-admin for the admin surfaces, which is the right home for those anyway.
+- Admin context (wp-admin host) is untouched.
+
+### Fixed — Duplicate appeared twice in the actions column
+
+The "more" kebab menu carried a Duplicate entry alongside the inline Duplicate button added in an earlier release. Visually that read as "Duplicate, Duplicate, Delete" — the user reported it as a duplication bug, and they were right.
+
+- Duplicate removed from `RowMenu`. The kebab now holds Delete only (destructive action properly tucked behind a tap, primary actions stay in the row's primary slot).
+- `RowMenu` signature simplified — `onDuplicate` prop removed.
+
 ## [1.0.35] — 2026-05-21
 
 ### Changed — Trim the public-route sidebar to what subscribers actually need

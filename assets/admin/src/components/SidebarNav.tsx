@@ -49,9 +49,19 @@ export const SidebarNav: FC<Props> = ({ page }) => {
   const config = getConfig();
   const isPublic = config.frontendContext === 'public';
 
-  const visible = NAV.filter(
-    (item) => !item.requiresCap || config.capabilities[item.requiresCap],
-  );
+  // Two filters compose: capability-gating (always) AND a public-route
+  // gate that hides everything except "My Signatures". The capability
+  // gate already hides Settings / Templates for users who lack the
+  // caps, but on the public route we want them hidden even for admins
+  // who happen to be visiting `/signatures/` — that route is intended
+  // as the end-user signature workspace, not a back-door into the
+  // admin surfaces (which still live in wp-admin where they belong).
+  const visible = NAV.filter((item) => {
+    if (isPublic && item.key !== 'signatures') {
+      return false;
+    }
+    return !item.requiresCap || config.capabilities[item.requiresCap];
+  });
 
   const BackIcon = isPublic ? Home : ExternalLink;
   const backLabel = isPublic ? __('Back to home') : __('Back to WP Admin');

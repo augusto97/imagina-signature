@@ -370,13 +370,10 @@ export const SignaturesPage: FC = () => {
                           >
                             {__('Edit')}
                           </Button>
-                          {/* Duplicate is a frequent-enough action
-                              that hiding it under the "more" menu
-                              hurts discoverability — surface it as
-                              a primary affordance next to Edit. The
-                              kebab menu still has the entry as a
-                              fallback for keyboard users / narrow
-                              viewports. */}
+                          {/* Duplicate is frequent enough to deserve
+                              the primary slot next to Edit; the kebab
+                              menu is left with just Delete (destructive
+                              action stays tucked away behind a tap). */}
                           <Button
                             size="sm"
                             variant="ghost"
@@ -390,7 +387,6 @@ export const SignaturesPage: FC = () => {
                           </Button>
                           <RowMenu
                             disabled={busy}
-                            onDuplicate={() => void onDuplicate(row)}
                             onDelete={() => void onDelete(row)}
                           />
                         </div>
@@ -421,9 +417,8 @@ const Th: FC<{ children: React.ReactNode; align?: 'left' | 'right' }> = ({
 
 const RowMenu: FC<{
   disabled: boolean;
-  onDuplicate: () => void;
   onDelete: () => void;
-}> = ({ disabled, onDuplicate, onDelete }) => {
+}> = ({ disabled, onDelete }) => {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
@@ -441,15 +436,6 @@ const RowMenu: FC<{
           className="absolute right-0 top-full z-10 mt-1 w-40 overflow-hidden rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] shadow-[var(--shadow-md)]"
           onMouseLeave={() => setOpen(false)}
         >
-          <MenuItem
-            icon={<Copy size={12} />}
-            onClick={() => {
-              setOpen(false);
-              onDuplicate();
-            }}
-          >
-            {__('Duplicate')}
-          </MenuItem>
           <MenuItem
             icon={<Trash2 size={12} />}
             destructive

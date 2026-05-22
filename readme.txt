@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.35
+Stable tag: 1.0.36
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,10 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.36 =
+* **Public route sidebar: only "My Signatures".** On `/signatures/` even admins now see just the signatures entry — Templates and Settings are hidden unconditionally instead of being gated on caps. The public route is meant as the end-user signature workspace, so an admin who happens to visit it doesn't need the admin surfaces in the rail; wp-admin remains the right home for those.
+* **Actions column: Duplicate no longer appears twice.** Removed from the kebab menu since it's already a primary inline button next to Edit. The kebab now holds Delete only (destructive action correctly tucked behind a tap).
 
 = 1.0.35 =
 * **Hide Templates from non-admin sidebar.** On the public `/signatures/` route a subscriber doesn't manage templates — they pick from them. The Templates entry in the left sidebar is now gated on `imgsig_manage_templates` (same pattern as Settings), so subscribers see only "My Signatures" while admins keep the full nav.
