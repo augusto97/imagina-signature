@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.36
+Stable tag: 1.0.37
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,9 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.37 =
+* **Actions column: three visible icon buttons, no more kebab menu.** Edit, Duplicate and Delete are now square 32x32 icon-only buttons sitting next to each other in the row. The "more" kebab — which had been left holding only Delete after 1.0.36 — is gone. A dropdown for a single option was awkward; equal visibility for all three actions is faster to scan and removes the discovery problem ("where's Delete?"). Delete keeps its destructive treatment via a red hover tint instead of being hidden.
 
 = 1.0.36 =
 * **Public route sidebar: only "My Signatures".** On `/signatures/` even admins now see just the signatures entry — Templates and Settings are hidden unconditionally instead of being gated on caps. The public route is meant as the end-user signature workspace, so an admin who happens to visit it doesn't need the admin surfaces in the rail; wp-admin remains the right home for those.

@@ -2,6 +2,21 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.37] — 2026-05-22
+
+### Changed — Actions column: three visible icon buttons
+
+User feedback after 1.0.36: "no veo sentido tener el delete en un desplegable si solo es la única opción, mejor solo pon los iconos y los pones todos visibles". Agreed — a dropdown for a single option was awkward UX (1.0.36 removed Duplicate from the kebab so the kebab was left with just Delete).
+
+- Edit / Duplicate / Delete are now square 32x32 icon-only buttons placed side-by-side in the row. New `IconAction` helper component in `SignaturesPage.tsx` consolidates the styling (hover state, disabled state, destructive variant) — replaces the earlier mix of text-labelled `Button`s + the `RowMenu` kebab + the `MenuItem` row.
+- Delete gets a "destructive" visual treatment via the IconAction's `destructive` prop: red-tinted hover background (`color-mix` against `--danger`) and red icon color on hover. Resting state still uses the muted text color so the row doesn't shout at the user.
+- `title` provides the hover tooltip ("Edit" / "Duplicate" / "Delete"); `aria-label` is the full sentence including the row's signature name so screen readers announce "Edit Welcome message" rather than just "Edit".
+- `RowMenu` + `MenuItem` components and the `MoreHorizontal` icon import deleted — both were left over from 1.0.36 and no longer referenced.
+
+### Internal
+
+- Admin bundle only — editor bundle is byte-identical, hash carries over from 1.0.36.
+
 ## [1.0.36] — 2026-05-22
 
 ### Changed — Public route sidebar hides everything except "My Signatures"

@@ -4,7 +4,7 @@
     "name": "bundle-mjs"
   },
   "assets/admin/src/main.tsx": {
-    "file": "admin.BHKX-0al.js",
+    "file": "admin.CLyqdfTD.js",
     "name": "admin",
     "src": "assets/admin/src/main.tsx",
     "isEntry": true,
@@ -12,11 +12,11 @@
       "_bundle-mjs-B9pXxOha.js"
     ],
     "css": [
-      "admin.ClYqsgK5.css"
+      "admin.BYbAvlHI.css"
     ]
   },
   "assets/editor/src/main.tsx": {
-    "file": "editor.B7hdf0Xp.js",
+    "file": "editor.BseFlJRI.js",
     "name": "editor",
     "src": "assets/editor/src/main.tsx",
     "isEntry": true,
@@ -24,7 +24,7 @@
       "_bundle-mjs-B9pXxOha.js"
     ],
     "css": [
-      "editor.BiFxhhC3.css"
+      "editor.D4ArjtLe.css"
     ]
   }
 }

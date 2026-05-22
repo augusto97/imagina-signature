@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FC } from 'react';
-import { Plus, Search, FileSignature, Pencil, Copy, Trash2, MoreHorizontal, X } from 'lucide-react';
+import { Plus, Search, FileSignature, Pencil, Copy, Trash2, X } from 'lucide-react';
 import { Topbar } from '@admin/components/Topbar';
 import { Button } from '@admin/components/Button';
 import { StatusPill } from '@admin/components/StatusPill';
@@ -7,6 +7,7 @@ import { EmptyState } from '@admin/components/EmptyState';
 import { Spinner } from '@admin/components/Spinner';
 import { apiCall, ApiError, getConfig } from '@admin/api';
 import { __ } from '@admin/i18n';
+import { cn } from '@admin/utils/cn';
 import type { SignatureRow } from '@admin/types';
 
 type StatusFilter = 'all' | SignatureRow['status'];
@@ -361,33 +362,27 @@ export const SignaturesPage: FC = () => {
                         {formatDate(row.updated_at)}
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <div className="inline-flex items-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            icon={<Pencil size={12} />}
+                        <div className="inline-flex items-center gap-0.5">
+                          <IconAction
+                            icon={<Pencil size={14} />}
+                            label={__('Edit %s', row.name || __('Untitled'))}
+                            tooltip={__('Edit')}
                             onClick={() => { window.location.href = editorUrl(row.id); }}
-                          >
-                            {__('Edit')}
-                          </Button>
-                          {/* Duplicate is frequent enough to deserve
-                              the primary slot next to Edit; the kebab
-                              menu is left with just Delete (destructive
-                              action stays tucked away behind a tap). */}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            icon={<Copy size={12} />}
+                          />
+                          <IconAction
+                            icon={<Copy size={14} />}
+                            label={__('Duplicate %s', row.name || __('Untitled'))}
+                            tooltip={__('Duplicate')}
                             disabled={busy}
                             onClick={() => void onDuplicate(row)}
-                            title={__('Duplicate')}
-                            aria-label={__('Duplicate %s', row.name || __('Untitled'))}
-                          >
-                            {__('Duplicate')}
-                          </Button>
-                          <RowMenu
+                          />
+                          <IconAction
+                            icon={<Trash2 size={14} />}
+                            label={__('Delete %s', row.name || __('Untitled'))}
+                            tooltip={__('Delete')}
+                            destructive
                             disabled={busy}
-                            onDelete={() => void onDelete(row)}
+                            onClick={() => void onDelete(row)}
                           />
                         </div>
                       </td>
@@ -415,58 +410,39 @@ const Th: FC<{ children: React.ReactNode; align?: 'left' | 'right' }> = ({
   </th>
 );
 
-const RowMenu: FC<{
-  disabled: boolean;
-  onDelete: () => void;
-}> = ({ disabled, onDelete }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="relative">
-      <Button
-        size="sm"
-        variant="ghost"
-        disabled={disabled}
-        icon={<MoreHorizontal size={14} />}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span className="sr-only">{__('More')}</span>
-      </Button>
-      {open && (
-        <div
-          className="absolute right-0 top-full z-10 mt-1 w-40 overflow-hidden rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] shadow-[var(--shadow-md)]"
-          onMouseLeave={() => setOpen(false)}
-        >
-          <MenuItem
-            icon={<Trash2 size={12} />}
-            destructive
-            onClick={() => {
-              setOpen(false);
-              onDelete();
-            }}
-          >
-            {__('Delete')}
-          </MenuItem>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const MenuItem: FC<{
-  icon?: React.ReactNode;
+/**
+ * Square icon-only action button used in the signatures table's
+ * actions column. Replaces the earlier mix of text-labelled buttons +
+ * kebab menu — every action is now equally visible (and the kebab
+ * disappearing means there's no "where did Duplicate / Delete go?"
+ * moment for new users).
+ *
+ * `tooltip` shows on hover (native title attribute); `label` is the
+ * full accessible name and includes the row's signature name so
+ * screen readers announce "Edit Welcome message" instead of "Edit".
+ */
+const IconAction: FC<{
+  icon: React.ReactNode;
+  label: string;
+  tooltip: string;
   destructive?: boolean;
+  disabled?: boolean;
   onClick: () => void;
-  children: React.ReactNode;
-}> = ({ icon, destructive, onClick, children }) => (
+}> = ({ icon, label, tooltip, destructive, disabled, onClick }) => (
   <button
     type="button"
     onClick={onClick}
-    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] transition-colors hover:bg-[var(--bg-hover)] ${
-      destructive ? 'text-[var(--danger)]' : 'text-[var(--text-primary)]'
-    }`}
+    disabled={disabled}
+    title={tooltip}
+    aria-label={label}
+    className={cn(
+      'inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+      destructive
+        ? 'text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] hover:text-[var(--danger)]'
+        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]',
+    )}
   >
     {icon}
-    {children}
   </button>
 );
 
