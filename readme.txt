@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.37
+Stable tag: 1.0.38
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,10 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.0.38 =
+* **"Export HTML" button renamed to "Export".** The button opens a modal that does much more than just export HTML (copy visual to clipboard, copy raw HTML, download .html, send-to-self via email, per-client install instructions). Calling it "Export HTML" misrepresented four of those five paths. Icon also swapped from `Code2` (very HTML-coded) to `Share2` (neutral "send this out").
+* **Canvas links no longer trigger navigation.** Clicking a link inside the editor canvas (a social icon, a button-CTA, a vCard download link, etc.) used to follow the href — which unmounted the React app and dropped any unsaved edits the user had in flight. Canvas now intercepts anchor clicks in the capture phase and `preventDefault`s them. Block selection still works because the interceptor doesn't `stopPropagation`. The compiled HTML output is unaffected — links in the exported signature still work as normal in the recipient's email client.
 
 = 1.0.37 =
 * **Actions column: three visible icon buttons, no more kebab menu.** Edit, Duplicate and Delete are now square 32x32 icon-only buttons sitting next to each other in the row. The "more" kebab — which had been left holding only Delete after 1.0.36 — is gone. A dropdown for a single option was awkward; equal visibility for all three actions is faster to scan and removes the discovery problem ("where's Delete?"). Delete keeps its destructive treatment via a red hover tint instead of being hidden.

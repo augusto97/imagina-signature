@@ -46,6 +46,19 @@ export const Canvas: FC = () => {
         className="is-canvas-root border border-[var(--border-default)] bg-white"
         style={canvasStyle}
         onClick={(e) => e.stopPropagation()}
+        onClickCapture={(e) => {
+          // Anchors inside the canvas are part of the rendered
+          // signature preview — they belong in the compiled HTML
+          // output, but inside the editor a real navigation would
+          // unmount the React tree and drop the user's unsaved work.
+          // Intercept in the capture phase so the link never gets to
+          // fire its default action; the block-selection click below
+          // still runs.
+          const link = (e.target as HTMLElement | null)?.closest('a');
+          if (link) {
+            e.preventDefault();
+          }
+        }}
         id="canvas-empty"
       >
         {schema.blocks.length === 0 ? (

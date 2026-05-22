@@ -3,7 +3,7 @@ import {
   Undo2,
   Redo2,
   LayoutTemplate,
-  Code2,
+  Share2,
   Eye,
   ArrowLeft,
   FileSignature,
@@ -39,7 +39,7 @@ const BUNDLE_VERSION = __BUNDLE_VERSION__;
  *
  *  - Left:  back-to-dashboard link + plugin label (anchors the user).
  *  - Center: device switcher + undo/redo (canvas-affecting controls).
- *  - Right: save indicator + Preview + Export HTML.
+ *  - Right: save indicator + Preview + Export.
  */
 export const Topbar: FC<{ className?: string }> = ({ className }) => {
   const { isSaving, isDirty, lastSavedAt, lastError } = usePersistenceStore();
@@ -176,8 +176,8 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
           className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--accent)] px-3 text-[12.5px] font-medium text-white shadow-[var(--shadow-xs)] transition-colors hover:bg-[var(--accent-hover)]"
           onClick={() => openModal('export')}
         >
-          <Code2 size={14} />
-          {__('Export HTML')}
+          <Share2 size={14} />
+          {__('Export')}
         </button>
       </div>
     </header>

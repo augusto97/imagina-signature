@@ -2,6 +2,31 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.38] — 2026-05-22
+
+### Changed — "Export HTML" topbar button renamed to "Export"
+
+User feedback: "ese botón de 'export html' creo que debería cambiarse el texto porque no solo exporta html". Correct — the button opens `ExportModal` which offers five paths, only one of which produces raw HTML:
+
+- Copy visual (rich-clipboard, pastes formatted into Gmail / Outlook / Apple Mail compose).
+- Copy HTML (raw markup for HTML-mode signature settings).
+- Download .html (file to disk).
+- Send to my email (POSTs to `/signatures/test-send` which uses `wp_mail`).
+- Per-client install instructions (Gmail / Outlook Web / Outlook Desktop / Apple Mail / Thunderbird).
+
+The label is now just "Export" (no false "HTML" claim). Icon swapped from `Code2` (very HTML-coded) to `Share2` (neutral "send this out"). The component's docblock updated to match.
+
+### Fixed — Canvas links navigated away and dropped unsaved edits
+
+User report: "los links no deberían ser clickeables porque por error se les da click y me saca del editor o recarga y pierdo lo que estoy haciendo". The canvas renders the signature *as it will appear in email*, including real `<a href>` elements (social icons, button-CTA, contact rows, vCard download, image links). A real navigation unmounts the React app, so an accidental click on a social-icon link took the user to e.g. linkedin.com and ate their pending edits.
+
+`Canvas` now installs an `onClickCapture` handler on the `is-canvas-root` div: if `e.target.closest('a')` returns a link, `e.preventDefault()`. Two reasons capture phase is the right hook here:
+
+- Native click default fires AFTER bubbling, so a regular bubble-phase listener with `preventDefault` would still navigate.
+- We don't `stopPropagation`, so block-selection clicks (handled deeper in `SortableBlock`) still register normally.
+
+The compiled HTML output is unchanged — links in the exported signature are real `<a>` tags as before, they just don't act as links *inside the editor preview*.
+
 ## [1.0.37] — 2026-05-22
 
 ### Changed — Actions column: three visible icon buttons
