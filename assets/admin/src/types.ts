@@ -7,7 +7,7 @@ import type { BrandKit } from '@shared/brandKit';
 /** Bootstrap config injected by PHP as `window.IMGSIG_ADMIN_CONFIG`. */
 export interface AdminConfig {
   /** Initial page slug — selected by which wp-admin URL the user opened. */
-  page: 'signatures' | 'templates' | 'settings';
+  page: 'signatures' | 'templates' | 'settings' | 'profile' | 'groups';
   /** Logged-in user info. */
   userId: number;
   /** Map of plugin caps the user holds. */
@@ -15,7 +15,7 @@ export interface AdminConfig {
     use: boolean;
     manage_templates: boolean;
     manage_storage: boolean;
-    /** `imgsig_manage_team` (1.3.0; missing on older bootstraps). */
+    /** `imgsig_manage_team` (1.3.0; missing on older bootstraps): groups, profile fields, CSV import, other users, deployment. */
     manage_team?: boolean;
   };
   /** REST API base, e.g. `https://example.com/wp-json/imagina-signatures/v1`. */
@@ -63,6 +63,10 @@ export interface AdminConfig {
      * braces and broke every Edit link in the listing.
      */
     editor: string;
+    /** "My profile" (1.3.0; wp-admin page or `/<slug>/?view=profile`). */
+    profile?: string;
+    /** Groups + CSV import (1.3.0; wp-admin only). */
+    groups?: string;
   };
 }
 
@@ -140,6 +144,8 @@ export interface BannerCampaign {
   width: number;
   start_date: string;
   end_date: string;
+  /** Group (term) ids the campaign targets; empty / missing = everyone (1.3.0). */
+  groups?: number[];
 }
 
 /** REST: GET/PATCH /admin/frontend-access. */

@@ -11,8 +11,11 @@ namespace ImaginaSignatures\Core;
 
 use ImaginaSignatures\Api\Controllers\AssetsController;
 use ImaginaSignatures\Api\Controllers\FrontendAccessController;
+use ImaginaSignatures\Api\Controllers\GroupsController;
 use ImaginaSignatures\Api\Controllers\MeController;
 use ImaginaSignatures\Api\Controllers\OutlookController;
+use ImaginaSignatures\Api\Controllers\ProfileController;
+use ImaginaSignatures\Api\Controllers\ProfileImportController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Api\Controllers\StorageController;
@@ -235,6 +238,26 @@ final class ServiceProvider {
 					$c->make( OutlookSignatureService::class ),
 					$c->make( RateLimiter::class )
 				);
+			}
+		);
+
+		// 1.3.0 directory: profile fields, groups, CSV profile import.
+		$container->singleton(
+			ProfileController::class,
+			static function ( Container $c ): ProfileController {
+				return new ProfileController( $c->make( RateLimiter::class ) );
+			}
+		);
+		$container->singleton(
+			GroupsController::class,
+			static function (): GroupsController {
+				return new GroupsController();
+			}
+		);
+		$container->singleton(
+			ProfileImportController::class,
+			static function (): ProfileImportController {
+				return new ProfileImportController();
 			}
 		);
 

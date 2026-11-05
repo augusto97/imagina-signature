@@ -11,6 +11,7 @@ namespace ImaginaSignatures\Api\Controllers;
 
 use ImaginaSignatures\Api\BaseController;
 use ImaginaSignatures\Api\Middleware\CapabilityCheck;
+use ImaginaSignatures\Directory\Groups;
 use ImaginaSignatures\Settings\BrandKit;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 
@@ -110,6 +111,8 @@ final class SiteSettingsController extends BaseController {
 		// expired ones (and their internal names) stay admin-only.
 		if ( ! current_user_can( CapabilitiesInstaller::CAP_MANAGE_STORAGE ) ) {
 			$settings['banner_campaigns'] = self::active_banner_campaigns();
+			// 1.3.0: the footer that applies to them (group override or global).
+			$settings['compliance_footer'] = Groups::effective_compliance_footer( get_current_user_id(), $settings['compliance_footer'] );
 		}
 
 		return rest_ensure_response( $settings );
@@ -577,20 +580,26 @@ final class SiteSettingsController extends BaseController {
 
 	/**
 	 * Returns only campaigns that are enabled AND inside their date
-	 * window (or have no window). Used by the editor bootstrap so the
-	 * compile pipeline doesn't have to know about scheduling.
+	 * window (or have no window) AND — since 1.3.0 — targeted at the
+	 * user: no `groups`, or at least one group the user belongs to.
+	 * Used by the editor bootstrap so the compile pipeline doesn't have
+	 * to know about scheduling or targeting.
 	 *
 	 * @since 1.0.15
+	 * @since 1.3.0 Group targeting; `$user_id` (default: current user).
+	 *
+	 * @param int|null $user_id User the campaigns are for (null = current user).
 	 *
 	 * @return array<int, array<string, mixed>>
 	 */
-	public static function active_banner_campaigns(): array {
-		$today = current_time( 'Y-m-d' );
+	public static function active_banner_campaigns( ?int $user_id = null ): array {
+		$today       = current_time( 'Y-m-d' );
+		$user_groups = null; // Resolved lazily: most campaigns target everyone.
 
 		return array_values(
 			array_filter(
 				self::current_banner_campaigns(),
-				static function ( array $c ) use ( $today ): bool {
+				static function ( array $c ) use ( $today, $user_id, &$user_groups ): bool {
 					if ( empty( $c['enabled'] ) ) {
 						return false;
 					}
@@ -602,6 +611,14 @@ final class SiteSettingsController extends BaseController {
 					}
 					if ( empty( $c['image_url'] ) ) {
 						return false;
+					}
+					if ( ! empty( $c['groups'] ) ) {
+						if ( null === $user_groups ) {
+							$user_groups = Groups::for_user( null === $user_id ? get_current_user_id() : $user_id );
+						}
+						if ( [] === array_intersect( array_map( 'intval', (array) $c['groups'] ), $user_groups ) ) {
+							return false;
+						}
 					}
 					return true;
 				}
@@ -615,7 +632,10 @@ final class SiteSettingsController extends BaseController {
 	 *
 	 * Each output campaign is a strict shape:
 	 *   { id, name, enabled, image_url, link_url, alt, width,
-	 *     start_date, end_date }
+	 *     start_date, end_date, groups }
+	 *
+	 * `groups` (1.3.0) lists the group (term) ids the campaign targets;
+	 * empty = everyone.
 	 *
 	 * @since 1.0.15
 	 *
@@ -649,9 +669,33 @@ final class SiteSettingsController extends BaseController {
 				'width'      => $width,
 				'start_date' => self::sanitize_date( $entry['start_date'] ?? null ),
 				'end_date'   => self::sanitize_date( $entry['end_date'] ?? null ),
+				'groups'     => self::sanitize_group_ids( $entry['groups'] ?? [] ),
 			];
 
 			if ( count( $out ) >= self::MAX_CAMPAIGNS ) {
+				break;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Positive, unique group (term) ids, at most 50.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param mixed $value Raw input.
+	 *
+	 * @return array<int, int>
+	 */
+	private static function sanitize_group_ids( $value ): array {
+		$out = [];
+		foreach ( is_array( $value ) ? $value : [] as $id ) {
+			$id = is_numeric( $id ) ? (int) $id : 0;
+			if ( $id > 0 && ! in_array( $id, $out, true ) ) {
+				$out[] = $id;
+			}
+			if ( count( $out ) >= 50 ) {
 				break;
 			}
 		}

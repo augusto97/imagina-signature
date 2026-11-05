@@ -42,6 +42,8 @@ final class SystemVariablesTest extends TestCase {
 				return rtrim( (string) $value, '/\\' );
 			}
 		);
+		Functions\when( 'get_user_meta' )->justReturn( '' );
+		Functions\when( 'get_option' )->justReturn( [] );
 	}
 
 	protected function tearDown(): void {
@@ -95,7 +97,10 @@ final class SystemVariablesTest extends TestCase {
 
 		// Templates reference their placeholder images through it.
 		$this->assertSame( 'https://example.com/wp-content/plugins/imagina-signatures/assets', $vars['imgsig_assets_url'] );
-		$this->assertCount( 5 + 15 + 1, $vars );
+				// 1.3.0: every canonical profile key, '' when the profile is empty.
+		$this->assertSame( '', $vars['job_title'] );
+		$this->assertSame( '', $vars['pronouns'] );
+		$this->assertCount( 5 + 10 + 15 + 1, $vars );
 	}
 
 	public function test_assets_url_has_no_trailing_slash(): void {
@@ -116,6 +121,32 @@ final class SystemVariablesTest extends TestCase {
 
 		$vars = SystemVariables::for_user( $this->user(), $this->kit() );
 		$this->assertSame( 'https://cdn.example.net/imgsig/assets', $vars['imgsig_assets_url'] );
+	}
+
+	public function test_includes_profile_values(): void {
+		$vars = SystemVariables::for_user(
+			$this->user(),
+			$this->kit(),
+			[
+				'job_title' => 'CTO',
+				'phone'     => '+34 600 000 000',
+			]
+		);
+
+		$this->assertSame( 'CTO', $vars['job_title'] );
+		$this->assertSame( '+34 600 000 000', $vars['phone'] );
+		$this->assertSame( 'Acme', $vars['company_name'] );
+	}
+
+	public function test_resolves_profile_values_from_user_meta(): void {
+		Functions\when( 'get_user_meta' )->alias(
+			static function ( $user_id, $key ) {
+				return 7 === $user_id && 'imgsig_profile' === $key ? [ 'department' => 'Ventas' ] : '';
+			}
+		);
+
+		$vars = SystemVariables::for_user( $this->user(), $this->kit() );
+		$this->assertSame( 'Ventas', $vars['department'] );
 	}
 
 	public function test_reads_the_stored_kit_when_none_is_given(): void {

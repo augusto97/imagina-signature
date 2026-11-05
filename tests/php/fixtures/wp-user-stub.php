@@ -33,6 +33,9 @@ if ( ! class_exists( 'WP_User' ) ) {
 		/** @var string */
 		public $user_url = '';
 
+		/** @var array<int, string> */
+		public $roles = [];
+
 		/**
 		 * @param array<string, mixed> $props Property values.
 		 */

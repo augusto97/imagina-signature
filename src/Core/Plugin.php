@@ -11,6 +11,7 @@ namespace ImaginaSignatures\Core;
 
 use ImaginaSignatures\Admin\AdminAppPage;
 use ImaginaSignatures\Admin\AdminMenu;
+use ImaginaSignatures\Admin\DirectoryPages;
 use ImaginaSignatures\Admin\Notices;
 use ImaginaSignatures\Admin\Pages\EditorPage;
 use ImaginaSignatures\Frontend\FrontendRouter;
@@ -18,6 +19,9 @@ use ImaginaSignatures\Setup\CapabilitiesInstaller;
 use ImaginaSignatures\Api\Controllers\AssetsController;
 use ImaginaSignatures\Api\Controllers\FrontendAccessController;
 use ImaginaSignatures\Api\Controllers\GmailDeployController;
+use ImaginaSignatures\Api\Controllers\GroupsController;
+use ImaginaSignatures\Api\Controllers\ProfileController;
+use ImaginaSignatures\Api\Controllers\ProfileImportController;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Api\Controllers\MeController;
 use ImaginaSignatures\Api\Controllers\OutlookController;
@@ -28,6 +32,9 @@ use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\RestRouter;
 use ImaginaSignatures\Deployment\Gmail\GmailScheduler;
 use ImaginaSignatures\Deployment\OutlookWellKnown;
+use ImaginaSignatures\Directory\Groups;
+use ImaginaSignatures\Directory\ProfilePrivacy;
+use ImaginaSignatures\Directory\ProfileScreen;
 use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\SignatureRepository;
@@ -148,6 +155,11 @@ final class Plugin {
 
 		// Personal-data exporter / eraser + delete_user cleanup.
 		$this->container->make( UserDataManager::class )->register();
+
+		// 1.3.0: `imgsig_group` user taxonomy (groups / departments) and
+		// the profile fields' privacy exporter / eraser.
+		Groups::boot();
+		ProfilePrivacy::boot();
 
 		// Public-facing route — runs on EVERY request, admin or not.
 		// The router self-gates on its own settings; when the feature
@@ -291,6 +303,10 @@ final class Plugin {
 		$admin_menu->boot();
 
 		( new Notices() )->boot();
+
+		// 1.3.0: "My profile" + "Groups" pages, profile-screen section.
+		( new DirectoryPages() )->boot();
+		ProfileScreen::boot();
 	}
 
 	/**
@@ -317,6 +333,9 @@ final class Plugin {
 				$this->container->make( FrontendAccessController::class ),
 				$this->container->make( GmailDeployController::class ),
 				$this->container->make( OutlookController::class ),
+				$this->container->make( ProfileController::class ),
+				$this->container->make( GroupsController::class ),
+				$this->container->make( ProfileImportController::class ),
 			]
 		);
 		$router->register();

@@ -128,7 +128,9 @@ final class AdminAssetEnqueuer {
 	 * @return string
 	 */
 	public function tag_as_module( string $tag, string $handle ): string {
-		if ( self::HANDLE !== $handle ) {
+		// Idempotent: several enqueuer instances (AdminMenu, DirectoryPages)
+		// each add this filter for the same handle.
+		if ( self::HANDLE !== $handle || false !== strpos( $tag, 'type="module"' ) ) {
 			return $tag;
 		}
 		// `<script src="..."></script>` -> `<script type="module" src="..."></script>`.
@@ -180,6 +182,8 @@ final class AdminAssetEnqueuer {
 				// opened the editor with `?id=id` instead of the row's
 				// real id.
 				'editor'     => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures-editor&id=__ID__' ) ),
+				'profile'    => DirectoryPages::profile_url(),
+				'groups'     => DirectoryPages::groups_url(),
 			],
 			'brandPalette'     => $site_opts['brand_palette'],
 			'complianceFooter' => $site_opts['compliance_footer'],

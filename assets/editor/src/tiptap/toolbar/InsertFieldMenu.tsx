@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import type { Editor } from '@tiptap/react';
 import { Braces } from 'lucide-react';
 import { getConfig } from '@/bridge/apiClient';
+import { resolvedVariables } from '@/core/compiler/variables';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { isInternalVariable } from '@/core/compiler/variables';
 import { __ } from '@/i18n/helpers';
@@ -33,9 +34,10 @@ function systemVariables(): Record<string, string> {
 export const InsertFieldMenu: FC<Props> = ({ editor }) => {
   const userVariables = useSchemaStore((s) => s.schema.variables) ?? {};
   const system = systemVariables();
-  // A signature variable overrides the profile field of the same name
-  // at compile time, so show the value that will actually ship.
-  const valueOf = (key: string) => userVariables[key] ?? system[key] ?? '';
+  // Show the value that will actually ship: the signature's variable
+  // overrides a system one, except a non-empty profile field.
+  const shipped = resolvedVariables(userVariables, system);
+  const valueOf = (key: string) => shipped[key] ?? '';
 
   const groups: FieldGroup[] = [
     {

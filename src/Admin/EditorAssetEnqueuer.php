@@ -11,6 +11,8 @@ namespace ImaginaSignatures\Admin;
 
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Core\I18n;
+use ImaginaSignatures\Directory\Groups;
+use ImaginaSignatures\Directory\ProfileFields;
 use ImaginaSignatures\Settings\BrandKit;
 use ImaginaSignatures\Settings\SystemVariables;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
@@ -183,7 +185,11 @@ final class EditorAssetEnqueuer {
 			// Public brand kit: new signatures start from its typography.
 			'brandKit'         => BrandKit::public_payload( $site_opts['brand_kit'] ),
 			'brandPalette'     => $site_opts['brand_palette'],
-			'complianceFooter' => $site_opts['compliance_footer'],
+			// 1.3.0: the user's first group with a footer override wins.
+			'complianceFooter' => Groups::effective_compliance_footer( $user_id, $site_opts['compliance_footer'] ),
+			// 1.3.0: profile field definitions (Variables panel) + where to edit them.
+			'profileFields'    => ProfileFields::public_definitions(),
+			'profileUrl'       => DirectoryPages::profile_url(),
 			// Editor only sees CURRENTLY-ACTIVE campaigns (filtered by
 			// enabled + date window) so the compile pipeline doesn't
 			// have to know about scheduling. The admin sees the full

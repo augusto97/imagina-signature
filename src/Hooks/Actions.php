@@ -79,6 +79,59 @@ final class Actions {
 	public const GMAIL_PUSH_COMPLETED = 'imgsig/gmail/push_completed';
 
 	/**
+	 * Fires after a user's plugin-stored profile values change (REST,
+	 * WP profile screen or CSV import). Signatures resolve them as
+	 * `{{key}}`, so the user's compiled HTML may now be outdated.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int      $user_id User.
+	 * @param string[] $changed Keys that changed.
+	 * @param string   $context `rest` | `profile_screen` | `import`.
+	 */
+	public const PROFILE_UPDATED = 'imgsig/profile/updated';
+
+	/**
+	 * Fires after Settings → Profile fields (mapping / custom fields) is saved.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param array<string, mixed> $config Sanitised `imgsig_profile_fields`.
+	 */
+	public const PROFILE_FIELDS_CHANGED = 'imgsig/profile/fields_changed';
+
+	/**
+	 * Fires after a group is created or updated.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int    $group_id Group (term id).
+	 * @param string $event    `created` | `updated`.
+	 */
+	public const GROUP_SAVED = 'imgsig/group/saved';
+
+	/**
+	 * Fires after a group is deleted.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int $group_id Deleted group.
+	 */
+	public const GROUP_DELETED = 'imgsig/group/deleted';
+
+	/**
+	 * Fires after users join or leave a group (their effective footer,
+	 * targeted campaigns and assigned template may have changed).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int   $group_id Group.
+	 * @param int[] $added    Users added.
+	 * @param int[] $removed  Users removed.
+	 */
+	public const GROUP_MEMBERS_CHANGED = 'imgsig/group/members_changed';
+
+	/**
 	 * Fires from {@see \ImaginaSignatures\Storage\StorageManager::save_config()}
 	 * when the active storage driver ID changes (e.g. switching from
 	 * Media Library to S3).

@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Settings;
 
+use ImaginaSignatures\Directory\ProfileFields;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -20,6 +22,11 @@ defined( 'ABSPATH' ) || exit;
  * the public route's `FrontendPage`) so they can never drift apart.
  *
  *  - `wp_*`      — from the current WordPress user record;
+ *  - profile keys (1.3.0) — `job_title`, `phone`, … and the admin's
+ *                  custom fields, unprefixed, '' when missing
+ *                  ({@see ProfileFields::values_for()}). In the editor a
+ *                  NON-EMPTY profile value wins over the signature's own
+ *                  variable of the same name (templates ship examples);
  *  - `company_*` — from the site-wide brand kit ({@see BrandKit::company_variables()}),
  *                  always present (empty string when blank) so the
  *                  tokens resolve instead of shipping as `{{…}}`;
@@ -31,9 +38,9 @@ defined( 'ABSPATH' ) || exit;
  *                  hides `imgsig_*` keys from its field pickers.
  *
  * The `imgsig/editor/system_variables` filter runs AFTER the merge, so a
- * host plugin sees (and can override or remove) the company variables
- * too. Signature-defined variables still win on key conflict at
- * compile time.
+ * host plugin sees (and can override or remove) the company and profile
+ * variables too. Signature-defined variables still win on key conflict
+ * at compile time, except for non-empty profile values (see above).
  *
  * @since 1.2.0
  */
@@ -43,13 +50,15 @@ final class SystemVariables {
 	 * System variables for `$user`.
 	 *
 	 * @since 1.2.0
+	 * @since 1.3.0 Adds the user's profile fields ({@see ProfileFields::values_for()}).
 	 *
-	 * @param \WP_User                  $user The user the editor is bound to.
-	 * @param array<string, mixed>|null $kit  Brand kit (null reads the stored one).
+	 * @param \WP_User                   $user    The user the editor is bound to.
+	 * @param array<string, mixed>|null  $kit     Brand kit (null reads the stored one).
+	 * @param array<string, string>|null $profile Resolved profile values (null resolves them).
 	 *
 	 * @return array<string, string>
 	 */
-	public static function for_user( \WP_User $user, ?array $kit = null ): array {
+	public static function for_user( \WP_User $user, ?array $kit = null, ?array $profile = null ): array {
 		$base = array_merge(
 			[
 				'wp_display_name' => (string) $user->display_name,
@@ -58,6 +67,9 @@ final class SystemVariables {
 				'wp_last_name'    => (string) $user->last_name,
 				'wp_url'          => (string) $user->user_url,
 			],
+			// 1.3.0: profile fields under their own keys (job_title, phone,
+			// custom fields…), '' when missing — see ProfileFields.
+			null === $profile ? ProfileFields::values_for( (int) $user->ID ) : $profile,
 			BrandKit::company_variables( $kit ),
 			[
 				'imgsig_assets_url' => self::assets_url(),

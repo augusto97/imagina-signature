@@ -203,14 +203,11 @@ describe('Transport rule script', () => {
 
 describe('compileForExchange', () => {
   function templateWithVariables(): unknown {
-    const raw = readFileSync(resolve(process.cwd(), 'templates/corporate-classic.json'), 'utf8')
-      .replace('Jane Doe', '{{wp_display_name}}')
-      .replace('Director of Operations', '{{job_title}} · {{pronouns}}')
-      .replace('ACME Industries', '{{company_name}}')
-      .replace('"jane@acme.com"', '"{{wp_email}}"')
-      .replace('mailto:jane@acme.com', 'mailto:{{wp_email}}')
-      .replace('"+1 555 100 2000"', '"{{phone}}"');
-    return JSON.parse(raw);
+    // The shipped template already uses the profile / WordPress / brand
+    // variables; add one Exchange has no token for.
+    const raw = readFileSync(resolve(process.cwd(), 'templates/corporate-classic.json'), 'utf8');
+    expect(raw).toContain('{{job_title}}');
+    return JSON.parse(raw.replace('{{job_title}}', '{{job_title}} · {{pronouns}}'));
   }
 
   it('compiles a template with Exchange tokens in place of our variables', async () => {
@@ -226,14 +223,17 @@ describe('compileForExchange', () => {
     expect(result.html).toContain('ISIGTEST01');
     expect(result.html).not.toMatch(/<!DOCTYPE|<body|<head/i);
     expect([...result.html].every((c) => c.charCodeAt(0) < 0x7f)).toBe(true);
+    expect(result.html).toContain('%%Department%%');
     expect(result.mapped.sort()).toEqual([
       'company_name',
+      'department',
       'job_title',
       'phone',
       'wp_display_name',
       'wp_email',
     ]);
-    expect(result.emptied).toEqual(['pronouns']);
+    // No brand kit passed: its logo / website have no value either.
+    expect(result.emptied.sort()).toEqual(['company_logo', 'company_website', 'pronouns']);
     expect(result.size.length).toBe(result.html.length);
     expect(result.size.tooLong).toBe(result.html.length > 5000);
   });

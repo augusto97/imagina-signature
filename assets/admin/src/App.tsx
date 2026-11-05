@@ -3,6 +3,8 @@ import { Layout } from '@admin/components/Layout';
 import { SignaturesPage } from '@admin/pages/SignaturesPage';
 import { TemplatesPage } from '@admin/pages/TemplatesPage';
 import { SettingsPage } from '@admin/pages/SettingsPage';
+import { ProfilePage } from '@admin/pages/ProfilePage';
+import { GroupsPage } from '@admin/pages/GroupsPage';
 import { getConfig } from '@admin/api';
 
 export const App: FC = () => {
@@ -13,6 +15,8 @@ export const App: FC = () => {
       {page === 'signatures' && <SignaturesPage />}
       {page === 'templates' && <TemplatesPage />}
       {page === 'settings' && <SettingsPage />}
+      {page === 'profile' && <ProfilePage />}
+      {page === 'groups' && <GroupsPage />}
     </Layout>
   );
 };

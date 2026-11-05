@@ -153,6 +153,17 @@ final class Filters {
 	public const SCHEMA_LIMITS = 'imgsig/schema/limits';
 
 	/**
+	 * Filters a user's resolved profile values (after the source mapping)
+	 * — the `{{job_title}}`, `{{phone}}`, … system variables.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param array<string, string> $values  Key => value ('' when missing).
+	 * @param int                   $user_id User.
+	 */
+	public const PROFILE_VALUES = 'imgsig/profile/values';
+
+	/**
 	 * Filters the URL protocols accepted in signature HTML and URL fields
 	 * (script-capable schemes are always refused).
 	 *

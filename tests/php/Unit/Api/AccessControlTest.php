@@ -133,6 +133,8 @@ final class AccessControlTest extends TestCase {
 
 	public function test_site_settings_show_only_active_campaigns_to_non_admins(): void {
 		Functions\when( 'current_time' )->justReturn( '2026-06-15' );
+		Functions\when( 'get_current_user_id' )->justReturn( 5 );
+		Functions\when( 'wp_get_object_terms' )->justReturn( [] );
 		Functions\when( 'esc_url_raw' )->returnArg( 1 );
 		Functions\when( 'sanitize_text_field' )->alias( 'trim' );
 

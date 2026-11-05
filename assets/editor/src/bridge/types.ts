@@ -7,6 +7,7 @@
  */
 
 import type { BrandKit } from '@shared/brandKit';
+import type { ProfileFieldDefinition } from '@shared/profileFields';
 
 /**
  * Editor bootstrap config — injected by `EditorAssetEnqueuer` PHP
@@ -75,6 +76,15 @@ export interface AppConfig {
    * (user-defined variables win on conflict).
    */
   systemVariables?: Record<string, string>;
+  /**
+   * Profile fields (1.3.0): the canonical keys plus the admin's custom
+   * fields, with labels. Their values are in `systemVariables`, and a
+   * NON-EMPTY one wins over the signature's own variable of the same
+   * name (see `resolvedVariables()`).
+   */
+  profileFields?: ProfileFieldDefinition[];
+  /** Where the user edits their profile (wp-admin page or public route). */
+  profileUrl?: string;
   /**
    * Public company brand kit (Settings → Brand kit). New signatures
    * start from its typography. Optional for back-compat.
