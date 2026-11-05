@@ -1,128 +1,17 @@
-import { useState, type FC } from 'react';
-import { CircleUserRound, Crop } from 'lucide-react';
+import { CircleUserRound } from 'lucide-react';
 import type { AvatarBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
-import { __ } from '@/i18n/helpers';
-import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
-import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
-import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
-import { attr, horizontalPadding, intPx, paddingCss } from '@/core/compiler/css';
-import { checkAlt, clampToAvailable, markerAttr } from '@/core/compiler/issues';
-import { isUploadEnabled } from '@/bridge/apiClient';
-import { ImageUploadButton } from '../image/definition';
-import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
+import { registerBlock, type BlockDefinition } from '../registry';
+import { compileAvatar } from './compileAvatar';
+import { AvatarProperties } from './AvatarProperties';
+import { AvatarRenderer } from './AvatarRenderer';
 
-const Renderer: FC<{ block: AvatarBlock }> = ({ block }) => {
-  const padding = block.padding;
-  const td: React.CSSProperties = {
-    padding: padding ? `${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px` : '0',
-  };
-
-  return (
-    <table role="presentation" cellPadding={0} cellSpacing={0} border={0} style={{ borderCollapse: 'collapse' }}>
-      <tbody>
-        <tr>
-          <td style={td}>
-            <img
-              src={block.src || `https://placehold.co/${block.size}x${block.size}?text=A`}
-              alt={block.alt}
-              width={block.size}
-              height={block.size}
-              style={{
-                display: 'block',
-                width: `${block.size}px`,
-                height: `${block.size}px`,
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: 0,
-              }}
-            />
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  );
-};
-
-const Properties: FC<{ block: AvatarBlock; onChange: (u: Partial<AvatarBlock>) => void }> = ({ block, onChange }) => {
-  const [cropping, setCropping] = useState(false);
-  return (
-    <div className="space-y-3 text-xs">
-      <div className="block">
-        <span className="mb-1 block text-[var(--text-secondary)]">{__('Image URL')}</span>
-        <div className="flex items-center gap-1.5">
-          <input
-            type="url"
-            aria-label={__('Image URL')}
-            className="w-full min-w-0 rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
-            value={block.src}
-            onChange={(e) => onChange({ src: e.target.value })}
-          />
-          {/* Uploads are centre-cropped to a square with a circular
-              alpha mask so the avatar is round even in Outlook. */}
-          <ImageUploadButton
-            displayWidth={block.size}
-            square
-            circular
-            filenameBase="avatar"
-            onUploaded={(url) => onChange({ src: url })}
-          />
-        </div>
-      </div>
-      {/* Crop renders + uploads a real circular PNG — hidden in
-          URL-only mode (1.0.29). */}
-      {isUploadEnabled() && (
-        <button
-          type="button"
-          disabled={!block.src}
-          onClick={() => setCropping(true)}
-          className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-2 text-[12px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <Crop size={12} />
-          {__('Crop image')}
-        </button>
-      )}
-      <label className="block">
-        <span className="mb-1 block text-[var(--text-secondary)]">{__('Alt text')}</span>
-        <input
-          type="text"
-          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
-          value={block.alt}
-          onChange={(e) => onChange({ alt: e.target.value })}
-        />
-      </label>
-      <DimensionInput label={__('Size')} value={block.size} onChange={(v) => onChange({ size: v })} min={32} max={200} />
-      <PaddingInput value={block.padding ?? { top: 0, right: 0, bottom: 0, left: 0 }} onChange={(p) => onChange({ padding: p })} />
-
-      <ImageCropperModal
-        open={cropping}
-        src={block.src}
-        aspect={1}
-        circular
-        displayWidth={block.size}
-        filenameBase="avatar"
-        onCancel={() => setCropping(false)}
-        onConfirm={(result) => {
-          onChange({ src: result.url });
-          setCropping(false);
-        }}
-      />
-    </div>
-  );
-};
-
-function compile(block: AvatarBlock, ctx: CompileContext): string {
-  checkAlt(ctx, block, block.alt);
-  const padding = paddingCss(block.padding);
-  // Escape EVERY interpolated attribute (src, alt) via the central
-  // serializer.
-  const safeSrc = attr(block.src);
-  const safeAlt = attr(block.alt);
-  const available = ctx.availableWidth - horizontalPadding(block.padding);
-  const size = clampToAvailable(ctx, block, intPx(block.size, 8, 800, 64), available);
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><img${markerAttr(block)} src="${safeSrc}" alt="${safeAlt}" width="${size}" height="${size}" style="display:block;width:${size}px;max-width:100%;height:auto;border-radius:50%;object-fit:cover;border:0" /></td></tr></table>`;
-}
-
+/**
+ * Avatar block (1.2): profile photo with a real shape (circle, rounded,
+ * square) and optional ring baked into a hosted PNG, alignment, link
+ * and alt text. See `model.ts` for how pre-1.2 rows are read and
+ * `compileAvatar.ts` for the email output.
+ */
 const definition: BlockDefinition<AvatarBlock> = {
   type: 'avatar',
   label: 'Avatar',
@@ -135,11 +24,14 @@ const definition: BlockDefinition<AvatarBlock> = {
     src: '',
     alt: '',
     size: 64,
+    shape: 'circle',
+    align: 'left',
     padding: { top: 0, right: 0, bottom: 8, left: 0 },
   }),
-  Renderer,
-  PropertiesPanel: Properties,
-  compile,
+  Renderer: AvatarRenderer,
+  PropertiesPanel: AvatarProperties,
+  compile: compileAvatar,
+  wrap_in_section: false,
 };
 
 registerBlock(definition);

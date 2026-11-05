@@ -54,9 +54,31 @@ export interface ImageBlock extends BlockBase {
   src: string;
   alt: string;
   width?: number;
+  /**
+   * Explicit height. Used when `lock_aspect` is off, or when it is on
+   * but the intrinsic size of `src` is unknown (pasted URL, pre-1.2
+   * rows). Scaled with the width when the image is clamped to the
+   * available space.
+   */
   height?: number;
   link?: string;
   border_radius?: number;
+  /** Horizontal alignment in the available width. Absent = `left`. */
+  align?: 'left' | 'center' | 'right';
+  /**
+   * Keep the height proportional to the width. Absent = `true`. With
+   * `natural_*` known the compiled height is derived from the image's
+   * own aspect ratio, otherwise from `width` / `height`.
+   */
+  lock_aspect?: boolean;
+  /**
+   * Intrinsic pixel size of `src`, recorded when the image comes from
+   * an upload, the asset library or a crop. Absent for pasted URLs.
+   */
+  natural_width?: number;
+  natural_height?: number;
+  /** Optional border drawn around the image (absent / width 0 = none). */
+  border?: BorderStyle;
   /**
    * Optional URL of a static image used as a graceful fallback for
    * Outlook 2007–2019 (which freezes animated GIFs on the first
@@ -71,9 +93,37 @@ export interface ImageBlock extends BlockBase {
 
 export interface AvatarBlock extends BlockBase {
   type: 'avatar';
+  /**
+   * Image the email references. Once the editor has rendered the
+   * avatar (see `processed`) this is a PNG with the shape mask and the
+   * ring baked in; otherwise it is the user's image as-is.
+   */
   src: string;
   alt: string;
   size: number;
+  /** Absent = `circle` (the only shape before 1.2). */
+  shape?: 'circle' | 'rounded' | 'square';
+  /** Ring (outline) width in px around the photo. Absent / 0 = none. */
+  ring_width?: number;
+  ring_color?: string;
+  /** Horizontal alignment in the available width. Absent = `left`. */
+  align?: 'left' | 'center' | 'right';
+  link?: string;
+  /**
+   * The user's (unmasked) photo the masked `src` is rendered from.
+   * Set when the image was uploaded, picked from the library or
+   * cropped; absent for pasted URLs and pre-1.2 rows (then `src` is
+   * the source and the shape is drawn with CSS only).
+   */
+  source_url?: string;
+  /** What `src` was rendered with — absent when `src` is not a rendered PNG. */
+  processed?: {
+    source_url: string;
+    shape: 'circle' | 'rounded' | 'square';
+    ring_width: number;
+    ring_color: string;
+    size: number;
+  };
 }
 
 export interface DividerBlock extends BlockBase {
@@ -261,6 +311,16 @@ export interface BannerBlock extends BlockBase {
   /** Width in px, capped to the canvas width at compile time. */
   width: number;
   border_radius?: number;
+  /**
+   * Fill the whole width available where the banner sits (ignores
+   * `width`). Absent = `false`, so pre-1.2 rows keep their fixed width.
+   */
+  full_width?: boolean;
+  /** Horizontal alignment when narrower than the space. Absent = `center`. */
+  align?: 'left' | 'center' | 'right';
+  /** Intrinsic pixel size of `src` (upload / library); absent for pasted URLs. */
+  natural_width?: number;
+  natural_height?: number;
   /**
    * Optional static image URL used as a graceful Outlook 2007–2019
    * fallback when `src` is an animated GIF. See `ImageBlock` for the

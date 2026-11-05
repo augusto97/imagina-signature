@@ -1,167 +1,19 @@
-import type { FC } from 'react';
 import { Megaphone } from 'lucide-react';
 import type { BannerBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
-import { __ } from '@/i18n/helpers';
-import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
-import { horizontalPadding, intPx, paddingCss, px } from '@/core/compiler/css';
-import { checkAlt, clampToAvailable, markerAttr } from '@/core/compiler/issues';
-import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
-import { ImageUploadButton, isAnimatedGif, withOutlookFallback } from '../image/definition';
+import { registerBlock, type BlockDefinition } from '../registry';
+import { compileBanner } from './compileBanner';
+import { BannerProperties } from './BannerProperties';
+import { BannerRenderer } from './BannerRenderer';
 
 /**
  * Banner block — promotional / campaign image with a link.
  *
- * Looks like an Image block but typed differently because it carries
- * its own scale defaults (full canvas width by default, 16:5
- * aspect-ish), and surfaces banner-specific affordances in the
- * library card. Lives in the `content` category.
+ * Like an Image, but it fills the available width by default (new
+ * banners) or keeps a fixed width (pre-1.2 rows), is centred, and
+ * surfaces banner-specific affordances. See `model.ts` and
+ * `compileBanner.ts`.
  */
-const Renderer: FC<{ block: BannerBlock }> = ({ block }) => {
-  const padding = block.padding;
-  const td: React.CSSProperties = {
-    padding: padding
-      ? `${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px`
-      : '0',
-    textAlign: 'center',
-  };
-
-  const img = (
-    <img
-      src={block.src || 'https://placehold.co/600x180?text=Banner'}
-      alt={block.alt}
-      width={block.width}
-      style={{
-        display: 'block',
-        maxWidth: '100%',
-        height: 'auto',
-        border: 0,
-        borderRadius: block.border_radius ? `${block.border_radius}px` : 0,
-        margin: '0 auto',
-      }}
-    />
-  );
-
-  return (
-    <table
-      role="presentation"
-      cellPadding={0}
-      cellSpacing={0}
-      border={0}
-      style={{ borderCollapse: 'collapse', width: '100%' }}
-    >
-      <tbody>
-        <tr>
-          <td style={td}>{block.link ? <a href={block.link}>{img}</a> : img}</td>
-        </tr>
-      </tbody>
-    </table>
-  );
-};
-
-const Properties: FC<{
-  block: BannerBlock;
-  onChange: (updates: Partial<BannerBlock>) => void;
-}> = ({ block, onChange }) => (
-  <div className="flex flex-col gap-3 text-[12px]">
-    <div className="flex flex-col gap-1.5">
-      <span className="font-medium text-[var(--text-secondary)]">{__('Image URL')}</span>
-      <div className="flex items-center gap-1.5">
-        <input
-          type="url"
-          aria-label={__('Image URL')}
-          className="min-w-0 flex-1"
-          value={block.src}
-          onChange={(e) => onChange({ src: e.target.value })}
-          placeholder="https://example.com/banner.png"
-        />
-        <ImageUploadButton
-          displayWidth={block.width || 600}
-          filenameBase="banner"
-          onUploaded={(url) => onChange({ src: url })}
-        />
-      </div>
-    </div>
-
-    <label className="flex flex-col gap-1.5">
-      <span className="font-medium text-[var(--text-secondary)]">{__('Alt text')}</span>
-      <input
-        type="text"
-        value={block.alt}
-        onChange={(e) => onChange({ alt: e.target.value })}
-        placeholder={__('Describe what the banner shows')}
-      />
-    </label>
-
-    <label className="flex flex-col gap-1.5">
-      <span className="font-medium text-[var(--text-secondary)]">{__('Link URL')}</span>
-      <input
-        type="url"
-        value={block.link}
-        onChange={(e) => onChange({ link: e.target.value })}
-        placeholder="https://example.com/landing"
-      />
-    </label>
-
-    <DimensionInput
-      label={__('Width (px)')}
-      value={block.width}
-      onChange={(v) => onChange({ width: v })}
-      min={120}
-      max={800}
-    />
-
-    <DimensionInput
-      label={__('Border radius (px)')}
-      value={block.border_radius ?? 0}
-      onChange={(v) => onChange({ border_radius: v })}
-      min={0}
-      max={32}
-    />
-
-    {isAnimatedGif(block.src) && (
-      <label className="flex flex-col gap-1.5">
-        <span className="font-medium text-[var(--text-secondary)]">
-          {__('Static fallback URL')}
-        </span>
-        <input
-          type="url"
-          value={block.static_fallback_url ?? ''}
-          onChange={(e) => onChange({ static_fallback_url: e.target.value || undefined })}
-          placeholder="https://example.com/banner-static.png"
-        />
-        <span className="text-[10.5px] text-[var(--text-muted)]">
-          {__('Outlook 2007–2019 freezes GIFs on the first frame. Provide a static PNG/JPG and modern clients keep the animation while old Outlook shows this instead.')}
-        </span>
-      </label>
-    )}
-  </div>
-);
-
-function compile(block: BannerBlock, ctx: CompileContext): string {
-  checkAlt(ctx, block, block.alt);
-  const padding = paddingCss(block.padding);
-  // "Capped to the canvas width at compile time" (schema contract) —
-  // more precisely to the width available where the banner sits.
-  const available = ctx.availableWidth - horizontalPadding(block.padding);
-  const width = clampToAvailable(ctx, block, intPx(block.width || available, 1, 4000, available), available);
-  const widthAttr = ` width="${width}"`;
-  const radius = block.border_radius ? `;border-radius:${px(block.border_radius, 0, 999)}px` : '';
-  const baseStyle = `display:block;max-width:100%;height:auto;border:0;margin:0 auto${radius}`;
-
-  const inner = withOutlookFallback(
-    block.src,
-    block.static_fallback_url,
-    block.alt,
-    widthAttr,
-    baseStyle,
-    block.link,
-    markerAttr(block),
-  );
-
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="padding:${padding};text-align:center">${inner}</td></tr></table>`;
-}
-
 const definition: BlockDefinition<BannerBlock> = {
   type: 'banner',
   label: 'Banner',
@@ -175,12 +27,15 @@ const definition: BlockDefinition<BannerBlock> = {
     alt: '',
     link: '',
     width: 600,
+    full_width: true,
+    align: 'center',
     border_radius: 0,
     padding: { top: 8, right: 0, bottom: 8, left: 0 },
   }),
-  Renderer,
-  PropertiesPanel: Properties,
-  compile,
+  Renderer: BannerRenderer,
+  PropertiesPanel: BannerProperties,
+  compile: compileBanner,
+  wrap_in_section: false,
 };
 
 registerBlock(definition);
