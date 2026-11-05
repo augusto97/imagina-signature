@@ -41,6 +41,12 @@ Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
 
+= 1.3.0 =
+* Central management and deployment release (roadmap Fase 2).
+* Deploy to every mailbox: Gmail through a Google Workspace service account (authorised once by the administrator), an Outlook add-in for Microsoft 365 plus an Exchange mail-flow rule generator, and a personal install link with email invitations and reminders.
+* Company-managed signatures: linked templates with block locks and employee modes, employee profile fields, groups / departments and CSV import.
+* Team console: everyone's signature, HTML freshness and deployment status, with bulk actions, in-browser recompilation of outdated signatures and editing on someone's behalf.
+
 = 1.2.0 =
 * Premium design release (roadmap Fase 1): box styling for every block, containers with 1 to 4 columns, full typography inherited from the canvas, rich headings and disclaimers, and new versions of the image, avatar, button, divider, banner, QR and vCard blocks.
 * Real hosted icons for social and contact blocks.

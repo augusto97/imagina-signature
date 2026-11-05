@@ -2,6 +2,34 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — 2026-11-05
+
+Fase 2 of the November 2026 roadmap: central management and deployment. The company sets up signatures once and every employee gets theirs in Gmail, Outlook or by a personal install link. Verified with `tests/e2e/smoke.cjs` (39 checks) on an upgrade from a 1.0.39 database and on a fresh install.
+
+### Added — deploy to every mailbox
+- **Gmail / Google Workspace**: a service account with domain-wide delegation, authorised once by the Workspace administrator (no per-user sign-in). Settings → Google Workspace has a step-by-step setup guide, encrypted key upload, allowed domains and a test with any address. Signatures are pushed on demand, automatically when a primary signature changes (debounced, retried with back-off) and optionally in a daily sync.
+- **Outlook / Microsoft 365**: an Outlook add-in that inserts the employee's signature in every new message, reply, forward and meeting invitation (Outlook on the web, new Outlook for Windows, Outlook for Mac, classic Outlook and, where supported, mobile). Settings → Microsoft 365 generates the manifest with a private deployment key and explains the one-time deployment in the Microsoft 365 admin center. An Exchange Online mail-flow rule generator (PowerShell) covers mail sent from any device.
+- **Personal install link**: every employee has a private page with their signature, one-click copy for each email client and step-by-step instructions; they can mark it as installed. Invitations by email to everyone or selected people, with progress and optional reminders. A link becomes "outdated" when the signature changes after it was installed.
+
+### Added — company-managed signatures
+- **Linked templates**: assign a template to people, groups, a role or everyone, linked or as a copy, optionally as their primary signature. Editing a linked template updates every linked signature (in batches for large teams).
+- **Block locks and employee modes**: template managers lock blocks; a template can let employees edit freely, keep the design locked (only unlocked text editable) or show only a "Your details" form beside a live preview. The server enforces the same rules on save.
+- **Employee profiles**: job title, department, phones, photo, LinkedIn, booking link, website, address, pronouns and up to 10 custom fields, each from the plugin or from an existing user meta field. They fill `{{job_title}}`-style fields in every signature and win over the template's examples. "My profile" in wp-admin and on the public route, and a section on the WordPress profile screen.
+- **Groups / departments** with their own compliance footer, targeted banner campaigns and an assigned template.
+- **CSV import** of employee profiles with column mapping (English and Spanish headers), a dry run and optional user creation.
+- **Team console** (Imagina Signatures → Team): everyone who can use signatures with their primary signature, whether its HTML is up to date and where it is deployed (Gmail, Outlook add-in, install link), with counters and filters. Row and bulk actions: assign a template, send install invitations, push to Gmail, copy an install link, edit someone's profile, and edit their signature on their behalf (saved with their details and language).
+- **Signatures stay current**: changing a profile, group membership, the profile-field mapping, the brand kit's company data, the compliance footer or the campaigns marks the affected HTML as outdated, and "Recompile N outdated" rebuilds it in the browser with each owner's details — which then flows to Gmail and the install pages. Until then the install page and the Outlook add-in keep serving the last version.
+
+### Changed
+- The server keeps each signature's compiled HTML and plain text, and every user has a primary signature (introduced in 1.2.0) — the source for every deployment channel.
+- Settings is a grouped side navigation (General / Team & deployment); the team sections are shown only to users who can manage the team.
+- Counts read naturally ("1 person", "3 images" — "1 persona", "3 imágenes") instead of "(s)".
+
+### Fixed
+- Buttons across the admin screens (tabs, primary actions, counters) lost their background, padding and border to an over-specific CSS reset.
+- Employees using the "fields only" mode get the full details form (friendly labels, photo upload, read-only profile values).
+- Template onboarding shows profile fields that are already filled in as read-only instead of letting a value be typed that the signature would ignore.
+
 ## [1.2.0] — 2026-11-05
 
 Fase 1 of the November 2026 roadmap: premium design. Verified with `tests/e2e/smoke.cjs` (21 checks) on an upgrade from a 1.0.39 database.

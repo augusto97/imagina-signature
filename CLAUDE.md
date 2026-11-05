@@ -37,7 +37,7 @@ Varias secciones de este documento describen el diseño original del MVP. Donde 
 
 ### 0.2. Alcance (actualizado con la hoja de ruta de noviembre 2026)
 
-La auditoría de noviembre 2026 definió cinco fases. **En curso: Fases 0, 1 y 2.**
+La auditoría de noviembre 2026 definió cinco fases. **Completadas: Fase 0 (1.1.0), Fase 1 (1.2.0) y Fase 2 (1.3.0).** Las Fases 3 y 4 siguen pendientes de confirmación del usuario.
 - Fase 0 — Estabilizar (1.1.0): salida de email sin fallos, seguridad, CI, traducciones.
 - Fase 1 — Diseño premium (1.2.0): esquema 1.1 con estilos de caja y contenedor de 1–4 columnas, iconos reales, imágenes subidas, tipografía completa, kit de marca, 30+ plantillas, bienvenida guiada.
 - Fase 2 — Gestión y despliegue (1.3.0): HTML compilado en servidor, plantillas vinculadas, modo empleado, consola de equipo, grupos, campos de perfil, enlace de instalación, despliegue a Gmail (cuenta de servicio con delegación de dominio) y complemento de Outlook.
@@ -895,6 +895,8 @@ import { __ } from '@/i18n/helpers';
 Helper interno carga del bundle de traducciones inyectado por PHP (`window.IMGSIG_EDITOR_CONFIG.translations`).
 
 Regla: TODO string visible debe pasar por `__()`. Nunca hardcoded.
+
+Cantidades: nunca `"%s item(s)"`. Usa `_n('%s item', '%s items', count, String(count))` (JS, `@/i18n/helpers` / `@admin/i18n`) o `_n()` de WordPress en PHP. Un msgid no puede ser sustantivo y verbo a la vez ("Copy"): usa textos distintos.
 
 ### 6.6. Tailwind dentro del iframe
 
