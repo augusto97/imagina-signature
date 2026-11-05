@@ -219,7 +219,7 @@ export function useHostedAssetSync(options: AssetSyncOptions): {
           const latest = findBlockByIdDeep(store.schema.blocks, blockId);
           // Content changed while uploading → a newer run owns it.
           if (!latest || optsRef.current.hashOf(latest) !== hashAtStart) return;
-          store.updateBlock(blockId, patch);
+          store.updateBlock(blockId, patch, { history: false });
           if (mountedRef.current) {
             setStatus('idle');
             setError(null);

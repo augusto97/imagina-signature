@@ -33,6 +33,11 @@ export type ContainerColumnUpdates = Partial<Pick<ContainerColumn, 'valign' | 'b
  */
 export const HISTORY_COALESCE_MS = 500;
 
+export interface UpdateBlockOptions {
+  /** `false` = derived write: applied and saved, but no undo step. Default `true`. */
+  history?: boolean;
+}
+
 export interface ReplaceSchemaOptions {
   /**
    * `true` (default) pushes the current schema to history first so
@@ -122,7 +127,15 @@ interface SchemaState {
   addBlock: (block: Block, position?: number) => boolean;
   insertBlockBefore: (target_id: string, block: Block) => boolean;
   insertBlockAfter: (target_id: string, block: Block) => boolean;
-  updateBlock: (id: string, updates: Partial<Block>) => void;
+  /**
+   * Merge `updates` into block `id`. Pass `{ history: false }` for
+   * DERIVED writes the user didn't make directly — e.g. the URL of a
+   * QR/vCard/avatar file that was just uploaded for content the user
+   * already changed. Those must not become their own undo step:
+   * undoing one would bring back stale content, trigger a re-upload
+   * and wipe the redo stack.
+   */
+  updateBlock: (id: string, updates: Partial<Block>, options?: UpdateBlockOptions) => void;
   deleteBlock: (id: string) => void;
   moveBlock: (id: string, target_id: string, position: 'before' | 'after') => boolean;
   duplicateBlock: (id: string) => void;
@@ -439,14 +452,16 @@ export const useSchemaStore = create<SchemaState>()(
       return true;
     },
 
-    updateBlock: (id, updates) => {
+    updateBlock: (id, updates, options = {}) => {
       // Recurses into Container children so nested blocks are
       // editable through the same selection-driven property panel.
       const current = findBlockByIdDeep(get().schema.blocks, id);
       if (!current) return;
       const fields = changedFields(current, updates);
       if (fields.length === 0) return; // no-op write — nothing to undo or save
-      pushCoalescedSnapshot(`block:${id}:${fields.join('|')}`);
+      if (options.history !== false) {
+        pushCoalescedSnapshot(`block:${id}:${fields.join('|')}`);
+      }
       set((state) => {
         const block = findBlockByIdDeep(state.schema.blocks, id);
         if (block) {

@@ -51,7 +51,7 @@ export function BackgroundAssetSync(): null {
             const store = useSchemaStore.getState();
             const latest = findBlockByIdDeep(store.schema.blocks, item.id);
             if (latest && item.hashOf(latest) === item.hash) {
-              store.updateBlock(item.id, patch);
+              store.updateBlock(item.id, patch, { history: false });
             }
           } catch {
             // Remember the failure for this content so we don't loop;
