@@ -4,8 +4,10 @@ import type { BannerBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
+import { horizontalPadding, intPx, paddingCss, px } from '@/core/compiler/css';
+import { checkAlt, clampToAvailable, markerAttr } from '@/core/compiler/issues';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
-import { isAnimatedGif, withOutlookFallback } from '../image/definition';
+import { ImageUploadButton, isAnimatedGif, withOutlookFallback } from '../image/definition';
 
 /**
  * Banner block — promotional / campaign image with a link.
@@ -62,15 +64,24 @@ const Properties: FC<{
   onChange: (updates: Partial<BannerBlock>) => void;
 }> = ({ block, onChange }) => (
   <div className="flex flex-col gap-3 text-[12px]">
-    <label className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5">
       <span className="font-medium text-[var(--text-secondary)]">{__('Image URL')}</span>
-      <input
-        type="url"
-        value={block.src}
-        onChange={(e) => onChange({ src: e.target.value })}
-        placeholder="https://example.com/banner.png"
-      />
-    </label>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="url"
+          aria-label={__('Image URL')}
+          className="min-w-0 flex-1"
+          value={block.src}
+          onChange={(e) => onChange({ src: e.target.value })}
+          placeholder="https://example.com/banner.png"
+        />
+        <ImageUploadButton
+          displayWidth={block.width || 600}
+          filenameBase="banner"
+          onUploaded={(url) => onChange({ src: url })}
+        />
+      </div>
+    </div>
 
     <label className="flex flex-col gap-1.5">
       <span className="font-medium text-[var(--text-secondary)]">{__('Alt text')}</span>
@@ -127,11 +138,15 @@ const Properties: FC<{
   </div>
 );
 
-function compile(block: BannerBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px` : '0';
-  const widthAttr = block.width ? ` width="${block.width}"` : '';
-  const radius = block.border_radius ? `;border-radius:${block.border_radius}px` : '';
+function compile(block: BannerBlock, ctx: CompileContext): string {
+  checkAlt(ctx, block, block.alt);
+  const padding = paddingCss(block.padding);
+  // "Capped to the canvas width at compile time" (schema contract) —
+  // more precisely to the width available where the banner sits.
+  const available = ctx.availableWidth - horizontalPadding(block.padding);
+  const width = clampToAvailable(ctx, block, intPx(block.width || available, 1, 4000, available), available);
+  const widthAttr = ` width="${width}"`;
+  const radius = block.border_radius ? `;border-radius:${px(block.border_radius, 0, 999)}px` : '';
   const baseStyle = `display:block;max-width:100%;height:auto;border:0;margin:0 auto${radius}`;
 
   const inner = withOutlookFallback(
@@ -141,6 +156,7 @@ function compile(block: BannerBlock, _ctx: CompileContext): string {
     widthAttr,
     baseStyle,
     block.link,
+    markerAttr(block),
   );
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="padding:${padding};text-align:center">${inner}</td></tr></table>`;

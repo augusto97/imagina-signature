@@ -8,6 +8,18 @@ import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { FontFamilyInput } from '@/editor/sidebar-right/inputs/FontFamilyInput';
 import { FontWeightInput } from '@/editor/sidebar-right/inputs/FontWeightInput';
 import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
+import {
+  escapeHtml,
+  fontStack,
+  fontWeight,
+  inlineStyle,
+  num,
+  paddingCss,
+  px,
+  safeColor,
+  textAlign,
+} from '@/core/compiler/css';
+import { checkContrast } from '@/core/compiler/issues';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: HeadingBlock }> = ({ block }) => {
@@ -59,22 +71,21 @@ const Properties: FC<{ block: HeadingBlock; onChange: (u: Partial<HeadingBlock>)
   );
 };
 
-function compile(block: HeadingBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px` : '0';
-  const style = [
-    `font-family:${block.style.font_family}`,
-    `font-size:${block.style.font_size}px`,
-    `font-weight:${block.style.font_weight}`,
-    `color:${block.style.color}`,
-    `line-height:${block.style.line_height ?? 1.2}`,
-    `text-align:${block.style.text_align ?? 'left'}`,
-    `padding:${padding}`,
-  ].join(';');
+function compile(block: HeadingBlock, ctx: CompileContext): string {
+  const color = safeColor(block.style.color, '#111827');
+  const fontSize = px(block.style.font_size, 6, 96, 18);
+  checkContrast(ctx, block, color, safeColor(ctx.canvas.background_color, '#ffffff'), fontSize);
+  const style = inlineStyle({
+    'font-family': fontStack(block.style.font_family),
+    'font-size': `${fontSize}px`,
+    'font-weight': fontWeight(block.style.font_weight, 700),
+    color,
+    'line-height': num(block.style.line_height ?? 1.2, 0.5, 4, 1.2),
+    'text-align': textAlign(block.style.text_align),
+    padding: paddingCss(block.padding),
+  });
 
-  const safe = String(block.content).replace(/[<>&]/g, (c) =>
-    c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&amp;',
-  );
+  const safe = escapeHtml(block.content);
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="${style}">${safe}</td></tr></table>`;
 }
 

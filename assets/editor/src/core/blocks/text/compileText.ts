@@ -1,6 +1,17 @@
 import type { TextBlock } from '@/core/schema/blocks';
 import type { CompileContext } from '@/core/blocks/registry';
 import { sanitizeEmailHtml } from '@/core/compiler/sanitize';
+import {
+  fontStack,
+  fontWeight,
+  inlineStyle,
+  num,
+  paddingCss,
+  px,
+  safeColor,
+  textAlign,
+} from '@/core/compiler/css';
+import { checkContrast, markerAttr } from '@/core/compiler/issues';
 
 /**
  * JSON → email-safe HTML for a Text block.
@@ -10,25 +21,31 @@ import { sanitizeEmailHtml } from '@/core/compiler/sanitize';
  * `javascript:` URLs even if a hostile schema (corrupted DB row,
  * tampered template, future Tiptap regression) gets through. Defence
  * in depth — the editor also sanitises before rendering on the canvas.
+ *
+ * Every style value goes through the central serializer so font
+ * stacks with double quotes no longer break the `style` attribute.
  */
-export function compileText(block: TextBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p
-    ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px`
-    : '0';
+export function compileText(block: TextBlock, ctx: CompileContext): string {
+  const color = safeColor(block.style.color, '#111827');
+  const fontSize = px(block.style.font_size, 6, 96, 14);
+  checkContrast(ctx, block, color, safeColor(ctx.canvas.background_color, '#ffffff'), fontSize);
+  const style = inlineStyle({
+    'font-family': fontStack(block.style.font_family),
+    'font-size': `${fontSize}px`,
+    'font-weight': fontWeight(block.style.font_weight),
+    color,
+    'line-height': num(block.style.line_height ?? 1.4, 0.5, 4, 1.4),
+    'text-align': textAlign(block.style.text_align),
+    padding: paddingCss(block.padding),
+  });
 
-  const styles: Array<[string, string | number]> = [
-    ['font-family', block.style.font_family],
-    ['font-size', `${block.style.font_size}px`],
-    ['font-weight', block.style.font_weight],
-    ['color', block.style.color],
-    ['line-height', block.style.line_height ?? 1.4],
-    ['text-align', block.style.text_align ?? 'left'],
-    ['padding', padding],
-  ];
-  const style = styles.map(([k, v]) => `${k}:${v}`).join(';');
-
-  const safeContent = sanitizeEmailHtml(block.content);
+  // Links pick up the canvas link colour (the sanitiser drops any
+  // inline style on <a>); paragraphs get margin:0 so mail clients
+  // don't add their ~1em default spacing the canvas never showed.
+  const safeContent = sanitizeEmailHtml(block.content, { linkColor: ctx.canvas.link_color }).replace(
+    /<a(?=[\s>])/g,
+    `<a${markerAttr(block)}`,
+  );
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;"><tr><td style="${style}">${safeContent}</td></tr></table>`;
 }

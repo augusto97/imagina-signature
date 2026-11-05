@@ -1,6 +1,8 @@
 import type { FC } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import type { Block, BlockBase } from '@/core/schema/blocks';
+import type { CanvasConfig } from '@/core/schema/signature';
+import type { CompileIssue } from '@/core/compiler/issues';
 
 /**
  * Block category surfaces the block in the left-sidebar library.
@@ -8,15 +10,30 @@ import type { Block, BlockBase } from '@/core/schema/blocks';
 export type BlockCategory = 'content' | 'layout' | 'social';
 
 /**
- * Compile context handed to each block's `compile()` function.
- *
- * The real {@link CompileContext} arrives in Sprint 9 — for now it
- * carries enough state for the canvas-mode renderers to short-circuit
- * the email-safe compile path when not actually exporting.
+ * Compile context handed to each block's `compile()` function
+ * (CLAUDE.md §9.2).
  */
 export interface CompileContext {
+  /** Variables available for substitution (system `wp_*` + user-defined). */
   variables: Record<string, string>;
+  /**
+   * Free-form warning strings. Still honoured for back-compat — they
+   * are surfaced as warning-level issues. New code should push to
+   * {@link CompileContext.issues} via `report()` from
+   * `@/core/compiler/issues`.
+   */
   warnings: string[];
+  /** Structured, leveled diagnostics (errors + warnings). */
+  issues: CompileIssue[];
+  /** Canvas config of the signature being compiled (link colour, fonts…). */
+  canvas: CanvasConfig;
+  /**
+   * Pixel width available to the block being compiled. The root value
+   * is `canvas.width`; a 2-column container compiles each cell's
+   * children with that cell's inner width. Image-like blocks clamp their
+   * `width` attribute to it (minus their own horizontal padding).
+   */
+  availableWidth: number;
 }
 
 /**

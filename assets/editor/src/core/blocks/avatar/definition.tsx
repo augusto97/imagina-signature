@@ -6,8 +6,10 @@ import { __ } from '@/i18n/helpers';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
 import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
-import { escapeAttr } from '@/core/compiler/compile';
+import { attr, horizontalPadding, intPx, paddingCss } from '@/core/compiler/css';
+import { checkAlt, clampToAvailable, markerAttr } from '@/core/compiler/issues';
 import { isUploadEnabled } from '@/bridge/apiClient';
+import { ImageUploadButton } from '../image/definition';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: AvatarBlock }> = ({ block }) => {
@@ -46,18 +48,29 @@ const Properties: FC<{ block: AvatarBlock; onChange: (u: Partial<AvatarBlock>) =
   const [cropping, setCropping] = useState(false);
   return (
     <div className="space-y-3 text-xs">
-      <label className="block">
+      <div className="block">
         <span className="mb-1 block text-[var(--text-secondary)]">{__('Image URL')}</span>
-        <input
-          type="url"
-          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
-          value={block.src}
-          onChange={(e) => onChange({ src: e.target.value })}
-        />
-      </label>
-      {/* Crop emits a data-URL into block.src — disabled in URL-only
-          mode (1.0.29) since that would defeat the no-uploads
-          contract. */}
+        <div className="flex items-center gap-1.5">
+          <input
+            type="url"
+            aria-label={__('Image URL')}
+            className="w-full min-w-0 rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
+            value={block.src}
+            onChange={(e) => onChange({ src: e.target.value })}
+          />
+          {/* Uploads are centre-cropped to a square with a circular
+              alpha mask so the avatar is round even in Outlook. */}
+          <ImageUploadButton
+            displayWidth={block.size}
+            square
+            circular
+            filenameBase="avatar"
+            onUploaded={(url) => onChange({ src: url })}
+          />
+        </div>
+      </div>
+      {/* Crop renders + uploads a real circular PNG — hidden in
+          URL-only mode (1.0.29). */}
       {isUploadEnabled() && (
         <button
           type="button"
@@ -86,9 +99,11 @@ const Properties: FC<{ block: AvatarBlock; onChange: (u: Partial<AvatarBlock>) =
         src={block.src}
         aspect={1}
         circular
+        displayWidth={block.size}
+        filenameBase="avatar"
         onCancel={() => setCropping(false)}
-        onConfirm={(croppedDataUrl) => {
-          onChange({ src: croppedDataUrl });
+        onConfirm={(result) => {
+          onChange({ src: result.url });
           setCropping(false);
         }}
       />
@@ -96,15 +111,16 @@ const Properties: FC<{ block: AvatarBlock; onChange: (u: Partial<AvatarBlock>) =
   );
 };
 
-function compile(block: AvatarBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px` : '0';
-  // Escape EVERY interpolated attribute (src, alt). The previous
-  // local replace only handled `"` for alt — leaving src raw and
-  // letting `&`/`<`/`>` corrupt the output.
-  const safeSrc = escapeAttr(block.src);
-  const safeAlt = escapeAttr(block.alt);
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><img src="${safeSrc}" alt="${safeAlt}" width="${block.size}" height="${block.size}" style="display:block;width:${block.size}px;height:${block.size}px;border-radius:50%;object-fit:cover;border:0" /></td></tr></table>`;
+function compile(block: AvatarBlock, ctx: CompileContext): string {
+  checkAlt(ctx, block, block.alt);
+  const padding = paddingCss(block.padding);
+  // Escape EVERY interpolated attribute (src, alt) via the central
+  // serializer.
+  const safeSrc = attr(block.src);
+  const safeAlt = attr(block.alt);
+  const available = ctx.availableWidth - horizontalPadding(block.padding);
+  const size = clampToAvailable(ctx, block, intPx(block.size, 8, 800, 64), available);
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><img${markerAttr(block)} src="${safeSrc}" alt="${safeAlt}" width="${size}" height="${size}" style="display:block;width:${size}px;max-width:100%;height:auto;border-radius:50%;object-fit:cover;border:0" /></td></tr></table>`;
 }
 
 const definition: BlockDefinition<AvatarBlock> = {

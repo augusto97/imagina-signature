@@ -4,6 +4,7 @@ import type { SpacerBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
+import { px } from '@/core/compiler/css';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: SpacerBlock }> = ({ block }) => (
@@ -23,7 +24,8 @@ const Properties: FC<{ block: SpacerBlock; onChange: (u: Partial<SpacerBlock>) =
 );
 
 function compile(block: SpacerBlock, _ctx: CompileContext): string {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="height:${block.height}px;font-size:0;line-height:0">&nbsp;</td></tr></table>`;
+  const height = px(block.height, 0, 400, 16);
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="height:${height}px;font-size:0;line-height:0">&nbsp;</td></tr></table>`;
 }
 
 const definition: BlockDefinition<SpacerBlock> = {

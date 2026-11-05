@@ -1,6 +1,7 @@
 import { useMemo, useState, type FC } from 'react';
 import { Monitor, Tablet, Smartphone } from 'lucide-react';
 import { compileSignature } from '@/core/compiler/compile';
+import { CompileIssues } from './ExportModal';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { __ } from '@/i18n/helpers';
@@ -48,10 +49,7 @@ export const PreviewModal: FC = () => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
 
   const compiled = useMemo(
-    () =>
-      modal === 'preview'
-        ? compileSignature(schema)
-        : { html: '', warnings: [], size: 0 },
+    () => (modal === 'preview' ? compileSignature(schema) : null),
     [modal, schema],
   );
 
@@ -63,10 +61,15 @@ export const PreviewModal: FC = () => {
     apple: 'background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:24px;',
   };
 
-  const srcDoc = `<!DOCTYPE html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head><body style="${wrapperStyle[client]}">${compiled.html}</body></html>`;
+  // The fragment (shell table only) is what lands in the recipient's
+  // client, so preview exactly that inside a per-client wrapper — the
+  // previous version nested a whole second <!DOCTYPE>/<html> document
+  // inside this <body>.
+  const srcDoc = `<!DOCTYPE html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head><body style="${wrapperStyle[client]}">${compiled?.fragment ?? ''}</body></html>`;
 
-  const sizeKb = (compiled.size / 1024).toFixed(1);
-  const sizeWarn = compiled.size > 102 * 1024;
+  const size = compiled?.size ?? 0;
+  const sizeKb = (size / 1024).toFixed(1);
+  const sizeWarn = size > 102 * 1024;
 
   return (
     <Modal open={open} title={__('Preview')} onClose={closeModal} width={840}>
@@ -143,19 +146,8 @@ export const PreviewModal: FC = () => {
           />
         </div>
 
-        {/* Compile warnings */}
-        {compiled.warnings.length > 0 && (
-          <details className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800">
-            <summary className="cursor-pointer font-medium">
-              {__('%s compile warning(s)', String(compiled.warnings.length))}
-            </summary>
-            <ul className="mt-2 list-disc pl-4">
-              {compiled.warnings.map((w, i) => (
-                <li key={i}>{w}</li>
-              ))}
-            </ul>
-          </details>
-        )}
+        {/* Compile errors + warnings */}
+        {compiled && <CompileIssues issues={compiled.issues} />}
       </div>
     </Modal>
   );

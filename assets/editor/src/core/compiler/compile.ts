@@ -1,16 +1,37 @@
 import type { SignatureSchema } from '@/core/schema/signature';
 import { rendererForBlock, type CompileContext } from '@/core/blocks/registry';
-import { wrapInEmailShell } from './table-builder';
+import { __ } from '@/i18n/helpers';
+import { canvasWidth, wrapInEmailShell } from './table-builder';
 import { applyOutlookFixes } from './outlook-fixes';
 import { minifyHtml } from './minify';
-import { validateEmailHtml } from './validate';
+import { validateEmailOutput } from './validate';
 import { substituteVariables } from './variables';
+import { enforceSafeUrls } from './urls';
+import { report, type CompileIssue } from './issues';
+import { htmlToPlainText, schemaToPlainText } from './plain-text';
 import { getConfig } from '@/bridge/apiClient';
 import type { AppConfig } from '@/bridge/types';
+import { attr, intPx } from './css';
+
+export type { CompileIssue, CompileIssueLevel } from './issues';
 
 export interface CompileResult {
+  /** Complete HTML document (doctype, head, body). Copy HTML / Download / test-send. */
   html: string;
+  /**
+   * The signature fragment — the outer shell table only (no doctype /
+   * head / body). What "Copy visual" puts on the clipboard.
+   */
+  fragment: string;
+  /** Clean plain-text version generated from the schema (text/plain clipboard part). */
+  text: string;
+  /** Warning-level messages (back-compat: existing callers keep working). */
   warnings: string[];
+  /** Error-level messages: the export is broken for recipients until fixed. */
+  errors: string[];
+  /** Every diagnostic, leveled and (when known) attributed to a block. */
+  issues: CompileIssue[];
+  /** Byte size of `html`. */
   size: number;
 }
 
@@ -23,25 +44,29 @@ export interface CompileResult {
  *      outer table sized to canvas.width).
  *   3. Apply Outlook-specific fixes (mso line-height, conditional
  *      reset).
- *   4. Append the site-wide compliance footer (1.0.13+) if the admin
- *      enabled it — injected just before `</table></td></tr>` so it
- *      sits inside the same outer table as the rest of the
- *      signature, keeping width / centring intact.
+ *   4. Append the campaign banner and the site-wide compliance footer
+ *      (1.0.13+) inside the outer table so they share its width.
  *   5. Substitute variables. Read-only `wp_*` system variables (from
  *      `IMGSIG_EDITOR_CONFIG.systemVariables`) are merged with the
  *      schema's user-defined ones; user-defined variables win on
  *      key conflict so the user can override any auto-merged value.
- *   6. Minify (drop non-conditional comments + inter-tag whitespace).
- *   7. Run validation, returning warnings alongside the HTML so the
- *      Export modal can surface them.
+ *   6. URL safety pass on the substituted document: unsafe hrefs →
+ *      `#`, data: / javascript: / blob: images removed (errors),
+ *      http / local / placeholder images flagged (warnings).
+ *   7. Minify (drop non-conditional comments + structural whitespace).
+ *   8. Validate the final output (size, Gmail length limit, leftovers).
  *
  * Unknown block types contribute nothing to the output but produce
  * a warning so the bug is visible.
  */
 export function compileSignature(schema: SignatureSchema): CompileResult {
+  const merged = mergedVariables(schema.variables);
   const ctx: CompileContext = {
-    variables: schema.variables,
+    variables: merged,
     warnings: [],
+    issues: [],
+    canvas: schema.canvas,
+    availableWidth: canvasWidth(schema.canvas),
   };
 
   const blockChunks: string[] = [];
@@ -56,7 +81,13 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
     }
     const definition = rendererForBlock(block);
     if (!definition) {
-      ctx.warnings.push(`Unknown block type "${block.type}" was skipped.`);
+      report(
+        ctx,
+        'warning',
+        __('Unknown block type "%s" was skipped.', String(block.type)),
+        block,
+        'unknown-block',
+      );
       continue;
     }
     blockChunks.push(definition.compile(block as never, ctx));
@@ -68,25 +99,75 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
   // Campaign banner first (sits visually right under the user's
   // signature content), THEN the compliance footer (which always
   // wants to be the very last thing the recipient sees).
-  const withCampaign = appendBannerCampaign(withOutlookFixes, schema.canvas.width);
+  const withCampaign = appendBannerCampaign(withOutlookFixes, canvasWidth(schema.canvas));
   const withFooter = appendComplianceFooter(withCampaign);
 
-  // Merge: read-only wp_* variables first, then user-defined override.
-  // The bootstrap config is optional in tests / standalone preview —
-  // fall through to schema.variables only.
-  const merged = mergedVariables(schema.variables);
   const { html: substituted, missing } = substituteVariables(withFooter, merged);
-  const minified = minifyHtml(substituted);
-  const validationWarnings = validateEmailHtml(minified);
-  const variableWarnings = missing.map(
-    (name) => `Variable "{{${name}}}" referenced but not defined; left as literal text.`,
-  );
+  for (const name of missing) {
+    report(
+      ctx,
+      'warning',
+      __('Variable "{{%s}}" referenced but not defined; left as literal text.', name),
+      null,
+      'missing-variable',
+    );
+  }
+
+  const urlSafe = enforceSafeUrls(substituted, ctx);
+  const minified = minifyHtml(urlSafe);
+  const fragment = extractBodyFragment(minified);
+
+  const issues: CompileIssue[] = [
+    ...ctx.warnings.map((message): CompileIssue => ({ level: 'warning', message })),
+    ...ctx.issues,
+    ...validateEmailOutput(minified, fragment),
+  ];
 
   return {
     html: minified,
-    warnings: [...ctx.warnings, ...variableWarnings, ...validationWarnings],
+    fragment,
+    text: schemaToPlainText(schema, merged, plainTextExtras()),
+    warnings: issues.filter((i) => i.level === 'warning').map((i) => i.message),
+    errors: issues.filter((i) => i.level === 'error').map((i) => i.message),
+    issues,
     size: new Blob([minified]).size,
   };
+}
+
+/**
+ * The pasteable signature: the outer shell table only — no doctype,
+ * <head>, <title> or mso document settings. Everything between the
+ * `<body …>` open tag and `</body>`.
+ */
+export function extractBodyFragment(html: string): string {
+  const bodyOpen = html.search(/<body[\s>]/i);
+  const bodyClose = html.lastIndexOf('</body>');
+  if (bodyOpen === -1 || bodyClose === -1) return html;
+  const contentStart = html.indexOf('>', bodyOpen) + 1;
+  return html.slice(contentStart, bodyClose).trim();
+}
+
+/** Plain-text lines for the campaign banner and compliance footer. */
+function plainTextExtras(): string[] {
+  const lines: string[] = [];
+  let config: AppConfig | null = null;
+  try {
+    config = getConfig();
+  } catch {
+    return lines;
+  }
+  const campaigns = config.bannerCampaigns;
+  if (campaigns && campaigns.length > 0) {
+    const pick = campaigns[stablePickIndex(campaigns.length)];
+    if (pick?.image_url && pick.link_url) {
+      lines.push('', `${pick.alt || pick.name || __('Link')}: ${pick.link_url}`);
+    }
+  }
+  const footer = config.complianceFooter;
+  if (footer?.enabled && footer.html) {
+    lines.push('', htmlToPlainText(footer.html));
+  }
+  return lines;
 }
 
 function mergedVariables(userDefined: Record<string, string>): Record<string, string> {
@@ -140,7 +221,7 @@ function appendComplianceFooter(html: string): string {
  * Banner is rendered as a centred `<a><img></a>` so it inherits the
  * canvas width but never overflows on narrow clients (`max-width:100%`).
  */
-function appendBannerCampaign(html: string, canvasWidth: number): string {
+function appendBannerCampaign(html: string, maxWidth: number): string {
   let campaigns: AppConfig['bannerCampaigns'];
   try {
     campaigns = getConfig().bannerCampaigns;
@@ -164,7 +245,7 @@ function appendBannerCampaign(html: string, canvasWidth: number): string {
   const idx = html.lastIndexOf(marker);
   if (idx === -1) return html;
 
-  const width = Math.max(100, Math.min(canvasWidth, pick.width || canvasWidth));
+  const width = intPx(pick.width || maxWidth, 100, maxWidth, maxWidth);
   // Escape EVERY interpolated attribute. Banner image_url / link_url
   // / alt come from admin input that's only loosely sanitised on the
   // server. A `"` in any field would break out of the attribute and
@@ -195,18 +276,11 @@ function stablePickIndex(length: number): number {
 }
 
 /**
- * Strict HTML attribute-context escaper. Handles the four characters
- * that can break out of a double-quoted attribute (`&`, `<`, `>`,
- * `"`). Used by every block compile function that interpolates
- * user-controlled strings (URLs, alt text, names, hrefs).
+ * Strict HTML attribute-context escaper (`&`, `<`, `>`, `"`, `'`).
  *
- * Exported for re-use across block compilers — see image, banner,
- * social-icons, contact-row, button-cta, vcard, avatar definitions.
+ * Kept as a re-export for back-compat — new code should import
+ * {@link attr} from `./css` (the central serializer) directly.
  */
 export function escapeAttr(value: string): string {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return attr(value);
 }

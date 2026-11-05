@@ -3,6 +3,7 @@ import { Minus } from 'lucide-react';
 import type { DividerBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
+import { borderStyle, intPx, paddingCss, px, safeColor } from '@/core/compiler/css';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: DividerBlock }> = ({ block }) => {
@@ -24,12 +25,33 @@ const Renderer: FC<{ block: DividerBlock }> = ({ block }) => {
       <tbody>
         <tr>
           <td style={td}>
-            <div
-              style={{
-                height: 0,
-                borderTop: `${block.border.width}px ${block.border.style} ${block.border.color}`,
-              }}
-            />
+            {/* Mirrors the compiled markup: a 1px table cell carrying
+                the border (an empty <div> renders as a tall paragraph
+                in Outlook and is dropped by rich-text paste). */}
+            <table
+              role="presentation"
+              width="100%"
+              cellPadding={0}
+              cellSpacing={0}
+              border={0}
+              style={{ borderCollapse: 'collapse', width: '100%' }}
+            >
+              <tbody>
+                <tr>
+                  <td
+                    height={1}
+                    style={{
+                      borderTop: `${block.border.width}px ${block.border.style} ${block.border.color}`,
+                      fontSize: '1px',
+                      lineHeight: '1px',
+                      height: 1,
+                    }}
+                  >
+                    &nbsp;
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </td>
         </tr>
       </tbody>
@@ -78,12 +100,24 @@ const Properties: FC<{
   </div>
 );
 
+/**
+ * Email-safe horizontal rule.
+ *
+ * The line is the top border of a 1px-high table cell holding a
+ * `&nbsp;` at font-size / line-height 1px. The previous empty
+ * `<div style="height:0;border-top">` rendered as a tall empty
+ * paragraph in Outlook and was deleted outright by the rich-text
+ * clipboard path (empty elements don't survive a paste).
+ *
+ * `width_percent` sizes the outer table (left-aligned, as before);
+ * padding sits on the outer cell so it surrounds the line.
+ */
 function compile(block: DividerBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p
-    ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px`
-    : '0';
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:${block.width_percent}%"><tr><td style="padding:${padding}"><div style="height:0;border-top:${block.border.width}px ${block.border.style} ${block.border.color}"></div></td></tr></table>`;
+  const padding = paddingCss(block.padding);
+  const widthPct = intPx(block.width_percent, 1, 100, 100);
+  const border = `${px(block.border?.width, 0, 20, 1)}px ${borderStyle(block.border?.style)} ${safeColor(block.border?.color, '#e5e7eb')}`;
+  const line = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td height="1" style="border-top:${border};font-size:1px;line-height:1px;height:1px">&nbsp;</td></tr></table>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${widthPct}%" style="border-collapse:collapse;width:${widthPct}%"><tr><td style="padding:${padding}">${line}</td></tr></table>`;
 }
 
 const definition: BlockDefinition<DividerBlock> = {

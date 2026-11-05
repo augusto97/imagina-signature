@@ -5,20 +5,54 @@ import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
-import { escapeAttr } from '@/core/compiler/compile';
+import { attr, escapeHtml, paddingCss, px, safeColor } from '@/core/compiler/css';
+import { contentHash } from '@/core/compiler/hash';
+import { markerAttr, report } from '@/core/compiler/issues';
+import { isUploadEnabled } from '@/bridge/apiClient';
+import { slugFilename, uploadBlob } from '@/services/uploads';
+import { HostedAssetStatus, useHostedAssetSync } from '../qr-code/definition';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 /**
- * vCard block — renders a "Save my contact" link / button whose
- * `href` is a `data:text/vcard;base64,…` URI built from the block's
- * fields. Clicking it in a modern email client downloads / opens
- * the contact in the recipient's address book.
+ * vCard block — a "Save my contact" link to a hosted `.vcf` file.
  *
- * data: URIs in `href` are widely supported (Gmail, Apple Mail,
- * Outlook 365, Thunderbird). Old Outlook versions may strip them —
- * an admin can always also include a QR Code block whose payload
- * is the same vCard string for full coverage.
+ * The link used to be a `data:text/vcard;base64,…` URI, which Gmail /
+ * Outlook.com strip and which counts against Gmail's 10,000-character
+ * signature limit. The editor now uploads the generated vCard as
+ * `text/vcard` (`<name>.vcf`) through `/upload/*` whenever the fields
+ * change (debounced), stores its public URL in `vcf_url` (+ the content
+ * hash in `vcf_hash`), and the compiler emits a normal https link.
  */
+
+/** Hash of the vCard text the hosted file must contain. */
+export function vcardContentHash(block: VCardBlock): string {
+  return contentHash(`vcf-v1|${buildVCardString(block)}`);
+}
+
+/** True when the block carries at least one contact detail. */
+export function vcardHasDetails(block: VCardBlock): boolean {
+  return [
+    block.full_name,
+    block.organization,
+    block.title,
+    block.email,
+    block.phone,
+    block.website,
+  ].some((v) => typeof v === 'string' && v.trim() !== '');
+}
+
+export function vcardFilename(block: VCardBlock): string {
+  return `${slugFilename(block.full_name || block.organization || '', 'contact')}.vcf`;
+}
+
+/** Generates the .vcf, uploads it and resolves to the block fields to store. */
+export async function uploadVCardFile(
+  block: VCardBlock,
+): Promise<Pick<VCardBlock, 'vcf_url' | 'vcf_hash'>> {
+  const blob = new Blob([buildVCardString(block)], { type: 'text/vcard' });
+  const asset = await uploadBlob(blob, vcardFilename(block));
+  return { vcf_url: asset.url, vcf_hash: vcardContentHash(block) };
+}
 const Renderer: FC<{ block: VCardBlock }> = ({ block }) => {
   const padding = block.padding;
   const td: React.CSSProperties = {
@@ -28,8 +62,9 @@ const Renderer: FC<{ block: VCardBlock }> = ({ block }) => {
     textAlign: 'left',
   };
 
-  const href = `data:text/vcard;charset=utf-8;base64,${btoa(unescape(encodeURIComponent(buildVCardString(block))))}`;
-  const filename = `${(block.full_name || 'contact').replace(/\s+/g, '-').toLowerCase()}.vcf`;
+  // Canvas links never navigate (Canvas intercepts clicks); the hosted
+  // file URL is shown when available.
+  const href = block.vcf_url || '#';
 
   return (
     <table
@@ -44,7 +79,6 @@ const Renderer: FC<{ block: VCardBlock }> = ({ block }) => {
           <td style={td}>
             <a
               href={href}
-              download={filename}
               style={{
                 display: 'inline-block',
                 padding: '8px 14px',
@@ -68,77 +102,93 @@ const Renderer: FC<{ block: VCardBlock }> = ({ block }) => {
 const Properties: FC<{
   block: VCardBlock;
   onChange: (updates: Partial<VCardBlock>) => void;
-}> = ({ block, onChange }) => (
-  <div className="flex flex-col gap-3 text-[12px]">
-    <label className="flex flex-col gap-1.5">
-      <span className="font-medium text-[var(--text-secondary)]">
-        {__('Button label')}
-      </span>
-      <input
-        type="text"
-        value={block.label}
-        onChange={(e) => onChange({ label: e.target.value })}
-        placeholder={__('Save my contact')}
+}> = ({ block, onChange }) => {
+  const hash = vcardContentHash(block);
+  const upToDate = Boolean(block.vcf_url) && block.vcf_hash === hash;
+  const sync = useHostedAssetSync({
+    blockId: block.id,
+    hash,
+    upToDate,
+    canSync: vcardHasDetails(block),
+    upload: () => uploadVCardFile(block),
+    hashOf: (latest) => (latest.type === 'vcard' ? vcardContentHash(latest) : null),
+  });
+
+  return (
+    <div className="flex flex-col gap-3 text-[12px]">
+      <HostedAssetStatus
+        status={sync.status}
+        error={sync.error}
+        hosted={upToDate}
+        onRetry={sync.retry}
+        disabledMessage={__(
+          'Uploads are disabled on this site, so the contact card cannot be hosted and the link will not appear in the exported signature.',
+        )}
       />
-    </label>
+      <label className="flex flex-col gap-1.5">
+        <span className="font-medium text-[var(--text-secondary)]">{__('Button label')}</span>
+        <input
+          type="text"
+          value={block.label}
+          onChange={(e) => onChange({ label: e.target.value })}
+          placeholder={__('Save my contact')}
+        />
+      </label>
 
-    <span className="is-section-label">{__('Contact details')}</span>
+      <span className="is-section-label">{__('Contact details')}</span>
 
-    <Field
-      label={__('Full name')}
-      value={block.full_name}
-      onChange={(v) => onChange({ full_name: v })}
-    />
-    <Field
-      label={__('Organization')}
-      value={block.organization}
-      onChange={(v) => onChange({ organization: v })}
-    />
-    <Field
-      label={__('Title')}
-      value={block.title}
-      onChange={(v) => onChange({ title: v })}
-    />
-    <Field
-      label={__('Email')}
-      type="email"
-      value={block.email}
-      onChange={(v) => onChange({ email: v })}
-    />
-    <Field
-      label={__('Phone')}
-      type="tel"
-      value={block.phone}
-      onChange={(v) => onChange({ phone: v })}
-    />
-    <Field
-      label={__('Website')}
-      type="url"
-      value={block.website}
-      onChange={(v) => onChange({ website: v })}
-    />
+      <Field
+        label={__('Full name')}
+        value={block.full_name}
+        onChange={(v) => onChange({ full_name: v })}
+      />
+      <Field
+        label={__('Organization')}
+        value={block.organization}
+        onChange={(v) => onChange({ organization: v })}
+      />
+      <Field label={__('Title')} value={block.title} onChange={(v) => onChange({ title: v })} />
+      <Field
+        label={__('Email')}
+        type="email"
+        value={block.email}
+        onChange={(v) => onChange({ email: v })}
+      />
+      <Field
+        label={__('Phone')}
+        type="tel"
+        value={block.phone}
+        onChange={(v) => onChange({ phone: v })}
+      />
+      <Field
+        label={__('Website')}
+        type="url"
+        value={block.website}
+        onChange={(v) => onChange({ website: v })}
+      />
 
-    <span className="is-section-label">{__('Style')}</span>
+      <span className="is-section-label">{__('Style')}</span>
 
-    <ColorInput
-      label={__('Background')}
-      value={block.background_color}
-      onChange={(v) => onChange({ background_color: v })}
-    />
-    <ColorInput
-      label={__('Text colour')}
-      value={block.text_color}
-      onChange={(v) => onChange({ text_color: v })}
-    />
-    <DimensionInput
-      label={__('Border radius (px)')}
-      value={block.border_radius}
-      onChange={(v) => onChange({ border_radius: v })}
-      min={0}
-      max={32}
-    />
-  </div>
-);
+      <ColorInput
+        label={__('Background')}
+        value={block.background_color}
+        onChange={(v) => onChange({ background_color: v })}
+      />
+      <ColorInput
+        label={__('Text colour')}
+        value={block.text_color}
+        onChange={(v) => onChange({ text_color: v })}
+      />
+      <DimensionInput
+        label={__('Border radius (px)')}
+        value={block.border_radius}
+        onChange={(v) => onChange({ border_radius: v })}
+        min={0}
+        max={32}
+      />
+    </div>
+  );
+};
 
 const Field: FC<{
   label: string;
@@ -186,40 +236,68 @@ function escapeVCard(value: string): string {
     .replace(/\n/g, '\\n');
 }
 
-function compile(block: VCardBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px` : '0';
+function compile(block: VCardBlock, ctx: CompileContext): string {
+  if (!vcardHasDetails(block)) {
+    report(
+      ctx,
+      'warning',
+      __('vCard block has no contact details yet, so it was left out of the export.'),
+      block,
+      'vcard-empty',
+    );
+    return '';
+  }
+  if (!block.vcf_url) {
+    report(
+      ctx,
+      'error',
+      isUploadEnabled()
+        ? __(
+            'vCard file not uploaded yet. Select the vCard block (or use “Fix embedded images”) to upload it.',
+          )
+        : __(
+            'vCards need a hosted .vcf file, but uploads are disabled on this site, so the link was left out.',
+          ),
+      block,
+      'vcard-not-uploaded',
+    );
+    return '';
+  }
+  if (block.vcf_hash !== vcardContentHash(block)) {
+    report(
+      ctx,
+      'warning',
+      __(
+        'The hosted vCard file is out of date with the block’s contact details; it is being re-uploaded.',
+      ),
+      block,
+      'vcard-stale',
+    );
+  }
 
-  const vcardBase64 = btoa(unescape(encodeURIComponent(buildVCardString(block))));
-  const href = `data:text/vcard;charset=utf-8;base64,${vcardBase64}`;
-  const filename = `${(block.full_name || 'contact').replace(/\s+/g, '-').toLowerCase()}.vcf`;
-  const label = escapeHtml(block.label || 'Save my contact');
+  const padding = paddingCss(block.padding);
+  const label = escapeHtml(block.label || __('Save my contact'));
 
   const styles = [
     'display:inline-block',
     'padding:8px 14px',
-    // Colour values are interpolated into a CSS string. Strict
-    // attribute-context escaping defends against a corrupted JSON
-    // row containing `"` or `;` injection.
-    `background:${escapeAttr(block.background_color)}`,
-    `color:${escapeAttr(block.text_color)}`,
-    `border-radius:${block.border_radius}px`,
+    // Colour values are free-form schema strings — validate them
+    // through the central serializer instead of escaping.
+    `background:${safeColor(block.background_color, '#2563eb')}`,
+    `color:${safeColor(block.text_color, '#ffffff')}`,
+    `border-radius:${px(block.border_radius, 0, 999)}px`,
     'text-decoration:none',
     'font-size:13px',
     'font-weight:500',
   ].join(';');
 
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><a href="${href}" download="${escapeAttr(filename)}" style="${styles}">${label}</a></td></tr></table>`;
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><a${markerAttr(block)} href="${attr(block.vcf_url)}" style="${styles}">${label}</a></td></tr></table>`;
 }
 
 const definition: BlockDefinition<VCardBlock> = {
   type: 'vcard',
   label: 'vCard',
-  description: 'Downloadable contact card (.vcf) link.',
+  description: 'Link to a hosted contact card (.vcf).',
   icon: Contact,
   category: 'content',
   create: (): VCardBlock => ({

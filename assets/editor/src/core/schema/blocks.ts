@@ -145,6 +145,15 @@ export interface QrCodeBlock extends BlockBase {
   background_color: string;
   /** Optional caption rendered below the QR. */
   caption?: string;
+  /**
+   * Public URL of the uploaded QR PNG (rendered at 2x `size`). Set by
+   * the editor after it uploads the image; email clients don't show
+   * data: images, so the compiler only ever references this URL.
+   * Optional so older signatures (no hosted asset yet) still load.
+   */
+  image_url?: string;
+  /** `qrContentHash()` of the inputs `image_url` was rendered from. */
+  image_hash?: string;
 }
 
 export interface BannerBlock extends BlockBase {
@@ -179,6 +188,14 @@ export interface VCardBlock extends BlockBase {
   background_color: string;
   text_color: string;
   border_radius: number;
+  /**
+   * Public URL of the uploaded `.vcf` file the link points to. Set by
+   * the editor after upload (replaces the old data:text/vcard href).
+   * Optional so older signatures (no hosted asset yet) still load.
+   */
+  vcf_url?: string;
+  /** `vcardContentHash()` of the vCard text `vcf_url` was generated from. */
+  vcf_hash?: string;
 }
 
 export type Block =
