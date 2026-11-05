@@ -61,7 +61,7 @@ final class Activator {
 		// the user's face. We catch ANY throwable, surface it as a
 		// stored option that the admin notice picks up, and rethrow
 		// only the message in `wp_die` so the user gets actionable text
-		// instead of "There has been a critical error on this website."
+		// instead of WordPress's generic "critical error" screen.
 		try {
 			( new Installer() )->install();
 		} catch ( \Throwable $e ) {

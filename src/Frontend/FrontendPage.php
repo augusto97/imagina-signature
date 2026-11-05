@@ -55,7 +55,7 @@ final class FrontendPage {
 		nocache_headers();
 
 		if ( ! is_user_logged_in() ) {
-			$this->render_login_prompt();
+			$this->render_login_prompt( $view, $signature_id );
 			return;
 		}
 
@@ -136,12 +136,12 @@ final class FrontendPage {
 	 *
 	 * @since 1.0.24
 	 *
-	 * @param string                $title         Page title.
-	 * @param string                $mount_id      DOM id for the React root.
-	 * @param string                $config_global Window-level config variable name.
-	 * @param array<string, mixed>  $config        Bootstrap payload.
-	 * @param string                $manifest_key  Vite manifest entry path.
-	 * @param string                $fallback_file Bundle filename if manifest missing.
+	 * @param string               $title         Page title.
+	 * @param string               $mount_id      DOM id for the React root.
+	 * @param string               $config_global Window-level config variable name.
+	 * @param array<string, mixed> $config        Bootstrap payload.
+	 * @param string               $manifest_key  Vite manifest entry path.
+	 * @param string               $fallback_file Bundle filename if manifest missing.
 	 *
 	 * @return void
 	 */
@@ -177,9 +177,9 @@ final class FrontendPage {
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex,nofollow" />
 <title><?php echo esc_html( $title ); ?></title>
-<?php if ( '' !== $css_url ) : ?>
+		<?php if ( '' !== $css_url ) : ?>
 <link rel="stylesheet" href="<?php echo esc_url( $css_url ); ?>" />
-<?php endif; ?>
+		<?php endif; ?>
 <style>
 html, body { margin: 0; padding: 0; background: #f7f8fa; min-height: 100vh; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -200,12 +200,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 	 * site name + a primary "Log in" button that redirects back to
 	 * the URL the user was trying to reach.
 	 *
+	 * The return URL is rebuilt from the router's parsed view + id
+	 * on top of `home_url()` — never from the raw `Host` header or
+	 * `REQUEST_URI`, which an attacker controls (host-header
+	 * injection would otherwise let them mint login links that bounce
+	 * victims to a foreign domain after authentication).
+	 *
 	 * @since 1.0.24
+	 *
+	 * @param string $view         `index` | `editor`.
+	 * @param int    $signature_id Signature id for the editor view (0 = new).
 	 *
 	 * @return void
 	 */
-	private function render_login_prompt(): void {
-		$return_url = ( is_ssl() ? 'https://' : 'http://' ) . ( $_SERVER['HTTP_HOST'] ?? '' ) . ( $_SERVER['REQUEST_URI'] ?? '/' );
+	private function render_login_prompt( string $view = 'index', int $signature_id = 0 ): void {
+		$return_url = self::return_url_for( $view, $signature_id );
 		$login_url  = wp_login_url( $return_url );
 
 		status_header( 401 );
@@ -213,7 +222,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 		nocache_headers();
 
 		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
-		?><!DOCTYPE html>
+		?>
+<!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
 <meta charset="<?php bloginfo( 'charset' ); ?>" />
@@ -242,6 +252,30 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 	}
 
 	/**
+	 * Builds the post-login redirect target for a public-route view.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param string $view         `index` | `editor`.
+	 * @param int    $signature_id Signature id for the editor view (0 = new).
+	 *
+	 * @return string Absolute URL on this site's home origin.
+	 */
+	public static function return_url_for( string $view, int $signature_id ): string {
+		if ( 'editor' === $view ) {
+			$url = $signature_id > 0
+				? FrontendAccess::editor_url( $signature_id )
+				: esc_url_raw( home_url( '/' . FrontendAccess::slug() . '/editor/' ) );
+		} else {
+			$url = FrontendAccess::dashboard_url();
+		}
+
+		// Belt and braces: never hand wp_login_url() anything that
+		// isn't on an allowed redirect host.
+		return wp_validate_redirect( $url, home_url( '/' ) );
+	}
+
+	/**
 	 * Forbidden fallback — logged in but missing the cap.
 	 *
 	 * @since 1.0.24
@@ -254,7 +288,8 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 		nocache_headers();
 
 		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
-		?><!DOCTYPE html>
+		?>
+<!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
 <meta charset="<?php bloginfo( 'charset' ); ?>" />

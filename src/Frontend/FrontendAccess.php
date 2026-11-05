@@ -157,6 +157,13 @@ final class FrontendAccess {
 		return self::current()['enabled'];
 	}
 
+	/**
+	 * Returns the configured URL slug.
+	 *
+	 * @since 1.0.24
+	 *
+	 * @return string
+	 */
 	public static function slug(): string {
 		return self::current()['slug'];
 	}
@@ -198,6 +205,10 @@ final class FrontendAccess {
 	 * that don't survive — the caller falls back to a default.
 	 *
 	 * @since 1.0.24
+	 *
+	 * @param string $value Raw slug candidate.
+	 *
+	 * @return string
 	 */
 	private static function sanitize_slug( string $value ): string {
 		$value = strtolower( trim( $value ) );

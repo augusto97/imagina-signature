@@ -160,9 +160,9 @@ class SignatureService {
 	 *
 	 * @since 1.0.26
 	 *
-	 * @param Signature                 $persisted Row freshly read from disk.
-	 * @param array<string, mixed>      $prepared  Field map handed to repo.
-	 * @param string                    $context   `create` or `update`.
+	 * @param Signature            $persisted Row freshly read from disk.
+	 * @param array<string, mixed> $prepared  Field map handed to repo.
+	 * @param string               $context   `create` or `update`.
 	 *
 	 * @throws \RuntimeException When the hashes don't match.
 	 *

@@ -201,6 +201,8 @@ class SignatureRepository extends BaseRepository {
 	 * @param array<string, mixed> $data Field values.
 	 *
 	 * @return Signature
+	 *
+	 * @throws \RuntimeException When the INSERT fails or the row cannot be read back.
 	 */
 	public function insert( array $data ): Signature {
 		$now = $this->now();
@@ -266,6 +268,8 @@ class SignatureRepository extends BaseRepository {
 	 * @param array<string, mixed> $data Partial field map.
 	 *
 	 * @return Signature|null  The updated row, or null when no row matched.
+	 *
+	 * @throws \RuntimeException When the UPDATE fails at the database layer.
 	 */
 	public function update( int $id, array $data ): ?Signature {
 		$updatable = [

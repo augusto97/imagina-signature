@@ -184,7 +184,13 @@ final class SiteSettingsController extends BaseController {
 		// this read sees it.
 		$current = [
 			'brand_palette'     => self::read_option_uncached( self::OPT_BRAND_PALETTE, [] ),
-			'compliance_footer' => self::read_option_uncached( self::OPT_COMPLIANCE_FOOTER, [ 'enabled' => false, 'html' => '' ] ),
+			'compliance_footer' => self::read_option_uncached(
+				self::OPT_COMPLIANCE_FOOTER,
+				[
+					'enabled' => false,
+					'html' => '',
+				]
+			),
 			'banner_campaigns'  => self::read_option_uncached( self::OPT_BANNER_CAMPAIGNS, [] ),
 		];
 
@@ -601,6 +607,13 @@ final class SiteSettingsController extends BaseController {
 		return $value;
 	}
 
+	/**
+	 * Generates a fresh campaign identifier.
+	 *
+	 * @since 1.0.15
+	 *
+	 * @return string
+	 */
 	private static function generate_campaign_id(): string {
 		return 'camp_' . substr( md5( uniqid( '', true ) ), 0, 12 );
 	}
