@@ -82,6 +82,30 @@ beforeEach(() => {
           propagation: { template_id: 4, status: 'done', total: 3, processed: 3, updated: 3 },
         });
       }
+      if (call.url.includes('/admin/groups')) {
+        return json([
+          {
+            id: 11,
+            name: 'Sales',
+            slug: 'sales',
+            description: '',
+            color: '#ff0000',
+            template_id: null,
+            compliance_footer_override: { enabled: false, html: '' },
+            member_count: 4,
+          },
+          {
+            id: 12,
+            name: 'Support',
+            slug: 'support',
+            description: '',
+            color: '#00ff00',
+            template_id: null,
+            compliance_footer_override: { enabled: false, html: '' },
+            member_count: 2,
+          },
+        ]);
+      }
       return json([template]);
     }),
   );
@@ -128,6 +152,42 @@ describe('Templates page — Apply', () => {
       mode: 'copy',
       make_primary: false,
     });
+  });
+});
+
+describe('Templates page — Apply to groups', () => {
+  it('assigns to the members of the groups picked', async () => {
+    render(<TemplatesPage />);
+    fireEvent.click(await screen.findByRole('button', { name: /Apply/ }));
+    fireEvent.click(await screen.findByLabelText(/By group/));
+    fireEvent.click(screen.getByLabelText(/Sales/));
+    fireEvent.click(screen.getByLabelText(/Support/));
+    fireEvent.click(screen.getByLabelText(/Support/));
+    fireEvent.click(submitButton());
+
+    await screen.findByRole('button', { name: 'Done' });
+    const assign = body(calls.find((c) => c.url.includes('/assign'))!);
+    expect(assign).toMatchObject({ group_ids: [11], mode: 'linked' });
+    expect(assign).not.toHaveProperty('all');
+  });
+
+  it('asks for a group before assigning', async () => {
+    render(<TemplatesPage />);
+    fireEvent.click(await screen.findByRole('button', { name: /Apply/ }));
+    fireEvent.click(await screen.findByLabelText(/By group/));
+    fireEvent.click(submitButton());
+
+    expect(await screen.findByText('Pick at least one group.')).toBeInTheDocument();
+    expect(calls.some((c) => c.url.includes('/assign'))).toBe(false);
+  });
+
+  it('hides Apply from template managers who do not manage the team', async () => {
+    (
+      globalThis as unknown as { IMGSIG_ADMIN_CONFIG: { capabilities: Record<string, boolean> } }
+    ).IMGSIG_ADMIN_CONFIG.capabilities.manage_team = false;
+    render(<TemplatesPage />);
+    expect(await screen.findByRole('button', { name: /Edit/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Apply/ })).not.toBeInTheDocument();
   });
 });
 

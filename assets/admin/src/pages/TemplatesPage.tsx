@@ -5,25 +5,13 @@ import { Button } from '@admin/components/Button';
 import { EmptyState } from '@admin/components/EmptyState';
 import { Spinner } from '@admin/components/Spinner';
 import { Modal } from '@admin/components/Modal';
+import { AssignTemplateDialog } from '@admin/components/AssignTemplateDialog';
 import { apiCall, ApiError, getConfig } from '@admin/api';
 import { __ } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
-import type { AssignResult, EmployeeMode, PropagationProgress, TemplateRow } from '@admin/types';
+import { WP_ROLES, roleLabel } from '@admin/utils/roles';
+import type { EmployeeMode, PropagationProgress, TemplateRow } from '@admin/types';
 import { templateCategoryLabel } from '@shared/templateCategories';
-
-/**
- * Standard WordPress role slugs surfaced in the role picker. Custom
- * roles aren't enumerated yet (would need a `/admin/roles` endpoint);
- * the server stores whatever slug we POST so a custom role can still
- * be wired manually via the JSON API.
- */
-const WP_ROLES: Array<{ slug: string; label: () => string }> = [
-  { slug: 'administrator', label: () => __('Administrator') },
-  { slug: 'editor', label: () => __('Editor') },
-  { slug: 'author', label: () => __('Author') },
-  { slug: 'contributor', label: () => __('Contributor') },
-  { slug: 'subscriber', label: () => __('Subscriber') },
-];
 
 /** Employee modes of a template (1.3.0); labels translate at render time. */
 const EMPLOYEE_MODES: Array<{ value: EmployeeMode; label: () => string; hint: () => string }> = [
@@ -53,24 +41,21 @@ function employeeModeOf(template: TemplateRow): EmployeeMode {
   return mode === 'locked_design' || mode === 'fields_only' ? mode : 'free';
 }
 
-/** Translated name of a standard role; custom role slugs are shown as-is. */
-function roleLabel(slug: string): string {
-  const role = WP_ROLES.find((r) => r.slug === slug);
-  return role ? role.label() : slug;
-}
-
 /**
  * Templates listing — read-open to anyone with `imgsig_use_signatures`,
  * write-only for admins (CLAUDE.md §15.2).
  *
  * Admins (`imgsig_manage_templates`) get three actions per template:
  *  - Edit metadata (name / category / description / role visibility)
- *  - Apply (assigns the template — linked or as a copy — to users in scope)
+ *  - Apply (assigns the template — linked or as a copy — to users in scope,
+ *    {@link AssignTemplateDialog}; needs `imgsig_manage_team`)
  *  - The "New template" CTA in the topbar (creates an empty shell)
  */
 export const TemplatesPage: FC = () => {
   const config = getConfig();
   const canManage = config.capabilities.manage_templates;
+  // Assigning goes through a team endpoint (missing flag = older bootstrap = allowed).
+  const canAssign = canManage && config.capabilities.manage_team !== false;
 
   const [items, setItems] = useState<TemplateRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -187,14 +172,16 @@ export const TemplatesPage: FC = () => {
                     >
                       {__('Edit')}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      icon={<Send size={12} />}
-                      onClick={() => setApplying(row)}
-                    >
-                      {__('Apply')}
-                    </Button>
+                    {canAssign && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon={<Send size={12} />}
+                        onClick={() => setApplying(row)}
+                      >
+                        {__('Apply')}
+                      </Button>
+                    )}
                   </div>
                 )}
               </article>
@@ -224,11 +211,13 @@ export const TemplatesPage: FC = () => {
               );
             }}
           />
-          <ApplyTemplateModal
-            open={applying !== null}
-            template={applying}
-            onClose={() => setApplying(null)}
-          />
+          {canAssign && (
+            <AssignTemplateDialog
+              open={applying !== null}
+              template={applying}
+              onClose={() => setApplying(null)}
+            />
+          )}
         </>
       )}
     </div>
@@ -590,313 +579,6 @@ const EditTemplateModal: FC<EditTemplateModalProps> = ({ open, template, onClose
     </Modal>
   );
 };
-
-// ---------------------------------------------------------------------------
-// Apply — assign the template to users (linked or copy), in chunks
-// ---------------------------------------------------------------------------
-
-type Scope =
-  | { kind: 'all' }
-  | { kind: 'role'; role: string }
-  | { kind: 'users'; ids: string };
-
-type AssignMode = 'linked' | 'copy';
-
-interface AssignTotals {
-  total: number;
-  processed: number;
-  created: number;
-  updated: number;
-  skipped: number;
-  failed: number;
-}
-
-const EMPTY_TOTALS: AssignTotals = {
-  total: 0,
-  processed: 0,
-  created: 0,
-  updated: 0,
-  skipped: 0,
-  failed: 0,
-};
-
-interface ApplyTemplateModalProps {
-  open: boolean;
-  template: TemplateRow | null;
-  onClose: () => void;
-}
-
-/**
- * Assigns the template to every user in scope through
- * `POST /admin/templates/:id/assign` (1.3.0), which processes 50 users
- * per request: the dialog repeats the call with `next_offset` and shows
- * a progress bar.
- *
- *  - Linked: each user's signature follows the template — later edits
- *    of the template reach it; employees keep their details and text.
- *  - Copy: each user gets an independent copy (users who already have
- *    one from this template are skipped).
- */
-const ApplyTemplateModal: FC<ApplyTemplateModalProps> = ({ open, template, onClose }) => {
-  const [scope, setScope] = useState<Scope>({ kind: 'all' });
-  const [mode, setMode] = useState<AssignMode>('linked');
-  const [makePrimary, setMakePrimary] = useState(true);
-  const [running, setRunning] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [totals, setTotals] = useState<AssignTotals | null>(null);
-  const [done, setDone] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setScope({ kind: 'all' });
-      setMode('linked');
-      setMakePrimary(true);
-      setRunning(false);
-      setFormError(null);
-      setTotals(null);
-      setDone(false);
-    }
-  }, [open]);
-
-  const targets = (): Record<string, unknown> | null => {
-    if (scope.kind === 'all') return { all: true };
-    if (scope.kind === 'role') {
-      if (!scope.role) {
-        setFormError(__('Pick a role.'));
-        return null;
-      }
-      return { role: scope.role };
-    }
-    const ids = scope.ids
-      .split(',')
-      .map((s) => Number.parseInt(s.trim(), 10))
-      .filter((n) => Number.isInteger(n) && n > 0);
-    if (ids.length === 0) {
-      setFormError(__('Provide at least one user ID.'));
-      return null;
-    }
-    return { user_ids: ids };
-  };
-
-  const submit = async (): Promise<void> => {
-    if (!template || running) return;
-    setFormError(null);
-    const body = targets();
-    if (!body) return;
-
-    setRunning(true);
-    setDone(false);
-    let sum: AssignTotals = { ...EMPTY_TOTALS };
-    setTotals(sum);
-
-    try {
-      let offset: number | null = 0;
-      while (offset !== null) {
-        const chunk: AssignResult = await apiCall<AssignResult>(
-          `/admin/templates/${template.id}/assign`,
-          {
-            method: 'POST',
-            body: { ...body, mode, make_primary: makePrimary, offset },
-          },
-        );
-        sum = {
-          total: chunk.total,
-          processed: sum.processed + chunk.processed,
-          created: sum.created + chunk.created,
-          updated: sum.updated + chunk.updated,
-          skipped: sum.skipped + chunk.skipped,
-          failed: sum.failed + chunk.failed,
-        };
-        setTotals(sum);
-        offset = chunk.next_offset;
-      }
-      setDone(true);
-    } catch (err) {
-      setFormError(err instanceof ApiError ? err.message : (err as Error).message);
-    } finally {
-      setRunning(false);
-    }
-  };
-
-  const percent =
-    totals && totals.total > 0 ? Math.round((totals.processed / totals.total) * 100) : 0;
-
-  return (
-    <Modal
-      open={open}
-      title={template ? __('Apply “%s”', template.name) : __('Apply template')}
-      onClose={running ? () => {} : onClose}
-      footer={
-        done ? (
-          <Button variant="primary" size="sm" onClick={onClose}>
-            {__('Done')}
-          </Button>
-        ) : (
-          <>
-            <Button variant="ghost" size="sm" onClick={onClose} disabled={running}>
-              {__('Cancel')}
-            </Button>
-            <Button variant="primary" size="sm" onClick={() => void submit()} disabled={running}>
-              {running ? __('Applying…') : __('Apply')}
-            </Button>
-          </>
-        )
-      }
-    >
-      <form
-        className="flex flex-col gap-3 text-[13px]"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void submit();
-        }}
-      >
-        <fieldset className="flex flex-col gap-2" disabled={running || done}>
-          <span className="text-[12px] font-medium text-[var(--text-primary)]">{__('Users')}</span>
-          <ScopeOption
-            label={__('All eligible users')}
-            description={__('Everyone with the “Use signatures” capability.')}
-            checked={scope.kind === 'all'}
-            onSelect={() => setScope({ kind: 'all' })}
-          />
-
-          <ScopeOption
-            label={__('By role')}
-            description={__('Limit to a single WordPress role.')}
-            checked={scope.kind === 'role'}
-            onSelect={() => setScope({ kind: 'role', role: 'editor' })}
-          >
-            {scope.kind === 'role' && (
-              <select
-                value={scope.role}
-                onChange={(e) => setScope({ kind: 'role', role: e.target.value })}
-                className="!w-auto"
-              >
-                {WP_ROLES.map(({ slug, label }) => (
-                  <option key={slug} value={slug}>
-                    {label()}
-                  </option>
-                ))}
-              </select>
-            )}
-          </ScopeOption>
-
-          <ScopeOption
-            label={__('Specific user IDs')}
-            description={__('Comma-separated WP user IDs. Useful for targeted campaigns.')}
-            checked={scope.kind === 'users'}
-            onSelect={() => setScope({ kind: 'users', ids: '' })}
-          >
-            {scope.kind === 'users' && (
-              <input
-                type="text"
-                value={scope.ids}
-                onChange={(e) => setScope({ kind: 'users', ids: e.target.value })}
-                placeholder="1, 2, 3"
-              />
-            )}
-          </ScopeOption>
-        </fieldset>
-
-        <fieldset className="flex flex-col gap-2" disabled={running || done}>
-          <span className="text-[12px] font-medium text-[var(--text-primary)]">{__('Mode')}</span>
-          <ScopeOption
-            label={__('Linked (recommended)')}
-            description={__('Signatures follow this template: when you edit it, everyone gets the new design. Employees keep their details and text.')}
-            checked={mode === 'linked'}
-            onSelect={() => setMode('linked')}
-          />
-          <ScopeOption
-            label={__('Copy')}
-            description={__('Each user gets an independent copy. Later template changes don’t reach it; users who already have a copy are skipped.')}
-            checked={mode === 'copy'}
-            onSelect={() => setMode('copy')}
-          />
-        </fieldset>
-
-        <label className="flex cursor-pointer items-center gap-2 text-[12px]">
-          <input
-            type="checkbox"
-            checked={makePrimary}
-            onChange={(e) => setMakePrimary(e.target.checked)}
-            disabled={running || done}
-            className="!h-4 !w-4 !p-0"
-          />
-          <span className="text-[var(--text-secondary)]">
-            {__('Make it each user’s primary signature (the one deployed to Gmail and Outlook)')}
-          </span>
-        </label>
-
-        {totals && (
-          <div className="flex flex-col gap-1.5" aria-live="polite">
-            <div
-              className="h-2 overflow-hidden rounded-full bg-[var(--bg-panel-soft)]"
-              role="progressbar"
-              aria-label={__('Progress')}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={percent}
-            >
-              <div
-                className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-300"
-                style={{ width: `${percent}%` }}
-              />
-            </div>
-            <p className="text-[12px] text-[var(--text-secondary)]">
-              {__('%1$s of %2$s users', String(totals.processed), String(totals.total))} —{' '}
-              <strong>{totals.created}</strong> {__('created')},{' '}
-              <strong>{totals.updated}</strong> {__('updated')},{' '}
-              <strong>{totals.skipped}</strong> {__('skipped')}
-              {totals.failed > 0 && (
-                <>
-                  , <strong className="text-[var(--danger)]">{totals.failed}</strong>{' '}
-                  {__('failed')}
-                </>
-              )}
-              .
-            </p>
-          </div>
-        )}
-
-        {formError && (
-          <div className="rounded-md border border-[var(--danger)] bg-red-50 px-3 py-2 text-[12px] text-[var(--danger)]">
-            {formError}
-          </div>
-        )}
-      </form>
-    </Modal>
-  );
-};
-
-const ScopeOption: FC<{
-  label: string;
-  description: string;
-  checked: boolean;
-  onSelect: () => void;
-  children?: React.ReactNode;
-}> = ({ label, description, checked, onSelect, children }) => (
-  <label
-    className={cn(
-      'flex cursor-pointer flex-col gap-1.5 rounded-md border p-3 transition-colors',
-      checked
-        ? 'border-[var(--accent)] bg-[var(--bg-selected)]'
-        : 'border-[var(--border-default)] hover:bg-[var(--bg-hover)]',
-    )}
-  >
-    <div className="flex items-start gap-2">
-      <input
-        type="radio"
-        checked={checked}
-        onChange={onSelect}
-        className="mt-0.5 !h-4 !w-4 !p-0"
-      />
-      <div className="flex-1">
-        <div className="text-[12.5px] font-medium text-[var(--text-primary)]">{label}</div>
-        <div className="text-[11px] text-[var(--text-muted)]">{description}</div>
-      </div>
-    </div>
-    {checked && children && <div className="ml-6">{children}</div>}
-  </label>
-);
 
 // ---------------------------------------------------------------------------
 // Shared
