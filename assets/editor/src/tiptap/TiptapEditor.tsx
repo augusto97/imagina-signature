@@ -3,7 +3,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import { Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon } from 'lucide-react';
-import type { FC } from 'react';
+import { useEffect, useMemo, useRef, type FC } from 'react';
 import { __ } from '@/i18n/helpers';
 
 export type AllowedFormat = 'bold' | 'italic' | 'underline' | 'link';
@@ -27,14 +27,30 @@ interface Props {
  * The companion HtmlSanitizer on the server enforces the same
  * whitelist; a tampered request body can't slip arbitrary HTML
  * past validation.
+ *
+ * Controlled-ish: Tiptap only reads `content` when it creates the
+ * editor, so an effect pushes later prop changes (undo / redo,
+ * template apply, paste) into the document with `setContent`. The
+ * sync never emits an update (no onChange → store → prop loop), is
+ * kept out of Tiptap's own undo history, and restores the caret when
+ * the editor has focus. `lastSyncedRef` remembers the HTML the editor
+ * and the prop last agreed on, so a non-normalised prop value (e.g.
+ * `Hello` vs Tiptap's `<p>Hello</p>`) doesn't re-sync on every
+ * render.
+ *
+ * Callers should still key the component by the owning block id so
+ * switching blocks mounts a fresh editor (see RightSidebar).
  */
 export const TiptapEditor: FC<Props> = ({
   content,
   onChange,
   allowedFormats = ['bold', 'italic', 'underline', 'link'],
 }) => {
-  const editor = useEditor({
-    extensions: [
+  // Memoised so the extension instances are stable across renders —
+  // a fresh array each render made @tiptap/react call setOptions() on
+  // every keystroke.
+  const extensions = useMemo(
+    () => [
       StarterKit.configure({
         heading: false,
         bulletList: false,
@@ -51,11 +67,47 @@ export const TiptapEditor: FC<Props> = ({
         validate: (url: string) => /^(https?:\/\/|mailto:|tel:)/i.test(url),
       }),
     ],
+    [],
+  );
+
+  const lastSyncedRef = useRef(content);
+
+  const editor = useEditor({
+    extensions,
     content,
     onUpdate: ({ editor: e }) => {
-      onChange(e.getHTML());
+      const html = e.getHTML();
+      lastSyncedRef.current = html;
+      onChange(html);
     },
   });
+
+  // Push external content changes into the editor.
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    if (content === lastSyncedRef.current) return;
+    if (content === editor.getHTML()) {
+      lastSyncedRef.current = content;
+      return;
+    }
+
+    const { from, to } = editor.state.selection;
+    const focused = editor.isFocused;
+    let chain = editor
+      .chain()
+      .command(({ tr }) => {
+        // External syncs are not user typing — keep them out of
+        // Tiptap's own (in-editor) undo stack.
+        tr.setMeta('addToHistory', false);
+        return true;
+      })
+      .setContent(content, false);
+    if (focused) {
+      chain = chain.setTextSelection({ from, to });
+    }
+    chain.run();
+    lastSyncedRef.current = content;
+  }, [editor, content]);
 
   if (!editor) return null;
 
