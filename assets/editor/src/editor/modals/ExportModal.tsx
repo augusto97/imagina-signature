@@ -11,9 +11,26 @@ import {
   Eye,
 } from 'lucide-react';
 import { compileSignature, type CompileIssue } from '@/core/compiler/compile';
-import { useSchemaStore } from '@/stores/schemaStore';
+import type { Block, QrCodeBlock, VCardBlock } from '@/core/schema/blocks';
+import { findBlockByIdDeep, useSchemaStore } from '@/stores/schemaStore';
 import { useEditorStore } from '@/stores/editorStore';
-import { apiCall, ApiError } from '@/bridge/apiClient';
+import { apiCall, ApiError, isUploadEnabled } from '@/bridge/apiClient';
+import { qrContentHash, uploadQrImage } from '@/core/blocks/qr-code/definition';
+import {
+  uploadVCardFile,
+  vcardContentHash,
+  vcardHasDetails,
+} from '@/core/blocks/vcard/definition';
+import {
+  dataUrlToBlob,
+  extensionFor,
+  isUploadsDisabledError,
+  loadImage,
+  renderImage,
+  targetPixelWidth,
+  uploadBlob,
+  uploadErrorMessage,
+} from '@/services/uploads';
 import { useToastStore } from '@/stores/toastStore';
 import { copyText, copyRichHtml } from '@/utils/clipboard';
 import { __ } from '@/i18n/helpers';
@@ -120,6 +137,11 @@ export const ExportModal: FC = () => {
     () => (modal === 'export' ? compileSignature(schema) : null),
     [modal, schema],
   );
+  const embedded = useMemo(
+    () => (modal === 'export' ? findEmbeddedAssets(schema.blocks) : []),
+    [modal, schema],
+  );
+  const [fixing, setFixing] = useState<{ done: number; total: number } | null>(null);
 
   const open = modal === 'export';
 
@@ -189,6 +211,31 @@ export const ExportModal: FC = () => {
       showToast(__('Could not send: %s', msg), 'error');
     } finally {
       setSending(false);
+    }
+  };
+
+  const fixEmbedded = async (): Promise<void> => {
+    if (fixing || embedded.length === 0) return;
+    setFixing({ done: 0, total: embedded.length });
+    const failures: string[] = [];
+    for (let i = 0; i < embedded.length; i++) {
+      try {
+        await hostEmbeddedAsset(embedded[i]!);
+      } catch (e) {
+        failures.push(uploadErrorMessage(e));
+        if (isUploadsDisabledError(e)) break;
+      }
+      setFixing({ done: i + 1, total: embedded.length });
+    }
+    setFixing(null);
+    if (failures.length === 0) {
+      showToast(__('All embedded images are now hosted.'), 'success');
+    } else {
+      showToast(
+        __('%s item(s) could not be uploaded: %s', String(failures.length), failures[0] ?? ''),
+        'error',
+        8000,
+      );
     }
   };
 
@@ -271,6 +318,44 @@ export const ExportModal: FC = () => {
             </span>
           </div>
 
+          {embedded.length > 0 && (
+            <div
+              role="alert"
+              className="flex flex-col gap-2 rounded-lg border-2 border-red-300 bg-red-50 px-3 py-2.5 text-[12px] text-red-900"
+            >
+              <div className="flex items-center gap-1.5 font-semibold">
+                <AlertOctagon size={14} />
+                {__(
+                  '%s embedded image(s) or file(s) will not show in Gmail or Outlook.com',
+                  String(embedded.length),
+                )}
+              </div>
+              <p className="text-[11.5px] leading-relaxed text-red-800">
+                {__(
+                  'This signature embeds images or files directly (data: URIs). Most webmail clients refuse to display them, and a single embedded photo can push the signature past Gmail’s 10,000-character limit. Upload them to your site so the signature links to hosted copies instead.',
+                )}
+              </p>
+              {isUploadEnabled() ? (
+                <button
+                  type="button"
+                  onClick={() => void fixEmbedded()}
+                  disabled={fixing !== null}
+                  className="inline-flex h-8 w-fit items-center gap-1.5 rounded-md bg-red-600 px-3 font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+                >
+                  {fixing
+                    ? __('Uploading %s of %s…', String(fixing.done + 1), String(fixing.total))
+                    : __('Fix embedded images')}
+                </button>
+              ) : (
+                <p className="text-[11.5px] font-medium">
+                  {__(
+                    'Uploads are disabled on this site — replace these images with links to hosted images (https://…).',
+                  )}
+                </p>
+              )}
+            </div>
+          )}
+
           <CompileIssues issues={result.issues} />
 
           {/* Install guides */}
@@ -346,6 +431,120 @@ export const ExportModal: FC = () => {
     </Modal>
   );
 };
+
+type EmbeddedAsset =
+  | { kind: 'image'; blockId: string; field: 'src' | 'static_fallback_url' }
+  | { kind: 'qr'; blockId: string }
+  | { kind: 'vcard'; blockId: string };
+
+/**
+ * Walks every block — including both cells of 2-column containers — and
+ * lists what still has to be hosted: data: images (src and the Outlook
+ * static fallback of Image / Avatar / Banner), QR codes without an
+ * up-to-date uploaded PNG and vCards without an up-to-date .vcf file.
+ */
+function findEmbeddedAssets(blocks: Block[]): EmbeddedAsset[] {
+  const out: EmbeddedAsset[] = [];
+  const isData = (v: unknown): boolean => typeof v === 'string' && /^\s*data:/i.test(v);
+  const walk = (list: Block[] | undefined): void => {
+    for (const block of list ?? []) {
+      switch (block.type) {
+        case 'image':
+        case 'banner':
+          if (isData(block.src)) out.push({ kind: 'image', blockId: block.id, field: 'src' });
+          if (isData(block.static_fallback_url)) {
+            out.push({ kind: 'image', blockId: block.id, field: 'static_fallback_url' });
+          }
+          break;
+        case 'avatar':
+          if (isData(block.src)) out.push({ kind: 'image', blockId: block.id, field: 'src' });
+          break;
+        case 'qr_code':
+          if (block.data && (!block.image_url || block.image_hash !== qrContentHash(block))) {
+            out.push({ kind: 'qr', blockId: block.id });
+          }
+          break;
+        case 'vcard':
+          if (
+            vcardHasDetails(block) &&
+            (!block.vcf_url || block.vcf_hash !== vcardContentHash(block))
+          ) {
+            out.push({ kind: 'vcard', blockId: block.id });
+          }
+          break;
+        case 'container':
+          walk(block.children);
+          walk(block.right_children);
+          break;
+        default:
+          break;
+      }
+    }
+  };
+  walk(blocks);
+  return out;
+}
+
+/**
+ * Uploads one embedded asset and patches its block through the store's
+ * existing `updateBlock` action (the store itself is untouched). Always
+ * re-reads the block from the store so a previous fix in the same run
+ * is not overwritten.
+ */
+async function hostEmbeddedAsset(asset: EmbeddedAsset): Promise<void> {
+  const store = useSchemaStore.getState();
+  const block = findBlockByIdDeep(store.schema.blocks, asset.blockId);
+  if (!block) return;
+
+  if (asset.kind === 'qr') {
+    if (block.type !== 'qr_code') return;
+    store.updateBlock(block.id, await uploadQrImage(block as QrCodeBlock));
+    return;
+  }
+  if (asset.kind === 'vcard') {
+    if (block.type !== 'vcard') return;
+    store.updateBlock(block.id, await uploadVCardFile(block as VCardBlock));
+    return;
+  }
+
+  if (block.type !== 'image' && block.type !== 'banner' && block.type !== 'avatar') return;
+  const record = block as unknown as Record<string, unknown>;
+  const dataUrl = record[asset.field];
+  if (typeof dataUrl !== 'string' || !/^\s*data:/i.test(dataUrl)) return;
+
+  const isAvatar = block.type === 'avatar';
+  const displayWidth =
+    block.type === 'avatar' ? block.size : block.type === 'banner' ? block.width : (block.width ?? 600);
+  const original = dataUrlToBlob(dataUrl);
+  let upload: Blob = original;
+  let mime = original.type;
+  // Re-encode at 2x display width (cap 1200px; avatars get a true
+  // circular mask). Animated GIFs and browsers without a 2D canvas
+  // upload the original bytes.
+  if (original.type !== 'image/gif' && canvasAvailable()) {
+    try {
+      const rendered = await renderImage(await loadImage(dataUrl), {
+        maxWidth: targetPixelWidth(displayWidth),
+        square: isAvatar,
+        circular: isAvatar,
+      });
+      upload = rendered.blob;
+      mime = rendered.mime;
+    } catch {
+      // Fall back to the original bytes.
+    }
+  }
+  const hosted = await uploadBlob(upload, `${block.type}.${extensionFor(mime)}`);
+  useSchemaStore.getState().updateBlock(block.id, { [asset.field]: hosted.url } as Partial<Block>);
+}
+
+function canvasAvailable(): boolean {
+  try {
+    return document.createElement('canvas').getContext('2d') !== null;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Leveled compile diagnostics: errors (the export is broken for
