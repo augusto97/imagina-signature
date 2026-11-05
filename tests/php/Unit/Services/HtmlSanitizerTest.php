@@ -76,6 +76,42 @@ final class HtmlSanitizerTest extends TestCase {
 		$this->assertSame( '<span style="color: red; font-weight: bold">x</span>', $output );
 	}
 
+	public function test_rich_text_typography_marks_round_trip_unchanged(): void {
+		$html = '<p>Hi <span style="color: #2563eb; font-size: 18px; letter-spacing: 1.5px; text-transform: uppercase; '
+			. 'font-style: italic; font-weight: 700; text-decoration: underline">Jane</span> '
+			. '<span style="letter-spacing: -0.5px; text-transform: capitalize">doe</span> '
+			. '<span style="letter-spacing: normal; font-size: 9.5px">x</span></p>';
+
+		$this->assertSame( $html, $this->sanitizer->sanitize( $html ) );
+	}
+
+	/**
+	 * @return array<string, array{0: string, 1: string}>
+	 */
+	public function invalid_typography_values(): array {
+		return [
+			'font-size in em'       => [ 'font-size: 2em', 'font-size' ],
+			'font-size keyword'     => [ 'font-size: xx-large', 'font-size' ],
+			'font-size calc'        => [ 'font-size: calc(10px + 5vw)', 'font-size' ],
+			'letter-spacing in em'  => [ 'letter-spacing: 0.2em', 'letter-spacing' ],
+			'letter-spacing huge'   => [ 'letter-spacing: 999px', 'letter-spacing' ],
+			'text-transform bogus'  => [ 'text-transform: full-width', 'text-transform' ],
+			'font-style bogus'      => [ 'font-style: expression(alert(1))', 'font-style' ],
+			'position still banned' => [ 'position: absolute', 'position' ],
+			'display still banned'  => [ 'display: none', 'display' ],
+		];
+	}
+
+	/**
+	 * @dataProvider invalid_typography_values
+	 */
+	public function test_rich_text_drops_invalid_typography_values( string $declaration, string $property ): void {
+		$output = $this->sanitizer->sanitize( '<span style="color: #111111; ' . $declaration . '">x</span>' );
+
+		$this->assertSame( '<span style="color: #111111">x</span>', $output );
+		$this->assertStringNotContainsString( $property, $output );
+	}
+
 	public function test_style_attribute_removed_when_nothing_survives(): void {
 		$this->assertSame( '<span>x</span>', $this->sanitizer->sanitize( '<span style="position:fixed">x</span>' ) );
 	}
