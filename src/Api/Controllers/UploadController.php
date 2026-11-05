@@ -50,8 +50,13 @@ defined( 'ABSPATH' ) || exit;
  * `BEGIN:VCARD`). See {@see UploadPolicy}.
  *
  * All three endpoints are gated by `imgsig_use_signatures` and share a
- * 10/min per-user rate limit. Request / response JSON shapes are
- * unchanged from 1.0.0.
+ * per-user rate limit of 30 calls per minute (the editor auto-uploads
+ * generated QR codes, vCards and crops; filter
+ * `imgsig/upload/rate_limit_per_minute`) on top of the per-user storage
+ * quota. Request / response JSON shapes are unchanged from 1.0.0,
+ * except that the presigned init response now really says
+ * `method: "presigned"` (the DTO's `"PUT"` used to overwrite it) and
+ * carries the HTTP verb as `http_method`.
  *
  * @since 1.0.0
  */
@@ -63,9 +68,10 @@ final class UploadController extends BaseController {
 	private const RL_ACTION = 'upload';
 
 	/**
-	 * Uploads allowed per user per minute (init + direct + finalize).
+	 * Default upload calls allowed per user per minute (init + direct +
+	 * finalize share the bucket).
 	 */
-	private const RL_MAX = 10;
+	private const RL_MAX = 30;
 
 	/**
 	 * Default presigned-URL TTL.
@@ -211,10 +217,9 @@ final class UploadController extends BaseController {
 			);
 		}
 
-		try {
-			$this->rate_limiter->check( self::RL_ACTION, $user_id, self::RL_MAX, MINUTE_IN_SECONDS );
-		} catch ( ImaginaSignaturesException $e ) {
-			return $this->exception_to_wp_error( $e );
+		$rate_limited = $this->check_rate_limit( $user_id );
+		if ( null !== $rate_limited ) {
+			return $rate_limited;
 		}
 
 		$mime_type  = UploadPolicy::canonical_mime( sanitize_text_field( (string) $request->get_param( 'mime_type' ) ) );
@@ -269,12 +274,14 @@ final class UploadController extends BaseController {
 
 			$this->pending->remember( $key, $user_id, $mime_type, $size_bytes, self::PRESIGN_TTL_SECONDS );
 
-			return rest_ensure_response(
-				array_merge(
-					[ 'method' => 'presigned' ],
-					$presigned->to_array()
-				)
-			);
+			// The DTO's own `method` is the HTTP verb ("PUT"); it used to
+			// overwrite the flow discriminator. Flow under `method`, verb
+			// under `http_method`.
+			$payload                = $presigned->to_array();
+			$payload['http_method'] = $presigned->method;
+			$payload['method']      = 'presigned';
+
+			return rest_ensure_response( $payload );
 		}
 
 		// Direct (Media Library) — point the browser back at this controller.
@@ -306,10 +313,9 @@ final class UploadController extends BaseController {
 			);
 		}
 
-		try {
-			$this->rate_limiter->check( self::RL_ACTION, $user_id, self::RL_MAX, MINUTE_IN_SECONDS );
-		} catch ( ImaginaSignaturesException $e ) {
-			return $this->exception_to_wp_error( $e );
+		$rate_limited = $this->check_rate_limit( $user_id );
+		if ( null !== $rate_limited ) {
+			return $rate_limited;
 		}
 
 		$files = $request->get_file_params();
@@ -419,10 +425,9 @@ final class UploadController extends BaseController {
 			);
 		}
 
-		try {
-			$this->rate_limiter->check( self::RL_ACTION, $user_id, self::RL_MAX, MINUTE_IN_SECONDS );
-		} catch ( ImaginaSignaturesException $e ) {
-			return $this->exception_to_wp_error( $e );
+		$rate_limited = $this->check_rate_limit( $user_id );
+		if ( null !== $rate_limited ) {
+			return $rate_limited;
 		}
 
 		$key        = (string) $request->get_param( 'key' );
@@ -568,6 +573,34 @@ final class UploadController extends BaseController {
 		$type  = is_array( $check ) && ! empty( $check['type'] ) ? (string) $check['type'] : '';
 
 		return UploadPolicy::is_image( $type ) ? UploadPolicy::canonical_mime( $type ) : '';
+	}
+
+	/**
+	 * Applies the shared per-user upload rate limit.
+	 *
+	 * @param int $user_id User.
+	 *
+	 * @return \WP_Error|null Error when limited.
+	 */
+	private function check_rate_limit( int $user_id ): ?\WP_Error {
+		/**
+		 * Filters how many upload calls (init / direct / finalize) a user
+		 * may make per minute.
+		 *
+		 * @since 1.0.40
+		 *
+		 * @param int $max     Default 30.
+		 * @param int $user_id User.
+		 */
+		$max = (int) apply_filters( 'imgsig/upload/rate_limit_per_minute', self::RL_MAX, $user_id );
+
+		try {
+			$this->rate_limiter->check( self::RL_ACTION, $user_id, $max, MINUTE_IN_SECONDS );
+		} catch ( ImaginaSignaturesException $e ) {
+			return $this->exception_to_wp_error( $e );
+		}
+
+		return null;
 	}
 
 	/**

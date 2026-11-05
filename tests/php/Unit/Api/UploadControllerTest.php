@@ -232,6 +232,8 @@ final class UploadControllerTest extends TestCase {
 		);
 
 		$data = $response->get_data();
+		$this->assertSame( 'presigned', $data['method'] );
+		$this->assertSame( 'PUT', $data['http_method'] );
 		$this->assertSame( [ 'Content-Type' => 'text/vcard' ], $data['headers'] );
 		$this->assertMatchesRegularExpression( '#^u/[a-f0-9]{16}/[a-f0-9]{32}\.vcf$#', $data['key'] );
 		$this->assertStringNotContainsString( 'Jane', $data['key'] );
@@ -434,6 +436,58 @@ final class UploadControllerTest extends TestCase {
 		$this->assertSame( 201, $response->get_status() );
 		$this->assertNull( $this->inserted[0]['width'] );
 		$this->assertSame( 'text/vcard', $this->inserted[0]['mime_type'] );
+	}
+
+	public function test_upload_rate_limit_is_thirty_per_minute_by_default(): void {
+		$storage = $this->createMock( StorageManager::class );
+		$storage->method( 'active_driver_id' )->willReturn( 's3' );
+		$storage->method( 'active_driver' )->willReturn( $this->driver );
+
+		$limiter = $this->createMock( RateLimiter::class );
+		$limiter->expects( $this->once() )->method( 'check' )->with( 'upload', 42, 30, MINUTE_IN_SECONDS );
+
+		$controller = new UploadController( $storage, $this->createMock( AssetRepository::class ), $limiter, new PendingUploads() );
+		$controller->init(
+			new \WP_REST_Request(
+				[
+					'filename'   => 'qr.png',
+					'mime_type'  => 'image/png',
+					'size_bytes' => 10,
+				]
+			)
+		);
+	}
+
+	public function test_vcard_presigned_round_trip_init_to_finalize(): void {
+		$response = $this->controller()->init(
+			new \WP_REST_Request(
+				[
+					'filename'   => 'contact.vcf',
+					'mime_type'  => 'text/vcard',
+					'size_bytes' => 180,
+				]
+			)
+		);
+		$key      = (string) $response->get_data()['key'];
+
+		// The browser PUTs with the signed Content-Type; S3 stores it.
+		$this->driver->object = [
+			'content_type'   => (string) $response->get_data()['headers']['Content-Type'],
+			'content_length' => 180,
+		];
+		$this->driver->prefix = "BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Jane\r\n";
+
+		$final = $this->finalize(
+			$key,
+			[
+				'mime_type'  => 'text/vcard',
+				'size_bytes' => 180,
+			]
+		);
+
+		$this->assertSame( 201, $final->get_status() );
+		$this->assertSame( 'text/vcard', $final->get_data()['mime_type'] );
+		$this->assertSame( 'https://cdn.example.com/' . $key, $final->get_data()['public_url'] );
 	}
 
 	public function test_direct_accepts_vcf_only_with_vcard_signature(): void {
