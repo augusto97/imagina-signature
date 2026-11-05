@@ -45,7 +45,7 @@ export function dynamicStrings(): string[] {
     __('Email / phone / web rows with icons.'),
     __('Call-to-action button.'),
     __('Small print at the bottom of the signature.'),
-    __('1 or 2 column layout with embedded blocks.'),
+    __('Up to 4 columns with their own blocks, widths and styling.'),
     __('Scannable QR code, hosted as a PNG image.'),
     __('Promotional banner image with a click-through link.'),
     __('Link to a hosted contact card (.vcf).'),
