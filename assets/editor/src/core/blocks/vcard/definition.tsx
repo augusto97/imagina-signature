@@ -1,15 +1,29 @@
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
 import { Contact } from 'lucide-react';
 import type { VCardBlock } from '@/core/schema/blocks';
+import type { CanvasConfig } from '@/core/schema/signature';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
+import { AlignInput } from '@/editor/sidebar-right/inputs/AlignInput';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
-import { attr, escapeHtml, paddingCss, px, safeColor } from '@/core/compiler/css';
+import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
+import { SegmentedInput } from '@/editor/sidebar-right/inputs/SegmentedInput';
 import { contentHash } from '@/core/compiler/hash';
-import { markerAttr, report } from '@/core/compiler/issues';
+import { report } from '@/core/compiler/issues';
 import { isUploadEnabled } from '@/bridge/apiClient';
 import { slugFilename, uploadBlob } from '@/services/uploads';
+import { useSchemaStore } from '@/stores/schemaStore';
+import { ButtonPreview } from '../button-cta/ButtonPreview';
+import {
+  BUTTON_DEFAULTS,
+  compileButton,
+  readableTextColor,
+  resolveButtonSpec,
+  type ButtonDefaults,
+  type ButtonSpec,
+} from '../button-cta/buttonMarkup';
+import { BUTTON_TYPOGRAPHY } from '../text/typography';
 import { HostedAssetStatus, useHostedAssetSync } from '../qr-code/definition';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
@@ -53,50 +67,46 @@ export async function uploadVCardFile(
   const asset = await uploadBlob(blob, vcardFilename(block));
   return { vcf_url: asset.url, vcf_hash: vcardContentHash(block) };
 }
-const Renderer: FC<{ block: VCardBlock }> = ({ block }) => {
-  const padding = block.padding;
-  const td: React.CSSProperties = {
-    padding: padding
-      ? `${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px`
-      : '0',
-    textAlign: 'left',
-  };
 
+/** vCard link look: a compact 13px / medium button (8 × 14 px padding). */
+const VCARD_BUTTON: ButtonDefaults = {
+  ...BUTTON_DEFAULTS,
+  paddingX: 14,
+  paddingY: 8,
+  fill: '#2563eb',
+  typography: { ...BUTTON_TYPOGRAPHY, sizeScale: 13 / 14, fallbackSize: 13, fontWeight: 500 },
+};
+
+/**
+ * The vCard link as a button spec (shared button styling): `link_style`
+ * 'text' renders a plain text link, anything else a solid button.
+ */
+export function vcardButtonSpec(
+  block: VCardBlock,
+  canvas: Partial<CanvasConfig> | null | undefined,
+): ButtonSpec {
+  return resolveButtonSpec(
+    {
+      label: block.label || __('Save my contact'),
+      href: block.vcf_url ?? '',
+      preset: block.link_style === 'text' ? 'text' : 'solid',
+      background_color: block.background_color,
+      text_color: block.text_color,
+      border_radius: block.border_radius,
+      align: block.align,
+      padding: block.padding,
+    },
+    canvas,
+    VCARD_BUTTON,
+  );
+}
+
+const Renderer: FC<{ block: VCardBlock }> = ({ block }) => {
+  const canvas = useSchemaStore((s) => s.schema.canvas);
+  const spec = useMemo(() => vcardButtonSpec(block, canvas), [block, canvas]);
   // Canvas links never navigate (Canvas intercepts clicks); the hosted
   // file URL is shown when available.
-  const href = block.vcf_url || '#';
-
-  return (
-    <table
-      role="presentation"
-      cellPadding={0}
-      cellSpacing={0}
-      border={0}
-      style={{ borderCollapse: 'collapse' }}
-    >
-      <tbody>
-        <tr>
-          <td style={td}>
-            <a
-              href={href}
-              style={{
-                display: 'inline-block',
-                padding: '8px 14px',
-                background: block.background_color,
-                color: block.text_color,
-                borderRadius: `${block.border_radius}px`,
-                textDecoration: 'none',
-                fontSize: 13,
-                fontWeight: 500,
-              }}
-            >
-              {block.label || __('Save my contact')}
-            </a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  );
+  return <ButtonPreview spec={spec} href={block.vcf_url || '#'} />;
 };
 
 const Properties: FC<{
@@ -113,6 +123,7 @@ const Properties: FC<{
     upload: () => uploadVCardFile(block),
     hashOf: (latest) => (latest.type === 'vcard' ? vcardContentHash(latest) : null),
   });
+  const isText = block.link_style === 'text';
 
   return (
     <div className="flex flex-col gap-3 text-[12px]">
@@ -169,22 +180,43 @@ const Properties: FC<{
 
       <span className="is-section-label">{__('Style')}</span>
 
-      <ColorInput
-        label={__('Background')}
-        value={block.background_color}
-        onChange={(v) => onChange({ background_color: v })}
+      <SegmentedInput<'button' | 'text'>
+        label={__('Show as')}
+        value={isText ? 'text' : 'button'}
+        onChange={(v) => {
+          const textColor = readableTextColor(block, v === 'button');
+          onChange(textColor ? { link_style: v, text_color: textColor } : { link_style: v });
+        }}
+        options={[
+          { value: 'button', label: __('Button') },
+          { value: 'text', label: __('Text link') },
+        ]}
       />
+      {!isText && (
+        <ColorInput
+          label={__('Background')}
+          value={block.background_color}
+          onChange={(v) => onChange({ background_color: v })}
+        />
+      )}
       <ColorInput
         label={__('Text colour')}
         value={block.text_color}
         onChange={(v) => onChange({ text_color: v })}
       />
-      <DimensionInput
-        label={__('Border radius (px)')}
-        value={block.border_radius}
-        onChange={(v) => onChange({ border_radius: v })}
-        min={0}
-        max={32}
+      {!isText && (
+        <DimensionInput
+          label={__('Border radius (px)')}
+          value={block.border_radius}
+          onChange={(v) => onChange({ border_radius: v })}
+          min={0}
+          max={32}
+        />
+      )}
+      <AlignInput value={block.align} onChange={(v) => onChange({ align: v })} />
+      <PaddingInput
+        value={block.padding ?? { top: 0, right: 0, bottom: 0, left: 0 }}
+        onChange={(p) => onChange({ padding: p })}
       />
     </div>
   );
@@ -275,23 +307,9 @@ function compile(block: VCardBlock, ctx: CompileContext): string {
     );
   }
 
-  const padding = paddingCss(block.padding);
-  const label = escapeHtml(block.label || __('Save my contact'));
-
-  const styles = [
-    'display:inline-block',
-    'padding:8px 14px',
-    // Colour values are free-form schema strings — validate them
-    // through the central serializer instead of escaping.
-    `background:${safeColor(block.background_color, '#2563eb')}`,
-    `color:${safeColor(block.text_color, '#ffffff')}`,
-    `border-radius:${px(block.border_radius, 0, 999)}px`,
-    'text-decoration:none',
-    'font-size:13px',
-    'font-weight:500',
-  ].join(';');
-
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><a${markerAttr(block)} href="${attr(block.vcf_url)}" style="${styles}">${label}</a></td></tr></table>`;
+  // Shared bullet-proof button (VML for Outlook) or a plain text link;
+  // every value is validated by the button helper / css.ts.
+  return compileButton(vcardButtonSpec(block, ctx.canvas), block, ctx);
 }
 
 const definition: BlockDefinition<VCardBlock> = {
@@ -313,6 +331,8 @@ const definition: BlockDefinition<VCardBlock> = {
     background_color: '#2563eb',
     text_color: '#ffffff',
     border_radius: 6,
+    link_style: 'button',
+    align: 'left',
     padding: { top: 4, right: 0, bottom: 4, left: 0 },
   }),
   Renderer,

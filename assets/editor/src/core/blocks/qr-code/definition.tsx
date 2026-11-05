@@ -4,8 +4,10 @@ import qrcode from 'qrcode-generator';
 import type { Block, QrCodeBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
+import { AlignInput } from '@/editor/sidebar-right/inputs/AlignInput';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
+import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
 import { findBlockByIdDeep, useSchemaStore } from '@/stores/schemaStore';
 import { isUploadEnabled } from '@/bridge/apiClient';
 import {
@@ -19,6 +21,13 @@ import {
 import { contentHash } from '@/core/compiler/hash';
 import { clampToAvailable, markerAttr, report } from '@/core/compiler/issues';
 import { canvasToBlob, uploadBlob, uploadErrorMessage, UploadError } from '@/services/uploads';
+import {
+  alignedRow,
+  alignMargin,
+  alignMarginCss,
+  blockAlign,
+  tableAlignAttr,
+} from '../text/blockLayout';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 /**
@@ -275,40 +284,60 @@ const Renderer: FC<{ block: QrCodeBlock }> = ({ block }) => {
   );
   const src = preview || block.image_url || '';
   const padding = block.padding;
-  const td: React.CSSProperties = {
+  const align = blockAlign(block.align);
+  const outer: React.CSSProperties = {
     padding: padding
       ? `${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px`
       : '0',
-    textAlign: 'center',
+    textAlign: align,
   };
 
+  // Same shape as compile(): a full-width row aligning a shrink-to-fit
+  // table that centres the QR and its caption.
   return (
     <table
       role="presentation"
+      width="100%"
       cellPadding={0}
       cellSpacing={0}
       border={0}
-      style={{ borderCollapse: 'collapse' }}
+      style={{ borderCollapse: 'collapse', width: '100%' }}
     >
       <tbody>
         <tr>
-          <td style={td}>
-            {block.data && src ? (
-              <img
-                src={src}
-                alt={block.caption || __('QR code')}
-                width={block.size}
-                height={block.size}
-                style={{ display: 'block', border: 0, margin: '0 auto' }}
-              />
-            ) : (
-              <span style={{ fontSize: 11, color: '#94a3b8' }}>
-                {__('Add data to render the QR.')}
-              </span>
-            )}
-            {block.caption && (
-              <div style={{ marginTop: 4, fontSize: 11, color: '#475569' }}>{block.caption}</div>
-            )}
+          <td align={align} style={outer}>
+            <table
+              role="presentation"
+              cellPadding={0}
+              cellSpacing={0}
+              border={0}
+              style={{ borderCollapse: 'collapse', ...alignMarginCss(align) }}
+            >
+              <tbody>
+                <tr>
+                  <td style={{ textAlign: 'center' }}>
+                    {block.data && src ? (
+                      <img
+                        src={src}
+                        alt={block.caption || __('QR code')}
+                        width={block.size}
+                        height={block.size}
+                        style={{ display: 'block', border: 0, margin: '0 auto' }}
+                      />
+                    ) : (
+                      <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                        {__('Add data to render the QR.')}
+                      </span>
+                    )}
+                    {block.caption && (
+                      <div style={{ marginTop: 4, fontSize: 11, color: '#475569' }}>
+                        {block.caption}
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </td>
         </tr>
       </tbody>
@@ -374,6 +403,12 @@ const Properties: FC<{
         />
       </label>
 
+      <AlignInput value={block.align} onChange={(v) => onChange({ align: v })} />
+      <PaddingInput
+        value={block.padding ?? { top: 0, right: 0, bottom: 0, left: 0 }}
+        onChange={(p) => onChange({ padding: p })}
+      />
+
       <HostedAssetStatus
         status={sync.status}
         error={sync.error}
@@ -426,7 +461,14 @@ function compile(block: QrCodeBlock, ctx: CompileContext): string {
     ? `<div style="margin-top:4px;font-size:11px;color:#475569">${escapeHtml(block.caption)}</div>`
     : '';
 
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding};text-align:center"><img${markerAttr(block)} src="${attr(block.image_url)}" alt="${alt}" width="${size}" height="${size}" style="display:block;border:0;margin:0 auto;max-width:100%;height:auto" />${captionHtml}</td></tr></table>`;
+  // A shrink-to-fit table keeps the caption centred under the QR; the
+  // full-width row around it positions the pair (left by default, as
+  // before 1.2).
+  const align = blockAlign(block.align);
+  const margin = alignMargin(align);
+  const inner = `<table role="presentation" cellpadding="0" cellspacing="0" border="0"${tableAlignAttr(align)} style="border-collapse:collapse${margin ? `;margin:${margin}` : ''}"><tr><td style="text-align:center"><img${markerAttr(block)} src="${attr(block.image_url)}" alt="${alt}" width="${size}" height="${size}" style="display:block;border:0;margin:0 auto;max-width:100%;height:auto" />${captionHtml}</td></tr></table>`;
+
+  return alignedRow(inner, align, padding);
 }
 
 const definition: BlockDefinition<QrCodeBlock> = {
@@ -442,6 +484,7 @@ const definition: BlockDefinition<QrCodeBlock> = {
     size: 120,
     color: '#000000',
     background_color: '#ffffff',
+    align: 'left',
     padding: { top: 4, right: 0, bottom: 4, left: 0 },
   }),
   Renderer,
