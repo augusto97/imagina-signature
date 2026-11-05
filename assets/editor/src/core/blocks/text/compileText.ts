@@ -1,17 +1,16 @@
 import type { TextBlock } from '@/core/schema/blocks';
 import type { CompileContext } from '@/core/blocks/registry';
 import { sanitizeEmailHtml } from '@/core/compiler/sanitize';
+import { inlineStyle, paddingCss, safeColor } from '@/core/compiler/css';
+import { checkContrast, markerAttr, type BlockRef } from '@/core/compiler/issues';
+import { scaleSpanLineHeights } from './richText';
 import {
-  fontStack,
-  fontWeight,
-  inlineStyle,
-  num,
-  paddingCss,
-  px,
-  safeColor,
-  textAlign,
-} from '@/core/compiler/css';
-import { checkContrast, markerAttr } from '@/core/compiler/issues';
+  TEXT_TYPOGRAPHY,
+  resolveTypography,
+  typographyDeclarations,
+  type TypographyDefaults,
+} from './typography';
+import type { Padding, TextStyle } from '@/core/schema/styles';
 
 /**
  * JSON → email-safe HTML for a Text block.
@@ -24,28 +23,48 @@ import { checkContrast, markerAttr } from '@/core/compiler/issues';
  *
  * Every style value goes through the central serializer so font
  * stacks with double quotes no longer break the `style` attribute.
+ * Unset family / size / colour inherit the canvas (`ctx.canvas`).
  */
 export function compileText(block: TextBlock, ctx: CompileContext): string {
-  const color = safeColor(block.style.color, '#111827');
-  const fontSize = px(block.style.font_size, 6, 96, 14);
-  checkContrast(ctx, block, color, safeColor(ctx.canvas.background_color, '#ffffff'), fontSize);
-  const style = inlineStyle({
-    'font-family': fontStack(block.style.font_family),
-    'font-size': `${fontSize}px`,
-    'font-weight': fontWeight(block.style.font_weight),
-    color,
-    'line-height': num(block.style.line_height ?? 1.4, 0.5, 4, 1.4),
-    'text-align': textAlign(block.style.text_align),
-    padding: paddingCss(block.padding),
+  return compileRichTextCell(
+    block,
+    block.content,
+    block.style,
+    block.padding,
+    ctx,
+    TEXT_TYPOGRAPHY,
+  );
+}
+
+/**
+ * Shared single-cell rich-text compile (text, heading, disclaimer).
+ *
+ * Links pick up the canvas link colour (the sanitiser drops any inline
+ * style on <a>); paragraphs get margin:0 so mail clients don't add
+ * their ~1em default spacing the canvas never showed. With an explicit
+ * line height the cell carries it in px (+ mso-line-height-rule) and
+ * resized spans get a matching px line height.
+ */
+export function compileRichTextCell(
+  block: BlockRef,
+  html: string,
+  style: TextStyle | undefined,
+  padding: Padding | undefined,
+  ctx: CompileContext,
+  defaults: TypographyDefaults,
+): string {
+  const t = resolveTypography(style, ctx.canvas, defaults);
+  checkContrast(ctx, block, t.color, safeColor(ctx.canvas.background_color, '#ffffff'), t.fontSize);
+  const cellStyle = inlineStyle({
+    ...typographyDeclarations(t),
+    padding: paddingCss(padding),
   });
 
-  // Links pick up the canvas link colour (the sanitiser drops any
-  // inline style on <a>); paragraphs get margin:0 so mail clients
-  // don't add their ~1em default spacing the canvas never showed.
-  const safeContent = sanitizeEmailHtml(block.content, { linkColor: ctx.canvas.link_color }).replace(
+  let safeContent = sanitizeEmailHtml(html, { linkColor: ctx.canvas.link_color }).replace(
     /<a(?=[\s>])/g,
     `<a${markerAttr(block)}`,
   );
+  if (t.lineHeightPx !== null) safeContent = scaleSpanLineHeights(safeContent, t.lineHeight);
 
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;"><tr><td style="${style}">${safeContent}</td></tr></table>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;"><tr><td style="${cellStyle}">${safeContent}</td></tr></table>`;
 }

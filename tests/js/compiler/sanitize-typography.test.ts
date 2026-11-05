@@ -24,9 +24,11 @@ describe('sanitizeEmailHtml — span typography', () => {
   });
 
   it('accepts negative / normal letter spacing and capitalize', () => {
-    expect(styleOf(sanitizeEmailHtml('<span style="letter-spacing:-0.5px;text-transform:capitalize">x</span>'))).toBe(
-      'letter-spacing:-0.5px;text-transform:capitalize',
-    );
+    expect(
+      styleOf(
+        sanitizeEmailHtml('<span style="letter-spacing:-0.5px;text-transform:capitalize">x</span>'),
+      ),
+    ).toBe('letter-spacing:-0.5px;text-transform:capitalize');
     expect(styleOf(sanitizeEmailHtml('<span style="letter-spacing:normal">x</span>'))).toBe(
       'letter-spacing:normal',
     );
