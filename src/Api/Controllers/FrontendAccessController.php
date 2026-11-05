@@ -49,7 +49,9 @@ final class FrontendAccessController extends BaseController {
 					'permission_callback' => $require_admin,
 				],
 				[
-					'methods'             => 'PATCH',
+					// `EDITABLE` = POST | PUT | PATCH (WAF-stripped PATCH
+					// fallback, same as the other admin endpoints).
+					'methods'             => \WP_REST_Server::EDITABLE,
 					'callback'            => [ $this, 'update' ],
 					'permission_callback' => $require_admin,
 				],
@@ -71,6 +73,10 @@ final class FrontendAccessController extends BaseController {
 	/**
 	 * `PATCH /admin/frontend-access`.
 	 *
+	 * Partial update: only the keys present in the request change.
+	 * Omitting `enabled` or `roles` keeps the stored value (previously
+	 * an omitted key disabled the route / revoked every role).
+	 *
 	 * @since 1.0.24
 	 *
 	 * @param \WP_REST_Request $request Inbound.
@@ -78,11 +84,18 @@ final class FrontendAccessController extends BaseController {
 	 * @return \WP_REST_Response
 	 */
 	public function update( \WP_REST_Request $request ): \WP_REST_Response {
-		$next = [
-			'enabled' => (bool) $request->get_param( 'enabled' ),
-			'slug'    => (string) ( $request->get_param( 'slug' ) ?? '' ),
-			'roles'   => (array) ( $request->get_param( 'roles' ) ?? [] ),
-		];
+		$next = [];
+
+		if ( null !== $request->get_param( 'enabled' ) ) {
+			$next['enabled'] = rest_sanitize_boolean( $request->get_param( 'enabled' ) );
+		}
+		if ( null !== $request->get_param( 'slug' ) ) {
+			$next['slug'] = (string) $request->get_param( 'slug' );
+		}
+		if ( null !== $request->get_param( 'roles' ) ) {
+			$next['roles'] = (array) $request->get_param( 'roles' );
+		}
+
 		$settings = FrontendAccess::update( $next );
 		return rest_ensure_response( $this->build_response( $settings ) );
 	}

@@ -206,7 +206,11 @@ final class TemplatesController extends BaseController {
 	 */
 	public function show( \WP_REST_Request $request ) {
 		$template = $this->repo->find( (int) $request['id'] );
-		if ( null === $template ) {
+
+		// Same visibility rule as index(): a template scoped to roles
+		// the caller doesn't hold answers 404 (not 403) so ids can't be
+		// probed for existence.
+		if ( null === $template || ! self::is_visible_to_current_user( $template->visible_to_roles ) ) {
 			return new \WP_Error(
 				'imgsig_not_found',
 				__( 'Template not found.', 'imagina-signatures' ),
@@ -214,6 +218,25 @@ final class TemplatesController extends BaseController {
 			);
 		}
 		return rest_ensure_response( $template->to_array() );
+	}
+
+	/**
+	 * Mirrors the `visible_to_roles` filter that {@see index()} applies
+	 * in SQL: template managers see everything; everyone else sees
+	 * templates with no role scoping or scoped to one of their roles.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param array<int, string> $visible_to_roles Template role scope (empty = everyone).
+	 *
+	 * @return bool
+	 */
+	public static function is_visible_to_current_user( array $visible_to_roles ): bool {
+		if ( empty( $visible_to_roles ) || current_user_can( CapabilitiesInstaller::CAP_MANAGE_TEMPLATES ) ) {
+			return true;
+		}
+
+		return [] !== array_intersect( array_map( 'sanitize_key', $visible_to_roles ), self::current_user_roles() );
 	}
 
 	/**

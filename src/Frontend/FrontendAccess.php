@@ -96,6 +96,7 @@ final class FrontendAccess {
 	/**
 	 * Writes new settings + applies side effects.
 	 *
+	 * Merge semantics: keys missing from `$next` keep their stored value.
 	 * Synchronises caps on the role list AND flushes rewrite rules if
 	 * the slug or enabled flag transitioned. Returns the post-write
 	 * snapshot so callers can echo it back without a second read.
@@ -119,12 +120,13 @@ final class FrontendAccess {
 			: $previous['roles'];
 
 		$settings = [
-			'enabled' => ! empty( $next['enabled'] ),
+			'enabled' => array_key_exists( 'enabled', $next ) ? ! empty( $next['enabled'] ) : $previous['enabled'],
 			'slug'    => $slug,
 			'roles'   => $roles,
 		];
 
-		update_option( self::OPT_NAME, $settings, false );
+		// Autoloaded: the router reads this on every `init`.
+		update_option( self::OPT_NAME, $settings, true );
 
 		// Sync the capability across the role registry so the role
 		// list in the option is the source of truth.

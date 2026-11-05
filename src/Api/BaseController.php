@@ -103,17 +103,24 @@ abstract class BaseController {
 			);
 		}
 
+		// Storage / generic failures can carry filesystem paths, endpoint
+		// hosts or provider responses: log the detail, and only show it
+		// to storage administrators (who need it to fix configuration).
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		error_log( '[imagina-signatures] ' . get_class( $exception ) . ': ' . $exception->getMessage() );
+		$show_detail = function_exists( 'current_user_can' ) && current_user_can( 'imgsig_manage_storage' );
+
 		if ( $exception instanceof StorageException ) {
 			return new \WP_Error(
 				'imgsig_storage_error',
-				$exception->getMessage(),
+				$show_detail ? $exception->getMessage() : __( 'The file could not be stored. Please try again later.', 'imagina-signatures' ),
 				[ 'status' => 500 ]
 			);
 		}
 
 		return new \WP_Error(
 			'imgsig_error',
-			$exception->getMessage(),
+			$show_detail ? $exception->getMessage() : __( 'The request could not be completed because of a server error.', 'imagina-signatures' ),
 			[ 'status' => 500 ]
 		);
 	}

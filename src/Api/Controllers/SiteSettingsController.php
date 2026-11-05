@@ -91,7 +91,16 @@ final class SiteSettingsController extends BaseController {
 	 * @return \WP_REST_Response
 	 */
 	public function show(): \WP_REST_Response {
-		return rest_ensure_response( self::current_settings() );
+		$settings = self::current_settings();
+
+		// Signature users only need what the compiler will actually
+		// render: currently-active campaigns. Disabled / scheduled /
+		// expired ones (and their internal names) stay admin-only.
+		if ( ! current_user_can( CapabilitiesInstaller::CAP_MANAGE_STORAGE ) ) {
+			$settings['banner_campaigns'] = self::active_banner_campaigns();
+		}
+
+		return rest_ensure_response( $settings );
 	}
 
 	/**
@@ -163,17 +172,20 @@ final class SiteSettingsController extends BaseController {
 
 		if ( ! $persist_ok ) {
 			global $wpdb;
+			// The raw DB error stays in the server log; the response only
+			// names which settings failed.
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( '[imagina-signatures] site settings persist failed (' . implode( ', ', $persist_errors ) . '): ' . $wpdb->last_error );
 			return new \WP_Error(
 				'imgsig_persist_failed',
 				sprintf(
 					/* translators: %s: comma-separated list of option keys that failed to save. */
-					__( 'Failed to persist site settings (%s) at the database layer.', 'imagina-signatures' ),
+					__( 'Failed to persist site settings (%s). Check the server error log.', 'imagina-signatures' ),
 					implode( ', ', $persist_errors )
 				),
 				[
-					'status'   => 500,
-					'last_db_error' => $wpdb->last_error,
-					'failed'   => $persist_errors,
+					'status' => 500,
+					'failed' => $persist_errors,
 				]
 			);
 		}

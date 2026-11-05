@@ -267,20 +267,33 @@ final class SignaturesController extends BaseController {
 		} catch ( \Throwable $e ) {
 			// Catch the read-after-write verify failures (and anything
 			// else that bubbles up from the service / repository) so
-			// the REST layer always returns a structured WP_Error
-			// instead of letting WP turn it into an opaque 500.
+			// the REST layer always returns a structured WP_Error. The
+			// raw message (SQL errors, table names, hashes) is logged,
+			// never returned.
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( '[imagina-signatures] create failed: ' . $e->getMessage() );
-			return new \WP_Error(
-				'imgsig_persistence_failed',
-				$e->getMessage(),
-				[ 'status' => 500 ]
-			);
+			return $this->persistence_error();
 		}
 
 		$response = rest_ensure_response( $this->with_notes( $signature->to_array() ) );
 		$response->set_status( 201 );
 		return $response;
+	}
+
+	/**
+	 * Generic 500 for unexpected persistence failures (details are in
+	 * the server error log).
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return \WP_Error
+	 */
+	private function persistence_error(): \WP_Error {
+		return new \WP_Error(
+			'imgsig_persistence_failed',
+			__( 'The signature could not be saved because of a server error. Please try again; if it keeps failing, ask a site administrator to check the error log.', 'imagina-signatures' ),
+			[ 'status' => 500 ]
+		);
 	}
 
 	/**
@@ -345,11 +358,7 @@ final class SignaturesController extends BaseController {
 		} catch ( \Throwable $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( '[imagina-signatures] update failed: ' . $e->getMessage() );
-			return new \WP_Error(
-				'imgsig_persistence_failed',
-				$e->getMessage(),
-				[ 'status' => 500 ]
-			);
+			return $this->persistence_error();
 		}
 
 		return rest_ensure_response( $this->with_notes( $signature->to_array() ) );
