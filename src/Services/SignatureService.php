@@ -146,6 +146,7 @@ class SignatureService {
 		if ( null === $signature ) {
 			throw new OwnershipException( __( 'Signature not found or not owned by the caller.', 'imagina-signatures' ) );
 		}
+		$previous = $this->primary_id_for_user( $user_id );
 		update_user_meta( $user_id, self::PRIMARY_META_KEY, $signature_id );
 
 		/**
@@ -158,7 +159,40 @@ class SignatureService {
 		 */
 		do_action( 'imgsig/signature/primary_changed', $user_id, $signature_id );
 
+		if ( $previous !== $signature_id ) {
+			$this->maybe_announce_primary_html( $signature );
+		}
+
 		return $signature;
+	}
+
+	/**
+	 * Fires `imgsig/deploy/primary_html_changed` when `$signature` is its
+	 * owner's primary signature and has compiled HTML — the signal the
+	 * deployment channels (Gmail push, Outlook add-in cache, install
+	 * reminders) listen to.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param Signature $signature Freshly persisted row.
+	 *
+	 * @return void
+	 */
+	private function maybe_announce_primary_html( Signature $signature ): void {
+		if ( ! $signature->has_html || $this->primary_id_for_user( $signature->user_id ) !== $signature->id ) {
+			return;
+		}
+
+		/**
+		 * Fires when the HTML a user deploys changes: their primary
+		 * signature was re-compiled, or another signature became primary.
+		 *
+		 * @since 1.3.0
+		 *
+		 * @param int       $user_id   Owner.
+		 * @param Signature $signature The primary signature (with html_cache).
+		 */
+		do_action( 'imgsig/deploy/primary_html_changed', $signature->user_id, $signature );
 	}
 
 	/**
@@ -230,6 +264,10 @@ class SignatureService {
 
 		do_action( 'imgsig/signature/created', $signature );
 
+		if ( isset( $prepared['html_hash'] ) ) {
+			$this->maybe_announce_primary_html( $signature );
+		}
+
 		return $signature;
 	}
 
@@ -273,6 +311,10 @@ class SignatureService {
 		}
 
 		do_action( 'imgsig/signature/updated', $updated );
+
+		if ( array_key_exists( 'html_hash', $prepared ) && $prepared['html_hash'] !== $existing->html_hash ) {
+			$this->maybe_announce_primary_html( $updated );
+		}
 
 		return $updated;
 	}

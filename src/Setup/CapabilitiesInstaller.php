@@ -50,6 +50,13 @@ final class CapabilitiesInstaller {
 	public const CAP_MANAGE_STORAGE = 'imgsig_manage_storage';
 
 	/**
+	 * Admin-only cap for managing the team: everyone's signatures,
+	 * groups, profile fields, template assignment and deployment
+	 * (Gmail / Outlook / install invitations). Added in 1.3.0.
+	 */
+	public const CAP_MANAGE_TEAM = 'imgsig_manage_team';
+
+	/**
 	 * Roles that receive `CAP_USE` on install.
 	 *
 	 * @var string[]
@@ -64,6 +71,7 @@ final class CapabilitiesInstaller {
 	private const ADMIN_CAPS = [
 		self::CAP_MANAGE_TEMPLATES,
 		self::CAP_MANAGE_STORAGE,
+		self::CAP_MANAGE_TEAM,
 	];
 
 	/**
@@ -78,6 +86,7 @@ final class CapabilitiesInstaller {
 		self::CAP_USE,
 		self::CAP_MANAGE_TEMPLATES,
 		self::CAP_MANAGE_STORAGE,
+		self::CAP_MANAGE_TEAM,
 	];
 
 	/**

@@ -35,6 +35,7 @@ final class SignatureHtmlTest extends TestCase {
 		Functions\when( 'sanitize_text_field' )->alias( 'trim' );
 		Functions\when( 'wp_json_encode' )->alias( 'json_encode' );
 		Functions\when( 'wp_strip_all_tags' )->alias( 'strip_tags' );
+		Functions\when( 'get_user_meta' )->justReturn( '' );
 	}
 
 	protected function tearDown(): void {
@@ -146,6 +147,36 @@ final class SignatureHtmlTest extends TestCase {
 		);
 
 		$this->assertSame( 4, $this->service( $repo )->primary_id_for_user( 3 ) );
+	}
+
+	public function test_recompiling_the_primary_signature_announces_it(): void {
+		Functions\when( 'get_user_meta' )->justReturn( '5' );
+		$repo = $this->createMock( SignatureRepository::class );
+		$repo->method( 'find_owned_by' )->willReturn(
+			Signature::from_row(
+				[
+					'id'           => 5,
+					'user_id'      => 3,
+					'json_content' => '{}',
+					'html_cache'   => '<table></table>',
+					'html_hash'    => 'old',
+				]
+			)
+		);
+		$repo->method( 'update' )->willReturn(
+			Signature::from_row(
+				[
+					'id'         => 5,
+					'user_id'    => 3,
+					'html_cache' => '<table><tr><td>new</td></tr></table>',
+				]
+			)
+		);
+		Monkey\Actions\expectDone( 'imgsig/deploy/primary_html_changed' )->once();
+
+		$this->service( $repo )->update( 5, 3, [ 'html' => '<table><tr><td>new</td></tr></table>' ] );
+		// The expectation above is verified by Mockery in tearDown().
+		$this->addToAssertionCount( 1 );
 	}
 
 	public function test_set_primary_requires_ownership(): void {
