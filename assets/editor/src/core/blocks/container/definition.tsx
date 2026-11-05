@@ -1,7 +1,7 @@
 import { useState, type FC } from 'react';
 import { Columns2, Plus, Trash2 } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableContext } from '@dnd-kit/sortable';
 import type { Block, ContainerBlock } from '@/core/schema/blocks';
 import { useSchemaStore, type ContainerCell } from '@/stores/schemaStore';
 import { useSelectionStore } from '@/stores/selectionStore';
@@ -9,6 +9,8 @@ import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
+import { SortableBlock } from '@/editor/canvas/SortableBlock';
+import { noShiftSortingStrategy } from '@/editor/canvas/dnd';
 import {
   registerBlock,
   rendererForBlock,
@@ -140,17 +142,19 @@ const Renderer: FC<{ block: ContainerBlock; isPreview?: boolean }> = ({ block, i
 
 /**
  * One cell's worth of children. Wires:
- *   - A `useDroppable` for the cell itself so the user can drop into
- *     an empty cell (no child to land "next to").
- *   - A `SortableContext` listing the cell's children — dnd-kit uses
- *     this to detect reorder drops within the cell. The actual
- *     `useSortable` hooks live one level down per child via
- *     `<SortableBlock>` (which the canvas already renders for top-
- *     level blocks; we reuse it here for nested ones too).
+ *   - A `useDroppable` for the cell itself (a drop "zone") so the user
+ *     can drop into an empty cell, and so drops in the gaps between
+ *     children resolve to the nearest child (see editor/canvas/dnd.ts).
+ *   - A `SortableContext` listing the cell's children. Each child is a
+ *     full {@link SortableBlock} — the same wrapper top-level blocks
+ *     use — so nested blocks get the selection outline, hover outline,
+ *     floating toolbar (drag, move up / down within the cell,
+ *     duplicate, delete) and drop indicator.
  *
  * The cell renders a faint dashed border when empty so the user
- * knows where to drop. Hidden in preview mode so the exported
- * email-safe HTML stays clean.
+ * knows where to drop. In preview mode (drag overlay) children render
+ * bare, without sortable registration, so the overlay never registers
+ * duplicate droppable ids.
  */
 const CellList: FC<{
   containerId: string;
@@ -165,70 +169,47 @@ const CellList: FC<{
     disabled: isPreview,
   });
 
-  const select = useSelectionStore((s) => s.select);
-  const selectedId = useSelectionStore((s) => s.selectedBlockId);
-
   const empty = items.length === 0;
+
+  if (isPreview) {
+    return (
+      <div>
+        {items.map((child) => {
+          const def = rendererForBlock(child);
+          if (!def) return null;
+          const ChildRenderer = def.Renderer as FC<{ block: Block; isPreview?: boolean }>;
+          return <ChildRenderer key={child.id} block={child} isPreview />;
+        })}
+      </div>
+    );
+  }
 
   return (
     <SortableContext
       items={items.map((item) => item.id)}
-      strategy={verticalListSortingStrategy}
+      strategy={noShiftSortingStrategy}
       id={dropId}
     >
       <div
         ref={setNodeRef}
-        style={
-          isPreview
-            ? undefined
-            : {
-                minHeight: empty ? 56 : undefined,
-                padding: empty ? 8 : undefined,
-                border: empty ? '1px dashed #d1d5db' : undefined,
-                borderRadius: empty ? 4 : undefined,
-                background: isOver ? 'rgba(37, 99, 235, 0.06)' : undefined,
-                transition: 'background 120ms ease',
-              }
-        }
+        style={{
+          minHeight: empty ? 56 : undefined,
+          padding: empty ? 8 : undefined,
+          border: empty ? `1px dashed ${isOver ? '#2563eb' : '#d1d5db'}` : undefined,
+          borderRadius: empty ? 4 : undefined,
+          background: isOver ? 'rgba(37, 99, 235, 0.06)' : undefined,
+          transition: 'background 120ms ease, border-color 120ms ease',
+        }}
       >
-        {empty && !isPreview && (
+        {empty && (
           <div className="text-center text-[11px] text-[var(--text-muted)]">
             {__('Drop blocks here')}
           </div>
         )}
 
-        {items.map((child) => {
-          const def = rendererForBlock(child);
-          if (!def) return null;
-          const ChildRenderer = def.Renderer as FC<{ block: Block; isPreview?: boolean }>;
-          const isSelected = !isPreview && child.id === selectedId;
-          return (
-            <div
-              key={child.id}
-              data-imgsig-block-id={child.id}
-              onClick={
-                isPreview
-                  ? undefined
-                  : (e) => {
-                      e.stopPropagation();
-                      select(child.id);
-                    }
-              }
-              style={
-                isPreview
-                  ? { marginBottom: 4 }
-                  : {
-                      marginBottom: 4,
-                      cursor: 'pointer',
-                      outline: isSelected ? '1px solid #2563eb' : '1px solid transparent',
-                      borderRadius: 2,
-                    }
-              }
-            >
-              <ChildRenderer block={child} isPreview={isPreview} />
-            </div>
-          );
-        })}
+        {items.map((child) => (
+          <SortableBlock key={child.id} block={child} zone={dropId} />
+        ))}
       </div>
     </SortableContext>
   );
