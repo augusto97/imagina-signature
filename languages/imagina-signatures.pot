@@ -841,7 +841,7 @@ msgstr ""
 #: src/Deployment/Install/InstallPage.php:324
 #: assets/admin/src/pages/TemplatesPage.tsx:501
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:294
-#: assets/editor/src/editor/topbar/Topbar.tsx:252
+#: assets/editor/src/editor/topbar/Topbar.tsx:260
 msgid "Saving…"
 msgstr ""
 
@@ -2174,19 +2174,19 @@ msgid "Loading"
 msgstr ""
 
 #: assets/admin/src/components/StatusPill.tsx:13
-#: assets/editor/src/editor/topbar/Topbar.tsx:427
+#: assets/editor/src/editor/topbar/Topbar.tsx:435
 msgid "Draft"
 msgstr ""
 
 #: assets/admin/src/components/StatusPill.tsx:14
 #: assets/admin/src/pages/SignaturesPage.tsx:259
-#: assets/editor/src/editor/topbar/Topbar.tsx:428
+#: assets/editor/src/editor/topbar/Topbar.tsx:436
 msgid "Ready"
 msgstr ""
 
 #: assets/admin/src/components/StatusPill.tsx:15
 #: assets/admin/src/pages/SignaturesPage.tsx:260
-#: assets/editor/src/editor/topbar/Topbar.tsx:429
+#: assets/editor/src/editor/topbar/Topbar.tsx:437
 msgid "Archived"
 msgstr ""
 
@@ -2693,8 +2693,8 @@ msgstr ""
 #: assets/admin/src/pages/settings/FrontendTab.tsx:210
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:672
 #: assets/admin/src/pages/settings/Microsoft365Tab.tsx:196
-#: assets/editor/src/editor/topbar/Topbar.tsx:246
-#: assets/editor/src/editor/topbar/Topbar.tsx:260
+#: assets/editor/src/editor/topbar/Topbar.tsx:254
+#: assets/editor/src/editor/topbar/Topbar.tsx:268
 msgid "Save"
 msgstr ""
 
@@ -3370,9 +3370,9 @@ msgstr ""
 
 #: assets/admin/src/pages/settings/CampaignsTab.tsx:348
 #: assets/admin/src/pages/settings/ComplianceTab.tsx:127
-#: assets/editor/src/editor/FieldsOnlyView.tsx:121
+#: assets/editor/src/editor/FieldsOnlyView.tsx:99
 #: assets/editor/src/editor/modals/PreviewModal.tsx:137
-#: assets/editor/src/editor/topbar/Topbar.tsx:192
+#: assets/editor/src/editor/topbar/Topbar.tsx:200
 msgid "Preview"
 msgstr ""
 
@@ -5918,50 +5918,41 @@ msgstr ""
 msgid "Block"
 msgstr ""
 
-#: assets/editor/src/editor/FieldsOnlyView.tsx:47
+#: assets/editor/src/editor/FieldsOnlyView.tsx:60
 #: assets/editor/src/editor/onboarding/DetailsForm.tsx:71
 #: assets/editor/src/editor/onboarding/OnboardingModal.tsx:110
 #: assets/editor/src/editor/onboarding/YourDetailsModal.tsx:22
-#: assets/editor/src/editor/topbar/Topbar.tsx:162
+#: assets/editor/src/editor/topbar/Topbar.tsx:168
 msgid "Your details"
 msgstr ""
 
-#: assets/editor/src/editor/FieldsOnlyView.tsx:52
+#: assets/editor/src/editor/FieldsOnlyView.tsx:65
 msgid ""
 "Your company manages the design of this signature. Fill in your details and "
 "the preview updates as you type."
 msgstr ""
 
-#: assets/editor/src/editor/FieldsOnlyView.tsx:59
+#: assets/editor/src/editor/FieldsOnlyView.tsx:72
 msgid "This design has no fields to fill in."
 msgstr ""
 
-#: assets/editor/src/editor/FieldsOnlyView.tsx:85
-#: assets/editor/src/editor/onboarding/DetailsForm.tsx:63
-msgid "From your profile"
+#: assets/editor/src/editor/FieldsOnlyView.tsx:80
+#: assets/editor/src/editor/onboarding/YourDetailsModal.tsx:85
+msgid "Used wherever this signature shows them."
 msgstr ""
 
-#: assets/editor/src/editor/FieldsOnlyView.tsx:95
-#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:124
-msgid "(empty in profile)"
-msgstr ""
-
-#: assets/editor/src/editor/FieldsOnlyView.tsx:108
+#: assets/editor/src/editor/FieldsOnlyView.tsx:91
 #: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:112
 msgid "Edit profile"
 msgstr ""
 
-#: assets/editor/src/editor/FieldsOnlyView.tsx:112
-msgid "Edit profile to change these values."
-msgstr ""
-
-#: assets/editor/src/editor/FieldsOnlyView.tsx:124
+#: assets/editor/src/editor/FieldsOnlyView.tsx:102
 #: assets/editor/src/editor/modals/PreviewModal.tsx:220
 #: assets/editor/src/editor/onboarding/DetailsForm.tsx:282
 msgid "Signature preview"
 msgstr ""
 
-#: assets/editor/src/editor/FieldsOnlyView.tsx:132
+#: assets/editor/src/editor/FieldsOnlyView.tsx:110
 msgid "The preview could not be generated."
 msgstr ""
 
@@ -6650,7 +6641,7 @@ msgid "Update template"
 msgstr ""
 
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:297
-#: assets/editor/src/editor/topbar/Topbar.tsx:183
+#: assets/editor/src/editor/topbar/Topbar.tsx:191
 msgid "Save as template"
 msgstr ""
 
@@ -6678,7 +6669,7 @@ msgid "Template applied. Press Ctrl+Z to undo."
 msgstr ""
 
 #: assets/editor/src/editor/modals/TemplatePicker.tsx:89
-#: assets/editor/src/editor/topbar/Topbar.tsx:148
+#: assets/editor/src/editor/topbar/Topbar.tsx:154
 msgid "Pick a template"
 msgstr ""
 
@@ -6718,6 +6709,10 @@ msgstr ""
 
 #: assets/editor/src/editor/modals/preview/DarkModeImageWarnings.tsx:55
 msgid "Add light background"
+msgstr ""
+
+#: assets/editor/src/editor/onboarding/DetailsForm.tsx:63
+msgid "From your profile"
 msgstr ""
 
 #: assets/editor/src/editor/onboarding/DetailsForm.tsx:64
@@ -6804,10 +6799,6 @@ msgstr ""
 msgid ""
 "This signature has no fields yet. Pick a template, or insert fields such as "
 "{{job_title}} into a text block."
-msgstr ""
-
-#: assets/editor/src/editor/onboarding/YourDetailsModal.tsx:85
-msgid "Used wherever this signature shows them."
 msgstr ""
 
 #: assets/editor/src/editor/onboarding/YourDetailsModal.tsx:105
@@ -6969,6 +6960,10 @@ msgstr ""
 msgid ""
 "Filled from your profile. A value set there replaces the example in this "
 "signature."
+msgstr ""
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:124
+msgid "(empty in profile)"
 msgstr ""
 
 #: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:135
@@ -7297,79 +7292,79 @@ msgstr ""
 msgid "Canvas content"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:76
+#: assets/editor/src/editor/topbar/Topbar.tsx:78
 msgid "Saved"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:115
+#: assets/editor/src/editor/topbar/Topbar.tsx:117
 msgid "Back to signatures"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:137
+#: assets/editor/src/editor/topbar/Topbar.tsx:141
 msgid "Undo"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:140
+#: assets/editor/src/editor/topbar/Topbar.tsx:144
 msgid "Redo"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:147
+#: assets/editor/src/editor/topbar/Topbar.tsx:153
 msgid "This signature follows a company template"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:159
+#: assets/editor/src/editor/topbar/Topbar.tsx:165
 msgid "Edit the details this signature shows: job title, phone, photo…"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:180
+#: assets/editor/src/editor/topbar/Topbar.tsx:188
 msgid "Save the current canvas as a global template"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:200
+#: assets/editor/src/editor/topbar/Topbar.tsx:208
 msgid "Export"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:256
+#: assets/editor/src/editor/topbar/Topbar.tsx:264
 msgid "Retry save"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:265
+#: assets/editor/src/editor/topbar/Topbar.tsx:273
 #, javascript-format
 msgid "Saved · %s"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:279
+#: assets/editor/src/editor/topbar/Topbar.tsx:287
 msgid "Save now (Cmd/Ctrl + S)"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:326
+#: assets/editor/src/editor/topbar/Topbar.tsx:334
 msgid "Plugin version (PHP and JS bundle agree)."
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:347
+#: assets/editor/src/editor/topbar/Topbar.tsx:355
 #, javascript-format
 msgid ""
 "Stale bundle detected. The plugin is on PHP %s but your browser is running "
 "JS %s. Click to hard-refresh."
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:382
+#: assets/editor/src/editor/topbar/Topbar.tsx:390
 msgid "Untitled signature"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:385
+#: assets/editor/src/editor/topbar/Topbar.tsx:393
 msgid "Signature name"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:386
+#: assets/editor/src/editor/topbar/Topbar.tsx:394
 msgid "Click to rename"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:424
+#: assets/editor/src/editor/topbar/Topbar.tsx:432
 msgid "Signature status"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:425
+#: assets/editor/src/editor/topbar/Topbar.tsx:433
 msgid "Status — controls how the row is grouped on the listing."
 msgstr ""
 
