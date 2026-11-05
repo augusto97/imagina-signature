@@ -148,6 +148,19 @@ final class Actions {
 	public const STORAGE_DRIVER_CHANGED = 'imgsig/storage/driver_changed';
 
 	/**
+	 * Fires after each chunk (≤ 50 users) of a template assignment —
+	 * {@see \ImaginaSignatures\Services\TemplateAssignmentService::assign()}.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int                  $template_id Template.
+	 * @param int[]                $user_ids    Users of this chunk.
+	 * @param string               $mode        `linked` or `copy`.
+	 * @param array<string, mixed> $result      `{ processed, created, updated, skipped, failed, total, next_offset }`.
+	 */
+	public const TEMPLATE_ASSIGNED = 'imgsig/template/assigned';
+
+	/**
 	 * Constructor is private — this class is a static registry.
 	 */
 	private function __construct() {}

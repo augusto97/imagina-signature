@@ -1,5 +1,15 @@
 import { useState, type FC } from 'react';
-import { ChevronUp, ChevronDown, Eye, EyeOff, GripVertical, Layers, Trash2 } from 'lucide-react';
+import {
+  ChevronUp,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Layers,
+  Lock,
+  Trash2,
+  Unlock,
+} from 'lucide-react';
 import {
   DndContext,
   KeyboardSensor,
@@ -20,6 +30,8 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { useSelectionStore } from '@/stores/selectionStore';
+import { useEditPolicy, useLinkStore } from '@/stores/linkStore';
+import { canRestructureBlock, lockedBlockIds } from '@/core/schema/locks';
 import { rendererForBlock } from '@/core/blocks/registry';
 import { normalizeContactRow } from '@/core/blocks/contact-row/normalize';
 import { iconTitle } from '@/core/blocks/social-icons/iconSet';
@@ -51,6 +63,11 @@ import { cn } from '@/utils/cn';
  * level deep. The chevron + eye + trash buttons stay around — drag is
  * not always faster than a one-click "move up" when the next row is
  * adjacent, and chevrons are accessible to keyboard users by default.
+ *
+ * Locks (1.3.0): locked rows show a lock icon; template managers get a
+ * lock / unlock toggle per row. When the lock policy applies, rows that
+ * can't be restructured lose their drag handle and row actions (the
+ * store refuses those actions anyway).
  */
 const CELL_DROP_PREFIX = 'layers-cell:';
 function layersCellDropId(containerId: string, columnId: string): string {
@@ -176,8 +193,15 @@ const LayerRow: FC<LayerRowProps> = ({ block, depth, index, siblingsCount, dragg
   const select = useSelectionStore((s) => s.select);
   const hover = useSelectionStore((s) => s.hover);
 
+  const policy = useEditPolicy();
+  const canManageLocks = useLinkStore((s) => s.canManageLocks);
+  const isLocked = useSchemaStore((s) => lockedBlockIds(s.schema.blocks).has(block.id));
+  const canRestructure = canRestructureBlock(policy, isLocked);
+  const isOwnLock = block.locked === true;
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
+    disabled: !canRestructure,
   });
 
   const def = rendererForBlock(block);
@@ -215,16 +239,20 @@ const LayerRow: FC<LayerRowProps> = ({ block, depth, index, siblingsCount, dragg
       >
         {/* Drag handle — only this element triggers a drag, so
             clicking on the row body still selects the block. */}
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          aria-label={__('Drag layer')}
-          title={__('Drag to reorder')}
-          className="inline-flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
-        >
-          <GripVertical size={11} />
-        </button>
+        {canRestructure ? (
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            aria-label={__('Drag layer')}
+            title={__('Drag to reorder')}
+            className="inline-flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
+          >
+            <GripVertical size={11} />
+          </button>
+        ) : (
+          <span className="inline-flex h-5 w-4 shrink-0" aria-hidden />
+        )}
 
         <button
           type="button"
@@ -245,36 +273,52 @@ const LayerRow: FC<LayerRowProps> = ({ block, depth, index, siblingsCount, dragg
           <span className="ml-1 truncate text-[11px] font-normal text-[var(--text-muted)]">
             {labelForBlock(block)}
           </span>
+          {isOwnLock && !canManageLocks && (
+            <Lock
+              size={11}
+              className="ml-auto shrink-0 text-[var(--text-muted)]"
+              aria-label={__('Locked block')}
+            />
+          )}
         </button>
 
-        <RowAction
-          title={__('Move up')}
-          disabled={!canMoveUp}
-          onClick={() => moveBlockUp(block.id)}
-        >
-          <ChevronUp size={12} />
-        </RowAction>
-        <RowAction
-          title={__('Move down')}
-          disabled={!canMoveDown}
-          onClick={() => moveBlockDown(block.id)}
-        >
-          <ChevronDown size={12} />
-        </RowAction>
-        <RowAction
-          title={visible ? __('Hide') : __('Show')}
-          alwaysVisible={!visible}
-          onClick={() => updateBlock(block.id, { visible: !visible })}
-        >
-          {visible ? <Eye size={12} /> : <EyeOff size={12} />}
-        </RowAction>
-        <RowAction
-          title={__('Delete')}
-          danger
-          onClick={() => deleteBlock(block.id)}
-        >
-          <Trash2 size={12} />
-        </RowAction>
+        {canManageLocks && (
+          <RowAction
+            title={isOwnLock ? __('Unlock block') : __('Lock block for employees')}
+            alwaysVisible={isOwnLock}
+            onClick={() => updateBlock(block.id, { locked: isOwnLock ? undefined : true })}
+          >
+            {isOwnLock ? <Lock size={12} /> : <Unlock size={12} />}
+          </RowAction>
+        )}
+        {canRestructure && (
+          <>
+            <RowAction
+              title={__('Move up')}
+              disabled={!canMoveUp}
+              onClick={() => moveBlockUp(block.id)}
+            >
+              <ChevronUp size={12} />
+            </RowAction>
+            <RowAction
+              title={__('Move down')}
+              disabled={!canMoveDown}
+              onClick={() => moveBlockDown(block.id)}
+            >
+              <ChevronDown size={12} />
+            </RowAction>
+            <RowAction
+              title={visible ? __('Hide') : __('Show')}
+              alwaysVisible={!visible}
+              onClick={() => updateBlock(block.id, { visible: !visible })}
+            >
+              {visible ? <Eye size={12} /> : <EyeOff size={12} />}
+            </RowAction>
+            <RowAction title={__('Delete')} danger onClick={() => deleteBlock(block.id)}>
+              <Trash2 size={12} />
+            </RowAction>
+          </>
+        )}
       </div>
 
       {/* Container children — rendered once per column so the user

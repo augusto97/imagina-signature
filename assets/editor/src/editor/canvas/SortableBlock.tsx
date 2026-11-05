@@ -1,9 +1,14 @@
 import { memo, type FC } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Lock } from 'lucide-react';
 import type { Block } from '@/core/schema/blocks';
+import { canRestructureBlock, lockedBlockIds } from '@/core/schema/locks';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useDropIndicatorStore } from '@/stores/dropIndicatorStore';
+import { useSchemaStore } from '@/stores/schemaStore';
+import { useEditPolicy } from '@/stores/linkStore';
+import { __ } from '@/i18n/helpers';
 import { BlockRenderer } from './BlockRenderer';
 import { SelectionOverlay } from './SelectionOverlay';
 import { BlockToolbar } from './BlockToolbar';
@@ -33,12 +38,21 @@ interface Props {
  * hover / indicator subscriptions are per-block booleans so a hover
  * change re-renders two blocks, not the whole canvas; `memo` skips
  * blocks whose (immer-shared) data didn't change.
+ *
+ * Locks (1.3.0): a block with `locked: true` shows a lock badge (to
+ * everyone, so administrators see what they locked). When the lock
+ * policy applies to the user, locked blocks — and every block of a
+ * `locked_design` / `fields_only` template — can't be dragged.
  */
 const SortableBlockImpl: FC<Props> = ({ block, zone = CANVAS_ROOT_DROP_ID }) => {
   const data: BlockDragData = { kind: 'block', zone };
+  const policy = useEditPolicy();
+  const isLocked = useSchemaStore((s) => lockedBlockIds(s.schema.blocks).has(block.id));
+  const canMove = canRestructureBlock(policy, isLocked);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
     data,
+    disabled: !canMove,
   });
 
   const isSelected = useSelectionStore((s) => s.selectedBlockId === block.id);
@@ -74,8 +88,24 @@ const SortableBlockImpl: FC<Props> = ({ block, zone = CANVAS_ROOT_DROP_ID }) => 
       >
         <BlockRenderer block={block} />
       </SelectionOverlay>
+      {block.locked === true && (
+        <span
+          className="pointer-events-none absolute -left-2 -top-2 z-10 inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-700 text-white shadow"
+          title={__('Locked by your administrator')}
+          aria-label={__('Locked block')}
+          data-imgsig-lock-badge=""
+        >
+          <Lock size={9} strokeWidth={2.5} />
+        </span>
+      )}
       {indicator && <DropIndicator position={indicator} />}
-      {isSelected && <BlockToolbar block={block} dragHandleProps={{ ...attributes, ...listeners }} />}
+      {isSelected && (
+        <BlockToolbar
+          block={block}
+          locked={isLocked}
+          dragHandleProps={{ ...attributes, ...listeners }}
+        />
+      )}
     </div>
   );
 };

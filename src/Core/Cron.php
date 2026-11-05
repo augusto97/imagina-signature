@@ -68,6 +68,11 @@ final class Cron {
 	 */
 	public static function unschedule(): void {
 		wp_clear_scheduled_hook( self::DAILY_HOOK );
+		// Pending template propagation batches (1.3.0); a template saved
+		// again after reactivation restarts its run.
+		if ( function_exists( 'wp_unschedule_hook' ) ) {
+			wp_unschedule_hook( \ImaginaSignatures\Services\TemplatePropagator::CRON_HOOK );
+		}
 	}
 
 	/**

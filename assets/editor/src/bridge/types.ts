@@ -83,7 +83,11 @@ export interface AppConfig {
    * name (see `resolvedVariables()`).
    */
   profileFields?: ProfileFieldDefinition[];
-  /** Where the user edits their profile (wp-admin page or public route). */
+  /**
+   * Where the user edits their profile (wp-admin page or public route) —
+   * linked from the read-only profile values in the Variables panel and
+   * the "Your details" form.
+   */
   profileUrl?: string;
   /**
    * Public company brand kit (Settings → Brand kit). New signatures
@@ -109,6 +113,26 @@ export interface AppConfig {
    * window). Empty array = no campaign banner is injected.
    */
   bannerCampaigns?: BannerCampaign[];
+  /**
+   * Whether the signature follows a company template (1.3.0) and what
+   * the template's employee mode lets this user change. Missing =
+   * a detached signature in `free` mode (pre-1.3 bootstrap).
+   */
+  signatureLink?: SignatureLinkConfig;
+  /**
+   * True for template / team managers: they ignore block locks and
+   * employee modes (1.3.0). Missing = false.
+   */
+  canBypassLocks?: boolean;
+}
+
+/** `IMGSIG_EDITOR_CONFIG.signatureLink` (1.3.0). */
+export interface SignatureLinkConfig {
+  mode: 'linked' | 'detached';
+  templateId: number | null;
+  employeeMode: 'free' | 'locked_design' | 'fields_only';
+  /** Display name of the template ('' when unknown). */
+  templateName?: string;
 }
 
 export interface BannerCampaign {

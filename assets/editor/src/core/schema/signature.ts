@@ -39,12 +39,46 @@ export interface CanvasConfig {
   link_color: string;
 }
 
+/**
+ * What employees may change on a signature that follows a template
+ * (1.3.0), declared by the template in `settings.employee_mode`:
+ *
+ *  - `free`          everything (default; the pre-1.3 behaviour);
+ *  - `locked_design` only the text of unlocked text / heading /
+ *                    disclaimer blocks — layout, styles and locked
+ *                    blocks are fixed;
+ *  - `fields_only`   only their own details (variables / profile).
+ */
+export type EmployeeMode = 'free' | 'locked_design' | 'fields_only';
+
+/** Every {@link EmployeeMode}. */
+export const EMPLOYEE_MODES: readonly EmployeeMode[] = ['free', 'locked_design', 'fields_only'];
+
+/** Template-level settings (1.3.0). Copied into the signatures built from it. */
+export interface SignatureSettings {
+  employee_mode?: EmployeeMode;
+}
+
+/**
+ * An employee's own text on an unlocked text-like block of a linked
+ * signature (1.3.0). Re-applied by the server every time the template
+ * design is refreshed.
+ */
+export interface BlockOverride {
+  content?: string;
+  content_html?: string;
+}
+
 export interface SignatureSchema {
   schema_version: SchemaVersion;
   meta: SignatureMeta;
   canvas: CanvasConfig;
   blocks: Block[];
   variables: Record<string, string>;
+  /** Template settings (1.3.0) — see {@link EmployeeMode}. */
+  settings?: SignatureSettings;
+  /** Linked signatures only (1.3.0): `{ [blockId]: BlockOverride }`. */
+  overrides?: Record<string, BlockOverride>;
 }
 
 /**

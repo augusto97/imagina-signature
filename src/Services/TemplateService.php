@@ -270,6 +270,10 @@ final class TemplateService {
 			$decoded          = $this->sanitizer->sanitize( $decoded );
 			$this->last_notes = $this->sanitizer->notes();
 
+			// An employee's text overrides belong to their linked
+			// signature, never to the template saved from it (1.3.0).
+			unset( $decoded['overrides'] );
+
 			$prepared['json_content']   = (string) wp_json_encode( $decoded );
 			$prepared['schema_version'] = (string) ( $decoded['schema_version'] ?? '1.0' );
 		}

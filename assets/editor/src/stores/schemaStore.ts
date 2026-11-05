@@ -19,7 +19,17 @@ import {
   sameWidths,
   setColumnCountInPlace,
 } from '@/core/schema/columns';
+import {
+  editableFields,
+  isTextLikeType,
+  lockedBlockIds,
+  recordOverride,
+  subtreeHasLock,
+} from '@/core/schema/locks';
+import { __ } from '@/i18n/helpers';
 import { useHistoryStore } from './historyStore';
+import { currentPolicy } from './linkStore';
+import { useToastStore } from './toastStore';
 import { cloneBlockWithFreshIds, cloneSchema, findParentAndIndex } from './schemaUtils';
 
 /** Column fields editable through {@link SchemaState.updateContainerColumn}. */
@@ -64,6 +74,15 @@ export interface ReplaceSchemaOptions {
  *     performs a structural change, or undoes / redoes.
  *   - No-op edits (same value written back) neither push history nor
  *     mark the document dirty.
+ *
+ * Locks (1.3.0): when the user can't bypass locks and the signature
+ * follows a template (see `stores/linkStore.ts` / `core/schema/locks.ts`),
+ * actions refuse — with a toast — to edit, move, duplicate or delete
+ * locked blocks; `locked_design` / `fields_only` also refuse any
+ * structural or canvas change and every property except the text of
+ * unlocked text-like blocks. Derived writes (`{ history: false }`) are
+ * never refused. Text edits on a linked signature are mirrored into
+ * `schema.overrides` so they survive template updates.
  */
 interface SchemaState {
   schema: SignatureSchema;
@@ -93,7 +112,7 @@ interface SchemaState {
    * to history so a single Ctrl+Z brings it back. The input is cloned
    * and never mutated.
    */
-  replaceSchema: (schema: SignatureSchema, options?: ReplaceSchemaOptions) => void;
+  replaceSchema: (schema: SignatureSchema, options?: ReplaceSchemaOptions) => boolean;
 
   /**
    * Replace the schema during undo / redo replay.
@@ -136,7 +155,8 @@ interface SchemaState {
    * and wipe the redo stack.
    */
   updateBlock: (id: string, updates: Partial<Block>, options?: UpdateBlockOptions) => void;
-  deleteBlock: (id: string) => void;
+  /** Returns false when nothing was deleted (missing, or refused by a lock). */
+  deleteBlock: (id: string) => boolean;
   moveBlock: (id: string, target_id: string, position: 'before' | 'after') => boolean;
   duplicateBlock: (id: string) => void;
 
@@ -257,6 +277,50 @@ function findContainer(blocks: Block[], id: string): ContainerBlock | undefined 
   return isContainer(block) ? block : undefined;
 }
 
+// ---------------------------------------------------------------------------
+// Lock guards (1.3.0)
+// ---------------------------------------------------------------------------
+
+type Refusal = 'locked' | 'layout' | 'design' | 'template';
+
+/** Shows why an action was refused and returns false. */
+function refuse(reason: Refusal): false {
+  const messages: Record<Refusal, () => string> = {
+    locked: () => __('This block is locked by your administrator.'),
+    layout: () => __('The layout of this signature is managed by your company template.'),
+    design: () => __('The design of this signature is managed by your company template.'),
+    template: () =>
+      __('This signature follows a company template. Detach it to apply another design.'),
+  };
+  useToastStore.getState().show(messages[reason](), 'error');
+  return false;
+}
+
+/** Id of the container holding block `id` (null at the top level / unknown). */
+function containerIdOf(blocks: Block[], id: string | null): string | null {
+  if (!id) return null;
+  return locateBlock(blocks, id)?.container?.id ?? null;
+}
+
+/**
+ * Whether a structural change is allowed: it moves / removes / copies
+ * `blockIds` and lands in container `targetContainerId` (null = top
+ * level or nothing lands). Toasts the reason when refused.
+ */
+function allowStructure(
+  blocks: Block[],
+  blockIds: string[],
+  targetContainerId: string | null,
+): boolean {
+  const policy = currentPolicy();
+  if (!policy.enforced) return true;
+  if (policy.structureLocked) return refuse('layout');
+  const locked = lockedBlockIds(blocks);
+  if (blockIds.some((id) => locked.has(id))) return refuse('locked');
+  if (targetContainerId !== null && locked.has(targetContainerId)) return refuse('locked');
+  return true;
+}
+
 /**
  * Whether `block` may land in the list that holds `targetId` (i.e.
  * before / after it). Unknown targets resolve to the top level.
@@ -360,6 +424,8 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     replaceSchema: (schema, options = {}) => {
+      // A design that follows a template can't be swapped for another.
+      if (currentPolicy().enforced) return refuse('template');
       const undoable = options.undoable ?? true;
       // Clone so we never migrate / freeze an object the caller still
       // holds (e.g. the template row cached in the picker).
@@ -375,6 +441,7 @@ export const useSchemaStore = create<SchemaState>()(
         state.schema = next;
         markEdited(state);
       });
+      return true;
     },
 
     replaceSchemaForHistory: (schema) => {
@@ -406,6 +473,7 @@ export const useSchemaStore = create<SchemaState>()(
 
     addBlock: (block, position) => {
       if (!canPlaceAtDepth(block, 0)) return false;
+      if (!allowStructure(get().schema.blocks, [], null)) return false;
       pushSnapshot();
       set((state) => {
         if (position === undefined) {
@@ -419,7 +487,9 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     insertBlockBefore: (target_id, block) => {
-      if (!canPlaceNextTo(get().schema.blocks, target_id, block)) return false;
+      const blocks = get().schema.blocks;
+      if (!canPlaceNextTo(blocks, target_id, block)) return false;
+      if (!allowStructure(blocks, [], containerIdOf(blocks, target_id))) return false;
       pushSnapshot();
       set((state) => {
         // Walk into container columns so dropping a library card
@@ -438,7 +508,9 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     insertBlockAfter: (target_id, block) => {
-      if (!canPlaceNextTo(get().schema.blocks, target_id, block)) return false;
+      const blocks = get().schema.blocks;
+      if (!canPlaceNextTo(blocks, target_id, block)) return false;
+      if (!allowStructure(blocks, [], containerIdOf(blocks, target_id))) return false;
       pushSnapshot();
       set((state) => {
         const found = findParentAndIndex(state.schema.blocks, target_id);
@@ -455,34 +527,67 @@ export const useSchemaStore = create<SchemaState>()(
     updateBlock: (id, updates, options = {}) => {
       // Recurses into Container children so nested blocks are
       // editable through the same selection-driven property panel.
-      const current = findBlockByIdDeep(get().schema.blocks, id);
+      const blocks = get().schema.blocks;
+      const current = findBlockByIdDeep(blocks, id);
       if (!current) return;
-      const fields = changedFields(current, updates);
+      const policy = currentPolicy();
+      const locked = policy.enforced || policy.linked ? lockedBlockIds(blocks).has(id) : false;
+
+      // Locks / employee mode: keep only the fields this user may change.
+      // Derived writes (uploaded asset URLs) always go through.
+      let applied: Partial<Block> = updates;
+      if (policy.enforced && options.history !== false) {
+        const allowed = editableFields(policy, current, locked);
+        if (allowed !== 'all') {
+          applied = Object.fromEntries(
+            Object.entries(updates).filter(([key]) => allowed.includes(key)),
+          ) as Partial<Block>;
+          if (changedFields(current, applied).length === 0) {
+            if (changedFields(current, updates).length > 0) refuse(locked ? 'locked' : 'design');
+            return;
+          }
+        }
+      }
+
+      const fields = changedFields(current, applied);
       if (fields.length === 0) return; // no-op write — nothing to undo or save
       if (options.history !== false) {
         pushCoalescedSnapshot(`block:${id}:${fields.join('|')}`);
       }
+      const textChanged =
+        policy.linked &&
+        !locked &&
+        isTextLikeType(current.type) &&
+        fields.some((field) => field === 'content' || field === 'content_html');
       set((state) => {
         const block = findBlockByIdDeep(state.schema.blocks, id);
         if (block) {
-          Object.assign(block, updates);
+          Object.assign(block, applied);
+          // Linked signature: the employee's text survives template updates.
+          if (textChanged) recordOverride(state.schema, block);
           markEdited(state);
         }
       });
     },
 
     deleteBlock: (id) => {
-      if (!findBlockByIdDeep(get().schema.blocks, id)) return;
+      const blocks = get().schema.blocks;
+      const block = findBlockByIdDeep(blocks, id);
+      if (!block) return false;
+      if (!allowStructure(blocks, [id], null)) return false;
+      if (currentPolicy().enforced && subtreeHasLock(block)) return refuse('locked');
       pushSnapshot();
       set((state) => {
         removeBlockByIdDeep(state.schema.blocks, id);
         markEdited(state);
       });
+      return true;
     },
 
     addChildToColumn: (containerId, columnId, block, position) => {
       const dest = findColumn(get().schema.blocks, containerId, columnId);
       if (!dest || !canPlaceAtDepth(block, dest.depth)) return false;
+      if (!allowStructure(get().schema.blocks, [], containerId)) return false;
       pushSnapshot();
       set((state) => {
         const target = findColumn(state.schema.blocks, containerId, columnId);
@@ -506,6 +611,7 @@ export const useSchemaStore = create<SchemaState>()(
       // deeper than MAX_CONTAINER_NESTING.
       if (isDescendantOf(blocks, blockId, containerId)) return false;
       if (!canPlaceAtDepth(moving, dest.depth)) return false;
+      if (!allowStructure(blocks, [blockId], containerId)) return false;
       pushSnapshot();
       set((state) => {
         const source = locateBlock(state.schema.blocks, blockId);
@@ -534,6 +640,7 @@ export const useSchemaStore = create<SchemaState>()(
       const existing = findContainer(get().schema.blocks, containerId);
       const target = clampColumnCount(count);
       if (!existing || existing.columns.length === target) return;
+      if (!allowStructure(get().schema.blocks, [containerId], null)) return;
       pushSnapshot();
       set((state) => {
         const container = findContainer(state.schema.blocks, containerId);
@@ -550,6 +657,7 @@ export const useSchemaStore = create<SchemaState>()(
       const normalized = normalizeWidths(widths.slice(0, count));
       const current = existing.columns.map((c) => c.width);
       if (existing.columns.length === count && sameWidths(current, normalized)) return;
+      if (!allowStructure(get().schema.blocks, [containerId], null)) return;
       pushSnapshot();
       set((state) => {
         const container = findContainer(state.schema.blocks, containerId);
@@ -564,6 +672,7 @@ export const useSchemaStore = create<SchemaState>()(
       if (!existing || widths.length !== existing.columns.length) return;
       const normalized = normalizeWidths(widths);
       if (existing.columns.every((c, i) => c.width === normalized[i])) return;
+      if (!allowStructure(get().schema.blocks, [containerId], null)) return;
       pushCoalescedSnapshot(`columns:${containerId}:width`);
       set((state) => {
         const container = findContainer(state.schema.blocks, containerId);
@@ -579,6 +688,7 @@ export const useSchemaStore = create<SchemaState>()(
       const existing = findContainer(get().schema.blocks, containerId);
       if (!existing || existing.columns.length <= 1) return;
       if (!existing.columns.some((c) => c.id === columnId)) return;
+      if (!allowStructure(get().schema.blocks, [containerId], null)) return;
       pushSnapshot();
       set((state) => {
         const container = findContainer(state.schema.blocks, containerId);
@@ -597,6 +707,7 @@ export const useSchemaStore = create<SchemaState>()(
       const from = existing.columns.findIndex((c) => c.id === columnId);
       const to = from + direction;
       if (from < 0 || to < 0 || to >= existing.columns.length) return;
+      if (!allowStructure(get().schema.blocks, [containerId], null)) return;
       pushSnapshot();
       set((state) => {
         const container = findContainer(state.schema.blocks, containerId);
@@ -613,6 +724,7 @@ export const useSchemaStore = create<SchemaState>()(
       if (!found) return;
       const fields = changedFields(found.column, updates);
       if (fields.length === 0) return;
+      if (!allowStructure(get().schema.blocks, [containerId], null)) return;
       pushCoalescedSnapshot(`column:${columnId}:${fields.join('|')}`);
       set((state) => {
         const target = findColumn(state.schema.blocks, containerId, columnId);
@@ -631,6 +743,7 @@ export const useSchemaStore = create<SchemaState>()(
     moveBlockUp: (id) => {
       const found = findParentAndIndex(get().schema.blocks, id);
       if (!found || found.index === 0) return;
+      if (!allowStructure(get().schema.blocks, [id], null)) return;
       pushSnapshot();
       set((state) => {
         const loc = findParentAndIndex(state.schema.blocks, id);
@@ -648,6 +761,7 @@ export const useSchemaStore = create<SchemaState>()(
     moveBlockDown: (id) => {
       const found = findParentAndIndex(get().schema.blocks, id);
       if (!found || found.index >= found.parent.length - 1) return;
+      if (!allowStructure(get().schema.blocks, [id], null)) return;
       pushSnapshot();
       set((state) => {
         const loc = findParentAndIndex(state.schema.blocks, id);
@@ -672,6 +786,7 @@ export const useSchemaStore = create<SchemaState>()(
       // Never into its own subtree, never deeper than allowed.
       if (isDescendantOf(blocks, id, target_id)) return false;
       if (!canPlaceAtDepth(moving, targetLoc.depth)) return false;
+      if (!allowStructure(blocks, [id], targetLoc.container?.id ?? null)) return false;
       pushSnapshot();
       set((state) => {
         // Walk into Container children for BOTH the source and target
@@ -709,6 +824,7 @@ export const useSchemaStore = create<SchemaState>()(
       const found = findParentAndIndex(get().schema.blocks, id);
       const original = found ? found.parent[found.index] : undefined;
       if (!original) return;
+      if (!allowStructure(get().schema.blocks, [id], containerIdOf(get().schema.blocks, id))) return;
       // Recursively re-id the clone AND every nested block in both
       // container cells — a copy sharing ids with the original makes
       // edits to the copy land on the original (and breaks React keys
@@ -733,6 +849,7 @@ export const useSchemaStore = create<SchemaState>()(
       const copy = cloneBlockWithFreshIds(migrateBlock(block));
       const anchor = after_id ? locateBlock(get().schema.blocks, after_id) : null;
       if (!canPlaceAtDepth(copy, anchor ? anchor.depth : 0)) return null;
+      if (!allowStructure(get().schema.blocks, [], anchor?.container?.id ?? null)) return null;
       pushSnapshot();
       set((state) => {
         const loc = after_id ? findParentAndIndex(state.schema.blocks, after_id) : null;
@@ -749,6 +866,10 @@ export const useSchemaStore = create<SchemaState>()(
     updateCanvas: (updates) => {
       const fields = changedFields(get().schema.canvas, updates);
       if (fields.length === 0) return;
+      if (currentPolicy().canvasLocked) {
+        refuse('design');
+        return;
+      }
       pushCoalescedSnapshot(`canvas:${fields.join('|')}`);
       set((state) => {
         Object.assign(state.schema.canvas, updates);

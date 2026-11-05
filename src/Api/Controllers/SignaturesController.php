@@ -619,6 +619,12 @@ final class SignaturesController extends BaseController {
 			$payload['json_content'] = $request->get_param( 'json_content' );
 		}
 
+		// 1.3.0: `detached` = "Detach from template". The service decides
+		// who may change the link (employees can't link themselves).
+		if ( is_string( $request->get_param( 'link_mode' ) ) ) {
+			$payload['link_mode'] = (string) $request->get_param( 'link_mode' );
+		}
+
 		if ( is_string( $request->get_param( 'html' ) ) ) {
 			$payload['html'] = (string) $request->get_param( 'html' );
 			if ( is_string( $request->get_param( 'text' ) ) ) {
@@ -700,6 +706,10 @@ final class SignaturesController extends BaseController {
 			],
 			'json_content' => [
 				'type' => 'object',
+			],
+			'link_mode'    => [
+				'type' => 'string',
+				'enum' => [ 'linked', 'detached' ],
 			],
 			// Compiled signature fragment + plain text (1.3.0). The
 			// service sanitises them with the email-safe allowlist.

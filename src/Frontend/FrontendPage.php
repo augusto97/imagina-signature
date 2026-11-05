@@ -17,6 +17,7 @@ use ImaginaSignatures\Directory\Groups;
 use ImaginaSignatures\Directory\ProfileFields;
 use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Settings\BrandKit;
+use ImaginaSignatures\Services\SignatureLinkConfig;
 use ImaginaSignatures\Settings\SystemVariables;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 use ImaginaSignatures\Storage\StorageManager;
@@ -593,6 +594,10 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 			'profileFields'    => ProfileFields::public_definitions(),
 			'profileUrl'       => self::profile_url(),
 			'bannerCampaigns'  => SiteSettingsController::active_banner_campaigns(),
+			// 1.3.0: whether the signature follows a template and what its
+			// employee mode lets this user change (see SignatureLinkConfig).
+			'signatureLink'    => SignatureLinkConfig::for_signature( $signature_id, $user_id ),
+			'canBypassLocks'   => SignatureLinkConfig::can_bypass_locks( $user_id ),
 		];
 	}
 }

@@ -116,6 +116,31 @@ export interface BulkApplyResult {
   failed: number;
 }
 
+/** REST: one chunk of POST /admin/templates/:id/assign (1.3.0). */
+export interface AssignResult {
+  template_id: number;
+  processed: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+  total: number;
+  /** Offset of the next chunk, or null when every user was processed. */
+  next_offset: number | null;
+}
+
+/** Progress of a template update reaching its linked signatures (1.3.0). */
+export interface PropagationProgress {
+  template_id: number;
+  status: 'none' | 'queued' | 'running' | 'done';
+  total: number;
+  processed: number;
+  updated: number;
+}
+
+/** What employees may change on signatures linked to a template (1.3.0). */
+export type EmployeeMode = 'free' | 'locked_design' | 'fields_only';
+
 /** REST: the storage state returned by /admin/storage. */
 export interface StorageState {
   driver: string;
