@@ -9,6 +9,8 @@ import { __ } from '@/i18n/helpers';
 interface Props {
   type: string;
   label: string;
+  /** Registry description, shown as the card's tooltip. */
+  description?: string;
   icon: LucideIcon;
 }
 
@@ -21,7 +23,7 @@ interface Props {
  *          drag handler in {@link useDragAndDrop} knows how to route
  *          the drop.
  */
-export const BlockCard: FC<Props> = ({ type, label, icon: Icon }) => {
+export const BlockCard: FC<Props> = ({ type, label, description, icon: Icon }) => {
   const addBlock = useSchemaStore((s) => s.addBlock);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `library-${type}`,
@@ -38,12 +40,15 @@ export const BlockCard: FC<Props> = ({ type, label, icon: Icon }) => {
       ref={setNodeRef}
       type="button"
       className="group flex aspect-[4/3] cursor-grab flex-col items-center justify-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-2 py-3 text-[11px] font-medium text-[var(--text-secondary)] transition-all duration-150 hover:-translate-y-px hover:border-[var(--accent)] hover:bg-[var(--bg-selected)] hover:text-[var(--accent)] hover:shadow-sm active:cursor-grabbing"
+      // i18n-dynamic: registry descriptions are listed in i18n/dynamic-strings.ts.
+      title={description ? __(description) : undefined}
       style={{ opacity: isDragging ? 0.4 : 1 }}
       onClick={handleClick}
       {...attributes}
       {...listeners}
     >
       <Icon size={20} strokeWidth={1.6} className="text-[var(--text-secondary)] transition-colors group-hover:text-[var(--accent)]" />
+      {/* i18n-dynamic: registry labels are listed in i18n/dynamic-strings.ts. */}
       <span className="text-[11px]">{__(label)}</span>
     </button>
   );

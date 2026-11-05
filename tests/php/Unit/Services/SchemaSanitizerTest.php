@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace ImaginaSignatures\Tests\Unit\Services;
 
 use Brain\Monkey;
+use Brain\Monkey\Functions;
 use ImaginaSignatures\Services\HtmlSanitizer;
 use ImaginaSignatures\Services\SchemaSanitizer;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +25,7 @@ final class SchemaSanitizerTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		Functions\when( '__' )->returnArg();
 		imgsig_tests_load_kses();
 		$this->sanitizer = new SchemaSanitizer( new HtmlSanitizer() );
 	}

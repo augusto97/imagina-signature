@@ -303,7 +303,7 @@ const definition: BlockDefinition<VCardBlock> = {
   create: (): VCardBlock => ({
     id: generateId('vcard'),
     type: 'vcard',
-    label: 'Save my contact',
+    label: __('Save my contact'),
     full_name: '',
     organization: '',
     title: '',

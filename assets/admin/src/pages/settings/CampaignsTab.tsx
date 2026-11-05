@@ -166,21 +166,21 @@ function statusFor(c: BannerCampaign): Status {
   return 'active';
 }
 
-const STATUS_STYLES: Record<Status, { label: string; cls: string }> = {
+const STATUS_STYLES: Record<Status, { label: () => string; cls: string }> = {
   active: {
-    label: 'Active',
+    label: () => __('Active'),
     cls: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
   },
   scheduled: {
-    label: 'Scheduled',
+    label: () => __('Scheduled'),
     cls: 'bg-amber-50 text-amber-700 ring-amber-200',
   },
   expired: {
-    label: 'Expired',
+    label: () => __('Expired'),
     cls: 'bg-slate-100 text-slate-600 ring-slate-200',
   },
   disabled: {
-    label: 'Disabled',
+    label: () => __('Disabled'),
     cls: 'bg-slate-100 text-slate-500 ring-slate-200',
   },
 };
@@ -212,7 +212,7 @@ const CampaignRow: FC<CampaignRowProps> = ({ campaign, status, onChange, onRemov
               statusStyle.cls,
             )}
           >
-            {__(statusStyle.label)}
+            {statusStyle.label()}
           </span>
         </div>
 

@@ -12,6 +12,7 @@ namespace ImaginaSignatures\Services;
 use ImaginaSignatures\Exceptions\ValidationException;
 use ImaginaSignatures\Models\Template;
 use ImaginaSignatures\Repositories\TemplateRepository;
+use ImaginaSignatures\Setup\DefaultTemplatesSeeder;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -96,11 +97,11 @@ final class TemplateService {
 
 		if ( null !== $this->repo->find_by_slug( (string) $prepared['slug'] ) ) {
 			throw new ValidationException(
-				'Slug already exists.',
+				__( 'Slug already exists.', 'imagina-signatures' ),
 				[
 					[
 						'path'    => 'slug',
-						'message' => 'A template with this slug already exists.',
+						'message' => __( 'A template with this slug already exists.', 'imagina-signatures' ),
 					],
 				]
 			);
@@ -130,11 +131,11 @@ final class TemplateService {
 		$existing = $this->repo->find( $template_id );
 		if ( null === $existing ) {
 			throw new ValidationException(
-				'Template not found.',
+				__( 'Template not found.', 'imagina-signatures' ),
 				[
 					[
 						'path'    => 'id',
-						'message' => 'No template with this id.',
+						'message' => __( 'No template with this id.', 'imagina-signatures' ),
 					],
 				]
 			);
@@ -142,16 +143,21 @@ final class TemplateService {
 
 		$prepared = $this->prepare_for_save( $changes );
 
+		// The REST layer shows seeded templates' name / description
+		// translated; saving the metadata form unchanged must keep the
+		// English source in the DB (see DefaultTemplatesSeeder::localize()).
+		$prepared = DefaultTemplatesSeeder::delocalize( $existing->slug, $existing->is_system, $prepared );
+
 		// Slug change must not collide with another row.
 		if ( isset( $prepared['slug'] ) && $prepared['slug'] !== $existing->slug ) {
 			$collision = $this->repo->find_by_slug( (string) $prepared['slug'] );
 			if ( null !== $collision && $collision->id !== $template_id ) {
 				throw new ValidationException(
-					'Slug already exists.',
+					__( 'Slug already exists.', 'imagina-signatures' ),
 					[
 						[
 							'path'    => 'slug',
-							'message' => 'A template with this slug already exists.',
+							'message' => __( 'A template with this slug already exists.', 'imagina-signatures' ),
 						],
 					]
 				);
@@ -177,11 +183,11 @@ final class TemplateService {
 		$existing = $this->repo->find( $template_id );
 		if ( null === $existing ) {
 			throw new ValidationException(
-				'Template not found.',
+				__( 'Template not found.', 'imagina-signatures' ),
 				[
 					[
 						'path'    => 'id',
-						'message' => 'No template with this id.',
+						'message' => __( 'No template with this id.', 'imagina-signatures' ),
 					],
 				]
 			);
@@ -189,11 +195,11 @@ final class TemplateService {
 
 		if ( $existing->is_system ) {
 			throw new ValidationException(
-				'System templates cannot be deleted.',
+				__( 'System templates cannot be deleted.', 'imagina-signatures' ),
 				[
 					[
 						'path'    => 'id',
-						'message' => 'This template is shipped with the plugin.',
+						'message' => __( 'This template is shipped with the plugin.', 'imagina-signatures' ),
 					],
 				]
 			);
@@ -250,11 +256,11 @@ final class TemplateService {
 
 			if ( ! is_array( $decoded ) ) {
 				throw new ValidationException(
-					'json_content must be a JSON object.',
+					__( 'json_content must be a JSON object.', 'imagina-signatures' ),
 					[
 						[
 							'path'    => 'json_content',
-							'message' => 'Could not decode payload.',
+							'message' => __( 'Could not decode payload.', 'imagina-signatures' ),
 						],
 					]
 				);

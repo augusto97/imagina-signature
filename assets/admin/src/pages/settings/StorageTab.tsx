@@ -19,13 +19,17 @@ interface FormState {
   public_url_base: string;
 }
 
-const PROVIDERS: Array<{ value: string; label: string }> = [
-  { value: 'cloudflare_r2', label: 'Cloudflare R2' },
-  { value: 's3', label: 'Amazon S3' },
-  { value: 'b2', label: 'Backblaze B2' },
-  { value: 'do_spaces', label: 'DigitalOcean Spaces' },
-  { value: 'wasabi', label: 'Wasabi' },
-  { value: 'custom', label: 'Custom S3-compatible' },
+/**
+ * Provider names are brands and stay untranslated; only the generic
+ * entry has a translatable label. Lazy so it translates at render time.
+ */
+const PROVIDERS: Array<{ value: string; label: () => string }> = [
+  { value: 'cloudflare_r2', label: () => 'Cloudflare R2' },
+  { value: 's3', label: () => 'Amazon S3' },
+  { value: 'b2', label: () => 'Backblaze B2' },
+  { value: 'do_spaces', label: () => 'DigitalOcean Spaces' },
+  { value: 'wasabi', label: () => 'Wasabi' },
+  { value: 'custom', label: () => __('Custom S3-compatible') },
 ];
 
 interface TestResult {
@@ -147,7 +151,7 @@ export const StorageTab: FC = () => {
                 <select value={form.provider} onChange={(e) => update('provider', e.target.value)}>
                   {PROVIDERS.map((p) => (
                     <option key={p.value} value={p.value}>
-                      {p.label}
+                      {p.label()}
                     </option>
                   ))}
                 </select>

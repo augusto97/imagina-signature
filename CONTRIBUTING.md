@@ -83,10 +83,30 @@ Before requesting review, please confirm:
 - [ ] `npm test` passes
 - [ ] New / changed behaviour has tests
 - [ ] User-visible strings go through `__()` / TS `__()` helper (CLAUDE.md §6.5)
+- [ ] `npm run i18n:check` passes (see [Translations](#translations))
 - [ ] New REST endpoints have a `permission_callback` and ownership check
 - [ ] New hooks are documented in `src/Hooks/Actions.php` or `Filters.php` and CLAUDE.md §26
 - [ ] No new external runtime dependencies (no CDNs, no third-party HTTP calls in runtime)
 - [ ] No usage of `eval`, `exec`, `shell_exec`, sessions, or similar (CLAUDE.md §2.4)
+
+## Translations
+
+Text domain `imagina-signatures`; catalogues live in `languages/`. The pipeline needs only Node and the `php` CLI (no WP-CLI or gettext):
+
+```bash
+npm run i18n:pot      # extract PHP (tokenizer) + TS (compiler API) strings → languages/imagina-signatures.pot
+npm run i18n:update   # merge the .pot into every languages/*.po (new msgids get an empty msgstr)
+# … translate the empty msgstr entries in languages/*.po …
+npm run i18n:build    # compile .po → .mo (PHP) and .json (React apps)
+npm run i18n:check    # exit 1 if anything is untranslated, a placeholder changed, or an artefact is stale
+```
+
+Commit the `.pot`, `.po`, `.mo` and `.json` files. Other helpers: `npm run i18n:extract-js` (lists non-literal `__()` calls), `npm run i18n:audit` (heuristic list of hard-coded UI strings), `npm run i18n:update -- es_MX` (start a regional catalogue).
+
+Rules:
+
+- Always pass a **literal** to `__()`. Registry-driven labels (block names / descriptions) are listed in `assets/editor/src/i18n/dynamic-strings.ts` — a test fails when a block is missing there.
+- Spanish: `es_ES` is the base catalogue; every other `es_*` locale falls back to it unless it has its own `.po`. Use “tú”, keep `%s` / `%1$s` / `{{variables}}` / HTML intact.
 
 ## Reporting bugs
 

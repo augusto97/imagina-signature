@@ -11,36 +11,42 @@ import { FrontendTab } from './settings/FrontendTab';
 
 type Tab = 'storage' | 'branding' | 'compliance' | 'campaigns' | 'frontend';
 
-const TABS: Array<{ id: Tab; label: string; icon: typeof Cloud; description: string }> = [
+/** Labels / descriptions are lazy so they translate at render time. */
+const TABS: Array<{ id: Tab; label: () => string; icon: typeof Cloud; description: () => string }> = [
   {
     id: 'storage',
-    label: 'Storage',
+    label: () => __('Storage'),
     icon: Cloud,
-    description: 'Pick where uploaded images live: WordPress Media Library or any S3-compatible bucket.',
+    description: () =>
+      __('Pick where uploaded images live: WordPress Media Library or any S3-compatible bucket.'),
   },
   {
     id: 'branding',
-    label: 'Branding',
+    label: () => __('Branding'),
     icon: Palette,
-    description: 'Site-wide brand palette shown as quick-pick swatches in every editor ColorInput.',
+    description: () =>
+      __('Site-wide brand palette shown as quick-pick swatches in every editor color picker.'),
   },
   {
     id: 'compliance',
-    label: 'Compliance',
+    label: () => __('Compliance'),
     icon: FileText,
-    description: 'Optional HTML footer appended to every signature on export (GDPR / CAN-SPAM).',
+    description: () =>
+      __('Optional HTML footer appended to every signature on export (GDPR / CAN-SPAM).'),
   },
   {
     id: 'campaigns',
-    label: 'Campaigns',
+    label: () => __('Campaigns'),
     icon: Megaphone,
-    description: 'Promotional banners auto-injected at the bottom of every signature, with optional date scheduling and random rotation across active entries.',
+    description: () =>
+      __('Promotional banners auto-injected at the bottom of every signature, with optional date scheduling and random rotation across active entries.'),
   },
   {
     id: 'frontend',
-    label: 'Frontend',
+    label: () => __('Frontend'),
     icon: Globe,
-    description: 'Expose the editor on a public-facing URL so non-admin users (e.g. subscribers) can manage their own signatures without entering wp-admin.',
+    description: () =>
+      __('Expose the editor on a public-facing URL so non-admin users (e.g. subscribers) can manage their own signatures without entering wp-admin.'),
   },
 ];
 
@@ -55,7 +61,7 @@ export const SettingsPage: FC = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <Topbar title={__('Settings')} description={__(active.description)} />
+      <Topbar title={__('Settings')} description={active.description()} />
 
       <div className="flex-1 overflow-auto p-6">
         <div className="mx-auto max-w-3xl space-y-4">
@@ -75,7 +81,7 @@ export const SettingsPage: FC = () => {
                   )}
                 >
                   <Icon size={14} />
-                  {__(label)}
+                  {label()}
                 </button>
               );
             })}

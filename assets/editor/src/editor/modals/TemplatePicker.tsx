@@ -11,6 +11,7 @@ import { mergeTemplateIntoSchema } from '@/stores/schemaUtils';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 import { Modal } from '@/components/shared/Modal';
+import { templateCategoryLabel } from '@shared/templateCategories';
 import { ConfirmDialog } from './ConfirmDialog';
 
 interface TemplateRow {
@@ -177,7 +178,7 @@ export const TemplatePicker: FC = () => {
                 </CategoryChip>
                 {categories.map((c) => (
                   <CategoryChip key={c} active={category === c} onClick={() => setCategory(c)}>
-                    {c}
+                    {templateCategoryLabel(c)}
                   </CategoryChip>
                 ))}
               </div>
@@ -203,7 +204,7 @@ export const TemplatePicker: FC = () => {
                       </span>
                       {t.category && (
                         <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-slate-600">
-                          {t.category}
+                          {templateCategoryLabel(t.category)}
                         </span>
                       )}
                     </div>

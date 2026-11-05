@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { __ } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
 
 type Status = 'draft' | 'ready' | 'archived';
@@ -7,10 +8,11 @@ interface Props {
   status: Status;
 }
 
-const LABEL: Record<Status, string> = {
-  draft: 'Draft',
-  ready: 'Ready',
-  archived: 'Archived',
+/** Lazy so labels translate at render time. */
+const LABEL: Record<Status, () => string> = {
+  draft: () => __('Draft'),
+  ready: () => __('Ready'),
+  archived: () => __('Archived'),
 };
 
 const COLOR: Record<Status, string> = {
@@ -26,6 +28,6 @@ export const StatusPill: FC<Props> = ({ status }) => (
       COLOR[status],
     )}
   >
-    {LABEL[status]}
+    {LABEL[status]()}
   </span>
 );

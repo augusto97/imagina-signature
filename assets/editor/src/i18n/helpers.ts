@@ -1,21 +1,15 @@
-import { getTranslations } from './translations';
-
 /**
- * Translation helper. Returns the localised string when a translation
- * is loaded for `text`, otherwise `text` itself.
+ * Editor translation helpers (CLAUDE.md §6.5).
  *
- * `sprintf`-style `%s` placeholders are substituted in order.
+ * `__()` looks the msgid up in `IMGSIG_EDITOR_CONFIG.translations`
+ * (injected by PHP for the user's locale), falls back to the msgid,
+ * and substitutes `%s` / `%d` / positional `%1$s` placeholders.
+ *
+ * The implementation is shared with the admin app — see
+ * `assets/shared/i18n.ts`.
  *
  * @example
  *   __('My Signatures');
  *   __('Created on %s', formattedDate);
  */
-export function __(text: string, ...args: Array<string | number>): string {
-  const translations = getTranslations();
-  const localised = translations[text] ?? text;
-
-  if (args.length === 0) return localised;
-
-  let i = 0;
-  return localised.replace(/%s/g, () => String(args[i++] ?? ''));
-}
+export { __, sprintf } from '@shared/i18n';

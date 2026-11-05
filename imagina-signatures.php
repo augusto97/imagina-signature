@@ -97,6 +97,14 @@ function imgsig_render_unsupported_notice(): void {
 }
 
 if ( ! imgsig_meets_requirements() ) {
+	// The autoloader (and so Core\I18n) never loads on this path, but
+	// the notice should still be translated.
+	add_action(
+		'init',
+		static function (): void {
+			load_plugin_textdomain( 'imagina-signatures', false, dirname( IMGSIG_BASENAME ) . '/languages' );
+		}
+	);
 	add_action( 'admin_notices', __NAMESPACE__ . '\\imgsig_render_unsupported_notice' );
 	add_action(
 		'admin_init',

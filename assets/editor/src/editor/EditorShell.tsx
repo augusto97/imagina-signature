@@ -67,6 +67,7 @@ export const EditorShell: FC = () => {
             <div className="pointer-events-none inline-flex items-center gap-2 rounded-md border border-[var(--border-selected)] bg-[var(--bg-panel)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] shadow-lg">
               {LibraryIcon && <LibraryIcon size={14} className="text-[var(--accent)]" />}
               <span>
+                {/* i18n-dynamic: registry labels are listed in i18n/dynamic-strings.ts. */}
                 {libraryDefinition ? __(libraryDefinition.label) : __('Block')}
               </span>
             </div>

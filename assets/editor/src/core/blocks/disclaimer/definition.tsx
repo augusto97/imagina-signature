@@ -96,8 +96,9 @@ const definition: BlockDefinition<DisclaimerBlock> = {
   create: (): DisclaimerBlock => ({
     id: generateId('dsc'),
     type: 'disclaimer',
-    content:
+    content: __(
       'This email and any attachments are confidential. If you received it in error, please notify the sender and delete it.',
+    ),
     style: {
       font_family: 'Arial, sans-serif',
       font_size: 10,

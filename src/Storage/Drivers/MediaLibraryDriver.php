@@ -106,7 +106,7 @@ final class MediaLibraryDriver implements StorageDriverInterface {
 	 */
 	public function upload( string $source_path, string $destination_key, array $meta ): UploadResult {
 		if ( ! is_string( $source_path ) || '' === $source_path || ! file_exists( $source_path ) ) {
-			throw new StorageException( 'Source file does not exist.' );
+			throw new StorageException( __( 'Source file does not exist.', 'imagina-signatures' ) );
 		}
 
 		$user_id = isset( $meta['user_id'] ) ? (int) $meta['user_id'] : 0;
@@ -125,7 +125,7 @@ final class MediaLibraryDriver implements StorageDriverInterface {
 		if ( $is_vcard ) {
 			$head = (string) file_get_contents( $source_path, false, null, 0, 64 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local upload temp file.
 			if ( ! UploadPolicy::looks_like_vcard( $head ) ) {
-				throw new StorageException( 'The uploaded file is not a vCard.' );
+				throw new StorageException( __( 'The uploaded file is not a vCard.', 'imagina-signatures' ) );
 			}
 		} elseif ( UploadPolicy::is_image( $mime ) ) {
 			// Strip EXIF / GPS and downscale before anything is stored.

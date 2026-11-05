@@ -198,14 +198,14 @@ final class SchemaSanitizer {
 			case 'html':
 				$clean = $this->html->sanitize( $value );
 				if ( $clean !== $value ) {
-					$this->note( $path, 'Removed HTML that is not allowed in signatures.' );
+					$this->note( $path, __( 'Removed HTML that is not allowed in signatures.', 'imagina-signatures' ) );
 				}
 				return $clean;
 
 			case 'url':
 				$clean = $this->html->sanitize_url( $value );
 				if ( null === $clean ) {
-					$this->note( $path, 'Removed a URL with a disallowed scheme (only http, https, mailto and tel links are allowed).' );
+					$this->note( $path, __( 'Removed a URL with a disallowed scheme (only http, https, mailto and tel links are allowed).', 'imagina-signatures' ) );
 					return '';
 				}
 				return $clean;
@@ -213,7 +213,7 @@ final class SchemaSanitizer {
 			default:
 				$clean = $this->html->strip_markup( $value );
 				if ( $clean !== $value ) {
-					$this->note( $path, 'Removed markup from a plain-text field.' );
+					$this->note( $path, __( 'Removed markup from a plain-text field.', 'imagina-signatures' ) );
 				}
 				return $clean;
 		}
@@ -237,14 +237,14 @@ final class SchemaSanitizer {
 			}
 
 			if ( $this->html->is_script_url( $value ) ) {
-				$this->note( $path, 'Removed a script or data URL from a variable value.' );
+				$this->note( $path, __( 'Removed a script or data URL from a variable value.', 'imagina-signatures' ) );
 				$variables[ $name ] = '';
 				continue;
 			}
 
 			$clean = $this->html->strip_markup( $value );
 			if ( $clean !== $value ) {
-				$this->note( $path, 'Removed markup from a variable value.' );
+				$this->note( $path, __( 'Removed markup from a variable value.', 'imagina-signatures' ) );
 			}
 			$variables[ $name ] = $clean;
 		}

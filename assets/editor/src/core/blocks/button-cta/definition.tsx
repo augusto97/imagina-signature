@@ -177,7 +177,7 @@ const definition: BlockDefinition<ButtonCtaBlock> = {
   create: (): ButtonCtaBlock => ({
     id: generateId('btn'),
     type: 'button_cta',
-    label: 'Book a call',
+    label: __('Book a call'),
     href: 'https://',
     background_color: '#1d4ed8',
     text_color: '#ffffff',

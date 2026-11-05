@@ -11,6 +11,7 @@ namespace ImaginaSignatures\Frontend;
 
 use ImaginaSignatures\Admin\ManifestReader;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
+use ImaginaSignatures\Core\I18n;
 use ImaginaSignatures\Core\Plugin;
 use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
@@ -61,17 +62,29 @@ final class FrontendPage {
 			return;
 		}
 
-		if ( ! current_user_can( CapabilitiesInstaller::CAP_USE ) ) {
-			$this->render_forbidden();
-			return;
-		}
+		// Logged-in users get their profile language (as in wp-admin), so
+		// the PHP-rendered shell matches the React app, whose
+		// `translations` follow get_user_locale().
+		$user_locale = get_user_locale();
+		$switched    = determine_locale() !== $user_locale && switch_to_locale( $user_locale );
 
-		if ( 'editor' === $view ) {
-			$this->render_editor( $signature_id );
-			return;
-		}
+		try {
+			if ( ! current_user_can( CapabilitiesInstaller::CAP_USE ) ) {
+				$this->render_forbidden();
+				return;
+			}
 
-		$this->render_index();
+			if ( 'editor' === $view ) {
+				$this->render_editor( $signature_id );
+				return;
+			}
+
+			$this->render_index();
+		} finally {
+			if ( $switched ) {
+				restore_previous_locale();
+			}
+		}
 	}
 
 	/**
@@ -468,6 +481,8 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 			// `admin-ajax.php?action=rest-nonce` (works for any logged-in role).
 			'ajaxUrl'          => esc_url_raw( admin_url( 'admin-ajax.php' ) ),
 			'locale'           => get_user_locale( $user_id ),
+			// `{ msgid: msgstr }` for the user's locale ({} for English).
+			'translations'     => I18n::js_translations( get_user_locale( $user_id ) ),
 			// Subscribers don't have wp-admin access — the sidebar's
 			// "back" link uses this as its destination, so point it at
 			// the WP site home. The SidebarNav reads `frontendContext`
@@ -530,6 +545,8 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 			'restNonce'        => wp_create_nonce( 'wp_rest' ),
 			'ajaxUrl'          => esc_url_raw( admin_url( 'admin-ajax.php' ) ),
 			'locale'           => get_user_locale( $user_id ),
+			// `{ msgid: msgstr }` for the user's locale ({} for English).
+			'translations'     => I18n::js_translations( get_user_locale( $user_id ) ),
 			'pluginUrl'        => esc_url_raw( plugins_url( '', IMGSIG_FILE ) ),
 			'signaturesUrl'    => FrontendAccess::dashboard_url(),
 			'capabilities'     => [

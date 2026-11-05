@@ -166,7 +166,7 @@ final class S3Driver implements StorageDriverInterface, ObjectInspectorInterface
 		$region       = $fixed_region ?? (string) ( $config['region'] ?? '' );
 
 		if ( '' === $region && 'custom' !== $preset_id ) {
-			throw new StorageException( 'A region must be configured for this provider.' );
+			throw new StorageException( __( 'A region must be configured for this provider.', 'imagina-signatures' ) );
 		}
 
 		// `custom` falls back to a sentinel region when none is set.
@@ -183,7 +183,7 @@ final class S3Driver implements StorageDriverInterface, ObjectInspectorInterface
 		$endpoint = ProviderPresets::resolve_endpoint( $preset_id, $region, $extra_fields );
 
 		if ( '' === $endpoint ) {
-			throw new StorageException( 'Could not resolve a usable endpoint URL for this provider.' );
+			throw new StorageException( __( 'Could not resolve a usable endpoint URL for this provider.', 'imagina-signatures' ) );
 		}
 
 		$signer    = new SigV4Signer( (string) $config['access_key'], (string) $config['secret_key'], $region );
@@ -266,12 +266,12 @@ final class S3Driver implements StorageDriverInterface, ObjectInspectorInterface
 	 */
 	public function upload( string $source_path, string $destination_key, array $meta ): UploadResult {
 		if ( '' === $source_path || ! file_exists( $source_path ) ) {
-			throw new StorageException( 'Source file does not exist.' );
+			throw new StorageException( __( 'Source file does not exist.', 'imagina-signatures' ) );
 		}
 
 		$body = file_get_contents( $source_path );
 		if ( false === $body ) {
-			throw new StorageException( 'Unable to read source file.' );
+			throw new StorageException( __( 'Unable to read source file.', 'imagina-signatures' ) );
 		}
 
 		$content_type = isset( $meta['mime_type'] ) ? (string) $meta['mime_type'] : 'application/octet-stream';
@@ -315,7 +315,7 @@ final class S3Driver implements StorageDriverInterface, ObjectInspectorInterface
 		int $expires_seconds
 	): PresignedResult {
 		if ( ! $this->is_configured() ) {
-			throw new StorageException( 'S3 driver is not configured.' );
+			throw new StorageException( __( 'S3 driver is not configured.', 'imagina-signatures' ) );
 		}
 
 		$url        = $this->presigner->for_put( $key, $content_type, $expires_seconds );

@@ -1,18 +1,9 @@
 /**
  * Translation bundle accessor.
  *
- * The host PHP optionally injects a `translations` map onto
- * `IMGSIG_EDITOR_CONFIG`. We don't have one wired yet — until we do,
- * `__()` falls through to the source string. The .po -> JSON pipeline
- * lands in Sprint 12.
+ * The host PHP injects a `{ msgid: msgstr }` map as `translations` on
+ * `IMGSIG_EDITOR_CONFIG` (`src/Core/I18n.php` reads it from
+ * `languages/imagina-signatures-<locale>.json`, compiled from the .po
+ * files by `npm run i18n:build`). Empty for English.
  */
-
-interface TranslationConfig {
-  translations?: Record<string, string>;
-}
-
-export function getTranslations(): Record<string, string> {
-  const config = (window as unknown as { IMGSIG_EDITOR_CONFIG?: TranslationConfig })
-    .IMGSIG_EDITOR_CONFIG;
-  return config?.translations ?? {};
-}
+export { getTranslations, type TranslationMap } from '@shared/i18n';

@@ -17,10 +17,11 @@ const CLIENT_LABELS: Record<PreviewClient, string> = {
   apple: 'Apple Mail',
 };
 
-const DEVICE_PRESETS: Record<PreviewDevice, { label: string; width: number; icon: typeof Monitor }> = {
-  desktop: { label: 'Desktop', width: 720, icon: Monitor },
-  tablet: { label: 'Tablet', width: 480, icon: Tablet },
-  mobile: { label: 'Mobile', width: 360, icon: Smartphone },
+/** Labels are lazy so they translate at render time. */
+const DEVICE_PRESETS: Record<PreviewDevice, { label: () => string; width: number; icon: typeof Monitor }> = {
+  desktop: { label: () => __('Desktop'), width: 720, icon: Monitor },
+  tablet: { label: () => __('Tablet'), width: 480, icon: Tablet },
+  mobile: { label: () => __('Mobile'), width: 360, icon: Smartphone },
 };
 
 /**
@@ -96,7 +97,8 @@ export const PreviewModal: FC = () => {
 
           <div className="flex items-center gap-1 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] p-0.5">
             {(['desktop', 'tablet', 'mobile'] as const).map((id) => {
-              const { label, icon: Icon } = DEVICE_PRESETS[id];
+              const { label: deviceLabel, icon: Icon } = DEVICE_PRESETS[id];
+              const label = deviceLabel();
               const active = device === id;
               return (
                 <button
@@ -131,7 +133,7 @@ export const PreviewModal: FC = () => {
                 : __('HTML payload size.')
             }
           >
-            {sizeKb} KB
+            {__('%s KB', sizeKb)}
           </span>
         </div>
 

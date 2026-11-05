@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { __ } from '@/i18n/helpers';
 
 export type SignatureStatus = 'draft' | 'ready' | 'archived';
 
@@ -61,7 +62,8 @@ export const usePersistenceStore = create<PersistenceState>((set) => ({
   isSaving: false,
   lastSavedAt: null,
   lastError: null,
-  signatureName: 'Untitled',
+  // Translated: the bootstrap config (with `translations`) is in place before the bundle runs.
+  signatureName: __('Untitled'),
   signatureStatus: 'draft',
 
   markLoaded: () => set({ isLoaded: true }),

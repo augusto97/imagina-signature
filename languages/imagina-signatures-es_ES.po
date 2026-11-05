@@ -1,0 +1,3367 @@
+# es_ES translation of Imagina Signatures.
+# This file is distributed under the GPL-2.0-or-later license.
+msgid ""
+msgstr ""
+"Project-Id-Version: Imagina Signatures 1.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/augusto97/imagina-signature/issues\n"
+"Last-Translator: Imagina WP\n"
+"Language-Team: Español\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: scripts/i18n/update-po.mjs\n"
+"X-Domain: imagina-signatures\n"
+
+#. translators: 1: plugin name, 2: minimum PHP version, 3: minimum WP version.
+#: imagina-signatures.php:90
+#, php-format
+msgid ""
+"%1$s requires PHP %2$s or higher and WordPress %3$s or higher. The plugin "
+"has been deactivated."
+msgstr ""
+"%1$s requiere PHP %2$s o superior y WordPress %3$s o superior. El plugin se "
+"ha desactivado."
+
+#: src/Admin/AdminAppPage.php:56
+msgid "You do not have permission to access this page."
+msgstr "No tienes permiso para acceder a esta página."
+
+#: src/Admin/AdminMenu.php:99
+#: src/Admin/AdminMenu.php:100
+#: src/Privacy/UserDataManager.php:104
+#: src/Privacy/UserDataManager.php:122
+#: assets/admin/src/components/SidebarNav.tsx:80
+msgid "Imagina Signatures"
+msgstr "Imagina Signatures"
+
+#: src/Admin/AdminMenu.php:110
+#: src/Admin/AdminMenu.php:111
+#: src/Frontend/FrontendPage.php:101
+#: assets/admin/src/components/SidebarNav.tsx:20
+#: assets/admin/src/pages/SignaturesPage.tsx:192
+msgid "My Signatures"
+msgstr "Mis firmas"
+
+#: src/Admin/AdminMenu.php:119
+#: src/Admin/AdminMenu.php:120
+#: assets/admin/src/components/SidebarNav.tsx:23
+#: assets/admin/src/pages/TemplatesPage.tsx:77
+msgid "Templates"
+msgstr "Plantillas"
+
+#: src/Admin/AdminMenu.php:128
+msgid "Storage Settings"
+msgstr "Ajustes de almacenamiento"
+
+#: src/Admin/AdminMenu.php:129
+#: assets/admin/src/components/SidebarNav.tsx:30
+#: assets/admin/src/pages/SettingsPage.tsx:64
+msgid "Settings"
+msgstr "Ajustes"
+
+#: src/Admin/AdminMenu.php:139
+#: src/Admin/AdminMenu.php:140
+#: src/Admin/AdminMenu.php:173
+msgid "Edit Signature"
+msgstr "Editar firma"
+
+#: src/Admin/ManifestReader.php:100
+msgid ""
+"Imagina Signatures: build manifest missing (build/.vite/manifest.json). The "
+"editor and admin pages will not load. Re-build the plugin (npm run build) or "
+"re-install from a fresh ZIP."
+msgstr ""
+"Imagina Signatures: falta el manifiesto de compilación "
+"(build/.vite/manifest.json). El editor y las páginas de administración no se "
+"cargarán. Vuelve a compilar el plugin (npm run build) o reinstálalo desde un "
+"ZIP nuevo."
+
+#. translators: %s: source-tree entry path.
+#: src/Admin/ManifestReader.php:135
+#, php-format
+msgid ""
+"Imagina Signatures: manifest entry \"%s\" not found. Re-build the plugin to "
+"refresh the manifest."
+msgstr ""
+"Imagina Signatures: no se encontró la entrada del manifiesto \"%s\". Vuelve "
+"a compilar el plugin para actualizar el manifiesto."
+
+#: src/Admin/Notices.php:65
+msgid "Imagina Signatures:"
+msgstr "Imagina Signatures:"
+
+#: src/Admin/Notices.php:66
+msgid ""
+"Storage credentials could not be decrypted — WordPress salts may have "
+"changed; re-enter them in Settings → Storage."
+msgstr ""
+"No se pudieron descifrar las credenciales de almacenamiento; es posible que "
+"las claves (salts) de WordPress hayan cambiado. Vuelve a introducirlas en "
+"Ajustes → Almacenamiento."
+
+#: src/Admin/Notices.php:68
+msgid "Open storage settings"
+msgstr "Abrir ajustes de almacenamiento"
+
+#: src/Admin/Pages/EditorPage.php:56
+msgid "You do not have permission to access the editor."
+msgstr "No tienes permiso para acceder al editor."
+
+#: src/Admin/Pages/EditorPage.php:67
+msgid "Signature not found or you do not have access to it."
+msgstr "No se encontró la firma o no tienes acceso a ella."
+
+#: src/Api/BaseController.php:116
+msgid "The file could not be stored. Please try again later."
+msgstr "No se pudo guardar el archivo. Inténtalo de nuevo más tarde."
+
+#: src/Api/BaseController.php:123
+msgid "The request could not be completed because of a server error."
+msgstr "No se pudo completar la solicitud por un error del servidor."
+
+#: src/Api/BaseController.php:165
+#: src/Api/Middleware/CapabilityCheck.php:45
+#: src/Api/Middleware/OwnershipCheck.php:84
+msgid "You must be signed in to perform this request."
+msgstr "Debes iniciar sesión para realizar esta solicitud."
+
+#: src/Api/BaseController.php:173
+#: src/Api/Middleware/CapabilityCheck.php:53
+#: src/Api/Middleware/OwnershipCheck.php:92
+msgid "You do not have permission to perform this request."
+msgstr "No tienes permiso para realizar esta solicitud."
+
+#: src/Api/Controllers/AssetsController.php:174
+msgid "Asset not found."
+msgstr "No se encontró el archivo."
+
+#: src/Api/Controllers/SignaturesController.php:304
+msgid ""
+"The signature could not be saved because of a server error. Please try "
+"again; if it keeps failing, ask a site administrator to check the error log."
+msgstr ""
+"No se pudo guardar la firma por un error del servidor. Inténtalo de nuevo; "
+"si sigue fallando, pide a un administrador del sitio que revise el registro "
+"de errores."
+
+#: src/Api/Controllers/SignaturesController.php:344
+msgid "Signature not found."
+msgstr "No se encontró la firma."
+
+#: src/Api/Controllers/SignaturesController.php:451
+msgid "Your WordPress account has no email address on file."
+msgstr ""
+"Tu cuenta de WordPress no tiene una dirección de correo electrónico "
+"registrada."
+
+#: src/Api/Controllers/SignaturesController.php:461
+msgid "No HTML supplied to send."
+msgstr "No se proporcionó HTML para enviar."
+
+#. translators: %d: maximum size in KB.
+#: src/Api/Controllers/SignaturesController.php:471
+#, php-format
+msgid "The signature HTML is too large to send (maximum %d KB)."
+msgstr "El HTML de la firma es demasiado grande para enviarlo (máximo %d KB)."
+
+#: src/Api/Controllers/SignaturesController.php:498
+msgid "Nothing sendable was left after removing unsupported HTML."
+msgstr "No quedó nada que enviar después de quitar el HTML no compatible."
+
+#: src/Api/Controllers/SignaturesController.php:503
+msgid "Imagina Signatures — your signature preview"
+msgstr "Imagina Signatures: vista previa de tu firma"
+
+#. translators: %s: user's display name.
+#: src/Api/Controllers/SignaturesController.php:508
+#, php-format
+msgid ""
+"Hi %s — here is the signature you just designed in Imagina Signatures. Copy "
+"it from below and paste it into your email client."
+msgstr ""
+"Hola, %s: esta es la firma que acabas de diseñar en Imagina Signatures. "
+"Cópiala desde abajo y pégala en tu cliente de correo."
+
+#: src/Api/Controllers/SignaturesController.php:543
+msgid "wp_mail() failed. Check your site's email configuration."
+msgstr "wp_mail() falló. Revisa la configuración de correo de tu sitio."
+
+#. translators: %s: comma-separated list of option keys that failed to save.
+#: src/Api/Controllers/SiteSettingsController.php:198
+#, php-format
+msgid "Failed to persist site settings (%s). Check the server error log."
+msgstr ""
+"No se pudieron guardar los ajustes del sitio (%s). Revisa el registro de "
+"errores del servidor."
+
+#: src/Api/Controllers/SiteSettingsController.php:243
+msgid "Brand palette write did not round-trip. Check the WordPress error log."
+msgstr ""
+"La paleta de marca no se guardó correctamente. Revisa el registro de errores "
+"de WordPress."
+
+#: src/Api/Controllers/SiteSettingsController.php:256
+msgid "Banner campaigns write did not round-trip."
+msgstr "Las campañas de banners no se guardaron correctamente."
+
+#. translators: %s: connection test failure message.
+#: src/Api/Controllers/StorageController.php:159
+#, php-format
+msgid ""
+"The storage settings were not saved because the connection test failed: %s"
+msgstr ""
+"No se guardaron los ajustes de almacenamiento porque falló la prueba de "
+"conexión: %s"
+
+#: src/Api/Controllers/StorageController.php:241
+msgid "Unknown storage provider."
+msgstr "Proveedor de almacenamiento desconocido."
+
+#: src/Api/Controllers/StorageController.php:248
+msgid ""
+"Bucket names may only contain letters, numbers, dots, dashes and underscores."
+msgstr ""
+"Los nombres de bucket solo pueden contener letras, números, puntos, guiones "
+"y guiones bajos."
+
+#: src/Api/Controllers/StorageController.php:257
+msgid "Only lowercase letters, numbers and dashes are allowed."
+msgstr "Solo se permiten letras minúsculas, números y guiones."
+
+#: src/Api/Controllers/StorageController.php:265
+msgid "Cloudflare R2 needs your account id."
+msgstr "Cloudflare R2 necesita el ID de tu cuenta."
+
+#: src/Api/Controllers/StorageController.php:274
+msgid "This credential is missing or contains whitespace."
+msgstr "Falta esta credencial o contiene espacios en blanco."
+
+#: src/Api/Controllers/StorageController.php:285
+msgid "A custom endpoint URL is required."
+msgstr "Se necesita una URL de endpoint personalizada."
+
+#: src/Api/Controllers/StorageController.php:296
+msgid "Enter a full http(s):// URL without query string or credentials."
+msgstr ""
+"Introduce una URL http(s):// completa, sin parámetros de consulta ni "
+"credenciales."
+
+#: src/Api/Controllers/StorageController.php:310
+msgid "Some storage settings are invalid."
+msgstr "Algunos ajustes de almacenamiento no son válidos."
+
+#: src/Api/Controllers/TemplatesController.php:217
+#: src/Api/Controllers/TemplatesController.php:345
+#: src/Services/TemplateService.php:134
+#: src/Services/TemplateService.php:186
+msgid "Template not found."
+msgstr "No se encontró la plantilla."
+
+#: src/Api/Controllers/TemplatesController.php:357
+msgid "No users matched the supplied scope."
+msgstr "Ningún usuario coincide con el alcance indicado."
+
+#: src/Api/Controllers/TemplatesController.php:370
+msgid "This template has invalid json_content; bulk apply aborted."
+msgstr ""
+"Esta plantilla tiene un json_content no válido; se canceló la aplicación en "
+"bloque."
+
+#: src/Api/Controllers/UploadController.php:215
+msgid ""
+"Uploads are disabled on this site (URL-only mode). Paste an external image "
+"URL instead."
+msgstr ""
+"La subida de archivos está desactivada en este sitio (modo solo URL). Pega "
+"la URL de una imagen externa."
+
+#: src/Api/Controllers/UploadController.php:311
+#: src/Api/Controllers/UploadController.php:423
+msgid "Uploads are disabled on this site (URL-only mode)."
+msgstr "La subida de archivos está desactivada en este sitio (modo solo URL)."
+
+#: src/Api/Controllers/UploadController.php:327
+msgid "No file received."
+msgstr "No se recibió ningún archivo."
+
+#: src/Api/Controllers/UploadController.php:342
+msgid "File size out of range."
+msgstr "El tamaño del archivo está fuera del rango permitido."
+
+#: src/Api/Controllers/UploadController.php:445
+msgid "Reported file size is missing or exceeds the configured limit."
+msgstr "El tamaño de archivo indicado falta o supera el límite configurado."
+
+#: src/Api/Controllers/UploadController.php:457
+msgid "The provided storage key does not belong to your account."
+msgstr "La clave de almacenamiento indicada no pertenece a tu cuenta."
+
+#: src/Api/Controllers/UploadController.php:466
+msgid ""
+"This upload was not started from this account or has expired. Please upload "
+"the file again."
+msgstr ""
+"Esta subida no se inició desde esta cuenta o ha caducado. Vuelve a subir el "
+"archivo."
+
+#: src/Api/Controllers/UploadController.php:500
+msgid ""
+"The uploaded file does not match what was declared when the upload started."
+msgstr ""
+"El archivo subido no coincide con lo que se declaró al iniciar la subida."
+
+#: src/Api/Controllers/UploadController.php:506
+msgid "The uploaded file is not a valid vCard."
+msgstr "El archivo subido no es una vCard válida."
+
+#: src/Api/Controllers/UploadController.php:512
+msgid "The uploaded file exceeds the configured size limit."
+msgstr "El archivo subido supera el límite de tamaño configurado."
+
+#: src/Api/Controllers/UploadController.php:622
+msgid "File size exceeds the configured limit."
+msgstr "El tamaño del archivo supera el límite configurado."
+
+#. translators: %s: storage quota, e.g. "100 MB".
+#: src/Api/Controllers/UploadController.php:659
+#, php-format
+msgid ""
+"You have reached your storage limit (%s). Delete unused images to free up "
+"space."
+msgstr ""
+"Alcanzaste tu límite de almacenamiento (%s). Elimina las imágenes que no "
+"uses para liberar espacio."
+
+#: src/Api/Controllers/UploadController.php:677
+msgid "Unsupported file type."
+msgstr "Tipo de archivo no compatible."
+
+#: src/Api/Controllers/UploadController.php:690
+msgid "No object exists at the reported storage key. Was the upload completed?"
+msgstr ""
+"No existe ningún objeto en la clave de almacenamiento indicada. ¿Se completó "
+"la subida?"
+
+#: src/Api/Middleware/OwnershipCheck.php:103
+msgid "The requested resource was not found or does not belong to you."
+msgstr "El recurso solicitado no existe o no te pertenece."
+
+#. translators: %d: number of seconds to wait before retrying.
+#: src/Api/Middleware/RateLimiter.php:127
+#, php-format
+msgid "Too many requests. Try again in %d seconds."
+msgstr "Demasiadas solicitudes. Inténtalo de nuevo en %d segundos."
+
+#: src/Core/Activator.php:50
+msgid ""
+"Imagina Signatures requires PHP 7.4 or higher and WordPress 6.0 or higher."
+msgstr ""
+"Imagina Signatures requiere PHP 7.4 o superior y WordPress 6.0 o superior."
+
+#: src/Core/Activator.php:54
+#: src/Core/Activator.php:79
+msgid "Plugin activation failed"
+msgstr "Falló la activación del plugin"
+
+#. translators: %s: error message.
+#: src/Core/Activator.php:75
+#, php-format
+msgid ""
+"Imagina Signatures could not finish activating: %s. The plugin has been "
+"deactivated. Check the WordPress error log for the full stack trace."
+msgstr ""
+"Imagina Signatures no pudo terminar de activarse: %s. El plugin se ha "
+"desactivado. Revisa el registro de errores de WordPress para ver el detalle "
+"completo."
+
+#: src/Frontend/FrontendPage.php:133
+msgid "Signature Editor"
+msgstr "Editor de firmas"
+
+#: src/Frontend/FrontendPage.php:353
+msgid "Log in to access your signatures"
+msgstr "Inicia sesión para acceder a tus firmas"
+
+#: src/Frontend/FrontendPage.php:365
+msgid "You need to log in"
+msgstr "Necesitas iniciar sesión"
+
+#: src/Frontend/FrontendPage.php:366
+msgid "Sign in to your account to manage your email signatures."
+msgstr "Inicia sesión en tu cuenta para gestionar tus firmas de correo."
+
+#: src/Frontend/FrontendPage.php:367
+msgid "Log in"
+msgstr "Iniciar sesión"
+
+#: src/Frontend/FrontendPage.php:434
+#: src/Frontend/FrontendPage.php:444
+msgid "Access denied"
+msgstr "Acceso denegado"
+
+#: src/Frontend/FrontendPage.php:445
+msgid ""
+"Your account does not have permission to use Imagina Signatures. Ask a site "
+"administrator to grant access."
+msgstr ""
+"Tu cuenta no tiene permiso para usar Imagina Signatures. Pide a un "
+"administrador del sitio que te dé acceso."
+
+#: src/Privacy/UserDataManager.php:166
+msgid "Email signatures"
+msgstr "Firmas de correo electrónico"
+
+#: src/Privacy/UserDataManager.php:170
+#: assets/admin/src/pages/SignaturesPage.tsx:323
+#: assets/admin/src/pages/TemplatesPage.tsx:322
+#: assets/admin/src/pages/TemplatesPage.tsx:443
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:70
+msgid "Name"
+msgstr "Nombre"
+
+#: src/Privacy/UserDataManager.php:174
+#: assets/admin/src/pages/SignaturesPage.tsx:324
+msgid "Status"
+msgstr "Estado"
+
+#: src/Privacy/UserDataManager.php:178
+msgid "Created (UTC)"
+msgstr "Creada (UTC)"
+
+#: src/Privacy/UserDataManager.php:182
+msgid "Last updated (UTC)"
+msgstr "Última actualización (UTC)"
+
+#: src/Privacy/UserDataManager.php:186
+msgid "Content (JSON)"
+msgstr "Contenido (JSON)"
+
+#: src/Privacy/UserDataManager.php:205
+msgid "Signature uploads"
+msgstr "Archivos subidos para firmas"
+
+#: src/Privacy/UserDataManager.php:209
+msgid "URL"
+msgstr "URL"
+
+#: src/Privacy/UserDataManager.php:213
+msgid "Type"
+msgstr "Tipo"
+
+#: src/Privacy/UserDataManager.php:217
+msgid "Size (bytes)"
+msgstr "Tamaño (bytes)"
+
+#: src/Privacy/UserDataManager.php:221
+msgid "Uploaded (UTC)"
+msgstr "Subido (UTC)"
+
+#. translators: %s: file URL.
+#: src/Privacy/UserDataManager.php:268
+#, php-format
+msgid ""
+"The stored file %s could not be deleted from the current storage backend; "
+"its record was removed."
+msgstr ""
+"No se pudo eliminar el archivo guardado %s del almacenamiento actual; se "
+"eliminó su registro."
+
+#. translators: 1: payload size in KB, 2: maximum size in KB.
+#: src/Services/JsonSchemaValidator.php:160
+#, php-format
+msgid ""
+"The signature is too large (%1$d KB). The maximum is %2$d KB — remove some "
+"blocks or shorten long text."
+msgstr ""
+"La firma es demasiado grande (%1$d KB). El máximo es %2$d KB: quita algunos "
+"bloques o acorta los textos largos."
+
+#: src/Services/JsonSchemaValidator.php:220
+msgid "Signature payload failed schema validation."
+msgstr "Los datos de la firma no superaron la validación del esquema."
+
+#. translators: 1: number of blocks, 2: maximum number of blocks.
+#: src/Services/JsonSchemaValidator.php:225
+#, php-format
+msgid "The signature has %1$d blocks. The maximum is %2$d."
+msgstr "La firma tiene %1$d bloques. El máximo es %2$d."
+
+#. translators: %d: maximum nesting depth.
+#: src/Services/JsonSchemaValidator.php:239
+#, php-format
+msgid ""
+"Blocks are nested too deeply. Containers can be nested at most %d levels."
+msgstr ""
+"Los bloques están anidados a demasiada profundidad. Los contenedores pueden "
+"anidarse como máximo %d niveles."
+
+#: src/Services/SchemaSanitizer.php:201
+msgid "Removed HTML that is not allowed in signatures."
+msgstr "Se eliminó HTML no permitido en las firmas."
+
+#: src/Services/SchemaSanitizer.php:208
+msgid ""
+"Removed a URL with a disallowed scheme (only http, https, mailto and tel "
+"links are allowed)."
+msgstr ""
+"Se eliminó una URL con un esquema no permitido (solo se permiten enlaces "
+"http, https, mailto y tel)."
+
+#: src/Services/SchemaSanitizer.php:216
+msgid "Removed markup from a plain-text field."
+msgstr "Se eliminó el formato de un campo de texto sin formato."
+
+#: src/Services/SchemaSanitizer.php:240
+msgid "Removed a script or data URL from a variable value."
+msgstr "Se eliminó una URL de script o de datos del valor de una variable."
+
+#: src/Services/SchemaSanitizer.php:247
+msgid "Removed markup from a variable value."
+msgstr "Se eliminó el formato del valor de una variable."
+
+#: src/Services/SignatureService.php:153
+#: src/Services/SignatureService.php:272
+#: src/Services/SignatureService.php:302
+msgid "Signature not found or not owned by the caller."
+msgstr "No se encontró la firma o no te pertenece."
+
+#. translators: %s: original signature name.
+#: src/Services/SignatureService.php:319
+#, php-format
+msgid "%s (copy)"
+msgstr "%s (copia)"
+
+#: src/Services/SignatureService.php:361
+msgid "Invalid status value."
+msgstr "Valor de estado no válido."
+
+#: src/Services/SignatureService.php:365
+msgid "Status must be one of: draft, ready, archived."
+msgstr "El estado debe ser uno de estos: draft, ready, archived."
+
+#: src/Services/SignatureService.php:383
+#: src/Services/TemplateService.php:259
+msgid "json_content must be a JSON object."
+msgstr "json_content debe ser un objeto JSON."
+
+#: src/Services/SignatureService.php:387
+#: src/Services/TemplateService.php:263
+msgid "Could not decode payload."
+msgstr "No se pudieron decodificar los datos."
+
+#: src/Services/TemplateService.php:100
+#: src/Services/TemplateService.php:156
+msgid "Slug already exists."
+msgstr "El slug ya existe."
+
+#: src/Services/TemplateService.php:104
+#: src/Services/TemplateService.php:160
+msgid "A template with this slug already exists."
+msgstr "Ya existe una plantilla con este slug."
+
+#: src/Services/TemplateService.php:138
+#: src/Services/TemplateService.php:190
+msgid "No template with this id."
+msgstr "No existe ninguna plantilla con este ID."
+
+#: src/Services/TemplateService.php:198
+msgid "System templates cannot be deleted."
+msgstr "Las plantillas del sistema no se pueden eliminar."
+
+#: src/Services/TemplateService.php:202
+msgid "This template is shipped with the plugin."
+msgstr "Esta plantilla viene incluida con el plugin."
+
+#: src/Setup/DefaultTemplatesSeeder.php:142
+msgid "Minimal Modern"
+msgstr "Minimalista moderna"
+
+#: src/Setup/DefaultTemplatesSeeder.php:143
+msgid "Single column, generous spacing, sans-serif."
+msgstr "Una columna, espaciado amplio, tipografía sans serif."
+
+#: src/Setup/DefaultTemplatesSeeder.php:146
+msgid "Corporate Classic"
+msgstr "Corporativa clásica"
+
+#: src/Setup/DefaultTemplatesSeeder.php:147
+msgid "Serif typography with a short rule."
+msgstr "Tipografía serif con una línea corta."
+
+#: src/Setup/DefaultTemplatesSeeder.php:150
+#: assets/admin/src/pages/TemplatesPage.tsx:327
+msgid "Sales Active"
+msgstr "Ventas activa"
+
+#: src/Setup/DefaultTemplatesSeeder.php:151
+msgid "Conversion-focused with a CTA button."
+msgstr "Orientada a la conversión, con un botón de llamada a la acción."
+
+#: src/Setup/DefaultTemplatesSeeder.php:154
+msgid "Medical"
+msgstr "Médica"
+
+#: src/Setup/DefaultTemplatesSeeder.php:155
+msgid "Professional credentials with a confidentiality disclaimer."
+msgstr "Credenciales profesionales con un aviso de confidencialidad."
+
+#: src/Setup/DefaultTemplatesSeeder.php:158
+msgid "Legal"
+msgstr "Legal"
+
+#: src/Setup/DefaultTemplatesSeeder.php:159
+msgid "Serif type with a long privilege disclaimer."
+msgstr "Tipografía serif con un aviso legal extenso de confidencialidad."
+
+#: src/Setup/DefaultTemplatesSeeder.php:162
+#: assets/shared/templateCategories.ts:25
+msgid "Creative"
+msgstr "Creativa"
+
+#: src/Setup/DefaultTemplatesSeeder.php:163
+msgid "Vibrant accent colours and social icons."
+msgstr "Colores de acento vivos e iconos de redes sociales."
+
+#: src/Setup/DefaultTemplatesSeeder.php:166
+msgid "Developer"
+msgstr "Desarrollador"
+
+#: src/Setup/DefaultTemplatesSeeder.php:167
+msgid "Monospace type with a GitHub link."
+msgstr "Tipografía monoespaciada con un enlace a GitHub."
+
+#: src/Setup/DefaultTemplatesSeeder.php:170
+msgid "Tech Startup"
+msgstr "Startup tecnológica"
+
+#: src/Setup/DefaultTemplatesSeeder.php:171
+msgid "Modern type with a product CTA."
+msgstr "Tipografía moderna con una llamada a la acción de producto."
+
+#: src/Setup/DefaultTemplatesSeeder.php:174
+msgid "Consultant"
+msgstr "Consultor"
+
+#: src/Setup/DefaultTemplatesSeeder.php:175
+msgid "Credentials front-and-centre with LinkedIn."
+msgstr "Credenciales en primer plano con LinkedIn."
+
+#: src/Setup/DefaultTemplatesSeeder.php:178
+msgid "E-commerce"
+msgstr "Comercio electrónico"
+
+#: src/Setup/DefaultTemplatesSeeder.php:179
+msgid "Shop CTA + social icons for storefront teams."
+msgstr "Botón de tienda + iconos de redes sociales para equipos de e-commerce."
+
+#: src/Setup/DefaultTemplatesSeeder.php:182
+msgid "Logo + info (2-column)"
+msgstr "Logo + información (2 columnas)"
+
+#: src/Setup/DefaultTemplatesSeeder.php:183
+msgid "Square logo on the left, name / role / contact / socials on the right."
+msgstr ""
+"Logo cuadrado a la izquierda; nombre, cargo, contacto y redes a la derecha."
+
+#: src/Setup/DefaultTemplatesSeeder.php:186
+msgid "Avatar + info (2-column)"
+msgstr "Avatar + información (2 columnas)"
+
+#: src/Setup/DefaultTemplatesSeeder.php:187
+msgid ""
+"Round profile photo + role on the left, contacts and socials on the right."
+msgstr ""
+"Foto de perfil redonda y cargo a la izquierda; contactos y redes a la "
+"derecha."
+
+#: src/Setup/DefaultTemplatesSeeder.php:190
+msgid "Balanced split (2-column)"
+msgstr "División equilibrada (2 columnas)"
+
+#: src/Setup/DefaultTemplatesSeeder.php:191
+msgid ""
+"Headline + tagline on the left, contacts + Book-a-call CTA on the right."
+msgstr ""
+"Titular y eslogan a la izquierda; contactos y botón para agendar una llamada "
+"a la derecha."
+
+#: src/Storage/Drivers/MediaLibraryDriver.php:109
+#: src/Storage/Drivers/S3Driver.php:269
+msgid "Source file does not exist."
+msgstr "El archivo de origen no existe."
+
+#: src/Storage/Drivers/MediaLibraryDriver.php:128
+msgid "The uploaded file is not a vCard."
+msgstr "El archivo subido no es una vCard."
+
+#: src/Storage/Drivers/MediaLibraryDriver.php:176
+msgid "Signature vCard"
+msgstr "vCard de la firma"
+
+#: src/Storage/Drivers/MediaLibraryDriver.php:177
+msgid "Signature image"
+msgstr "Imagen de la firma"
+
+#: src/Storage/Drivers/MediaLibraryDriver.php:300
+msgid "WordPress reports an error with the uploads directory."
+msgstr "WordPress informa de un error en el directorio de subidas."
+
+#: src/Storage/Drivers/MediaLibraryDriver.php:309
+msgid "Cannot create the imagina-signatures directory under uploads."
+msgstr "No se puede crear el directorio imagina-signatures dentro de uploads."
+
+#: src/Storage/Drivers/MediaLibraryDriver.php:316
+msgid "The imagina-signatures uploads directory is not writable."
+msgstr ""
+"El directorio de subidas imagina-signatures no tiene permisos de escritura."
+
+#: src/Storage/Drivers/MediaLibraryDriver.php:322
+msgid "Media Library is reachable and writable."
+msgstr "La biblioteca de medios está disponible y tiene permisos de escritura."
+
+#: src/Storage/Drivers/S3Driver.php:169
+msgid "A region must be configured for this provider."
+msgstr "Debes configurar una región para este proveedor."
+
+#: src/Storage/Drivers/S3Driver.php:186
+msgid "Could not resolve a usable endpoint URL for this provider."
+msgstr "No se pudo determinar una URL de endpoint válida para este proveedor."
+
+#: src/Storage/Drivers/S3Driver.php:274
+msgid "Unable to read source file."
+msgstr "No se puede leer el archivo de origen."
+
+#: src/Storage/Drivers/S3Driver.php:318
+msgid "S3 driver is not configured."
+msgstr "El controlador S3 no está configurado."
+
+#: src/Storage/Drivers/S3Driver.php:394
+msgid "S3 driver is not fully configured."
+msgstr "El controlador S3 no está configurado por completo."
+
+#: src/Storage/Drivers/S3Driver.php:403
+msgid "Could not reach the storage endpoint."
+msgstr "No se pudo conectar con el endpoint de almacenamiento."
+
+#: src/Storage/Drivers/S3Driver.php:415
+msgid "Connection succeeded — bucket is reachable and credentials are valid."
+msgstr ""
+"Conexión correcta: el bucket es accesible y las credenciales son válidas."
+
+#: src/Storage/Drivers/S3Driver.php:425
+msgid "The endpoint rejected the credentials."
+msgstr "El endpoint rechazó las credenciales."
+
+#: src/Storage/Drivers/S3Driver.php:435
+msgid "The configured bucket was not found at this endpoint."
+msgstr "No se encontró el bucket configurado en este endpoint."
+
+#. translators: %d: HTTP status code returned by the storage endpoint.
+#: src/Storage/Drivers/S3Driver.php:446
+#, php-format
+msgid "Storage endpoint returned an unexpected HTTP %d response."
+msgstr ""
+"El endpoint de almacenamiento devolvió una respuesta HTTP %d inesperada."
+
+#: src/Storage/Drivers/UrlOnlyDriver.php:67
+#: src/Storage/Drivers/UrlOnlyDriver.php:86
+msgid ""
+"Uploads are disabled in URL-only mode. Paste an external image URL instead."
+msgstr ""
+"La subida de archivos está desactivada en el modo solo URL. Pega la URL de "
+"una imagen externa."
+
+#: src/Storage/Drivers/UrlOnlyDriver.php:124
+msgid "URL-only mode active — no storage backend to test."
+msgstr "Modo solo URL activo: no hay ningún almacenamiento que probar."
+
+#: assets/admin/src/api.ts:84
+#: assets/editor/src/bridge/apiClient.ts:128
+#, javascript-format
+msgid "Request failed (%s)"
+msgstr "La solicitud falló (%s)"
+
+#: assets/admin/src/components/Modal.tsx:55
+msgid "Close"
+msgstr "Cerrar"
+
+#: assets/admin/src/components/SidebarNav.tsx:68
+msgid "Back to home"
+msgstr "Volver al inicio"
+
+#: assets/admin/src/components/SidebarNav.tsx:68
+msgid "Back to WP Admin"
+msgstr "Volver a WP Admin"
+
+#: assets/admin/src/components/Spinner.tsx:15
+msgid "Loading"
+msgstr "Cargando"
+
+#: assets/admin/src/components/StatusPill.tsx:13
+#: assets/editor/src/editor/topbar/Topbar.tsx:407
+msgid "Draft"
+msgstr "Borrador"
+
+#: assets/admin/src/components/StatusPill.tsx:14
+#: assets/admin/src/pages/SignaturesPage.tsx:221
+#: assets/editor/src/editor/topbar/Topbar.tsx:408
+msgid "Ready"
+msgstr "Lista"
+
+#: assets/admin/src/components/StatusPill.tsx:15
+#: assets/admin/src/pages/SignaturesPage.tsx:222
+#: assets/editor/src/editor/topbar/Topbar.tsx:409
+msgid "Archived"
+msgstr "Archivada"
+
+#: assets/admin/src/pages/SettingsPage.tsx:18
+msgid "Storage"
+msgstr "Almacenamiento"
+
+#: assets/admin/src/pages/SettingsPage.tsx:21
+msgid ""
+"Pick where uploaded images live: WordPress Media Library or any "
+"S3-compatible bucket."
+msgstr ""
+"Elige dónde se guardan las imágenes subidas: la biblioteca de medios de "
+"WordPress o cualquier bucket compatible con S3."
+
+#: assets/admin/src/pages/SettingsPage.tsx:25
+msgid "Branding"
+msgstr "Marca"
+
+#: assets/admin/src/pages/SettingsPage.tsx:28
+msgid ""
+"Site-wide brand palette shown as quick-pick swatches in every editor color "
+"picker."
+msgstr ""
+"Paleta de marca de todo el sitio, que aparece como muestras de selección "
+"rápida en cada selector de color del editor."
+
+#: assets/admin/src/pages/SettingsPage.tsx:32
+msgid "Compliance"
+msgstr "Cumplimiento"
+
+#: assets/admin/src/pages/SettingsPage.tsx:35
+msgid ""
+"Optional HTML footer appended to every signature on export (GDPR / CAN-SPAM)."
+msgstr ""
+"Pie de página HTML opcional que se añade a todas las firmas al exportarlas "
+"(RGPD / CAN-SPAM)."
+
+#: assets/admin/src/pages/SettingsPage.tsx:39
+msgid "Campaigns"
+msgstr "Campañas"
+
+#: assets/admin/src/pages/SettingsPage.tsx:42
+msgid ""
+"Promotional banners auto-injected at the bottom of every signature, with "
+"optional date scheduling and random rotation across active entries."
+msgstr ""
+"Banners promocionales que se insertan automáticamente al final de cada "
+"firma, con programación por fechas opcional y rotación aleatoria entre las "
+"campañas activas."
+
+#: assets/admin/src/pages/SettingsPage.tsx:46
+msgid "Frontend"
+msgstr "Sitio público"
+
+#: assets/admin/src/pages/SettingsPage.tsx:49
+msgid ""
+"Expose the editor on a public-facing URL so non-admin users (e.g. "
+"subscribers) can manage their own signatures without entering wp-admin."
+msgstr ""
+"Publica el editor en una URL pública para que los usuarios que no son "
+"administradores (p. ej., suscriptores) puedan gestionar sus propias firmas "
+"sin entrar en wp-admin."
+
+#: assets/admin/src/pages/SignaturesPage.tsx:47
+#: assets/admin/src/pages/TemplatesPage.tsx:61
+msgid "Server returned an unexpected response shape. Reload to retry."
+msgstr ""
+"El servidor devolvió una respuesta con un formato inesperado. Recarga la "
+"página para intentarlo de nuevo."
+
+#: assets/admin/src/pages/SignaturesPage.tsx:84
+#, javascript-format
+msgid "Could not duplicate: %s"
+msgstr "No se pudo duplicar: %s"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:91
+#, javascript-format
+msgid "Delete \"%s\"? This cannot be undone."
+msgstr "¿Eliminar \"%s\"? Esta acción no se puede deshacer."
+
+#: assets/admin/src/pages/SignaturesPage.tsx:100
+#, javascript-format
+msgid "Could not delete: %s"
+msgstr "No se pudo eliminar: %s"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:144
+#, javascript-format
+msgid "Delete %s signature(s)? This cannot be undone."
+msgstr "¿Eliminar %s firma(s)? Esta acción no se puede deshacer."
+
+#: assets/admin/src/pages/SignaturesPage.tsx:175
+#, javascript-format
+msgid "Deleted %s of %s. First failure: %s"
+msgstr "Se eliminaron %s de %s. Primer error: %s"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:193
+msgid "Visual editor for HTML email signatures. Each user sees only their own."
+msgstr ""
+"Editor visual de firmas de correo en HTML. Cada usuario ve solo las suyas."
+
+#: assets/admin/src/pages/SignaturesPage.tsx:196
+#: assets/admin/src/pages/SignaturesPage.tsx:295
+msgid "New signature"
+msgstr "Nueva firma"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:208
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:166
+msgid "Search by name…"
+msgstr "Buscar por nombre…"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:219
+msgid "All statuses"
+msgstr "Todos los estados"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:220
+msgid "Drafts"
+msgstr "Borradores"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:227
+#, javascript-format
+msgid "%s signature(s)"
+msgstr "%s firma(s)"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:237
+#, javascript-format
+msgid "%s selected"
+msgstr "%s seleccionada(s)"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:247
+msgid "Clear"
+msgstr "Limpiar"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:256
+msgid "Delete selected"
+msgstr "Eliminar seleccionadas"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:280
+msgid "No signatures yet"
+msgstr "Aún no hay firmas"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:281
+msgid "No signatures match your filters"
+msgstr "Ninguna firma coincide con tus filtros"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:285
+msgid "Create your first signature to get started."
+msgstr "Crea tu primera firma para empezar."
+
+#: assets/admin/src/pages/SignaturesPage.tsx:286
+msgid "Try clearing the search or status filter."
+msgstr "Prueba a borrar la búsqueda o el filtro de estado."
+
+#: assets/admin/src/pages/SignaturesPage.tsx:319
+msgid "Select all visible"
+msgstr "Seleccionar todas las visibles"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:325
+msgid "Last edited"
+msgstr "Última edición"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:326
+msgid "Actions"
+msgstr "Acciones"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:346
+#, javascript-format
+msgid "Select %s"
+msgstr "Seleccionar %s"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:346
+#: assets/admin/src/pages/SignaturesPage.tsx:355
+#: assets/admin/src/pages/SignaturesPage.tsx:368
+#: assets/admin/src/pages/SignaturesPage.tsx:374
+#: assets/admin/src/pages/SignaturesPage.tsx:381
+#: assets/editor/src/hooks/useLoadSignature.ts:80
+#: assets/editor/src/services/persistence.ts:158
+#: assets/editor/src/stores/persistenceStore.ts:66
+msgid "Untitled"
+msgstr "Sin título"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:368
+#, javascript-format
+msgid "Edit %s"
+msgstr "Editar %s"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:369
+#: assets/admin/src/pages/TemplatesPage.tsx:153
+msgid "Edit"
+msgstr "Editar"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:374
+#, javascript-format
+msgid "Duplicate %s"
+msgstr "Duplicar %s"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:375
+#: assets/editor/src/editor/canvas/BlockToolbar.tsx:73
+msgid "Duplicate"
+msgstr "Duplicar"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:381
+#, javascript-format
+msgid "Delete %s"
+msgstr "Eliminar %s"
+
+#: assets/admin/src/pages/SignaturesPage.tsx:382
+#: assets/editor/src/editor/canvas/BlockToolbar.tsx:77
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:294
+msgid "Delete"
+msgstr "Eliminar"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:21
+msgid "Administrator"
+msgstr "Administrador"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:22
+msgid "Editor"
+msgstr "Editor"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:23
+msgid "Author"
+msgstr "Autor"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:24
+msgid "Contributor"
+msgstr "Colaborador"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:25
+msgid "Subscriber"
+msgstr "Suscriptor"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:80
+msgid ""
+"Global signature templates. Tag with roles to scope visibility, or apply in "
+"bulk to seed a signature for every user."
+msgstr ""
+"Plantillas de firma globales. Etiquétalas con roles para limitar quién las "
+"ve, o aplícalas en bloque para crear una firma para cada usuario."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:81
+msgid "Browse the signature templates available on this site."
+msgstr "Explora las plantillas de firma disponibles en este sitio."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:90
+msgid "New template"
+msgstr "Nueva plantilla"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:112
+msgid "No templates yet"
+msgstr "Aún no hay plantillas"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:115
+msgid "Use “New template” to seed one."
+msgstr "Usa “Nueva plantilla” para crear una."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:116
+msgid "Templates are typically seeded on plugin activation."
+msgstr "Las plantillas suelen crearse al activar el plugin."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:134
+msgid "System"
+msgstr "Sistema"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:139
+msgid "No description provided."
+msgstr "Sin descripción."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:161
+#: assets/admin/src/pages/TemplatesPage.tsx:602
+msgid "Apply"
+msgstr "Aplicar"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:208
+msgid "Visible to all users with the imgsig_use_signatures capability."
+msgstr ""
+"Visible para todos los usuarios con la capacidad imgsig_use_signatures."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:210
+msgid "All roles"
+msgstr "Todos los roles"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:303
+#: assets/admin/src/pages/TemplatesPage.tsx:316
+msgid "Create template"
+msgstr "Crear plantilla"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:308
+#: assets/admin/src/pages/TemplatesPage.tsx:429
+#: assets/admin/src/pages/TemplatesPage.tsx:594
+#: assets/editor/src/editor/modals/ConfirmDialog.tsx:86
+#: assets/editor/src/editor/modals/ImageCropperModal.tsx:185
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:112
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:316
+msgid "Creating…"
+msgstr "Creando…"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:333
+#: assets/admin/src/pages/TemplatesPage.tsx:452
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:81
+msgid "Category"
+msgstr "Categoría"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:334
+msgid "Used to group templates in the picker (e.g. “sales”, “medical”)."
+msgstr ""
+"Sirve para agrupar las plantillas en el selector (p. ej., “ventas”, "
+"“medicina”)."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:343
+#: assets/admin/src/pages/TemplatesPage.tsx:460
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:90
+msgid "Description"
+msgstr "Descripción"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:424
+msgid "Edit template"
+msgstr "Editar plantilla"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:437
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:119
+#: assets/editor/src/editor/topbar/Topbar.tsx:232
+msgid "Saving…"
+msgstr "Guardando…"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:437
+#: assets/admin/src/pages/settings/FrontendTab.tsx:210
+#: assets/editor/src/editor/topbar/Topbar.tsx:226
+#: assets/editor/src/editor/topbar/Topbar.tsx:240
+msgid "Save"
+msgstr "Guardar"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:469
+msgid "Visible to roles"
+msgstr "Visible para los roles"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:470
+msgid "Empty = visible to all users with “Use signatures”. Tick to scope."
+msgstr ""
+"Vacío = visible para todos los usuarios con “Usar firmas”. Marca roles para "
+"limitarla."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:547
+msgid "Pick a role."
+msgstr "Elige un rol."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:558
+msgid "Provide at least one user ID."
+msgstr "Indica al menos un ID de usuario."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:584
+#, javascript-format
+msgid "Apply “%s” in bulk"
+msgstr "Aplicar “%s” en bloque"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:584
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:225
+msgid "Apply template"
+msgstr "Aplicar plantilla"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:589
+msgid "Done"
+msgstr "Listo"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:602
+msgid "Applying…"
+msgstr "Aplicando…"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:611
+#, javascript-format
+msgid "Applied to %s users"
+msgstr "Aplicada a %s usuarios"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:612
+msgid "created"
+msgstr "creadas"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:613
+msgid "skipped"
+msgstr "omitidas"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:617
+msgid "failed"
+msgstr "fallidas"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:624
+msgid "Skipped users already had a signature seeded from this template."
+msgstr ""
+"Se omitieron los usuarios que ya tenían una firma creada a partir de esta "
+"plantilla."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:637
+msgid ""
+"Creates a new signature for every user in scope, seeded from this template. "
+"Existing signatures are NOT modified."
+msgstr ""
+"Crea una firma nueva para cada usuario del alcance a partir de esta "
+"plantilla. Las firmas existentes NO se modifican."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:643
+msgid "All eligible users"
+msgstr "Todos los usuarios con acceso"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:644
+msgid "Everyone with the “Use signatures” capability."
+msgstr "Todos los que tienen la capacidad “Usar firmas”."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:650
+msgid "By role"
+msgstr "Por rol"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:651
+msgid "Limit to a single WordPress role."
+msgstr "Limitar a un único rol de WordPress."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:671
+msgid "Specific user IDs"
+msgstr "IDs de usuario concretos"
+
+#: assets/admin/src/pages/TemplatesPage.tsx:672
+msgid "Comma-separated WP user IDs. Useful for targeted campaigns."
+msgstr ""
+"IDs de usuario de WP separados por comas. Útil para campañas dirigidas."
+
+#: assets/admin/src/pages/TemplatesPage.tsx:694
+msgid "Skip users who already have a signature from this template"
+msgstr "Omitir a los usuarios que ya tienen una firma de esta plantilla"
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:68
+#, javascript-format
+msgid "Palette is full (max %s colours)."
+msgstr "La paleta está llena (máximo %s colores)."
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:108
+msgid ""
+"Server response did not include a palette. The save may not have persisted — "
+"please reload and verify."
+msgstr ""
+"La respuesta del servidor no incluía una paleta. Puede que no se haya "
+"guardado: recarga la página y compruébalo."
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:122
+#, javascript-format
+msgid ""
+"Saved %s of %s colours. Duplicates / invalid entries were rejected by the "
+"server."
+msgstr ""
+"Se guardaron %s de %s colores. El servidor rechazó los duplicados o las "
+"entradas no válidas."
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:131
+msgid "Brand palette saved."
+msgstr "Paleta de marca guardada."
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:157
+#: assets/editor/src/editor/sidebar-right/inputs/ColorInput.tsx:49
+msgid "Brand palette"
+msgstr "Paleta de marca"
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:158
+#, javascript-format
+msgid ""
+"Up to %s colours that appear as quick-pick swatches under every ColorInput "
+"in the editor. Click a swatch to edit; click \"+ Add colour\" to append a "
+"new one."
+msgstr ""
+"Hasta %s colores que aparecen como muestras de selección rápida en cada "
+"selector de color del editor. Haz clic en una muestra para editarla; haz "
+"clic en \"+ Añadir color\" para agregar una nueva."
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:166
+msgid "No swatches yet. Use a starter set or add your own below."
+msgstr ""
+"Aún no hay muestras. Usa una paleta inicial o añade tus propios colores "
+"abajo."
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:169
+msgid "Use starter palette"
+msgstr "Usar paleta inicial"
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:186
+msgid "Click to edit colour"
+msgstr "Haz clic para editar el color"
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:193
+#, javascript-format
+msgid "Edit colour %s"
+msgstr "Editar el color %s"
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:202
+#: assets/editor/src/core/blocks/container/definition.tsx:401
+#: assets/editor/src/core/blocks/social-icons/definition.tsx:89
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:218
+msgid "Remove"
+msgstr "Quitar"
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:220
+msgid "Add colour"
+msgstr "Añadir color"
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:223
+#, javascript-format
+msgid "%s of %s used"
+msgstr "%s de %s usados"
+
+#: assets/admin/src/pages/settings/BrandingTab.tsx:235
+msgid "Save palette"
+msgstr "Guardar paleta"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:72
+msgid "Campaigns saved."
+msgstr "Campañas guardadas."
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:97
+msgid "Banner campaigns"
+msgstr "Campañas de banners"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:98
+msgid ""
+"Promotional banners auto-injected at the bottom of every signature on "
+"export. Multiple active campaigns rotate randomly per export."
+msgstr ""
+"Banners promocionales que se insertan automáticamente al final de cada firma "
+"al exportarla. Si hay varias campañas activas, rotan al azar en cada "
+"exportación."
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:105
+msgid "No campaigns yet."
+msgstr "Aún no hay campañas."
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:114
+msgid "Add first campaign"
+msgstr "Añadir la primera campaña"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:138
+msgid "Add another campaign"
+msgstr "Añadir otra campaña"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:150
+msgid "Save campaigns"
+msgstr "Guardar campañas"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:171
+msgid "Active"
+msgstr "Activa"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:175
+msgid "Scheduled"
+msgstr "Programada"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:179
+msgid "Expired"
+msgstr "Vencida"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:183
+msgid "Disabled"
+msgstr "Desactivada"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:206
+msgid "Campaign name"
+msgstr "Nombre de la campaña"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:227
+msgid "Enabled"
+msgstr "Activada"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:233
+msgid "Remove campaign"
+msgstr "Quitar campaña"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:242
+#: assets/editor/src/core/blocks/avatar/definition.tsx:52
+#: assets/editor/src/core/blocks/avatar/definition.tsx:56
+#: assets/editor/src/core/blocks/banner/definition.tsx:68
+#: assets/editor/src/core/blocks/banner/definition.tsx:72
+#: assets/editor/src/core/blocks/image/definition.tsx:138
+#: assets/editor/src/core/blocks/image/definition.tsx:142
+msgid "Image URL"
+msgstr "URL de la imagen"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:251
+#: assets/editor/src/core/blocks/banner/definition.tsx:97
+#: assets/editor/src/core/blocks/button-cta/definition.tsx:90
+msgid "Link URL"
+msgstr "URL del enlace"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:260
+#: assets/editor/src/core/blocks/avatar/definition.tsx:86
+#: assets/editor/src/core/blocks/banner/definition.tsx:87
+#: assets/editor/src/core/blocks/image/definition.tsx:168
+msgid "Alt text"
+msgstr "Texto alternativo"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:265
+msgid "Describe the banner for screen readers"
+msgstr "Describe el banner para los lectores de pantalla"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:269
+#: assets/editor/src/core/blocks/banner/definition.tsx:107
+#: assets/editor/src/core/blocks/image/definition.tsx:177
+msgid "Width (px)"
+msgstr "Ancho (px)"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:279
+msgid "Start date (optional)"
+msgstr "Fecha de inicio (opcional)"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:287
+msgid "End date (optional)"
+msgstr "Fecha de fin (opcional)"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:298
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:127
+#: assets/editor/src/editor/modals/PreviewModal.tsx:76
+#: assets/editor/src/editor/topbar/Topbar.tsx:172
+msgid "Preview"
+msgstr "Vista previa"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:306
+msgid "Open link"
+msgstr "Abrir enlace"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:330
+msgid "Active window:"
+msgstr "Periodo activo:"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:331
+msgid "any time"
+msgstr "en cualquier momento"
+
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:331
+msgid "forever"
+msgstr "sin fecha de fin"
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:52
+msgid "Compliance footer saved."
+msgstr "Pie de página legal guardado."
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:77
+msgid "Compliance footer"
+msgstr "Pie de página legal"
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:78
+msgid ""
+"Optional HTML appended to every signature on export. Useful for GDPR / "
+"CAN-SPAM disclaimers an admin wants enforced site-wide."
+msgstr ""
+"HTML opcional que se añade a todas las firmas al exportarlas. Útil para "
+"avisos de RGPD / CAN-SPAM que un administrador quiere imponer en todo el "
+"sitio."
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:82
+msgid "Enable footer"
+msgstr "Activar pie de página"
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:92
+msgid "Footer is appended to every signature."
+msgstr "El pie de página se añade a todas las firmas."
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:93
+msgid "Footer is currently disabled — signatures ship without it."
+msgstr "El pie de página está desactivado: las firmas se exportan sin él."
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:99
+msgid "Footer HTML"
+msgstr "HTML del pie de página"
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:100
+msgid ""
+"Allowed tags: standard post-content set (paragraph, link, strong, em, br, "
+"etc.). Scripts and styles are stripped server-side."
+msgstr ""
+"Etiquetas permitidas: las habituales del contenido de entradas (párrafo, "
+"enlace, strong, em, br, etc.). Los scripts y estilos se eliminan en el "
+"servidor."
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:110
+msgid "Paste or write the HTML disclaimer here…"
+msgstr "Pega o escribe aquí el aviso legal en HTML…"
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:116
+msgid "Quick templates:"
+msgstr "Plantillas rápidas:"
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:119
+msgid "GDPR-style"
+msgstr "Estilo RGPD"
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:122
+msgid "CAN-SPAM-style"
+msgstr "Estilo CAN-SPAM"
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:131
+msgid "Rendered"
+msgstr "Resultado"
+
+#: assets/admin/src/pages/settings/ComplianceTab.tsx:149
+msgid "Save footer"
+msgstr "Guardar pie de página"
+
+#: assets/admin/src/pages/settings/FrontendTab.tsx:77
+msgid "Slug must be lowercase letters, numbers, and dashes only."
+msgstr "El slug solo puede contener letras minúsculas, números y guiones."
+
+#: assets/admin/src/pages/settings/FrontendTab.tsx:95
+msgid "Frontend access saved."
+msgstr "Acceso desde el sitio público guardado."
+
+#: assets/admin/src/pages/settings/FrontendTab.tsx:113
+msgid "Public access"
+msgstr "Acceso público"
+
+#: assets/admin/src/pages/settings/FrontendTab.tsx:114
+msgid ""
+"Expose the editor on a public-facing URL so users without wp-admin access "
+"(e.g. subscribers) can manage their own signatures. Each user only sees the "
+"signatures they own."
+msgstr ""
+"Publica el editor en una URL pública para que los usuarios sin acceso a "
+"wp-admin (p. ej., suscriptores) puedan gestionar sus propias firmas. Cada "
+"usuario solo ve las firmas que le pertenecen."
+
+#: assets/admin/src/pages/settings/FrontendTab.tsx:127
+msgid "Enable frontend access"
+msgstr "Activar el acceso desde el sitio público"
+
+#: assets/admin/src/pages/settings/FrontendTab.tsx:130
+msgid ""
+"When off the URL returns a 404. Capabilities granted below stay on the "
+"assigned roles even when off, so logged-in users with the cap can still "
+"access the wp-admin path."
+msgstr ""
+"Si está desactivado, la URL devuelve un error 404. Las capacidades asignadas "
+"abajo se mantienen en los roles aunque esté desactivado, así que los "
+"usuarios conectados con esa capacidad pueden seguir usando la ruta de "
+"wp-admin."
+
+#: assets/admin/src/pages/settings/FrontendTab.tsx:139
+msgid "URL slug"
+msgstr "Slug de la URL"
+
+#: assets/admin/src/pages/settings/FrontendTab.tsx:140
+msgid ""
+"First path segment under the site root. The editor will be reachable at the "
+"URL shown below."
+msgstr ""
+"Primer segmento de la ruta a partir de la raíz del sitio. El editor estará "
+"disponible en la URL que se muestra abajo."
+
+#: assets/admin/src/pages/settings/FrontendTab.tsx:144
+msgid "Slug"
+msgstr "Slug"
+
+#: assets/admin/src/pages/settings/FrontendTab.tsx:144
+msgid "Lowercase letters, numbers, and dashes only."
+msgstr "Solo letras minúsculas, números y guiones."
+
+#: assets/admin/src/pages/settings/FrontendTab.tsx:163
+msgid "Open"
+msgstr "Abrir"
+
+#: assets/admin/src/pages/settings/FrontendTab.tsx:170
+msgid "Roles with access"
+msgstr "Roles con acceso"
+
+#: assets/admin/src/pages/settings/FrontendTab.tsx:171
+msgid ""
+"Roles selected here receive the imgsig_use_signatures capability. "
+"Administrators always have access; deselecting them here has no effect."
+msgstr ""
+"Los roles seleccionados aquí reciben la capacidad imgsig_use_signatures. Los "
+"administradores siempre tienen acceso; desmarcarlos aquí no tiene efecto."
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:32
+msgid "Custom S3-compatible"
+msgstr "Compatible con S3 (personalizado)"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:80
+msgid "Settings saved."
+msgstr "Ajustes guardados."
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:122
+msgid "Backend"
+msgstr "Ubicación"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:122
+msgid "Where uploaded files are stored."
+msgstr "Dónde se guardan los archivos subidos."
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:123
+msgid "Driver"
+msgstr "Controlador"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:125
+msgid "WordPress Media Library (default)"
+msgstr "Biblioteca de medios de WordPress (predeterminado)"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:126
+msgid "S3-compatible (R2, S3, Spaces, …)"
+msgstr "Compatible con S3 (R2, S3, Spaces, …)"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:127
+msgid "External URLs only (no uploads)"
+msgstr "Solo URL externas (sin subidas)"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:134
+msgid "URL-only mode"
+msgstr "Modo solo URL"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:137
+msgid ""
+"No files will be hosted by this site. Users can paste external image URLs "
+"(e.g. from a CDN you already run) but the editor will not show upload, crop, "
+"or media-picker buttons. Existing assets stored under previous drivers stay "
+"readable."
+msgstr ""
+"Este sitio no alojará ningún archivo. Los usuarios pueden pegar URL de "
+"imágenes externas (p. ej., de un CDN que ya uses), pero el editor no "
+"mostrará los botones de subir, recortar ni de la biblioteca de medios. Los "
+"archivos guardados con controladores anteriores siguen siendo accesibles."
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:147
+msgid "S3 configuration"
+msgstr "Configuración de S3"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:148
+msgid ""
+"Credentials are encrypted at rest with AES-256 + HKDF derived from AUTH_KEY."
+msgstr ""
+"Las credenciales se guardan cifradas con AES-256 + HKDF derivado de AUTH_KEY."
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:150
+msgid "Provider"
+msgstr "Proveedor"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:160
+msgid "Bucket"
+msgstr "Bucket"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:170
+msgid "Region"
+msgstr "Región"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:171
+msgid "e.g. us-east-1 — see your provider for the exact code."
+msgstr "p. ej., us-east-1; consulta el código exacto en tu proveedor."
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:183
+msgid "Cloudflare account ID"
+msgstr "ID de cuenta de Cloudflare"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:184
+msgid "Used to build the R2 endpoint URL."
+msgstr "Se usa para construir la URL del endpoint de R2."
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:196
+msgid "Custom endpoint URL"
+msgstr "URL del endpoint personalizado"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:197
+msgid "Full https:// URL for your S3-compatible endpoint."
+msgstr "URL https:// completa de tu endpoint compatible con S3."
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:207
+msgid "Access key"
+msgstr "Clave de acceso"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:217
+msgid "Secret key"
+msgstr "Clave secreta"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:220
+msgid ""
+"A secret is stored. Leave blank to keep it; type a new value to replace it."
+msgstr ""
+"Hay una clave secreta guardada. Déjalo en blanco para conservarla o escribe "
+"un valor nuevo para reemplazarla."
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:233
+msgid "Public URL base (optional)"
+msgstr "URL pública base (opcional)"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:234
+msgid "CDN or custom-domain prefix. Blank uses the endpoint directly."
+msgstr ""
+"Prefijo de CDN o dominio personalizado. Si lo dejas en blanco, se usa "
+"directamente el endpoint."
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:252
+msgid "Test connection"
+msgstr "Probar conexión"
+
+#: assets/admin/src/pages/settings/StorageTab.tsx:260
+msgid "Save settings"
+msgstr "Guardar ajustes"
+
+#: assets/admin/src/pages/settings/_shared.tsx:59
+msgid "Dismiss"
+msgstr "Descartar"
+
+#: assets/editor/src/components/shared/ErrorBoundary.tsx:38
+msgid "Something went wrong"
+msgstr "Algo salió mal"
+
+#: assets/editor/src/components/shared/ErrorBoundary.tsx:45
+msgid "Try again"
+msgstr "Intentar de nuevo"
+
+#: assets/editor/src/core/blocks/avatar/definition.tsx:82
+#: assets/editor/src/core/blocks/image/definition.tsx:164
+#: assets/editor/src/editor/modals/ImageCropperModal.tsx:117
+msgid "Crop image"
+msgstr "Recortar imagen"
+
+#: assets/editor/src/core/blocks/avatar/definition.tsx:94
+#: assets/editor/src/core/blocks/heading/definition.tsx:66
+#: assets/editor/src/core/blocks/social-icons/definition.tsx:62
+#: assets/editor/src/core/blocks/text/TextProperties.tsx:45
+msgid "Size"
+msgstr "Tamaño"
+
+#: assets/editor/src/core/blocks/banner/definition.tsx:92
+msgid "Describe what the banner shows"
+msgstr "Describe lo que muestra el banner"
+
+#: assets/editor/src/core/blocks/banner/definition.tsx:115
+#: assets/editor/src/core/blocks/image/definition.tsx:189
+#: assets/editor/src/core/blocks/vcard/definition.tsx:183
+msgid "Border radius (px)"
+msgstr "Radio del borde (px)"
+
+#: assets/editor/src/core/blocks/banner/definition.tsx:125
+#: assets/editor/src/core/blocks/image/definition.tsx:211
+msgid "Static fallback URL"
+msgstr "URL alternativa estática"
+
+#: assets/editor/src/core/blocks/banner/definition.tsx:134
+#: assets/editor/src/core/blocks/image/definition.tsx:221
+msgid ""
+"Outlook 2007–2019 freezes GIFs on the first frame. Provide a static PNG/JPG "
+"and modern clients keep the animation while old Outlook shows this instead."
+msgstr ""
+"Outlook 2007–2019 congela los GIF en el primer fotograma. Indica un PNG/JPG "
+"estático: los clientes modernos mantienen la animación y el Outlook antiguo "
+"muestra esta imagen."
+
+#: assets/editor/src/core/blocks/button-cta/definition.tsx:81
+#: assets/editor/src/core/blocks/contact-row/definition.tsx:84
+msgid "Label"
+msgstr "Texto"
+
+#: assets/editor/src/core/blocks/button-cta/definition.tsx:98
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:363
+#: assets/editor/src/core/blocks/vcard/definition.tsx:173
+#: assets/editor/src/editor/sidebar-right/CanvasProperties.tsx:30
+msgid "Background"
+msgstr "Fondo"
+
+#: assets/editor/src/core/blocks/button-cta/definition.tsx:99
+#: assets/editor/src/editor/sidebar-right/CanvasProperties.tsx:52
+msgid "Text color"
+msgstr "Color del texto"
+
+#: assets/editor/src/core/blocks/button-cta/definition.tsx:100
+msgid "Border radius"
+msgstr "Radio del borde"
+
+#: assets/editor/src/core/blocks/button-cta/definition.tsx:142
+msgid ""
+"Button label is too long to fit on one line in Outlook; shorten it or it may "
+"be cut off."
+msgstr ""
+"El texto del botón es demasiado largo para caber en una línea en Outlook; "
+"acórtalo o podría cortarse."
+
+#: assets/editor/src/core/blocks/button-cta/definition.tsx:180
+msgid "Book a call"
+msgstr "Agenda una llamada"
+
+#: assets/editor/src/core/blocks/contact-row/definition.tsx:65
+#: assets/editor/src/core/blocks/disclaimer/definition.tsx:66
+#: assets/editor/src/core/blocks/divider/definition.tsx:68
+#: assets/editor/src/core/blocks/heading/definition.tsx:68
+#: assets/editor/src/core/blocks/text/TextProperties.tsx:58
+msgid "Color"
+msgstr "Color"
+
+#: assets/editor/src/core/blocks/contact-row/definition.tsx:70
+msgid "Rows"
+msgstr "Filas"
+
+#: assets/editor/src/core/blocks/contact-row/definition.tsx:78
+#: assets/editor/src/core/blocks/vcard/definition.tsx:152
+#: assets/editor/src/core/compiler/plain-text.ts:94
+msgid "Email"
+msgstr "Correo electrónico"
+
+#: assets/editor/src/core/blocks/contact-row/definition.tsx:79
+#: assets/editor/src/core/blocks/vcard/definition.tsx:158
+#: assets/editor/src/core/compiler/plain-text.ts:95
+msgid "Phone"
+msgstr "Teléfono"
+
+#: assets/editor/src/core/blocks/contact-row/definition.tsx:80
+#: assets/editor/src/core/blocks/vcard/definition.tsx:164
+msgid "Website"
+msgstr "Sitio web"
+
+#: assets/editor/src/core/blocks/contact-row/definition.tsx:91
+msgid "Href"
+msgstr "Enlace"
+
+#: assets/editor/src/core/blocks/contact-row/definition.tsx:110
+msgid "+ Add row"
+msgstr "+ Añadir fila"
+
+#: assets/editor/src/core/blocks/container/definition.tsx:208
+msgid "Drop blocks here"
+msgstr "Suelta bloques aquí"
+
+#: assets/editor/src/core/blocks/container/definition.tsx:238
+msgid "Columns"
+msgstr "Columnas"
+
+#: assets/editor/src/core/blocks/container/definition.tsx:244
+msgid "1 column"
+msgstr "1 columna"
+
+#: assets/editor/src/core/blocks/container/definition.tsx:245
+msgid "2 columns"
+msgstr "2 columnas"
+
+#: assets/editor/src/core/blocks/container/definition.tsx:250
+#: assets/editor/src/core/blocks/social-icons/definition.tsx:63
+msgid "Gap"
+msgstr "Separación"
+
+#: assets/editor/src/core/blocks/container/definition.tsx:261
+msgid "Children"
+msgstr "Bloques internos"
+
+#: assets/editor/src/core/blocks/container/definition.tsx:278
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:308
+msgid "Left cell"
+msgstr "Celda izquierda"
+
+#: assets/editor/src/core/blocks/container/definition.tsx:293
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:318
+msgid "Right cell"
+msgstr "Celda derecha"
+
+#: assets/editor/src/core/blocks/container/definition.tsx:311
+msgid ""
+"Drag library cards directly into a cell, or drag canvas blocks between cells "
+"to rearrange."
+msgstr ""
+"Arrastra tarjetas de la biblioteca directamente a una celda, o arrastra "
+"bloques del lienzo entre celdas para reorganizarlos."
+
+#: assets/editor/src/core/blocks/container/definition.tsx:349
+msgid "Add"
+msgstr "Añadir"
+
+#: assets/editor/src/core/blocks/container/definition.tsx:374
+msgid "Empty — drag here or click Add."
+msgstr "Vacía: arrastra aquí o haz clic en Añadir."
+
+#: assets/editor/src/core/blocks/container/definition.tsx:438
+msgid "Column widths"
+msgstr "Ancho de las columnas"
+
+#: assets/editor/src/core/blocks/container/definition.tsx:521
+#: assets/editor/src/core/compiler/compile.ts:87
+#, javascript-format
+msgid "Unknown block type \"%s\" was skipped."
+msgstr "Se omitió el tipo de bloque desconocido \"%s\"."
+
+#: assets/editor/src/core/blocks/disclaimer/definition.tsx:50
+msgid "Disclaimer text"
+msgstr "Texto del aviso legal"
+
+#: assets/editor/src/core/blocks/disclaimer/definition.tsx:59
+msgid "Font size"
+msgstr "Tamaño de fuente"
+
+#: assets/editor/src/core/blocks/disclaimer/definition.tsx:99
+msgid ""
+"This email and any attachments are confidential. If you received it in "
+"error, please notify the sender and delete it."
+msgstr ""
+"Este correo electrónico y sus archivos adjuntos son confidenciales. Si lo "
+"recibiste por error, avisa al remitente y elimínalo."
+
+#: assets/editor/src/core/blocks/divider/definition.tsx:77
+msgid "Thickness (px)"
+msgstr "Grosor (px)"
+
+#: assets/editor/src/core/blocks/divider/definition.tsx:90
+msgid "Width (%)"
+msgstr "Ancho (%)"
+
+#: assets/editor/src/core/blocks/heading/definition.tsx:57
+#: assets/editor/src/i18n/dynamic-strings.ts:22
+msgid "Text"
+msgstr "Texto"
+
+#: assets/editor/src/core/blocks/heading/definition.tsx:65
+#: assets/editor/src/core/blocks/text/TextProperties.tsx:39
+msgid "Font"
+msgstr "Fuente"
+
+#: assets/editor/src/core/blocks/heading/definition.tsx:67
+#: assets/editor/src/core/blocks/text/TextProperties.tsx:52
+msgid "Weight"
+msgstr "Grosor"
+
+#: assets/editor/src/core/blocks/heading/definition.tsx:101
+msgid "Your Name"
+msgstr "Tu nombre"
+
+#: assets/editor/src/core/blocks/image/definition.tsx:55
+msgid "Image uploaded."
+msgstr "Imagen subida."
+
+#: assets/editor/src/core/blocks/image/definition.tsx:57
+#, javascript-format
+msgid "Could not upload the image: %s"
+msgstr "No se pudo subir la imagen: %s"
+
+#: assets/editor/src/core/blocks/image/definition.tsx:77
+msgid "Upload an image from your computer"
+msgstr "Sube una imagen desde tu equipo"
+
+#: assets/editor/src/core/blocks/image/definition.tsx:81
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:263
+#: assets/editor/src/editor/modals/ImageCropperModal.tsx:193
+msgid "Uploading…"
+msgstr "Subiendo…"
+
+#: assets/editor/src/core/blocks/image/definition.tsx:81
+msgid "Upload"
+msgstr "Subir"
+
+#: assets/editor/src/core/blocks/image/definition.tsx:199
+msgid "Link (optional)"
+msgstr "Enlace (opcional)"
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:128
+msgid "The QR code could not be generated in this browser."
+msgstr "No se pudo generar el código QR en este navegador."
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:250
+#, javascript-format
+msgid "Upload failed: %s"
+msgstr "Falló la subida: %s"
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:257
+msgid "Retry"
+msgstr "Reintentar"
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:266
+msgid "Hosted — ready for email."
+msgstr "Alojado: listo para el correo."
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:299
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:424
+#: assets/editor/src/core/compiler/plain-text.ts:129
+msgid "QR code"
+msgstr "Código QR"
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:306
+msgid "Add data to render the QR."
+msgstr "Añade datos para generar el QR."
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:337
+msgid "Encoded data"
+msgstr "Datos codificados"
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:342
+msgid "https://example.com or BEGIN:VCARD…"
+msgstr "https://example.com o BEGIN:VCARD…"
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:345
+msgid "A URL, mailto:, tel:, or any other QR-encodable string."
+msgstr ""
+"Una URL, mailto:, tel: o cualquier otro texto que se pueda codificar en un "
+"QR."
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:350
+msgid "Size (px)"
+msgstr "Tamaño (px)"
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:358
+msgid "Foreground"
+msgstr "Primer plano"
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:369
+msgid "Caption (optional)"
+msgstr "Leyenda (opcional)"
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:382
+msgid ""
+"Uploads are disabled on this site, so the QR code cannot be hosted and will "
+"not appear in the exported signature. Generate the QR elsewhere and add it "
+"with an Image block."
+msgstr ""
+"La subida de archivos está desactivada en este sitio, así que el código QR "
+"no se puede alojar y no aparecerá en la firma exportada. Genera el QR en "
+"otro lugar y añádelo con un bloque Imagen."
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:398
+msgid ""
+"QR code image not uploaded yet. Select the QR block (or use “Fix embedded "
+"images”) to upload it."
+msgstr ""
+"La imagen del código QR aún no se ha subido. Selecciona el bloque QR (o usa "
+"“Corregir imágenes incrustadas”) para subirla."
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:401
+msgid ""
+"QR codes need a hosted image, but uploads are disabled on this site, so the "
+"QR code was left out. Use an Image block with a hosted QR image instead."
+msgstr ""
+"Los códigos QR necesitan una imagen alojada, pero la subida de archivos está "
+"desactivada en este sitio, así que se omitió el código QR. Usa un bloque "
+"Imagen con una imagen QR alojada."
+
+#: assets/editor/src/core/blocks/qr-code/definition.tsx:413
+msgid ""
+"The hosted QR code image is out of date with the block settings; it is being "
+"re-uploaded."
+msgstr ""
+"La imagen alojada del código QR no coincide con los ajustes del bloque; se "
+"está volviendo a subir."
+
+#: assets/editor/src/core/blocks/social-icons/definition.tsx:61
+msgid "Icon color"
+msgstr "Color de los iconos"
+
+#: assets/editor/src/core/blocks/social-icons/definition.tsx:65
+msgid "Networks"
+msgstr "Redes"
+
+#: assets/editor/src/core/blocks/social-icons/definition.tsx:100
+msgid "+ Add network"
+msgstr "+ Añadir red"
+
+#: assets/editor/src/core/blocks/spacer/definition.tsx:22
+msgid "Height"
+msgstr "Altura"
+
+#: assets/editor/src/core/blocks/text/TextProperties.tsx:29
+#: assets/editor/src/editor/sidebar-left/BlockLibrary.tsx:13
+msgid "Content"
+msgstr "Contenido"
+
+#: assets/editor/src/core/blocks/text/TextProperties.tsx:36
+#: assets/editor/src/editor/sidebar-right/CanvasProperties.tsx:37
+msgid "Typography"
+msgstr "Tipografía"
+
+#: assets/editor/src/core/blocks/text/TextProperties.tsx:65
+msgid "Spacing"
+msgstr "Espaciado"
+
+#: assets/editor/src/core/blocks/text/definition.tsx:20
+msgid "Edit me"
+msgstr "Edítame"
+
+#: assets/editor/src/core/blocks/vcard/definition.tsx:93
+#: assets/editor/src/core/blocks/vcard/definition.tsx:134
+#: assets/editor/src/core/blocks/vcard/definition.tsx:279
+#: assets/editor/src/core/blocks/vcard/definition.tsx:306
+#: assets/editor/src/core/compiler/plain-text.ts:134
+msgid "Save my contact"
+msgstr "Guarda mi contacto"
+
+#: assets/editor/src/core/blocks/vcard/definition.tsx:124
+msgid ""
+"Uploads are disabled on this site, so the contact card cannot be hosted and "
+"the link will not appear in the exported signature."
+msgstr ""
+"La subida de archivos está desactivada en este sitio, así que la tarjeta de "
+"contacto no se puede alojar y el enlace no aparecerá en la firma exportada."
+
+#: assets/editor/src/core/blocks/vcard/definition.tsx:129
+msgid "Button label"
+msgstr "Texto del botón"
+
+#: assets/editor/src/core/blocks/vcard/definition.tsx:138
+msgid "Contact details"
+msgstr "Datos de contacto"
+
+#: assets/editor/src/core/blocks/vcard/definition.tsx:141
+msgid "Full name"
+msgstr "Nombre completo"
+
+#: assets/editor/src/core/blocks/vcard/definition.tsx:146
+msgid "Organization"
+msgstr "Organización"
+
+#: assets/editor/src/core/blocks/vcard/definition.tsx:150
+msgid "Title"
+msgstr "Cargo"
+
+#: assets/editor/src/core/blocks/vcard/definition.tsx:170
+msgid "Style"
+msgstr "Estilo"
+
+#: assets/editor/src/core/blocks/vcard/definition.tsx:178
+msgid "Text colour"
+msgstr "Color del texto"
+
+#: assets/editor/src/core/blocks/vcard/definition.tsx:244
+msgid ""
+"vCard block has no contact details yet, so it was left out of the export."
+msgstr ""
+"El bloque vCard aún no tiene datos de contacto, así que se omitió en la "
+"exportación."
+
+#: assets/editor/src/core/blocks/vcard/definition.tsx:255
+msgid ""
+"vCard file not uploaded yet. Select the vCard block (or use “Fix embedded "
+"images”) to upload it."
+msgstr ""
+"El archivo vCard aún no se ha subido. Selecciona el bloque vCard (o usa "
+"“Corregir imágenes incrustadas”) para subirlo."
+
+#: assets/editor/src/core/blocks/vcard/definition.tsx:258
+msgid ""
+"vCards need a hosted .vcf file, but uploads are disabled on this site, so "
+"the link was left out."
+msgstr ""
+"Las vCard necesitan un archivo .vcf alojado, pero la subida de archivos está "
+"desactivada en este sitio, así que se omitió el enlace."
+
+#: assets/editor/src/core/blocks/vcard/definition.tsx:270
+msgid ""
+"The hosted vCard file is out of date with the block’s contact details; it is "
+"being re-uploaded."
+msgstr ""
+"El archivo vCard alojado no coincide con los datos de contacto del bloque; "
+"se está volviendo a subir."
+
+#: assets/editor/src/core/compiler/compile.ts:110
+#, javascript-format
+msgid "Variable \"{{%s}}\" referenced but not defined; left as literal text."
+msgstr ""
+"La variable \"{{%s}}\" se usa pero no está definida; se dejó como texto "
+"literal."
+
+#: assets/editor/src/core/compiler/compile.ts:163
+#: assets/editor/src/core/compiler/plain-text.ts:76
+#: assets/editor/src/core/compiler/plain-text.ts:78
+#: assets/editor/src/core/compiler/plain-text.ts:116
+#: assets/editor/src/core/compiler/plain-text.ts:123
+#: assets/editor/src/tiptap/TiptapEditor.tsx:157
+msgid "Link"
+msgstr "Enlace"
+
+#: assets/editor/src/core/compiler/issues.ts:64
+msgid "Signature"
+msgstr "Firma"
+
+#: assets/editor/src/core/compiler/issues.ts:110
+#, javascript-format
+msgid ""
+"%s block: the image has no alt text, so nothing describes it when images are "
+"blocked."
+msgstr ""
+"Bloque %s: la imagen no tiene texto alternativo, así que nada la describe "
+"cuando se bloquean las imágenes."
+
+#: assets/editor/src/core/compiler/issues.ts:135
+#, javascript-format
+msgid ""
+"%s block is %spx wide but only %spx are available here; it was scaled down "
+"to fit."
+msgstr ""
+"El bloque %s mide %spx de ancho, pero aquí solo hay %spx disponibles; se "
+"redujo para que quepa."
+
+#: assets/editor/src/core/compiler/issues.ts:166
+#, javascript-format
+msgid ""
+"%s block: %spx text has low contrast against the background (%s:1); it may "
+"be hard to read."
+msgstr ""
+"Bloque %s: el texto de %spx tiene poco contraste con el fondo (%s:1); puede "
+"ser difícil de leer."
+
+#: assets/editor/src/core/compiler/plain-text.ts:96
+msgid "Web"
+msgstr "Web"
+
+#: assets/editor/src/core/compiler/urls.ts:141
+#, javascript-format
+msgid "%s: a link has no URL."
+msgstr "%s: un enlace no tiene URL."
+
+#: assets/editor/src/core/compiler/urls.ts:150
+#, javascript-format
+msgid "%s: the link \"%s\" is incomplete (no address after the protocol)."
+msgstr ""
+"%s: el enlace \"%s\" está incompleto (no hay dirección después del "
+"protocolo)."
+
+#: assets/editor/src/core/compiler/urls.ts:162
+#, javascript-format
+msgid "%s: the link points to %s, which recipients cannot open."
+msgstr "%s: el enlace apunta a %s, que los destinatarios no pueden abrir."
+
+#: assets/editor/src/core/compiler/urls.ts:184
+#, javascript-format
+msgid "%s block has no image URL yet, so it was left out of the export."
+msgstr ""
+"El bloque %s aún no tiene URL de imagen, así que se omitió en la exportación."
+
+#: assets/editor/src/core/compiler/urls.ts:199
+#, javascript-format
+msgid ""
+"%s block loads its image over http://. Many clients block or warn about "
+"insecure images — use https://."
+msgstr ""
+"El bloque %s carga su imagen por http://. Muchos clientes bloquean o "
+"advierten sobre las imágenes no seguras: usa https://."
+
+#: assets/editor/src/core/compiler/urls.ts:212
+#, javascript-format
+msgid ""
+"%s block loads its image from %s, which recipients cannot reach. Upload it "
+"to a public site."
+msgstr ""
+"El bloque %s carga su imagen desde %s, al que los destinatarios no pueden "
+"acceder. Súbela a un sitio público."
+
+#: assets/editor/src/core/compiler/urls.ts:224
+#, javascript-format
+msgid ""
+"%s block still uses a placeholder image (%s). Replace it with your own "
+"picture."
+msgstr ""
+"El bloque %s todavía usa una imagen de ejemplo (%s). Reemplázala por tu "
+"propia imagen."
+
+#: assets/editor/src/core/compiler/urls.ts:242
+#, javascript-format
+msgid ""
+"%s block contains an embedded (data:) file. Gmail and Outlook.com do not "
+"show embedded images, and one photo can exceed Gmail's 10,000-character "
+"limit — it was removed. Upload it instead."
+msgstr ""
+"El bloque %s contiene un archivo incrustado (data:). Gmail y Outlook.com no "
+"muestran imágenes incrustadas, y una sola foto puede superar el límite de "
+"10.000 caracteres de Gmail, así que se eliminó. Súbelo en su lugar."
+
+#: assets/editor/src/core/compiler/urls.ts:256
+#, javascript-format
+msgid "%s block contains a script URL; it was disabled."
+msgstr "El bloque %s contiene una URL de script; se desactivó."
+
+#: assets/editor/src/core/compiler/urls.ts:258
+#, javascript-format
+msgid ""
+"%s block points to a temporary blob: URL that only exists in your browser; "
+"it was removed."
+msgstr ""
+"El bloque %s apunta a una URL temporal blob: que solo existe en tu "
+"navegador; se eliminó."
+
+#: assets/editor/src/core/compiler/urls.ts:262
+#, javascript-format
+msgid ""
+"%s block uses an unsupported URL (\"%s\"). Only https://, http://, mailto: "
+"and tel: work in email."
+msgstr ""
+"El bloque %s usa una URL no compatible (\"%s\"). En el correo solo funcionan "
+"https://, http://, mailto: y tel:."
+
+#: assets/editor/src/core/compiler/validate.ts:29
+#, javascript-format
+msgid "The HTML is %s KB; Gmail clips messages over 102 KB."
+msgstr "El HTML ocupa %s KB; Gmail recorta los mensajes de más de 102 KB."
+
+#: assets/editor/src/core/compiler/validate.ts:39
+#, javascript-format
+msgid ""
+"The signature is %s characters long; Gmail rejects signatures over 10,000 "
+"characters."
+msgstr ""
+"La firma tiene %s caracteres; Gmail rechaza las firmas de más de 10.000 "
+"caracteres."
+
+#: assets/editor/src/core/compiler/validate.ts:51
+msgid "The HTML still contains an embedded data: URI."
+msgstr "El HTML todavía contiene una URI data: incrustada."
+
+#: assets/editor/src/core/compiler/validate.ts:58
+msgid "The HTML still contains a script URL."
+msgstr "El HTML todavía contiene una URL de script."
+
+#: assets/editor/src/core/compiler/validate.ts:61
+msgid "The HTML still contains a temporary blob: URL."
+msgstr "El HTML todavía contiene una URL temporal blob:."
+
+#: assets/editor/src/core/compiler/validate.ts:67
+msgid "An image has no alt attribute."
+msgstr "Una imagen no tiene el atributo alt."
+
+#: assets/editor/src/core/compiler/validate.ts:73
+msgid "An image has no explicit width; Outlook may show it at full size."
+msgstr ""
+"Una imagen no tiene un ancho explícito; Outlook podría mostrarla a tamaño "
+"completo."
+
+#: assets/editor/src/core/compiler/validate.ts:83
+msgid "A link has no href."
+msgstr "Un enlace no tiene href."
+
+#: assets/editor/src/editor/EditorShell.tsx:71
+#: assets/editor/src/editor/sidebar-right/RightSidebar.tsx:29
+msgid "Block"
+msgstr "Bloque"
+
+#: assets/editor/src/editor/canvas/BlockToolbar.tsx:44
+msgid "Block actions"
+msgstr "Acciones del bloque"
+
+#: assets/editor/src/editor/canvas/BlockToolbar.tsx:52
+#: assets/editor/src/editor/canvas/BlockToolbar.tsx:53
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:245
+msgid "Drag to reorder"
+msgstr "Arrastra para reordenar"
+
+#: assets/editor/src/editor/canvas/BlockToolbar.tsx:60
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:273
+msgid "Move up"
+msgstr "Mover arriba"
+
+#: assets/editor/src/editor/canvas/BlockToolbar.tsx:67
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:280
+msgid "Move down"
+msgstr "Mover abajo"
+
+#: assets/editor/src/editor/canvas/Canvas.tsx:88
+msgid "Start your signature"
+msgstr "Empieza tu firma"
+
+#: assets/editor/src/editor/canvas/Canvas.tsx:91
+msgid "Drag a block from the left sidebar, or click one to drop it here."
+msgstr ""
+"Arrastra un bloque desde la barra lateral izquierda o haz clic en uno para "
+"añadirlo aquí."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:70
+msgid "Gmail"
+msgstr "Gmail"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:74
+#: assets/editor/src/editor/modals/ExportModal.tsx:87
+#: assets/editor/src/editor/modals/ExportModal.tsx:99
+#: assets/editor/src/editor/modals/ExportModal.tsx:111
+msgid ""
+"Press \"Copy visual\" above so the rendered signature is in your clipboard."
+msgstr ""
+"Pulsa \"Copiar visual\" arriba para tener la firma renderizada en el "
+"portapapeles."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:75
+msgid ""
+"Click the link below — Gmail opens on the General settings tab in a new "
+"window."
+msgstr ""
+"Haz clic en el enlace de abajo: Gmail se abre en una ventana nueva, en la "
+"pestaña General de la configuración."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:76
+msgid ""
+"Scroll to the \"Signature\" section, click \"Create new\", give it a name."
+msgstr ""
+"Desplázate hasta la sección \"Firma\", haz clic en \"Crear\" y ponle un "
+"nombre."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:77
+msgid ""
+"Click into the editor and paste (Cmd/Ctrl + V). The signature renders "
+"visually."
+msgstr ""
+"Haz clic en el editor y pega (Cmd/Ctrl + V). La firma se muestra con su "
+"diseño."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:78
+msgid ""
+"Pick the new signature in the \"For new emails use\" dropdown, then \"Save "
+"changes\" at the bottom."
+msgstr ""
+"Elige la nueva firma en el desplegable \"Para correos nuevos usar\" y luego "
+"haz clic en \"Guardar cambios\" al final de la página."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:83
+msgid "Outlook Web"
+msgstr "Outlook Web"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:88
+msgid ""
+"Click the link below to open Outlook on the web on the message-content "
+"settings page."
+msgstr ""
+"Haz clic en el enlace de abajo para abrir Outlook en la Web en la página de "
+"ajustes de redacción de mensajes."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:89
+msgid ""
+"Under \"Email signature\", click \"+ New signature\" and give it a name."
+msgstr ""
+"En \"Firma de correo electrónico\", haz clic en \"+ Nueva firma\" y ponle un "
+"nombre."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:90
+msgid ""
+"Click into the rich-text area and paste (Cmd/Ctrl + V). The signature "
+"renders visually."
+msgstr ""
+"Haz clic en el área de texto enriquecido y pega (Cmd/Ctrl + V). La firma se "
+"muestra con su diseño."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:91
+msgid ""
+"Set it as default for new messages and replies if you want, then click "
+"\"Save\"."
+msgstr ""
+"Si quieres, defínela como predeterminada para mensajes nuevos y respuestas; "
+"luego haz clic en \"Guardar\"."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:96
+msgid "Outlook Desktop"
+msgstr "Outlook de escritorio"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:100
+msgid "Open Outlook → File → Options → Mail → Signatures…"
+msgstr "Abre Outlook → Archivo → Opciones → Correo → Firmas…"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:101
+msgid "Click \"New\", give the signature a name, click \"OK\"."
+msgstr ""
+"Haz clic en \"Nueva\", ponle un nombre a la firma y haz clic en \"Aceptar\"."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:102
+msgid "Click into the editor area at the bottom and paste (Cmd/Ctrl + V)."
+msgstr ""
+"Haz clic en el área del editor de la parte inferior y pega (Cmd/Ctrl + V)."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:103
+msgid ""
+"Outlook 2007–2019 freezes animated GIFs on the first frame — the editor "
+"offers a static-fallback URL field to handle that. Click \"OK\" twice when "
+"done."
+msgstr ""
+"Outlook 2007–2019 congela los GIF animados en el primer fotograma: el editor "
+"ofrece un campo de URL alternativa estática para resolverlo. Cuando "
+"termines, haz clic dos veces en \"Aceptar\"."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:108
+msgid "Apple Mail"
+msgstr "Apple Mail"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:112
+msgid "Open Mail → Settings… → Signatures."
+msgstr "Abre Mail → Ajustes… → Firmas."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:113
+msgid ""
+"Pick the email account on the left, click \"+\" to add a new signature, give "
+"it a name."
+msgstr ""
+"Elige la cuenta de correo a la izquierda, haz clic en \"+\" para añadir una "
+"firma nueva y ponle un nombre."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:114
+msgid ""
+"Click into the editor on the right and paste (Cmd + V). The signature "
+"renders visually."
+msgstr ""
+"Haz clic en el editor de la derecha y pega (Cmd + V). La firma se muestra "
+"con su diseño."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:115
+msgid ""
+"If images don't show, untick \"Always match my default message font\" in the "
+"same panel."
+msgstr ""
+"Si no se ven las imágenes, desmarca \"Usar siempre mi tipo de letra "
+"predeterminado para los mensajes\" en el mismo panel."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:120
+msgid "Thunderbird"
+msgstr "Thunderbird"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:123
+msgid "Press \"Download .html\" above to save the signature to disk."
+msgstr "Pulsa \"Descargar .html\" arriba para guardar la firma en tu equipo."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:124
+msgid "Open Thunderbird → Account Settings → pick your account on the left."
+msgstr ""
+"Abre Thunderbird → Configuración de las cuentas → elige tu cuenta a la "
+"izquierda."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:125
+msgid "Tick \"Use HTML (e.g. <b>bold</b>)\" under the Signature text area."
+msgstr ""
+"Marca \"Usar HTML (p. ej., <b>negrita</b>)\" debajo del área de texto de la "
+"firma."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:126
+msgid ""
+"Tick \"Attach the signature from a file instead\" and choose the .html you "
+"just saved."
+msgstr ""
+"Marca \"Adjuntar la firma desde un archivo\" y elige el .html que acabas de "
+"guardar."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:127
+msgid ""
+"Click \"OK\". Thunderbird re-reads the file each send so editing the file "
+"updates every future email."
+msgstr ""
+"Haz clic en \"Aceptar\". Thunderbird vuelve a leer el archivo en cada envío, "
+"así que si editas el archivo se actualizan todos los correos futuros."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:171
+msgid "Could not copy — try selecting the HTML below manually."
+msgstr "No se pudo copiar: prueba a seleccionar manualmente el HTML de abajo."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:186
+msgid ""
+"Could not copy — your browser blocked rich-clipboard access. Try the \"Copy "
+"HTML\" button instead."
+msgstr ""
+"No se pudo copiar: tu navegador bloqueó el acceso al portapapeles con "
+"formato. Prueba con el botón \"Copiar HTML\"."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:215
+#, javascript-format
+msgid "Sent to %s"
+msgstr "Enviado a %s"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:218
+#, javascript-format
+msgid "Could not send: %s"
+msgstr "No se pudo enviar: %s"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:239
+msgid "All embedded images are now hosted."
+msgstr "Todas las imágenes incrustadas ya están alojadas."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:242
+#, javascript-format
+msgid "%s item(s) could not be uploaded: %s"
+msgstr "No se pudieron subir %s elemento(s): %s"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:254
+msgid "Export & install"
+msgstr "Exportar e instalar"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:268
+msgid ""
+"Copies the rendered signature so it pastes visually into rich-text composers "
+"(Gmail compose, Outlook signature box, Word, etc.). Use this when the "
+"signature settings only accept rich text, not HTML source."
+msgstr ""
+"Copia la firma renderizada para que se pegue con su diseño en editores de "
+"texto enriquecido (redacción de Gmail, cuadro de firma de Outlook, Word, "
+"etc.). Úsalo cuando los ajustes de firma solo acepten texto enriquecido, no "
+"código HTML."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:271
+#: assets/editor/src/editor/modals/ExportModal.tsx:286
+msgid "Copied!"
+msgstr "¡Copiado!"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:271
+msgid "Copy visual"
+msgstr "Copiar visual"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:283
+msgid ""
+"Copies the raw HTML source. Use this when the signature settings expose an "
+"HTML / source-code mode (Gmail with Labs HTML, raw .html file editing)."
+msgstr ""
+"Copia el código HTML. Úsalo cuando los ajustes de firma ofrezcan un modo "
+"HTML / código fuente (Gmail con HTML de Labs, edición directa de un archivo "
+".html)."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:286
+msgid "Copy HTML"
+msgstr "Copiar HTML"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:294
+msgid ""
+"Sends the compiled HTML to your WP account email so you can copy it from "
+"your real client."
+msgstr ""
+"Envía el HTML compilado al correo de tu cuenta de WP para que lo copies "
+"desde tu cliente de correo real."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:297
+msgid "Sending…"
+msgstr "Enviando…"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:297
+msgid "Sent!"
+msgstr "¡Enviado!"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:297
+msgid "Send to my email"
+msgstr "Enviar a mi correo"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:306
+msgid "Download .html"
+msgstr "Descargar .html"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:319
+msgid "Gmail clips messages over 102 KB. Trim images / banners."
+msgstr ""
+"Gmail recorta los mensajes de más de 102 KB. Reduce imágenes o banners."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:320
+msgid "Compiled HTML payload size."
+msgstr "Tamaño del HTML compilado."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:323
+#: assets/editor/src/editor/modals/PreviewModal.tsx:136
+#, javascript-format
+msgid "%s KB"
+msgstr "%s KB"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:335
+#, javascript-format
+msgid "%s embedded image(s) or file(s) will not show in Gmail or Outlook.com"
+msgstr ""
+"%s imagen(es) o archivo(s) incrustados no se mostrarán en Gmail ni en "
+"Outlook.com"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:341
+msgid ""
+"This signature embeds images or files directly (data: URIs). Most webmail "
+"clients refuse to display them, and a single embedded photo can push the "
+"signature past Gmail’s 10,000-character limit. Upload them to your site so "
+"the signature links to hosted copies instead."
+msgstr ""
+"Esta firma incrusta imágenes o archivos directamente (URI data:). La mayoría "
+"de los clientes de correo web se niegan a mostrarlos, y una sola foto "
+"incrustada puede hacer que la firma supere el límite de 10.000 caracteres de "
+"Gmail. Súbelos a tu sitio para que la firma enlace a copias alojadas."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:353
+#, javascript-format
+msgid "Uploading %s of %s…"
+msgstr "Subiendo %s de %s…"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:354
+msgid "Fix embedded images"
+msgstr "Corregir imágenes incrustadas"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:358
+msgid ""
+"Uploads are disabled on this site — replace these images with links to "
+"hosted images (https://…)."
+msgstr ""
+"La subida de archivos está desactivada en este sitio: reemplaza estas "
+"imágenes por enlaces a imágenes alojadas (https://…)."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:372
+msgid "Install in your email client"
+msgstr "Instalar en tu cliente de correo"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:375
+msgid "Copy the HTML above first, then follow the steps for your client."
+msgstr ""
+"Primero copia la firma desde arriba y luego sigue los pasos de tu cliente de "
+"correo."
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:406
+#, javascript-format
+msgid "Open %s settings"
+msgstr "Abrir los ajustes de %s"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:412
+msgid "Use “Copy visual”"
+msgstr "Usa “Copiar visual”"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:413
+msgid "Use “Download .html”"
+msgstr "Usa “Descargar .html”"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:430
+msgid "Show raw HTML"
+msgstr "Mostrar el código HTML"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:576
+msgid "1 problem will break this signature for recipients"
+msgstr "1 problema hará que esta firma no funcione para los destinatarios"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:577
+#, javascript-format
+msgid "%s problems will break this signature for recipients"
+msgstr "%s problemas harán que esta firma no funcione para los destinatarios"
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:590
+#, javascript-format
+msgid "%s compile warning(s)"
+msgstr "%s advertencia(s) de compilación"
+
+#: assets/editor/src/editor/modals/ImageCropperModal.tsx:137
+msgid "No image to crop yet — paste an image URL first."
+msgstr ""
+"Aún no hay ninguna imagen que recortar: primero pega la URL de una imagen."
+
+#: assets/editor/src/editor/modals/ImageCropperModal.tsx:143
+msgid "Zoom"
+msgstr "Zoom"
+
+#: assets/editor/src/editor/modals/ImageCropperModal.tsx:162
+msgid ""
+"This is an animated GIF. Cropping flattens it to a single frame — the result "
+"will be a static image. Cancel and resize the original GIF in another tool "
+"if you want to keep the animation."
+msgstr ""
+"Es un GIF animado. Al recortarlo se aplana en un solo fotograma y el "
+"resultado será una imagen estática. Cancela y cambia el tamaño del GIF "
+"original con otra herramienta si quieres conservar la animación."
+
+#: assets/editor/src/editor/modals/ImageCropperModal.tsx:193
+msgid "Apply crop"
+msgstr "Aplicar recorte"
+
+#: assets/editor/src/editor/modals/PreviewModal.tsx:22
+#: assets/editor/src/editor/topbar/DeviceSwitcher.tsx:8
+msgid "Desktop"
+msgstr "Escritorio"
+
+#: assets/editor/src/editor/modals/PreviewModal.tsx:23
+msgid "Tablet"
+msgstr "Tableta"
+
+#: assets/editor/src/editor/modals/PreviewModal.tsx:24
+#: assets/editor/src/editor/topbar/DeviceSwitcher.tsx:9
+msgid "Mobile"
+msgstr "Móvil"
+
+#: assets/editor/src/editor/modals/PreviewModal.tsx:132
+msgid "Gmail clips messages larger than 102 KB."
+msgstr "Gmail recorta los mensajes de más de 102 KB."
+
+#: assets/editor/src/editor/modals/PreviewModal.tsx:133
+msgid "HTML payload size."
+msgstr "Tamaño del HTML."
+
+#: assets/editor/src/editor/modals/PreviewModal.tsx:143
+msgid "Signature preview"
+msgstr "Vista previa de la firma"
+
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:48
+msgid "Template saved."
+msgstr "Plantilla guardada."
+
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:62
+msgid "Save signature as template"
+msgstr "Guardar la firma como plantilla"
+
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:65
+msgid ""
+"Saves the current canvas as a global template available to every user with "
+"“Use signatures”. Admins can edit it later."
+msgstr ""
+"Guarda el lienzo actual como una plantilla global disponible para todos los "
+"usuarios con “Usar firmas”. Los administradores pueden editarla después."
+
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:75
+msgid "Sales — active"
+msgstr "Ventas — activa"
+
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:119
+#: assets/editor/src/editor/topbar/Topbar.tsx:163
+msgid "Save as template"
+msgstr "Guardar como plantilla"
+
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:119
+msgid "This template has no readable content."
+msgstr "Esta plantilla no tiene contenido legible."
+
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:128
+msgid "Template applied. Press Ctrl+Z to undo."
+msgstr "Plantilla aplicada. Pulsa Ctrl+Z para deshacer."
+
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:146
+#: assets/editor/src/editor/topbar/Topbar.tsx:139
+msgid "Pick a template"
+msgstr "Elige una plantilla"
+
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:148
+#, javascript-format
+msgid "Failed to load templates: %s"
+msgstr "No se pudieron cargar las plantillas: %s"
+
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:151
+msgid "Loading…"
+msgstr "Cargando…"
+
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:154
+msgid "No templates available yet."
+msgstr "Aún no hay plantillas disponibles."
+
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:177
+msgid "All"
+msgstr "Todas"
+
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:189
+msgid "No templates match your filters."
+msgstr "Ninguna plantilla coincide con tus filtros."
+
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:224
+msgid "Replace your current signature?"
+msgstr "¿Reemplazar tu firma actual?"
+
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:233
+#, javascript-format
+msgid ""
+"Applying \"%s\" replaces the blocks and canvas settings on the canvas. Your "
+"variable values are kept, and you can undo this with Ctrl+Z."
+msgstr ""
+"Al aplicar \"%s\" se reemplazan los bloques y los ajustes del lienzo. Los "
+"valores de tus variables se conservan y puedes deshacerlo con Ctrl+Z."
+
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:283
+#, javascript-format
+msgid "Preview of %s"
+msgstr "Vista previa de %s"
+
+#: assets/editor/src/editor/shortcuts/useKeyboardShortcuts.ts:157
+msgid "Block copied"
+msgstr "Bloque copiado"
+
+#: assets/editor/src/editor/shortcuts/useKeyboardShortcuts.ts:169
+msgid "The copied block type is not available in this editor."
+msgstr "El tipo de bloque copiado no está disponible en este editor."
+
+#: assets/editor/src/editor/sidebar-left/BlockLibrary.tsx:11
+msgid "Layout"
+msgstr "Estructura"
+
+#: assets/editor/src/editor/sidebar-left/BlockLibrary.tsx:15
+#: assets/editor/src/i18n/dynamic-strings.ts:28
+msgid "Social"
+msgstr "Redes sociales"
+
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:147
+msgid "No layers yet"
+msgstr "Aún no hay capas"
+
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:150
+msgid "Add blocks from the Blocks tab and they appear here."
+msgstr "Añade bloques desde la pestaña Bloques y aparecerán aquí."
+
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:244
+msgid "Drag layer"
+msgstr "Arrastrar capa"
+
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:287
+msgid "Hide"
+msgstr "Ocultar"
+
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:287
+msgid "Show"
+msgstr "Mostrar"
+
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:382
+msgid "Drop into this cell"
+msgstr "Suelta en esta celda"
+
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:384
+msgid "Empty"
+msgstr "Vacía"
+
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:465
+#, javascript-format
+msgid "%s-col, 1 item"
+msgstr "%s col., 1 elemento"
+
+#: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:466
+#, javascript-format
+msgid "%s-col, %s items"
+msgstr "%s col., %s elementos"
+
+#: assets/editor/src/editor/sidebar-left/LeftSidebar.tsx:12
+msgid "Blocks"
+msgstr "Bloques"
+
+#: assets/editor/src/editor/sidebar-left/LeftSidebar.tsx:13
+msgid "Layers"
+msgstr "Capas"
+
+#: assets/editor/src/editor/sidebar-right/CanvasProperties.tsx:20
+#: assets/editor/src/editor/sidebar-right/RightSidebar.tsx:29
+msgid "Canvas"
+msgstr "Lienzo"
+
+#: assets/editor/src/editor/sidebar-right/CanvasProperties.tsx:23
+msgid "Width"
+msgstr "Ancho"
+
+#: assets/editor/src/editor/sidebar-right/CanvasProperties.tsx:40
+msgid "Default font"
+msgstr "Fuente predeterminada"
+
+#: assets/editor/src/editor/sidebar-right/CanvasProperties.tsx:45
+msgid "Default size"
+msgstr "Tamaño predeterminado"
+
+#: assets/editor/src/editor/sidebar-right/CanvasProperties.tsx:57
+msgid "Link color"
+msgstr "Color de los enlaces"
+
+#: assets/editor/src/editor/sidebar-right/PropertyPanel.tsx:29
+msgid "Unknown block type — no properties to show."
+msgstr "Tipo de bloque desconocido: no hay propiedades que mostrar."
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:41
+msgid "Use letters, digits, dashes, underscores, or dots."
+msgstr "Usa letras, números, guiones, guiones bajos o puntos."
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:45
+#, javascript-format
+msgid "A variable named \"%s\" already exists."
+msgstr "Ya existe una variable llamada \"%s\"."
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:58
+#, javascript-format
+msgid "Copied %s"
+msgstr "Se copió %s"
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:60
+msgid "Could not copy to clipboard"
+msgstr "No se pudo copiar al portapapeles"
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:67
+msgid "Variables"
+msgstr "Variables"
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:70
+msgid "None yet"
+msgstr "Ninguna todavía"
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:71
+#, javascript-format
+msgid "%s defined"
+msgstr "%s definida(s)"
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:76
+msgid ""
+"Type {{name}} anywhere in a text or button — the compiler swaps it for the "
+"value below at export time."
+msgstr ""
+"Escribe {{name}} en cualquier texto o botón: al exportar, el compilador lo "
+"reemplaza por el valor de abajo."
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:114
+msgid "name"
+msgstr "nombre"
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:129
+msgid "value"
+msgstr "valor"
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:147
+msgid "Add variable"
+msgstr "Añadir variable"
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:178
+msgid "Invalid name."
+msgstr "Nombre no válido."
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:210
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:249
+msgid "Copy {{token}}"
+msgstr "Copiar {{token}}"
+
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:244
+msgid "(empty in profile)"
+msgstr "(vacío en el perfil)"
+
+#: assets/editor/src/editor/sidebar-right/inputs/FontWeightInput.tsx:14
+msgid "Regular"
+msgstr "Normal"
+
+#: assets/editor/src/editor/sidebar-right/inputs/FontWeightInput.tsx:15
+msgid "Medium"
+msgstr "Media"
+
+#: assets/editor/src/editor/sidebar-right/inputs/FontWeightInput.tsx:16
+msgid "Semibold"
+msgstr "Seminegrita"
+
+#: assets/editor/src/editor/sidebar-right/inputs/FontWeightInput.tsx:17
+#: assets/editor/src/tiptap/TiptapEditor.tsx:130
+msgid "Bold"
+msgstr "Negrita"
+
+#: assets/editor/src/editor/sidebar-right/inputs/PaddingInput.tsx:20
+msgid "Padding"
+msgstr "Relleno"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:71
+msgid "Saved"
+msgstr "Guardado"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:110
+msgid "Back to signatures"
+msgstr "Volver a las firmas"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:131
+msgid "Undo"
+msgstr "Deshacer"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:134
+msgid "Redo"
+msgstr "Rehacer"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:160
+msgid "Save the current canvas as a global template"
+msgstr "Guarda el lienzo actual como una plantilla global"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:180
+msgid "Export"
+msgstr "Exportar"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:236
+msgid "Retry save"
+msgstr "Reintentar guardado"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:245
+#, javascript-format
+msgid "Saved · %s"
+msgstr "Guardado · %s"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:259
+msgid "Save now (Cmd/Ctrl + S)"
+msgstr "Guardar ahora (Cmd/Ctrl + S)"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:306
+msgid "Plugin version (PHP and JS bundle agree)."
+msgstr "Versión del plugin (PHP y el paquete JS coinciden)."
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:327
+#, javascript-format
+msgid ""
+"Stale bundle detected. The plugin is on PHP %s but your browser is running "
+"JS %s. Click to hard-refresh."
+msgstr ""
+"Se detectó un paquete desactualizado. El plugin está en la versión de PHP "
+"%s, pero tu navegador ejecuta la versión de JS %s. Haz clic para forzar la "
+"recarga."
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:362
+msgid "Untitled signature"
+msgstr "Firma sin título"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:365
+msgid "Signature name"
+msgstr "Nombre de la firma"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:366
+msgid "Click to rename"
+msgstr "Haz clic para cambiar el nombre"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:404
+msgid "Signature status"
+msgstr "Estado de la firma"
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:405
+msgid "Status — controls how the row is grouped on the listing."
+msgstr "Estado: define cómo se agrupa la firma en el listado."
+
+#: assets/editor/src/hooks/useLoadSignature.ts:72
+msgid ""
+"This signature has no readable content yet. Start adding blocks to populate "
+"it."
+msgstr ""
+"Esta firma aún no tiene contenido legible. Empieza a añadir bloques para "
+"completarla."
+
+#: assets/editor/src/hooks/useLoadSignature.ts:97
+#, javascript-format
+msgid "Could not load signature: %s"
+msgstr "No se pudo cargar la firma: %s"
+
+#: assets/editor/src/i18n/dynamic-strings.ts:23
+msgid "Heading"
+msgstr "Encabezado"
+
+#: assets/editor/src/i18n/dynamic-strings.ts:24
+msgid "Image"
+msgstr "Imagen"
+
+#: assets/editor/src/i18n/dynamic-strings.ts:25
+msgid "Avatar"
+msgstr "Avatar"
+
+#: assets/editor/src/i18n/dynamic-strings.ts:26
+msgid "Divider"
+msgstr "Separador"
+
+#: assets/editor/src/i18n/dynamic-strings.ts:27
+msgid "Spacer"
+msgstr "Espaciador"
+
+#: assets/editor/src/i18n/dynamic-strings.ts:29
+msgid "Contact"
+msgstr "Contacto"
+
+#: assets/editor/src/i18n/dynamic-strings.ts:30
+msgid "Button"
+msgstr "Botón"
+
+#: assets/editor/src/i18n/dynamic-strings.ts:31
+msgid "Disclaimer"
+msgstr "Aviso legal"
+
+#: assets/editor/src/i18n/dynamic-strings.ts:32
+msgid "Container"
+msgstr "Contenedor"
+
+#: assets/editor/src/i18n/dynamic-strings.ts:33
+msgid "QR Code"
+msgstr "Código QR"
+
+#: assets/editor/src/i18n/dynamic-strings.ts:34
+msgid "Banner"
+msgstr "Banner"
+
+#: assets/editor/src/i18n/dynamic-strings.ts:35
+msgid "vCard"
+msgstr "vCard"
+
+#: assets/editor/src/i18n/dynamic-strings.ts:38
+msgid "Single block of formatted text."
+msgstr "Un bloque de texto con formato."
+
+#: assets/editor/src/i18n/dynamic-strings.ts:39
+msgid "Larger text for emphasis."
+msgstr "Texto más grande para destacar."
+
+#: assets/editor/src/i18n/dynamic-strings.ts:40
+msgid "A single image with optional link."
+msgstr "Una imagen con enlace opcional."
+
+#: assets/editor/src/i18n/dynamic-strings.ts:41
+msgid "Round profile image."
+msgstr "Imagen de perfil redonda."
+
+#: assets/editor/src/i18n/dynamic-strings.ts:42
+msgid "Horizontal line."
+msgstr "Línea horizontal."
+
+#: assets/editor/src/i18n/dynamic-strings.ts:43
+msgid "Vertical empty space."
+msgstr "Espacio vertical vacío."
+
+#: assets/editor/src/i18n/dynamic-strings.ts:44
+msgid "Row of social media icons."
+msgstr "Fila de iconos de redes sociales."
+
+#: assets/editor/src/i18n/dynamic-strings.ts:45
+msgid "Email / phone / web rows with icons."
+msgstr "Filas de correo / teléfono / web con iconos."
+
+#: assets/editor/src/i18n/dynamic-strings.ts:46
+msgid "Call-to-action button."
+msgstr "Botón de llamada a la acción."
+
+#: assets/editor/src/i18n/dynamic-strings.ts:47
+msgid "Small print at the bottom of the signature."
+msgstr "Texto pequeño al final de la firma."
+
+#: assets/editor/src/i18n/dynamic-strings.ts:48
+msgid "1 or 2 column layout with embedded blocks."
+msgstr "Diseño de 1 o 2 columnas con bloques dentro."
+
+#: assets/editor/src/i18n/dynamic-strings.ts:49
+msgid "Scannable QR code, hosted as a PNG image."
+msgstr "Código QR escaneable, alojado como imagen PNG."
+
+#: assets/editor/src/i18n/dynamic-strings.ts:50
+msgid "Promotional banner image with a click-through link."
+msgstr "Imagen de banner promocional con un enlace."
+
+#: assets/editor/src/i18n/dynamic-strings.ts:51
+msgid "Link to a hosted contact card (.vcf)."
+msgstr "Enlace a una tarjeta de contacto alojada (.vcf)."
+
+#: assets/editor/src/services/persistence.ts:166
+msgid "Add at least one block before saving — empty signatures are not stored."
+msgstr ""
+"Añade al menos un bloque antes de guardar: las firmas vacías no se guardan."
+
+#: assets/editor/src/services/persistence.ts:188
+msgid "The server returned no signature id."
+msgstr "El servidor no devolvió el ID de la firma."
+
+#: assets/editor/src/services/persistence.ts:205
+msgid "Saved."
+msgstr "Guardado."
+
+#: assets/editor/src/services/persistence.ts:215
+#, javascript-format
+msgid "Save failed: %s"
+msgstr "Falló el guardado: %s"
+
+#: assets/editor/src/services/persistence.ts:248
+#, javascript-format
+msgid "Some content was removed for security: %s"
+msgstr "Se eliminó contenido por seguridad: %s"
+
+#: assets/editor/src/services/persistence.ts:253
+msgid ""
+"Saved, but the server adjusted some content. The editor now shows the stored "
+"version."
+msgstr ""
+"Se guardó, pero el servidor ajustó parte del contenido. El editor muestra "
+"ahora la versión guardada."
+
+#: assets/editor/src/services/persistence.ts:275
+#, javascript-format
+msgid "Autosave paused for %s seconds (too many saves). Your changes are kept."
+msgstr ""
+"Guardado automático en pausa durante %s segundos (demasiados guardados). Tus "
+"cambios se conservan."
+
+#: assets/editor/src/services/persistence.ts:276
+#, javascript-format
+msgid "Too many saves in a short time. Retrying in %s seconds."
+msgstr "Demasiados guardados en poco tiempo. Se reintentará en %s segundos."
+
+#: assets/editor/src/services/uploads.ts:60
+msgid "Uploads are disabled on this site — paste an image URL instead."
+msgstr ""
+"La subida de archivos está desactivada en este sitio: pega la URL de una "
+"imagen."
+
+#: assets/editor/src/services/uploads.ts:75
+msgid "Upload failed."
+msgstr "Falló la subida."
+
+#: assets/editor/src/services/uploads.ts:155
+#: assets/editor/src/services/uploads.ts:203
+msgid "The server returned an unexpected upload response."
+msgstr "El servidor devolvió una respuesta de subida inesperada."
+
+#: assets/editor/src/services/uploads.ts:170
+#: assets/editor/src/services/uploads.ts:187
+msgid "Upload failed — check your connection and try again."
+msgstr "Falló la subida: revisa tu conexión e inténtalo de nuevo."
+
+#: assets/editor/src/services/uploads.ts:198
+#, javascript-format
+msgid "Upload failed (HTTP %s)."
+msgstr "Falló la subida (HTTP %s)."
+
+#: assets/editor/src/services/uploads.ts:229
+msgid ""
+"Could not reach the storage service. Check its CORS settings and your "
+"connection."
+msgstr ""
+"No se pudo conectar con el servicio de almacenamiento. Revisa su "
+"configuración de CORS y tu conexión."
+
+#: assets/editor/src/services/uploads.ts:235
+#, javascript-format
+msgid "The storage service rejected the upload (HTTP %s)."
+msgstr "El servicio de almacenamiento rechazó la subida (HTTP %s)."
+
+#: assets/editor/src/services/uploads.ts:402
+msgid "This embedded file could not be read."
+msgstr "No se pudo leer este archivo incrustado."
+
+#: assets/editor/src/services/uploads.ts:424
+msgid "The image could not be loaded for processing."
+msgstr "No se pudo cargar la imagen para procesarla."
+
+#: assets/editor/src/services/uploads.ts:475
+msgid "The image is empty."
+msgstr "La imagen está vacía."
+
+#: assets/editor/src/services/uploads.ts:502
+msgid "Your browser cannot process images here."
+msgstr "Tu navegador no puede procesar imágenes aquí."
+
+#: assets/editor/src/services/uploads.ts:534
+msgid "SVG images are not supported in email. Use PNG or JPG."
+msgstr "Las imágenes SVG no son compatibles con el correo. Usa PNG o JPG."
+
+#: assets/editor/src/services/uploads.ts:595
+msgid "The image could not be encoded."
+msgstr "No se pudo codificar la imagen."
+
+#: assets/editor/src/services/uploads.ts:608
+msgid ""
+"This image's host does not allow editing it here (CORS). Download it and use "
+"Upload instead."
+msgstr ""
+"El servidor de esta imagen no permite editarla aquí (CORS). Descárgala y usa "
+"Subir."
+
+#: assets/editor/src/tiptap/TiptapEditor.tsx:116
+msgid "Link URL (https://, mailto:, or tel:)"
+msgstr "URL del enlace (https://, mailto: o tel:)"
+
+#: assets/editor/src/tiptap/TiptapEditor.tsx:139
+msgid "Italic"
+msgstr "Cursiva"
+
+#: assets/editor/src/tiptap/TiptapEditor.tsx:148
+msgid "Underline"
+msgstr "Subrayado"
+
+#: assets/shared/templateCategories.ts:15
+msgid "General"
+msgstr "General"
+
+#: assets/shared/templateCategories.ts:17
+msgid "Minimal"
+msgstr "Minimalista"
+
+#: assets/shared/templateCategories.ts:19
+msgid "Corporate"
+msgstr "Corporativa"
+
+#: assets/shared/templateCategories.ts:21
+msgid "Sales"
+msgstr "Ventas"
+
+#: assets/shared/templateCategories.ts:23
+msgid "Professional"
+msgstr "Profesional"
+
+#: assets/shared/templateCategories.ts:27
+msgid "Multi-column"
+msgstr "Varias columnas"
