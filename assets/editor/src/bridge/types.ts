@@ -40,8 +40,20 @@ export interface AppConfig {
    * client falls back to `${location.origin}/wp-admin/admin-ajax.php`.
    */
   ajaxUrl?: string;
-  /** WP locale code (e.g. `en_US`, `es_ES`). */
+  /** WP locale code of the editor UI (e.g. `en_US`, `es_ES`). */
   locale: string;
+  /**
+   * Locale of the signature's OWNER (1.3.0): the `lang` / `dir` of the
+   * compiled output. Differs from {@link locale} when a team manager
+   * edits someone else's signature. Missing = {@link locale}.
+   */
+  signatureLocale?: string;
+  /**
+   * Set when a team manager is editing another user's signature on
+   * their behalf (1.3.0): the system variables, footer and campaigns in
+   * this config are the owner's. Missing / null = the user's own.
+   */
+  onBehalfOf?: OnBehalfOf | null;
   /**
    * `{ msgid: msgstr }` for the user's locale (empty for English).
    * Read by `__()` — see `assets/shared/i18n.ts`.
@@ -124,6 +136,13 @@ export interface AppConfig {
    * employee modes (1.3.0). Missing = false.
    */
   canBypassLocks?: boolean;
+}
+
+/** `IMGSIG_EDITOR_CONFIG.onBehalfOf` (1.3.0). */
+export interface OnBehalfOf {
+  userId: number;
+  displayName: string;
+  email: string;
 }
 
 /** `IMGSIG_EDITOR_CONFIG.signatureLink` (1.3.0). */

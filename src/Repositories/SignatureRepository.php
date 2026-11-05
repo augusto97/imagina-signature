@@ -187,6 +187,26 @@ class SignatureRepository extends BaseRepository {
 	}
 
 	/**
+	 * Owner of a signature (`SELECT user_id`), 0 when it doesn't exist —
+	 * the cheap probe of the "edit on behalf" permission check (1.3.0).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int $signature_id Primary key.
+	 *
+	 * @return int
+	 */
+	public function owner_of( int $signature_id ): int {
+		if ( $signature_id <= 0 ) {
+			return 0;
+		}
+		return (int) $this->wpdb->get_var(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$this->wpdb->prepare( "SELECT user_id FROM {$this->table()} WHERE id = %d", $signature_id )
+		);
+	}
+
+	/**
 	 * Drops cached rows for an id (after any write to it).
 	 *
 	 * @param int $signature_id Primary key.

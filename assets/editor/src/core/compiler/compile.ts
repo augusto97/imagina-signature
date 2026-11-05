@@ -166,11 +166,15 @@ export function compileSignature(input: SignatureSchema): CompileResult {
   };
 }
 
-/** `lang` / `dir` of the export, from the editor locale (`getConfig().locale`). */
+/**
+ * `lang` / `dir` of the export: the signature owner's locale
+ * (`getConfig().signatureLocale`, 1.3.0), else the editor locale.
+ */
 function signatureLanguage(): { lang: string; dir: 'ltr' | 'rtl' } {
   let locale = '';
   try {
-    locale = getConfig().locale ?? '';
+    const config = getConfig();
+    locale = config.signatureLocale || config.locale || '';
   } catch {
     // Bootstrap config unavailable (test / standalone): no language.
   }

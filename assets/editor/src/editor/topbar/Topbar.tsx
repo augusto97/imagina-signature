@@ -21,6 +21,7 @@ import { usePersistenceStore } from '@/stores/persistenceStore';
 import { useToastStore } from '@/stores/toastStore';
 import { useEditPolicy } from '@/stores/linkStore';
 import { getConfig } from '@/bridge/apiClient';
+import { onBehalfOf } from '@/services/onBehalf';
 import { persistence } from '@/services/persistence';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
@@ -112,7 +113,7 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
             window.location.href = getConfig().signaturesUrl;
           }}
           className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
-          title={__('Back to signatures')}
+          title={onBehalfOf() ? __('Back to Team') : __('Back to signatures')}
         >
           <ArrowLeft size={16} />
         </a>
@@ -159,7 +160,7 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
           title={__('Edit the details this signature shows: job title, phone, photo…')}
         >
           <UserRound size={14} />
-          {__('Your details')}
+          {onBehalfOf() ? __('Their details') : __('Your details')}
         </button>
       </div>
 

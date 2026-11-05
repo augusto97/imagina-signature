@@ -142,7 +142,7 @@ final class AdminAssetEnqueuer {
 	 *
 	 * @since 1.0.5
 	 *
-	 * @param string $page App page slug (`signatures`|`templates`|`settings`).
+	 * @param string $page App page slug (`signatures`|`templates`|`settings`|`profile`|`groups`|`team`).
 	 *
 	 * @return array<string, mixed>
 	 */
@@ -184,6 +184,7 @@ final class AdminAssetEnqueuer {
 				'editor'     => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures-editor&id=__ID__' ) ),
 				'profile'    => DirectoryPages::profile_url(),
 				'groups'     => DirectoryPages::groups_url(),
+				'team'       => DirectoryPages::team_url(),
 			],
 			'brandPalette'     => $site_opts['brand_palette'],
 			'complianceFooter' => $site_opts['compliance_footer'],
