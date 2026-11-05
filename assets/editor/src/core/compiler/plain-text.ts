@@ -9,6 +9,13 @@ import type {
 } from '@/core/schema/blocks';
 import type { SignatureSchema } from '@/core/schema/signature';
 import { __ } from '@/i18n/helpers';
+import {
+  contactHref,
+  normalizeContactRow,
+  type ContactType,
+} from '@/core/blocks/contact-row/normalize';
+import { iconTitle } from '@/core/blocks/social-icons/iconSet';
+import { normalizeSocialIcons, socialHref } from '@/core/blocks/social-icons/normalize';
 import { sanitizeEmailHtml } from './sanitize';
 
 /**
@@ -38,17 +45,6 @@ export function schemaToPlainText(
     .trim();
   return substitutePlain(text, variables);
 }
-
-const PLATFORM_NAMES: Record<string, string> = {
-  linkedin: 'LinkedIn',
-  twitter: 'X (Twitter)',
-  x: 'X',
-  facebook: 'Facebook',
-  instagram: 'Instagram',
-  github: 'GitHub',
-  youtube: 'YouTube',
-  tiktok: 'TikTok',
-};
 
 function blockLines(blocks: Block[]): string[] {
   const out: string[] = [];
@@ -90,32 +86,39 @@ function linesFor(block: Block): string[] {
 }
 
 function contactLines(block: ContactRowBlock): string[] {
-  const kindLabel: Record<string, string> = {
+  // v1 rows and v2 items alike — the block's normaliser converts v1.
+  const kindLabel: Record<ContactType, string> = {
     email: __('Email'),
     phone: __('Phone'),
-    web: __('Web'),
+    mobile: __('Mobile'),
+    website: __('Web'),
+    address: __('Address'),
+    whatsapp: 'WhatsApp', // i18n-ignore
+    calendar: __('Booking link'),
+    custom: '',
   };
-  return (block.rows ?? [])
-    .map((row) => {
-      const value = linkText(row.label ?? '', row.href ?? '');
+  const contact = normalizeContactRow(block);
+  return contact.items
+    .map((item) => {
+      // An address reads better without its Maps search URL.
+      const href = item.type === 'address' ? '' : contactHref(item);
+      const value = linkText(item.value, href);
       if (!value) return '';
-      // Labels like "Reception: +1 555…" already carry their own prefix.
-      if (/:\s/.test(row.label ?? '')) return value;
-      const prefix = kindLabel[row.icon] ?? '';
+      const custom = contact.label_mode === 'custom' ? (item.label ?? '').trim() : '';
+      if (custom) return `${custom}: ${value}`;
+      // Values like "Reception: +1 555…" already carry their own prefix.
+      if (/:\s/.test(item.value)) return value;
+      const prefix = kindLabel[item.type];
       return prefix ? `${prefix}: ${value}` : value;
     })
     .filter(Boolean);
 }
 
 function socialLines(block: SocialIconsBlock): string[] {
-  return (block.networks ?? [])
-    .filter((n) => n.url && !/^https?:\/\/?$/.test(n.url.trim()))
-    .map((n) => {
-      const key = String(n.platform ?? '').toLowerCase();
-      const name =
-        PLATFORM_NAMES[key] ?? (key ? key.charAt(0).toUpperCase() + key.slice(1) : __('Link'));
-      return `${name}: ${n.url.trim()}`;
-    });
+  return normalizeSocialIcons(block)
+    .items.map((item) => ({ item, href: socialHref(item.network, item.url) }))
+    .filter(({ href }) => href !== '')
+    .map(({ item, href }) => `${iconTitle(item.network)}: ${href.replace(/^mailto:/i, '')}`);
 }
 
 function buttonLines(block: ButtonCtaBlock): string[] {
