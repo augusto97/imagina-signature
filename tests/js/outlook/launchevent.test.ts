@@ -72,13 +72,19 @@ function json(body: unknown, status = 200): Response {
 let fetchMock: ReturnType<typeof vi.fn>;
 
 /** Installs the mocks and evaluates the runtime script, as Outlook would load it. */
-function boot(mock: OfficeMock, path = `/wp-content/plugins/imagina-signatures/assets/outlook/commands.html${RUNTIME_QUERY}`): void {
+function boot(
+  mock: OfficeMock,
+  path = `/wp-content/plugins/imagina-signatures/assets/outlook/commands.html${RUNTIME_QUERY}`,
+): void {
   window.history.replaceState(null, '', path);
   vi.stubGlobal('Office', mock.office);
   new Function(SOURCE)();
 }
 
-async function run(mock: OfficeMock, handler = 'onNewMessageComposeHandler'): Promise<ReturnType<typeof vi.fn>> {
+async function run(
+  mock: OfficeMock,
+  handler = 'onNewMessageComposeHandler',
+): Promise<ReturnType<typeof vi.fn>> {
   const completed = vi.fn();
   expect(typeof mock.handlers[handler]).toBe('function');
   mock.handlers[handler]!({ completed });
@@ -152,7 +158,13 @@ describe('Outlook launchevent.js', () => {
   it('refetches once the cache is older than an hour', async () => {
     window.localStorage.setItem(
       CACHE_KEY,
-      JSON.stringify({ email: 'ana@acme.example', html: '<p>old</p>', hash: 'h0', replace: false, at: Date.now() - 61 * 60 * 1000 }),
+      JSON.stringify({
+        email: 'ana@acme.example',
+        html: '<p>old</p>',
+        hash: 'h0',
+        replace: false,
+        at: Date.now() - 61 * 60 * 1000,
+      }),
     );
     const mock = mockOffice();
     boot(mock);
@@ -177,7 +189,13 @@ describe('Outlook launchevent.js', () => {
   it('falls back to the last good copy when the site is unreachable', async () => {
     window.localStorage.setItem(
       CACHE_KEY,
-      JSON.stringify({ email: 'ana@acme.example', html: '<p>last good</p>', hash: 'h0', replace: false, at: Date.now() - 3 * 60 * 60 * 1000 }),
+      JSON.stringify({
+        email: 'ana@acme.example',
+        html: '<p>last good</p>',
+        hash: 'h0',
+        replace: false,
+        at: Date.now() - 3 * 60 * 60 * 1000,
+      }),
     );
     fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
     const mock = mockOffice();
