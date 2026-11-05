@@ -8,6 +8,7 @@ import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { attr, escapeHtml, paddingCss, px, safeColor } from '@/core/compiler/css';
 import { contentHash } from '@/core/compiler/hash';
 import { markerAttr, report } from '@/core/compiler/issues';
+import { isUploadEnabled } from '@/bridge/apiClient';
 import { slugFilename, uploadBlob } from '@/services/uploads';
 import { HostedAssetStatus, useHostedAssetSync } from '../qr-code/definition';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
@@ -250,9 +251,13 @@ function compile(block: VCardBlock, ctx: CompileContext): string {
     report(
       ctx,
       'error',
-      __(
-        'vCard file not uploaded yet. Select the vCard block (or use “Fix embedded images”) to upload it.',
-      ),
+      isUploadEnabled()
+        ? __(
+            'vCard file not uploaded yet. Select the vCard block (or use “Fix embedded images”) to upload it.',
+          )
+        : __(
+            'vCards need a hosted .vcf file, but uploads are disabled on this site, so the link was left out.',
+          ),
       block,
       'vcard-not-uploaded',
     );

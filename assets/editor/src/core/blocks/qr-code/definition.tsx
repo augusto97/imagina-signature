@@ -394,9 +394,13 @@ function compile(block: QrCodeBlock, ctx: CompileContext): string {
     report(
       ctx,
       'error',
-      __(
-        'QR code image not uploaded yet. Select the QR block (or use “Fix embedded images”) to upload it.',
-      ),
+      isUploadEnabled()
+        ? __(
+            'QR code image not uploaded yet. Select the QR block (or use “Fix embedded images”) to upload it.',
+          )
+        : __(
+            'QR codes need a hosted image, but uploads are disabled on this site, so the QR code was left out. Use an Image block with a hosted QR image instead.',
+          ),
       block,
       'qr-not-uploaded',
     );
