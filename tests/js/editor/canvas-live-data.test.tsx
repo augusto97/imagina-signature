@@ -106,9 +106,12 @@ describe('canvas: Show data / Show fields', () => {
     seed([img]);
     renderCanvas();
 
-    const el = screen.getByAltText('Acme & Sons') as HTMLImageElement;
-    expect(el.getAttribute('src')).toContain('placehold.co');
-    expect(el.closest('a')?.getAttribute('href')).toBe('https://acme.example');
+    // An empty resolved src renders the local placeholder (no external
+    // placeholder service, no link wrapper) instead of crashing.
+    const cell = document.querySelector('[data-imgsig-block-id="logo"]');
+    expect(cell).not.toBeNull();
+    expect(cell?.querySelector('img')).toBeNull();
+    expect(cell?.querySelector('a')).toBeNull();
   });
 
   it('falls back to the raw block when a renderer throws on resolved data', () => {

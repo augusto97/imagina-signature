@@ -77,9 +77,9 @@ export const banner = (extra: Partial<BannerBlock> = {}): BannerBlock => ({
 export const row = (left: Block[], right: Block[]): ContainerBlock => ({
   id: 'row',
   type: 'container',
-  columns: 2,
   gap: 20,
-  left_width: 50,
-  children: left,
-  right_children: right,
+  columns: [
+    { id: 'row-l', width: 50, children: left },
+    { id: 'row-r', width: 50, children: right },
+  ],
 });
