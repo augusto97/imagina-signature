@@ -18,8 +18,10 @@ import type { CompileContext } from '../registry';
 import {
   CONTACT_ICON,
   contactHref,
+  displayValue,
   itemPrefix,
   normalizeContactRow,
+  resolveItemValue,
   type ContactItem,
 } from './normalize';
 
@@ -72,8 +74,10 @@ export function compileContactRow(block: ContactRowBlock, ctx: CompileContext): 
     c.style.text_align === 'center' || c.style.text_align === 'right' ? c.style.text_align : 'left';
   checkContrast(ctx, block, color, safeColor(ctx.canvas.background_color, '#ffffff'), fontSize);
 
+  // Items whose value resolves to nothing (an employee without a mobile
+  // number, a brand-kit field left blank) are left out, icon included.
   const items: Prepared[] = c.items
-    .filter((item) => item.value.trim() !== '')
+    .filter((item) => resolveItemValue(item.value, ctx.variables).trim() !== '')
     .map((item) => ({
       item,
       href: contactHref(item, ctx.variables),
@@ -124,7 +128,7 @@ export function compileContactRow(block: ContactRowBlock, ctx: CompileContext): 
         ...extra,
       }),
     valueHtml: ({ item, href, prefix }) => {
-      const value = escapeHtml(item.value);
+      const value = escapeHtml(displayValue(item, ctx.variables));
       const linked = href
         ? `<a${marker} href="${attr(href)}" style="${linkStyle}">${value}</a>`
         : value;

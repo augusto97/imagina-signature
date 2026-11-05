@@ -240,6 +240,25 @@ function phoneDigits(value: string, variables: Record<string, string>, keepPlus:
   return plus + raw.replace(/\+/g, '');
 }
 
+/** `value` with its known `{{variables}}` resolved (unknown tokens kept). */
+export function resolveItemValue(value: string, variables: Record<string, string>): string {
+  return segments(value, variables)
+    .map((s) => s.text)
+    .join('');
+}
+
+/**
+ * Visible text of an item, variables resolved. A website reads better
+ * without its scheme and trailing slash — the brand kit stores
+ * `{{company_website}}` as `https://acme.com/`, shown as `acme.com`;
+ * the link keeps the full URL.
+ */
+export function displayValue(item: ContactItem, variables: Record<string, string> = {}): string {
+  const value = resolveItemValue(str(item.value), variables);
+  if (item.type !== 'website') return value;
+  return value.replace(/^\s*https?:\/\//i, '').replace(/\/\s*$/, '');
+}
+
 /** `https://` added to bare domains; non-web schemes (`javascript:`…) give ''. */
 export function webHref(value: string): string {
   const v = value.trim();
