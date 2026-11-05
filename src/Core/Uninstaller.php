@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace ImaginaSignatures\Core;
 
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
+use ImaginaSignatures\Directory\Groups;
+use ImaginaSignatures\Directory\ProfileFields;
 use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Models\Asset;
 use ImaginaSignatures\Security\Encryption;
@@ -155,6 +157,7 @@ final class Uninstaller {
 		self::delete_stored_files( $wpdb );
 		self::drop_tables( $wpdb );
 		self::delete_options();
+		self::delete_group_terms( $wpdb );
 
 		return true;
 	}
@@ -314,6 +317,37 @@ final class Uninstaller {
 	 */
 	private static function delete_user_meta(): void {
 		delete_metadata( 'user', 0, UploadPolicy::TOKEN_META_KEY, '', true );
+		delete_metadata( 'user', 0, ProfileFields::META_KEY, '', true );
+	}
+
+	/**
+	 * Deletes this site's `imgsig_group` terms, their meta and memberships
+	 * (the taxonomy is not registered during uninstall, so straight SQL).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param \wpdb $wpdb DB.
+	 *
+	 * @return void
+	 */
+	private static function delete_group_terms( \wpdb $wpdb ): void {
+		if ( empty( $wpdb->term_taxonomy ) ) {
+			return;
+		}
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$rows = $wpdb->get_results(
+			$wpdb->prepare( "SELECT term_id, term_taxonomy_id FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s", Groups::TAXONOMY )
+		);
+		foreach ( is_array( $rows ) ? $rows : [] as $row ) {
+			$term_id = (int) $row->term_id;
+			$tt_id   = (int) $row->term_taxonomy_id;
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( $wpdb->term_relationships, [ 'term_taxonomy_id' => $tt_id ], [ '%d' ] );
+			$wpdb->delete( $wpdb->termmeta, [ 'term_id' => $term_id ], [ '%d' ] );
+			$wpdb->delete( $wpdb->term_taxonomy, [ 'term_taxonomy_id' => $tt_id ], [ '%d' ] );
+			$wpdb->delete( $wpdb->terms, [ 'term_id' => $term_id ], [ '%d' ] );
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery
+		}
 	}
 
 	/**
