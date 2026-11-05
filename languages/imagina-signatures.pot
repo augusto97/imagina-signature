@@ -30,22 +30,22 @@ msgstr ""
 #: src/Admin/AdminMenu.php:100
 #: src/Privacy/UserDataManager.php:104
 #: src/Privacy/UserDataManager.php:122
-#: assets/admin/src/components/SidebarNav.tsx:103
+#: assets/admin/src/components/SidebarNav.tsx:111
 msgid "Imagina Signatures"
 msgstr ""
 
 #: src/Admin/AdminMenu.php:110
 #: src/Admin/AdminMenu.php:111
-#: src/Frontend/FrontendPage.php:125
-#: assets/admin/src/components/SidebarNav.tsx:28
-#: assets/admin/src/pages/SignaturesPage.tsx:230
+#: src/Frontend/FrontendPage.php:123
+#: assets/admin/src/components/SidebarNav.tsx:29
+#: assets/admin/src/pages/SignaturesPage.tsx:238
 msgid "My Signatures"
 msgstr ""
 
 #: src/Admin/AdminMenu.php:119
 #: src/Admin/AdminMenu.php:120
-#: assets/admin/src/components/SidebarNav.tsx:32
-#: assets/admin/src/pages/TemplatesPage.tsx:105
+#: assets/admin/src/components/SidebarNav.tsx:33
+#: assets/admin/src/pages/TemplatesPage.tsx:93
 msgid "Templates"
 msgstr ""
 
@@ -54,8 +54,8 @@ msgid "Storage Settings"
 msgstr ""
 
 #: src/Admin/AdminMenu.php:129
-#: assets/admin/src/components/SidebarNav.tsx:46
-#: assets/admin/src/pages/SettingsPage.tsx:114
+#: assets/admin/src/components/SidebarNav.tsx:54
+#: assets/admin/src/pages/SettingsPage.tsx:149
 msgid "Settings"
 msgstr ""
 
@@ -65,17 +65,25 @@ msgstr ""
 msgid "Edit Signature"
 msgstr ""
 
-#: src/Admin/DirectoryPages.php:56
-#: src/Admin/DirectoryPages.php:57
-#: src/Frontend/FrontendPage.php:125
-#: assets/admin/src/components/SidebarNav.tsx:29
+#: src/Admin/DirectoryPages.php:60
+#: src/Admin/DirectoryPages.php:61
+#: src/Frontend/FrontendPage.php:123
+#: assets/admin/src/components/SidebarNav.tsx:30
 #: assets/admin/src/pages/ProfilePage.tsx:15
 msgid "My profile"
 msgstr ""
 
-#: src/Admin/DirectoryPages.php:65
-#: src/Admin/DirectoryPages.php:66
-#: assets/admin/src/components/SidebarNav.tsx:39
+#: src/Admin/DirectoryPages.php:69
+#: src/Admin/DirectoryPages.php:70
+#: assets/admin/src/components/SidebarNav.tsx:40
+#: assets/admin/src/pages/TeamPage.tsx:311
+msgid "Team"
+msgstr ""
+
+#: src/Admin/DirectoryPages.php:78
+#: src/Admin/DirectoryPages.php:79
+#: assets/admin/src/components/AssignTemplateDialog.tsx:338
+#: assets/admin/src/components/SidebarNav.tsx:47
 #: assets/admin/src/pages/GroupsPage.tsx:60
 #: assets/admin/src/pages/GroupsPage.tsx:67
 msgid "Groups"
@@ -110,11 +118,11 @@ msgstr ""
 msgid "Open storage settings"
 msgstr ""
 
-#: src/Admin/Pages/EditorPage.php:56
+#: src/Admin/Pages/EditorPage.php:59
 msgid "You do not have permission to access the editor."
 msgstr ""
 
-#: src/Admin/Pages/EditorPage.php:67
+#: src/Admin/Pages/EditorPage.php:70
 msgid "Signature not found or you do not have access to it."
 msgstr ""
 
@@ -128,13 +136,13 @@ msgstr ""
 
 #: src/Api/BaseController.php:165
 #: src/Api/Middleware/CapabilityCheck.php:45
-#: src/Api/Middleware/OwnershipCheck.php:84
+#: src/Api/Middleware/OwnershipCheck.php:98
 msgid "You must be signed in to perform this request."
 msgstr ""
 
 #: src/Api/BaseController.php:173
 #: src/Api/Middleware/CapabilityCheck.php:53
-#: src/Api/Middleware/OwnershipCheck.php:92
+#: src/Api/Middleware/OwnershipCheck.php:106
 msgid "You do not have permission to perform this request."
 msgstr ""
 
@@ -177,19 +185,21 @@ msgstr ""
 #. translators: 1: number of addresses, 2: email address.
 #: src/Api/Controllers/GmailDeployController.php:380
 #, php-format
-msgid "Connected. Gmail returned %1$d send-as address(es) for %2$s."
-msgstr ""
+msgid "Connected. Gmail returned %1$d send-as address for %2$s."
+msgid_plural "Connected. Gmail returned %1$d send-as addresses for %2$s."
+msgstr[0] ""
+msgstr[1] ""
 
-#: src/Api/Controllers/GmailDeployController.php:414
+#: src/Api/Controllers/GmailDeployController.php:419
 msgid ""
 "Google Workspace is not connected yet: upload the service-account key first."
 msgstr ""
 
-#: src/Api/Controllers/GmailDeployController.php:432
+#: src/Api/Controllers/GmailDeployController.php:437
 msgid "Pass user_ids or all: true."
 msgstr ""
 
-#: src/Api/Controllers/GmailDeployController.php:478
+#: src/Api/Controllers/GmailDeployController.php:483
 msgid "Pass user_ids."
 msgstr ""
 
@@ -242,67 +252,67 @@ msgstr ""
 msgid "Send at most %d rows per request."
 msgstr ""
 
-#: src/Api/Controllers/SignaturesController.php:320
+#: src/Api/Controllers/SignaturesController.php:365
 msgid ""
 "The signature could not be saved because of a server error. Please try "
 "again; if it keeps failing, ask a site administrator to check the error log."
 msgstr ""
 
-#: src/Api/Controllers/SignaturesController.php:360
-#: src/Api/Controllers/TeamSignaturesController.php:298
-#: src/Services/SignatureService.php:386
+#: src/Api/Controllers/SignaturesController.php:407
+#: src/Api/Controllers/TeamSignaturesController.php:329
+#: src/Services/SignatureService.php:390
 msgid "Signature not found."
 msgstr ""
 
-#: src/Api/Controllers/SignaturesController.php:489
+#: src/Api/Controllers/SignaturesController.php:556
 msgid "Your WordPress account has no email address on file."
 msgstr ""
 
-#: src/Api/Controllers/SignaturesController.php:499
+#: src/Api/Controllers/SignaturesController.php:566
 msgid "No HTML supplied to send."
 msgstr ""
 
 #. translators: %d: maximum size in KB.
-#: src/Api/Controllers/SignaturesController.php:509
+#: src/Api/Controllers/SignaturesController.php:576
 #, php-format
 msgid "The signature HTML is too large to send (maximum %d KB)."
 msgstr ""
 
-#: src/Api/Controllers/SignaturesController.php:536
+#: src/Api/Controllers/SignaturesController.php:603
 msgid "Nothing sendable was left after removing unsupported HTML."
 msgstr ""
 
-#: src/Api/Controllers/SignaturesController.php:541
+#: src/Api/Controllers/SignaturesController.php:608
 msgid "Imagina Signatures — your signature preview"
 msgstr ""
 
 #. translators: %s: user's display name.
-#: src/Api/Controllers/SignaturesController.php:546
+#: src/Api/Controllers/SignaturesController.php:613
 #, php-format
 msgid ""
 "Hi %s — here is the signature you just designed in Imagina Signatures. Copy "
 "it from below and paste it into your email client."
 msgstr ""
 
-#: src/Api/Controllers/SignaturesController.php:581
+#: src/Api/Controllers/SignaturesController.php:648
 msgid "wp_mail() failed. Check your site's email configuration."
 msgstr ""
 
 #. translators: %s: comma-separated list of option keys that failed to save.
-#: src/Api/Controllers/SiteSettingsController.php:221
+#: src/Api/Controllers/SiteSettingsController.php:225
 #, php-format
 msgid "Failed to persist site settings (%s). Check the server error log."
 msgstr ""
 
-#: src/Api/Controllers/SiteSettingsController.php:269
+#: src/Api/Controllers/SiteSettingsController.php:273
 msgid "Brand palette write did not round-trip. Check the WordPress error log."
 msgstr ""
 
-#: src/Api/Controllers/SiteSettingsController.php:281
+#: src/Api/Controllers/SiteSettingsController.php:285
 msgid "Brand kit write did not round-trip. Check the WordPress error log."
 msgstr ""
 
-#: src/Api/Controllers/SiteSettingsController.php:290
+#: src/Api/Controllers/SiteSettingsController.php:294
 msgid "Banner campaigns write did not round-trip."
 msgstr ""
 
@@ -346,11 +356,17 @@ msgstr ""
 msgid "Some storage settings are invalid."
 msgstr ""
 
-#: src/Api/Controllers/TeamSignaturesController.php:245
+#: src/Api/Controllers/TeamSignaturesController.php:260
 msgid "The signature changed after it was loaded. Load it again and recompile."
 msgstr ""
 
-#: src/Api/Controllers/TeamSignaturesController.php:267
+#: src/Api/Controllers/TeamSignaturesController.php:274
+msgid ""
+"The owner's details or the company settings changed while the signature was "
+"being compiled. Load it again and recompile."
+msgstr ""
+
+#: src/Api/Controllers/TeamSignaturesController.php:298
 msgid "The compiled signature could not be stored because of a server error."
 msgstr ""
 
@@ -436,7 +452,7 @@ msgstr ""
 msgid "No object exists at the reported storage key. Was the upload completed?"
 msgstr ""
 
-#: src/Api/Middleware/OwnershipCheck.php:103
+#: src/Api/Middleware/OwnershipCheck.php:122
 msgid "The requested resource was not found or does not belong to you."
 msgstr ""
 
@@ -726,432 +742,435 @@ msgid ""
 "Upload the JSON key again."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:131
+#: src/Deployment/Install/InstallPage.php:132
 msgid "This link is no longer valid"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:131
+#: src/Deployment/Install/InstallPage.php:132
 msgid ""
 "Install links can be replaced by a newer one. Ask your administrator to send "
 "you a new invitation."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:140
+#: src/Deployment/Install/InstallPage.php:141
 msgid "Your signature is being prepared"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:140
+#: src/Deployment/Install/InstallPage.php:141
 msgid ""
 "Your administrator is still finishing your email signature. Come back to "
 "this link in a little while — it will be ready here."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:275
-#: src/Deployment/Install/InstallPage.php:337
+#: src/Deployment/Install/InstallPage.php:276
+#: src/Deployment/Install/InstallPage.php:338
 msgid "Install your email signature"
 msgstr ""
 
 #. translators: %s: the employee's first name.
-#: src/Deployment/Install/InstallPage.php:277
+#: src/Deployment/Install/InstallPage.php:278
 #, php-format
 msgid ""
 "Hi %s! This is your email signature. Pick your email client below and follow "
 "the steps — it takes about a minute."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:280
+#: src/Deployment/Install/InstallPage.php:281
 msgid ""
 "Your signature has changed since you installed it. Install the new version "
 "below, then press \"I've installed it\" again."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:286
 #: src/Deployment/Install/InstallPage.php:287
+#: src/Deployment/Install/InstallPage.php:288
 msgid "Your signature"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:290
-#: src/Deployment/Install/InstallPage.php:404
-#: src/Deployment/Install/InstallPage.php:452
+#: src/Deployment/Install/InstallPage.php:291
+#: src/Deployment/Install/InstallPage.php:405
+#: src/Deployment/Install/InstallPage.php:453
 msgid "Copy signature"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:291
-#: assets/editor/src/editor/modals/ExportModal.tsx:311
+#: src/Deployment/Install/InstallPage.php:292
+#: assets/editor/src/editor/modals/ExportModal.tsx:317
 msgid "Copy HTML"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:292
-#: assets/editor/src/editor/modals/ExportModal.tsx:322
-#: assets/editor/src/editor/modals/ExportModal.tsx:591
+#: src/Deployment/Install/InstallPage.php:293
+#: assets/editor/src/editor/modals/ExportModal.tsx:328
+#: assets/editor/src/editor/modals/ExportModal.tsx:599
 msgid "Download .html"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:295
-#: assets/editor/src/editor/modals/ExportModal.tsx:389
+#: src/Deployment/Install/InstallPage.php:296
+#: assets/editor/src/editor/modals/ExportModal.tsx:397
 msgid "Install in your email client"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:296
-#: assets/editor/src/editor/modals/ExportModal.tsx:392
+#: src/Deployment/Install/InstallPage.php:297
+#: assets/editor/src/editor/modals/ExportModal.tsx:400
 msgid ""
 "Pick your email client: each tab has the export it needs and the exact steps."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:300
+#: src/Deployment/Install/InstallPage.php:301
 msgid "Finished?"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:301
+#: src/Deployment/Install/InstallPage.php:302
 msgid ""
 "Once the signature shows up when you write a new email, let your "
 "administrator know you are all set."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:302
+#: src/Deployment/Install/InstallPage.php:303
 msgid "I've installed it"
 msgstr ""
 
 #. translators: %s: date.
-#: src/Deployment/Install/InstallPage.php:307
+#: src/Deployment/Install/InstallPage.php:308
 #, php-format
 msgid "Installed on %s."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:311
+#: src/Deployment/Install/InstallPage.php:312
 msgid "This page is personal to you. Please do not share its link."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:322
-#: assets/editor/src/editor/modals/ExportModal.tsx:294
-#: assets/editor/src/editor/modals/ExportModal.tsx:311
-#: assets/editor/src/editor/modals/ExportModal.tsx:443
-#: assets/editor/src/editor/modals/ExportModal.tsx:481
-#: assets/editor/src/editor/modals/ExportModal.tsx:688
-#: assets/editor/src/editor/modals/ExportModal.tsx:692
+#: src/Deployment/Install/InstallPage.php:323
+#: assets/editor/src/editor/modals/ExportModal.tsx:300
+#: assets/editor/src/editor/modals/ExportModal.tsx:317
+#: assets/editor/src/editor/modals/ExportModal.tsx:451
+#: assets/editor/src/editor/modals/ExportModal.tsx:489
+#: assets/editor/src/editor/modals/ExportModal.tsx:696
+#: assets/editor/src/editor/modals/ExportModal.tsx:700
 msgid "Copied!"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:323
+#: src/Deployment/Install/InstallPage.php:324
 msgid ""
 "Could not copy — your browser blocked clipboard access. Use \"Copy HTML\" or "
 "one of the downloads instead."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:324
-#: assets/admin/src/pages/TemplatesPage.tsx:501
+#: src/Deployment/Install/InstallPage.php:325
+#: assets/admin/src/pages/TemplatesPage.tsx:489
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:294
-#: assets/editor/src/editor/topbar/Topbar.tsx:260
+#: assets/editor/src/editor/topbar/Topbar.tsx:261
 msgid "Saving…"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:325
+#: src/Deployment/Install/InstallPage.php:326
 msgid ""
 "Thanks! Your administrator can now see that your signature is installed."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:326
+#: src/Deployment/Install/InstallPage.php:327
 msgid "Could not save — please try again in a moment."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:327
+#: src/Deployment/Install/InstallPage.php:328
+#: assets/admin/src/pages/team/model.ts:121
+#: assets/admin/src/pages/team/model.ts:122
 msgid "Installed"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:328
+#: src/Deployment/Install/InstallPage.php:329
 #: assets/editor/src/editor/modals/ExportModal.tsx:196
 msgid "Signature — press Cmd + A, then Cmd + C"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:329
+#: src/Deployment/Install/InstallPage.php:330
 #: src/Deployment/OutlookManifest.php:160
 #: assets/editor/src/core/compiler/issues.ts:64
 #: assets/editor/src/editor/modals/ExportModal.tsx:170
 msgid "Signature"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:347
+#: src/Deployment/Install/InstallPage.php:348
 #: assets/editor/src/editor/modals/ExportModal.tsx:74
 msgid "Gmail / Google Workspace"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:348
+#: src/Deployment/Install/InstallPage.php:349
 #: assets/editor/src/editor/modals/ExportModal.tsx:76
 msgid "New Outlook / Outlook on the web"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:349
+#: src/Deployment/Install/InstallPage.php:350
 #: assets/editor/src/editor/modals/ExportModal.tsx:75
 msgid "Outlook for Windows (classic)"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:350
+#: src/Deployment/Install/InstallPage.php:351
 #: assets/editor/src/editor/modals/ExportModal.tsx:77
 #: assets/editor/src/editor/modals/PreviewModal.tsx:48
 msgid "Apple Mail"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:351
+#: src/Deployment/Install/InstallPage.php:352
 msgid "iPhone / Android"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:354
+#: src/Deployment/Install/InstallPage.php:355
 #: assets/editor/src/editor/modals/PreviewModal.tsx:141
 msgid "Email client"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:387
-#: assets/editor/src/editor/modals/ExportModal.tsx:692
+#: src/Deployment/Install/InstallPage.php:388
+#: assets/editor/src/editor/modals/ExportModal.tsx:700
 msgid "Copy for Gmail"
 msgstr ""
 
 #. translators: %s: email client name.
-#: src/Deployment/Install/InstallPage.php:389
-#: src/Deployment/Install/InstallPage.php:406
-#: assets/editor/src/editor/modals/ExportModal.tsx:777
+#: src/Deployment/Install/InstallPage.php:390
+#: src/Deployment/Install/InstallPage.php:407
+#: assets/editor/src/editor/modals/ExportModal.tsx:785
 #, php-format
 msgid "Open %s settings"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:389
-#: assets/editor/src/editor/modals/ExportModal.tsx:695
+#: src/Deployment/Install/InstallPage.php:390
+#: assets/admin/src/pages/TeamPage.tsx:550
+#: assets/editor/src/editor/modals/ExportModal.tsx:703
 #: assets/editor/src/editor/modals/PreviewModal.tsx:44
 msgid "Gmail"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:393
+#: src/Deployment/Install/InstallPage.php:394
 msgid "Press \"Copy for Gmail\"."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:394
-#: assets/editor/src/editor/modals/ExportModal.tsx:701
+#: src/Deployment/Install/InstallPage.php:395
+#: assets/editor/src/editor/modals/ExportModal.tsx:709
 msgid ""
 "Open Gmail settings (link above) — or the gear icon → \"See all settings\" → "
 "\"General\" tab."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:395
-#: assets/editor/src/editor/modals/ExportModal.tsx:704
+#: src/Deployment/Install/InstallPage.php:396
+#: assets/editor/src/editor/modals/ExportModal.tsx:712
 msgid "Scroll to \"Signature\", click \"Create new\" and give it a name."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:396
-#: assets/editor/src/editor/modals/ExportModal.tsx:705
+#: src/Deployment/Install/InstallPage.php:397
+#: assets/editor/src/editor/modals/ExportModal.tsx:713
 msgid ""
 "Click into the signature box and paste (Cmd/Ctrl + V). Avoid editing it "
 "there afterwards — Gmail may drop formatting."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:397
-#: assets/editor/src/editor/modals/ExportModal.tsx:708
+#: src/Deployment/Install/InstallPage.php:398
+#: assets/editor/src/editor/modals/ExportModal.tsx:716
 msgid ""
 "Under \"Signature defaults\" pick it for new emails and for "
 "replies/forwards, then click \"Save changes\" at the bottom of the page."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:400
-#: assets/editor/src/editor/modals/ExportModal.tsx:714
+#: src/Deployment/Install/InstallPage.php:401
+#: assets/editor/src/editor/modals/ExportModal.tsx:722
 msgid ""
 "Google Workspace: if the signature box is missing or locked, your "
 "administrator manages signatures centrally."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:406
-#: assets/editor/src/editor/modals/ExportModal.tsx:485
+#: src/Deployment/Install/InstallPage.php:407
+#: assets/editor/src/editor/modals/ExportModal.tsx:493
 msgid "Outlook on the web"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:410
+#: src/Deployment/Install/InstallPage.php:411
 msgid "Press \"Copy signature\" so the signature is in your clipboard."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:411
-#: assets/editor/src/editor/modals/ExportModal.tsx:491
+#: src/Deployment/Install/InstallPage.php:412
+#: assets/editor/src/editor/modals/ExportModal.tsx:499
 msgid ""
 "Outlook on the web: Settings (gear) → Account → Signatures. New Outlook for "
 "Windows: Settings → Accounts → Signatures."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:412
-#: assets/editor/src/editor/modals/ExportModal.tsx:494
+#: src/Deployment/Install/InstallPage.php:413
+#: assets/editor/src/editor/modals/ExportModal.tsx:502
 msgid ""
 "Click \"+ New signature\", give it a name, click into the editor and paste "
 "(Cmd/Ctrl + V)."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:413
-#: assets/editor/src/editor/modals/ExportModal.tsx:497
+#: src/Deployment/Install/InstallPage.php:414
+#: assets/editor/src/editor/modals/ExportModal.tsx:505
 msgid ""
 "Pick it under \"Select default signatures\" for new messages and for "
 "replies/forwards, then click \"Save\"."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:419
-#: assets/editor/src/editor/modals/ExportModal.tsx:434
+#: src/Deployment/Install/InstallPage.php:420
+#: assets/editor/src/editor/modals/ExportModal.tsx:442
 msgid "Download for Outlook (.htm)"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:420
-#: assets/editor/src/editor/modals/ExportModal.tsx:437
+#: src/Deployment/Install/InstallPage.php:421
+#: assets/editor/src/editor/modals/ExportModal.tsx:445
 msgid "Download plain text (.txt)"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:421
-#: assets/editor/src/editor/modals/ExportModal.tsx:443
+#: src/Deployment/Install/InstallPage.php:422
+#: assets/editor/src/editor/modals/ExportModal.tsx:451
 msgid "Copy folder path"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:425
-#: assets/editor/src/editor/modals/ExportModal.tsx:451
+#: src/Deployment/Install/InstallPage.php:426
+#: assets/editor/src/editor/modals/ExportModal.tsx:459
 msgid ""
 "Download both files above. Keep their names identical — only the extension "
 "differs; the name is what Outlook lists."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:426
-#: assets/editor/src/editor/modals/ExportModal.tsx:454
+#: src/Deployment/Install/InstallPage.php:427
+#: assets/editor/src/editor/modals/ExportModal.tsx:462
 msgid "Close Outlook completely."
 msgstr ""
 
 #. translators: %s: Windows folder path.
-#: src/Deployment/Install/InstallPage.php:428
+#: src/Deployment/Install/InstallPage.php:429
 #, php-format
 msgid ""
 "Press Windows + R, paste %s and press Enter. Create the \"Signatures\" "
 "folder if it does not exist."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:429
-#: assets/editor/src/editor/modals/ExportModal.tsx:460
+#: src/Deployment/Install/InstallPage.php:430
+#: assets/editor/src/editor/modals/ExportModal.tsx:468
 msgid "Move the two downloaded files into that folder."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:430
-#: assets/editor/src/editor/modals/ExportModal.tsx:461
+#: src/Deployment/Install/InstallPage.php:431
+#: assets/editor/src/editor/modals/ExportModal.tsx:469
 msgid ""
 "Open Outlook → File → Options → Mail → Signatures…, choose the new signature "
 "for \"New messages\" and \"Replies/forwards\", then click \"OK\"."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:433
+#: src/Deployment/Install/InstallPage.php:434
 msgid ""
 "If your organisation syncs Microsoft 365 cloud signatures, Outlook may "
 "replace files in that folder. Then press \"Copy signature\" and paste into "
 "File → Options → Mail → Signatures… → New instead."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:437
-#: assets/editor/src/editor/modals/ExportModal.tsx:509
+#: src/Deployment/Install/InstallPage.php:438
+#: assets/editor/src/editor/modals/ExportModal.tsx:517
 msgid "Open signature in a new tab"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:441
-#: assets/editor/src/editor/modals/ExportModal.tsx:514
+#: src/Deployment/Install/InstallPage.php:442
+#: assets/editor/src/editor/modals/ExportModal.tsx:522
 msgid ""
 "Press \"Open signature in a new tab\" (Safari works best). The tab shows "
 "only the signature."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:442
-#: assets/editor/src/editor/modals/ExportModal.tsx:517
+#: src/Deployment/Install/InstallPage.php:443
+#: assets/editor/src/editor/modals/ExportModal.tsx:525
 msgid "In that tab press Cmd + A, then Cmd + C."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:443
-#: assets/editor/src/editor/modals/ExportModal.tsx:518
+#: src/Deployment/Install/InstallPage.php:444
+#: assets/editor/src/editor/modals/ExportModal.tsx:526
 msgid ""
 "Open Mail → Settings… → Signatures, pick the account on the left and click "
 "\"+\" to add a signature."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:444
-#: assets/editor/src/editor/modals/ExportModal.tsx:521
+#: src/Deployment/Install/InstallPage.php:445
+#: assets/editor/src/editor/modals/ExportModal.tsx:529
 msgid ""
 "Untick \"Always match my default message font\" — otherwise Mail replaces "
 "the signature’s fonts with your default font."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:445
-#: assets/editor/src/editor/modals/ExportModal.tsx:524
+#: src/Deployment/Install/InstallPage.php:446
+#: assets/editor/src/editor/modals/ExportModal.tsx:532
 msgid ""
 "Click into the signature area on the right, delete the placeholder text and "
 "paste (Cmd + V). Close the window; Mail saves automatically."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:448
-#: assets/editor/src/editor/modals/ExportModal.tsx:529
+#: src/Deployment/Install/InstallPage.php:449
+#: assets/editor/src/editor/modals/ExportModal.tsx:537
 msgid "Send yourself a test message to check the result."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:451
+#: src/Deployment/Install/InstallPage.php:452
 msgid ""
 "Open this page on your phone — the link in your invitation email works there "
 "too — and press \"Copy signature\"."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:453
-#: assets/editor/src/editor/modals/ExportModal.tsx:541
+#: src/Deployment/Install/InstallPage.php:454
+#: assets/editor/src/editor/modals/ExportModal.tsx:549
 msgid "iPhone / iPad (Mail)"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:456
-#: src/Deployment/Install/InstallPage.php:472
+#: src/Deployment/Install/InstallPage.php:457
+#: src/Deployment/Install/InstallPage.php:473
 msgid "Press \"Copy signature\" above."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:457
-#: assets/editor/src/editor/modals/ExportModal.tsx:547
+#: src/Deployment/Install/InstallPage.php:458
+#: assets/editor/src/editor/modals/ExportModal.tsx:555
 msgid ""
 "Open Settings → Apps → Mail → Signature (older iOS: Settings → Mail → "
 "Signature), choose \"All Accounts\" or \"Per Account\", clear the field and "
 "paste."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:458
-#: assets/editor/src/editor/modals/ExportModal.tsx:550
+#: src/Deployment/Install/InstallPage.php:459
+#: assets/editor/src/editor/modals/ExportModal.tsx:558
 msgid ""
 "iOS removes the formatting right after pasting: immediately shake the iPhone "
 "and tap \"Undo\" to bring the formatting back."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:459
-#: assets/editor/src/editor/modals/ExportModal.tsx:553
+#: src/Deployment/Install/InstallPage.php:460
+#: assets/editor/src/editor/modals/ExportModal.tsx:561
 msgid "Go back to save."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:462
-#: assets/editor/src/editor/modals/ExportModal.tsx:557
+#: src/Deployment/Install/InstallPage.php:463
+#: assets/editor/src/editor/modals/ExportModal.tsx:565
 msgid "Gmail app (Android / iPhone)"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:465
-#: assets/editor/src/editor/modals/ExportModal.tsx:560
+#: src/Deployment/Install/InstallPage.php:466
+#: assets/editor/src/editor/modals/ExportModal.tsx:568
 msgid ""
 "The Gmail app’s own \"Mobile signature\" is plain text only — images, "
 "colours and links are not kept. For the full visual signature, install it in "
 "Gmail on a computer (Gmail tab)."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:466
+#: src/Deployment/Install/InstallPage.php:467
 msgid ""
 "To set the text version: in the app open Settings → your account → Mobile "
 "signature and paste the signature (only its text is kept)."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:469
-#: assets/editor/src/editor/modals/ExportModal.tsx:569
+#: src/Deployment/Install/InstallPage.php:470
+#: assets/editor/src/editor/modals/ExportModal.tsx:577
 msgid "Outlook app (Android / iPhone)"
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:473
-#: assets/editor/src/editor/modals/ExportModal.tsx:575
+#: src/Deployment/Install/InstallPage.php:474
+#: assets/editor/src/editor/modals/ExportModal.tsx:583
 msgid ""
 "Open the Outlook app → Settings → Signature (per account when offered) and "
 "paste."
 msgstr ""
 
-#: src/Deployment/Install/InstallPage.php:474
-#: assets/editor/src/editor/modals/ExportModal.tsx:578
+#: src/Deployment/Install/InstallPage.php:475
+#: assets/editor/src/editor/modals/ExportModal.tsx:586
 msgid ""
 "How much formatting survives depends on the app version: send yourself a "
 "message to check, and keep the mobile signature simple if images are dropped."
@@ -1200,7 +1219,9 @@ msgid "Message from your administrator:"
 msgstr ""
 
 #. translators: %s: company or site name.
+#. translators: singular form (count = 1)
 #: src/Deployment/OutlookManifest.php:156
+#: assets/admin/src/pages/SignaturesPage.tsx:282
 #, php-format
 msgid "%s signature"
 msgstr ""
@@ -1355,32 +1376,32 @@ msgstr ""
 msgid "Synced from “%s” — edit it where that data is managed."
 msgstr ""
 
-#: src/Frontend/FrontendPage.php:157
+#: src/Frontend/FrontendPage.php:155
 msgid "Signature Editor"
 msgstr ""
 
-#: src/Frontend/FrontendPage.php:377
+#: src/Frontend/FrontendPage.php:375
 msgid "Log in to access your signatures"
 msgstr ""
 
-#: src/Frontend/FrontendPage.php:389
+#: src/Frontend/FrontendPage.php:387
 msgid "You need to log in"
 msgstr ""
 
-#: src/Frontend/FrontendPage.php:390
+#: src/Frontend/FrontendPage.php:388
 msgid "Sign in to your account to manage your email signatures."
 msgstr ""
 
-#: src/Frontend/FrontendPage.php:391
+#: src/Frontend/FrontendPage.php:389
 msgid "Log in"
 msgstr ""
 
-#: src/Frontend/FrontendPage.php:458
-#: src/Frontend/FrontendPage.php:468
+#: src/Frontend/FrontendPage.php:456
+#: src/Frontend/FrontendPage.php:466
 msgid "Access denied"
 msgstr ""
 
-#: src/Frontend/FrontendPage.php:469
+#: src/Frontend/FrontendPage.php:467
 msgid ""
 "Your account does not have permission to use Imagina Signatures. Ask a site "
 "administrator to grant access."
@@ -1391,17 +1412,17 @@ msgid "Email signatures"
 msgstr ""
 
 #: src/Privacy/UserDataManager.php:170
-#: assets/admin/src/pages/SignaturesPage.tsx:361
-#: assets/admin/src/pages/TemplatesPage.tsx:357
-#: assets/admin/src/pages/TemplatesPage.tsx:507
+#: assets/admin/src/pages/SignaturesPage.tsx:378
+#: assets/admin/src/pages/TemplatesPage.tsx:345
+#: assets/admin/src/pages/TemplatesPage.tsx:495
 #: assets/admin/src/pages/groups/GroupDialog.tsx:151
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:194
 msgid "Name"
 msgstr ""
 
 #: src/Privacy/UserDataManager.php:174
-#: assets/admin/src/pages/SignaturesPage.tsx:362
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:824
+#: assets/admin/src/pages/SignaturesPage.tsx:379
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:825
 msgid "Status"
 msgstr ""
 
@@ -1496,67 +1517,67 @@ msgid "Removed markup from a variable value."
 msgstr ""
 
 #: src/Services/SignatureService.php:158
-#: src/Services/SignatureService.php:323
-#: src/Services/SignatureService.php:595
-#: src/Services/SignatureService.php:625
+#: src/Services/SignatureService.php:325
+#: src/Services/SignatureService.php:634
+#: src/Services/SignatureService.php:664
 msgid "Signature not found or not owned by the caller."
 msgstr ""
 
-#: src/Services/SignatureService.php:391
+#: src/Services/SignatureService.php:395
 msgid "No compiled HTML supplied."
 msgstr ""
 
-#: src/Services/SignatureService.php:395
+#: src/Services/SignatureService.php:399
 msgid "html is required."
 msgstr ""
 
-#: src/Services/SignatureService.php:456
+#: src/Services/SignatureService.php:495
 msgid ""
 "This signature follows a company template and cannot be detached from it."
 msgstr ""
 
-#: src/Services/SignatureService.php:460
+#: src/Services/SignatureService.php:499
 msgid "Ask an administrator to detach it."
 msgstr ""
 
 #. translators: %s: original signature name.
-#: src/Services/SignatureService.php:642
+#: src/Services/SignatureService.php:681
 #, php-format
 msgid "%s (copy)"
 msgstr ""
 
-#: src/Services/SignatureService.php:687
+#: src/Services/SignatureService.php:726
 msgid "Invalid status value."
 msgstr ""
 
-#: src/Services/SignatureService.php:691
+#: src/Services/SignatureService.php:730
 msgid "Status must be one of: draft, ready, archived."
 msgstr ""
 
-#: src/Services/SignatureService.php:707
+#: src/Services/SignatureService.php:746
 msgid "Invalid link mode."
 msgstr ""
 
-#: src/Services/SignatureService.php:711
+#: src/Services/SignatureService.php:750
 msgid "link_mode must be \"linked\" or \"detached\"."
 msgstr ""
 
-#: src/Services/SignatureService.php:726
+#: src/Services/SignatureService.php:765
 msgid "The compiled signature is too large to store."
 msgstr ""
 
 #. translators: %d: maximum size in KB.
-#: src/Services/SignatureService.php:732
+#: src/Services/SignatureService.php:771
 #, php-format
 msgid "Maximum %d KB."
 msgstr ""
 
-#: src/Services/SignatureService.php:757
+#: src/Services/SignatureService.php:796
 #: src/Services/TemplateService.php:259
 msgid "json_content must be a JSON object."
 msgstr ""
 
-#: src/Services/SignatureService.php:761
+#: src/Services/SignatureService.php:800
 #: src/Services/TemplateService.php:263
 msgid "Could not decode payload."
 msgstr ""
@@ -1931,7 +1952,7 @@ msgid "Serif typography with a short rule."
 msgstr ""
 
 #: src/Setup/DefaultTemplatesSeeder.php:545
-#: assets/admin/src/pages/TemplatesPage.tsx:362
+#: assets/admin/src/pages/TemplatesPage.tsx:350
 msgid "Sales Active"
 msgstr ""
 
@@ -2101,14 +2122,198 @@ msgstr ""
 msgid "URL-only mode active — no storage backend to test."
 msgstr ""
 
-#: assets/admin/src/api.ts:84
+#: assets/admin/src/api.ts:95
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:107
 #: assets/editor/src/bridge/apiClient.ts:128
 #, javascript-format
 msgid "Request failed (%s)"
 msgstr ""
 
+#: assets/admin/src/components/AssignTemplateDialog.tsx:145
+msgid "Select at least one user."
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:153
+msgid "Pick a role."
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:160
+msgid "Pick at least one group."
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:170
+msgid "Provide at least one user ID."
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:180
+msgid "Pick a template."
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:237
+#, javascript-format
+msgid "Apply “%s”"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:237
+#: assets/admin/src/pages/TeamPage.tsx:275
+#: assets/admin/src/pages/TeamPage.tsx:469
+msgid "Assign a template"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:242
+#: assets/admin/src/pages/team/DeployDialogs.tsx:207
+msgid "Done"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:247
+#: assets/admin/src/pages/GroupsPage.tsx:207
+#: assets/admin/src/pages/TemplatesPage.tsx:331
+#: assets/admin/src/pages/TemplatesPage.tsx:481
+#: assets/admin/src/pages/groups/GroupDialog.tsx:134
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:396
+#: assets/admin/src/pages/team/DeployDialogs.tsx:70
+#: assets/admin/src/pages/team/RecompilePanel.tsx:53
+#: assets/editor/src/editor/modals/AssetLibraryModal.tsx:490
+#: assets/editor/src/editor/modals/ConfirmDialog.tsx:86
+#: assets/editor/src/editor/modals/ImageCropperModal.tsx:195
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:286
+#: assets/editor/src/editor/onboarding/YourDetailsModal.tsx:98
+msgid "Cancel"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:255
+msgid "Applying…"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:255
+#: assets/admin/src/pages/TemplatesPage.tsx:183
+msgid "Apply"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:271
+#: assets/admin/src/pages/settings/microsoft365/TransportRuleGenerator.tsx:158
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:230
+msgid "Template"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:278
+#: assets/editor/src/editor/modals/AssetLibraryModal.tsx:431
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:236
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:99
+#: assets/editor/src/editor/onboarding/OnboardingModal.tsx:86
+msgid "Loading…"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:279
+#: assets/admin/src/pages/TemplatesPage.tsx:126
+msgid "No templates yet"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:290
+msgid "Users"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:294
+msgid "1 selected user"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:295
+#, javascript-format
+msgid "%s selected users"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:300
+msgid "All eligible users"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:301
+msgid "Everyone with the “Use signatures” capability."
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:307
+msgid "By role"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:308
+msgid "Limit to a single WordPress role."
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:329
+msgid "By group"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:330
+msgid "Members of one or more groups."
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:365
+msgid "Specific user IDs"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:366
+msgid "Comma-separated WP user IDs. Useful for targeted campaigns."
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:384
+#: assets/admin/src/pages/settings/microsoft365/TransportRuleGenerator.tsx:193
+msgid "Mode"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:386
+msgid "Linked (recommended)"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:387
+msgid ""
+"Signatures follow this template: when you edit it, everyone gets the new "
+"design. Employees keep their details and text."
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:394
+msgid "Independent copy"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:395
+msgid ""
+"Each user gets an independent copy. Later template changes don’t reach it; "
+"users who already have a copy are skipped."
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:412
+msgid ""
+"Make it each user’s primary signature (the one deployed to Gmail and Outlook)"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:421
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:314
+#: assets/admin/src/pages/team/DeployDialogs.tsx:215
+#: assets/admin/src/pages/team/RecompilePanel.tsx:65
+msgid "Progress"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:432
+#, javascript-format
+msgid "%1$s of %2$s users"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:433
+msgid "created"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:434
+msgid "updated"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:434
+msgid "skipped"
+msgstr ""
+
+#: assets/admin/src/components/AssignTemplateDialog.tsx:437
+msgid "failed"
+msgstr ""
+
 #: assets/admin/src/components/Modal.tsx:55
+#: assets/admin/src/pages/team/RecompilePanel.tsx:57
 #: assets/editor/src/editor/onboarding/YourDetailsModal.tsx:68
 msgid "Close"
 msgstr ""
@@ -2139,6 +2344,7 @@ msgid "e.g. she/her"
 msgstr ""
 
 #: assets/admin/src/components/ProfileForm.tsx:101
+#: assets/admin/src/pages/TeamPage.tsx:745
 msgid "Profile saved."
 msgstr ""
 
@@ -2161,11 +2367,11 @@ msgstr ""
 msgid "Save profile"
 msgstr ""
 
-#: assets/admin/src/components/SidebarNav.tsx:91
+#: assets/admin/src/components/SidebarNav.tsx:99
 msgid "Back to home"
 msgstr ""
 
-#: assets/admin/src/components/SidebarNav.tsx:91
+#: assets/admin/src/components/SidebarNav.tsx:99
 msgid "Back to WP Admin"
 msgstr ""
 
@@ -2174,19 +2380,19 @@ msgid "Loading"
 msgstr ""
 
 #: assets/admin/src/components/StatusPill.tsx:13
-#: assets/editor/src/editor/topbar/Topbar.tsx:435
+#: assets/editor/src/editor/topbar/Topbar.tsx:436
 msgid "Draft"
 msgstr ""
 
 #: assets/admin/src/components/StatusPill.tsx:14
-#: assets/admin/src/pages/SignaturesPage.tsx:259
-#: assets/editor/src/editor/topbar/Topbar.tsx:436
+#: assets/admin/src/pages/SignaturesPage.tsx:276
+#: assets/editor/src/editor/topbar/Topbar.tsx:437
 msgid "Ready"
 msgstr ""
 
 #: assets/admin/src/components/StatusPill.tsx:15
-#: assets/admin/src/pages/SignaturesPage.tsx:260
-#: assets/editor/src/editor/topbar/Topbar.tsx:437
+#: assets/admin/src/pages/SignaturesPage.tsx:277
+#: assets/editor/src/editor/topbar/Topbar.tsx:438
 msgid "Archived"
 msgstr ""
 
@@ -2255,22 +2461,8 @@ msgstr ""
 msgid "Group saved."
 msgstr ""
 
-#: assets/admin/src/pages/GroupsPage.tsx:207
-#: assets/admin/src/pages/TemplatesPage.tsx:343
-#: assets/admin/src/pages/TemplatesPage.tsx:493
-#: assets/admin/src/pages/TemplatesPage.tsx:737
-#: assets/admin/src/pages/groups/GroupDialog.tsx:134
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:394
-#: assets/editor/src/editor/modals/AssetLibraryModal.tsx:490
-#: assets/editor/src/editor/modals/ConfirmDialog.tsx:86
-#: assets/editor/src/editor/modals/ImageCropperModal.tsx:195
-#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:286
-#: assets/editor/src/editor/onboarding/YourDetailsModal.tsx:98
-msgid "Cancel"
-msgstr ""
-
 #: assets/admin/src/pages/GroupsPage.tsx:210
-#: assets/admin/src/pages/SignaturesPage.tsx:447
+#: assets/admin/src/pages/SignaturesPage.tsx:472
 #: assets/editor/src/editor/canvas/BlockToolbar.tsx:114
 #: assets/editor/src/editor/modals/AssetLibraryModal.tsx:511
 #: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:317
@@ -2290,216 +2482,242 @@ msgid ""
 "{{phone}}, …). Open a signature again to see the new values."
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:32
+#: assets/admin/src/pages/SettingsPage.tsx:33
 msgid "Storage"
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:35
+#: assets/admin/src/pages/SettingsPage.tsx:36
 msgid ""
 "Pick where uploaded images live: WordPress Media Library or any "
 "S3-compatible bucket."
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:39
+#: assets/admin/src/pages/SettingsPage.tsx:40
 msgid "Brand kit"
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:42
+#: assets/admin/src/pages/SettingsPage.tsx:43
 msgid ""
 "Company details, social profiles, typography and colours shared by every "
 "signature, plus the brand palette shown in every editor color picker."
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:48
+#: assets/admin/src/pages/SettingsPage.tsx:49
 msgid "Compliance"
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:51
+#: assets/admin/src/pages/SettingsPage.tsx:52
 msgid ""
 "Optional HTML footer appended to every signature on export (GDPR / CAN-SPAM)."
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:55
+#: assets/admin/src/pages/SettingsPage.tsx:56
 #: assets/shared/templateCategories.ts:58
 msgid "Campaigns"
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:58
+#: assets/admin/src/pages/SettingsPage.tsx:59
 msgid ""
 "Promotional banners auto-injected at the bottom of every signature, with "
 "optional date scheduling and random rotation across active entries."
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:62
+#: assets/admin/src/pages/SettingsPage.tsx:65
 msgid "Frontend"
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:65
+#: assets/admin/src/pages/SettingsPage.tsx:68
 msgid ""
 "Expose the editor on a public-facing URL so non-admin users (e.g. "
 "subscribers) can manage their own signatures without entering wp-admin."
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:69
-msgid "Google Workspace"
-msgstr ""
-
-#: assets/admin/src/pages/SettingsPage.tsx:72
-msgid ""
-"Deploy every employee’s signature to Gmail with one click, through a service "
-"account with domain-wide delegation."
-msgstr ""
-
-#: assets/admin/src/pages/SettingsPage.tsx:76
-msgid "Microsoft 365"
-msgstr ""
-
-#: assets/admin/src/pages/SettingsPage.tsx:79
-msgid ""
-"Deploy every employee's signature to Outlook with an add-in, or generate an "
-"Exchange Online mail flow rule."
-msgstr ""
-
-#: assets/admin/src/pages/SettingsPage.tsx:83
+#: assets/admin/src/pages/SettingsPage.tsx:74
 #: assets/admin/src/pages/groups/ImportTab.tsx:450
 #: assets/editor/src/tiptap/toolbar/InsertFieldMenu.tsx:44
 msgid "Profile fields"
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:86
+#: assets/admin/src/pages/SettingsPage.tsx:77
 msgid ""
 "Where each employee profile field comes from, plus your own custom fields."
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:90
+#: assets/admin/src/pages/SettingsPage.tsx:81
 msgid "Invitations"
 msgstr ""
 
-#: assets/admin/src/pages/SettingsPage.tsx:93
+#: assets/admin/src/pages/SettingsPage.tsx:84
 msgid ""
 "Email every employee a personal link to install their signature in a minute, "
 "follow the progress and set up reminders."
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:47
-#: assets/admin/src/pages/TemplatesPage.tsx:89
+#: assets/admin/src/pages/SettingsPage.tsx:90
+msgid "Google Workspace"
+msgstr ""
+
+#: assets/admin/src/pages/SettingsPage.tsx:93
+msgid ""
+"Deploy every employee’s signature to Gmail with one click, through a service "
+"account with domain-wide delegation."
+msgstr ""
+
+#: assets/admin/src/pages/SettingsPage.tsx:99
+msgid "Microsoft 365"
+msgstr ""
+
+#: assets/admin/src/pages/SettingsPage.tsx:102
+msgid ""
+"Deploy every employee's signature to Outlook with an add-in, or generate an "
+"Exchange Online mail flow rule."
+msgstr ""
+
+#: assets/admin/src/pages/SettingsPage.tsx:137
+#: assets/shared/templateCategories.ts:16
+msgid "General"
+msgstr ""
+
+#: assets/admin/src/pages/SettingsPage.tsx:142
+msgid "Team & deployment"
+msgstr ""
+
+#: assets/admin/src/pages/SettingsPage.tsx:157
+msgid "Settings sections"
+msgstr ""
+
+#: assets/admin/src/pages/SignaturesPage.tsx:57
+#: assets/admin/src/pages/TemplatesPage.tsx:77
 msgid "Server returned an unexpected response shape. Reload to retry."
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:84
+#: assets/admin/src/pages/SignaturesPage.tsx:94
 #, javascript-format
 msgid "Could not duplicate: %s"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:97
+#: assets/admin/src/pages/SignaturesPage.tsx:107
 #, javascript-format
 msgid "Could not set the primary signature: %s"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:122
+#: assets/admin/src/pages/SignaturesPage.tsx:132
 #, javascript-format
 msgid "Could not open the install page: %s"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:129
+#: assets/admin/src/pages/SignaturesPage.tsx:139
 #, javascript-format
 msgid "Delete \"%s\"? This cannot be undone."
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:138
+#: assets/admin/src/pages/SignaturesPage.tsx:148
 #, javascript-format
 msgid "Could not delete: %s"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:182
+#. translators: singular form (count = 1)
+#: assets/admin/src/pages/SignaturesPage.tsx:190
 #, javascript-format
-msgid "Delete %s signature(s)? This cannot be undone."
+msgid "Delete %s signature? This cannot be undone."
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:213
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/SignaturesPage.tsx:190
+#, javascript-format
+msgid "Delete %s signatures? This cannot be undone."
+msgstr ""
+
+#: assets/admin/src/pages/SignaturesPage.tsx:221
 #, javascript-format
 msgid "Deleted %s of %s. First failure: %s"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:231
+#: assets/admin/src/pages/SignaturesPage.tsx:239
 msgid "Visual editor for HTML email signatures. Each user sees only their own."
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:234
-#: assets/admin/src/pages/SignaturesPage.tsx:333
+#: assets/admin/src/pages/SignaturesPage.tsx:248
+#: assets/admin/src/pages/SignaturesPage.tsx:350
 msgid "New signature"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:246
+#: assets/admin/src/pages/SignaturesPage.tsx:263
 msgid "Search by name…"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:257
+#: assets/admin/src/pages/SignaturesPage.tsx:274
 msgid "All statuses"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:258
+#: assets/admin/src/pages/SignaturesPage.tsx:275
 msgid "Drafts"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:265
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/SignaturesPage.tsx:282
 #, javascript-format
-msgid "%s signature(s)"
+msgid "%s signatures"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:275
+#: assets/admin/src/pages/SignaturesPage.tsx:292
+#: assets/admin/src/pages/TeamPage.tsx:462
 #, javascript-format
 msgid "%s selected"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:285
+#: assets/admin/src/pages/SignaturesPage.tsx:302
 msgid "Clear"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:294
+#: assets/admin/src/pages/SignaturesPage.tsx:311
 msgid "Delete selected"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:318
+#: assets/admin/src/pages/SignaturesPage.tsx:333
 msgid "No signatures yet"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:319
+#: assets/admin/src/pages/SignaturesPage.tsx:334
 msgid "No signatures match your filters"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:323
+#: assets/admin/src/pages/SignaturesPage.tsx:338
 msgid "Create your first signature to get started."
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:324
+#: assets/admin/src/pages/SignaturesPage.tsx:339
 msgid "Try clearing the search or status filter."
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:357
+#: assets/admin/src/pages/SignaturesPage.tsx:374
 msgid "Select all visible"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:363
+#: assets/admin/src/pages/SignaturesPage.tsx:380
 msgid "Last edited"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:364
+#: assets/admin/src/pages/SignaturesPage.tsx:381
+#: assets/admin/src/pages/TeamPage.tsx:559
+#: assets/admin/src/pages/team/RowMenu.tsx:51
 msgid "Actions"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:384
+#: assets/admin/src/pages/SignaturesPage.tsx:401
+#: assets/admin/src/pages/TeamPage.tsx:574
 #, javascript-format
 msgid "Select %s"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:384
-#: assets/admin/src/pages/SignaturesPage.tsx:393
-#: assets/admin/src/pages/SignaturesPage.tsx:415
-#: assets/admin/src/pages/SignaturesPage.tsx:422
-#: assets/admin/src/pages/SignaturesPage.tsx:431
-#: assets/admin/src/pages/SignaturesPage.tsx:439
-#: assets/admin/src/pages/SignaturesPage.tsx:446
+#: assets/admin/src/pages/SignaturesPage.tsx:401
+#: assets/admin/src/pages/SignaturesPage.tsx:410
+#: assets/admin/src/pages/SignaturesPage.tsx:432
+#: assets/admin/src/pages/SignaturesPage.tsx:443
+#: assets/admin/src/pages/SignaturesPage.tsx:455
+#: assets/admin/src/pages/SignaturesPage.tsx:464
+#: assets/admin/src/pages/SignaturesPage.tsx:471
+#: assets/admin/src/pages/TeamPage.tsx:625
 #: assets/editor/src/hooks/useLoadSignature.ts:86
 #: assets/editor/src/services/persistence.ts:175
 #: assets/editor/src/services/templateLink.ts:54
@@ -2507,330 +2725,415 @@ msgstr ""
 msgid "Untitled"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:398
+#: assets/admin/src/pages/SignaturesPage.tsx:415
 msgid "This is the signature deployed to your email clients."
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:401
+#: assets/admin/src/pages/SignaturesPage.tsx:418
 msgid "Primary"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:415
+#: assets/admin/src/pages/SignaturesPage.tsx:432
 #, javascript-format
 msgid "Edit %s"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:416
-#: assets/admin/src/pages/TemplatesPage.tsx:188
+#: assets/admin/src/pages/SignaturesPage.tsx:433
+#: assets/admin/src/pages/TemplatesPage.tsx:174
 msgid "Edit"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:422
+#: assets/admin/src/pages/SignaturesPage.tsx:441
 #, javascript-format
 msgid "Install %s in your email client"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:423
+#: assets/admin/src/pages/SignaturesPage.tsx:445
 msgid "Install"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:431
+#: assets/admin/src/pages/SignaturesPage.tsx:453
 #, javascript-format
 msgid "Make %s the primary signature"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:432
+#: assets/admin/src/pages/SignaturesPage.tsx:457
 msgid "Make primary"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:439
+#: assets/admin/src/pages/SignaturesPage.tsx:464
 #, javascript-format
 msgid "Duplicate %s"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:440
+#: assets/admin/src/pages/SignaturesPage.tsx:465
 #: assets/editor/src/editor/canvas/BlockToolbar.tsx:110
 msgid "Duplicate"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:446
+#: assets/admin/src/pages/SignaturesPage.tsx:471
 #, javascript-format
 msgid "Delete %s"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:21
-msgid "Administrator"
+#: assets/admin/src/pages/TeamPage.tsx:76
+msgid "Copy the link:"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:22
-msgid "Editor"
+#: assets/admin/src/pages/TeamPage.tsx:220
+#, javascript-format
+msgid "The recompile stopped: %s"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:23
-msgid "Author"
+#: assets/admin/src/pages/TeamPage.tsx:235
+#, javascript-format
+msgid "Install link of %s copied to the clipboard."
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:24
-msgid "Contributor"
+#: assets/admin/src/pages/TeamPage.tsx:261
+msgid "Edit signature on their behalf"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:25
-msgid "Subscriber"
+#: assets/admin/src/pages/TeamPage.tsx:269
+#: assets/editor/src/editor/FieldsOnlyView.tsx:91
+#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:112
+msgid "Edit profile"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:32
+#: assets/admin/src/pages/TeamPage.tsx:281
+msgid "Send install invitation"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:288
+msgid "Copy install link"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:296
+#: assets/admin/src/pages/TeamPage.tsx:486
+#: assets/admin/src/pages/team/DeployDialogs.tsx:202
+msgid "Push to Gmail"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:312
+msgid ""
+"Everyone who can use signatures: their primary signature, whether its HTML "
+"is up to date and where it is deployed."
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:321
+msgid ""
+"Rebuild every outdated signature in this browser, with each owner’s details."
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:326
+msgid "Recompile 1 outdated"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:327
+#, javascript-format
+msgid "Recompile %s outdated"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:402
+msgid "Search"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:414
+msgid "Name or email"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:421
+msgid "Group"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:430
+msgid "All groups"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:440
+msgid "State"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:458
+msgid "Selected people"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:462
+msgid "1 selected"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:477
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:255
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:303
+msgid "Send invitations"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:490
+msgid "Clear selection"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:510
+msgid "Nobody can use signatures yet"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:511
+msgid "Nobody matches"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:515
+msgid "Give a role the “Use signatures” capability to see people here."
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:516
+msgid "Try another search, group or state."
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:536
+msgid "Select everyone on this page"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:541
+msgid "Person"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:544
+msgid "Primary signature"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:547
+msgid "HTML"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:553
+#: assets/admin/src/pages/settings/Microsoft365Tab.tsx:156
+#: assets/admin/src/pages/team/model.ts:216
+msgid "Outlook add-in"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:556
+msgid "Install link"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:632
+#, javascript-format
+msgid "%s signatures in total"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:638
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:55
+msgid "No signature yet"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:656
+#, javascript-format
+msgid "Actions for %s"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:669
+msgid "Pages"
+msgstr ""
+
+#. translators: singular form (count = 1)
+#: assets/admin/src/pages/TeamPage.tsx:672
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:188
+#, javascript-format
+msgid "%s person"
+msgstr ""
+
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/TeamPage.tsx:672
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:188
+#, javascript-format
+msgid "%s people"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:679
+msgid "Previous"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:681
+#, javascript-format
+msgid "Page %1$s of %2$s"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:687
+msgid "Next"
+msgstr ""
+
+#. translators: singular form (count = 1)
+#: assets/admin/src/pages/TeamPage.tsx:710
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:204
+#, javascript-format
+msgid "%s invitation queued. It is sent in the background."
+msgstr ""
+
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/TeamPage.tsx:710
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:204
+#, javascript-format
+msgid "%s invitations queued. They are sent in batches in the background."
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:732
+#, javascript-format
+msgid "Profile of %s"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:732
+msgid "Profile"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:744
+msgid ""
+"Profile saved. Their signatures need a recompile to show the new details."
+msgstr ""
+
+#: assets/admin/src/pages/TemplatesPage.tsx:20
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:40
 msgid "Free"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:33
+#: assets/admin/src/pages/TemplatesPage.tsx:21
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:41
 msgid "Employees can change everything except locked blocks."
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:37
+#: assets/admin/src/pages/TemplatesPage.tsx:25
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:45
 msgid "Locked design"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:39
+#: assets/admin/src/pages/TemplatesPage.tsx:27
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:47
 msgid ""
 "Employees can only change the text of unlocked text blocks. Layout and "
 "styles are fixed."
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:43
+#: assets/admin/src/pages/TemplatesPage.tsx:33
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:53
 msgid "Fields only"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:44
+#: assets/admin/src/pages/TemplatesPage.tsx:35
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:55
 msgid ""
 "Employees only fill in their details (variables and profile). No canvas "
 "editing."
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:108
+#: assets/admin/src/pages/TemplatesPage.tsx:96
 msgid ""
 "Global signature templates. Tag with roles to scope visibility, or apply in "
 "bulk to seed a signature for every user."
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:109
+#: assets/admin/src/pages/TemplatesPage.tsx:99
 msgid "Browse the signature templates available on this site."
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:118
+#: assets/admin/src/pages/TemplatesPage.tsx:104
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:176
 msgid "New template"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:140
-msgid "No templates yet"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:143
+#: assets/admin/src/pages/TemplatesPage.tsx:129
 msgid "Use “New template” to seed one."
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:144
+#: assets/admin/src/pages/TemplatesPage.tsx:130
 msgid "Templates are typically seeded on plugin activation."
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:162
+#: assets/admin/src/pages/TemplatesPage.tsx:148
 msgid "System"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:167
+#: assets/admin/src/pages/TemplatesPage.tsx:153
 msgid "No description provided."
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:196
-#: assets/admin/src/pages/TemplatesPage.tsx:740
-msgid "Apply"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:243
+#: assets/admin/src/pages/TemplatesPage.tsx:231
 msgid "Visible to all users with the imgsig_use_signatures capability."
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:245
+#: assets/admin/src/pages/TemplatesPage.tsx:233
 msgid "All roles"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:338
-#: assets/admin/src/pages/TemplatesPage.tsx:351
+#: assets/admin/src/pages/TemplatesPage.tsx:326
+#: assets/admin/src/pages/TemplatesPage.tsx:339
 msgid "Create template"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:351
+#: assets/admin/src/pages/TemplatesPage.tsx:339
 msgid "Creating…"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:368
-#: assets/admin/src/pages/TemplatesPage.tsx:516
+#: assets/admin/src/pages/TemplatesPage.tsx:356
+#: assets/admin/src/pages/TemplatesPage.tsx:504
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:205
 msgid "Category"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:369
+#: assets/admin/src/pages/TemplatesPage.tsx:357
 msgid "Used to group templates in the picker (e.g. “sales”, “medical”)."
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:378
-#: assets/admin/src/pages/TemplatesPage.tsx:524
+#: assets/admin/src/pages/TemplatesPage.tsx:366
+#: assets/admin/src/pages/TemplatesPage.tsx:512
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:214
 msgid "Description"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:488
+#: assets/admin/src/pages/TemplatesPage.tsx:476
 msgid "Edit template"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:501
+#: assets/admin/src/pages/TemplatesPage.tsx:489
 #: assets/admin/src/pages/settings/FrontendTab.tsx:210
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:672
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:673
 #: assets/admin/src/pages/settings/Microsoft365Tab.tsx:196
-#: assets/editor/src/editor/topbar/Topbar.tsx:254
-#: assets/editor/src/editor/topbar/Topbar.tsx:268
+#: assets/editor/src/editor/topbar/Topbar.tsx:255
+#: assets/editor/src/editor/topbar/Topbar.tsx:269
 msgid "Save"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:533
+#: assets/admin/src/pages/TemplatesPage.tsx:521
 msgid "Visible to roles"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:534
+#: assets/admin/src/pages/TemplatesPage.tsx:522
 msgid "Empty = visible to all users with “Use signatures”. Tick to scope."
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:560
+#: assets/admin/src/pages/TemplatesPage.tsx:548
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:247
 msgid "Employee mode"
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:579
+#. translators: singular form (count = 1)
+#: assets/admin/src/pages/TemplatesPage.tsx:567
+#, javascript-format
+msgid "Saved. %s linked signature was updated."
+msgstr ""
+
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/TemplatesPage.tsx:567
 #, javascript-format
 msgid "Saved. %s linked signatures were updated."
 msgstr ""
 
-#: assets/admin/src/pages/TemplatesPage.tsx:580
+#. translators: singular form (count = 1)
+#: assets/admin/src/pages/TemplatesPage.tsx:573
+#, javascript-format
+msgid "Saved. %s linked signature is being updated in the background."
+msgstr ""
+
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/TemplatesPage.tsx:573
 #, javascript-format
 msgid "Saved. %s linked signatures are being updated in the background."
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:665
-msgid "Pick a role."
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:675
-msgid "Provide at least one user ID."
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:727
-#, javascript-format
-msgid "Apply “%s”"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:727
-#: assets/editor/src/editor/modals/TemplatePicker.tsx:112
-msgid "Apply template"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:732
-msgid "Done"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:740
-msgid "Applying…"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:754
-msgid "Users"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:756
-msgid "All eligible users"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:757
-msgid "Everyone with the “Use signatures” capability."
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:763
-msgid "By role"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:764
-msgid "Limit to a single WordPress role."
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:784
-msgid "Specific user IDs"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:785
-msgid "Comma-separated WP user IDs. Useful for targeted campaigns."
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:801
-#: assets/admin/src/pages/settings/microsoft365/TransportRuleGenerator.tsx:193
-msgid "Mode"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:803
-msgid "Linked (recommended)"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:804
-msgid ""
-"Signatures follow this template: when you edit it, everyone gets the new "
-"design. Employees keep their details and text."
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:809
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:194
-#: assets/admin/src/pages/settings/microsoft365/TransportRuleGenerator.tsx:306
-msgid "Copy"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:810
-msgid ""
-"Each user gets an independent copy. Later template changes don’t reach it; "
-"users who already have a copy are skipped."
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:825
-msgid ""
-"Make it each user’s primary signature (the one deployed to Gmail and Outlook)"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:834
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:312
-msgid "Progress"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:845
-#, javascript-format
-msgid "%1$s of %2$s users"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:846
-msgid "created"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:847
-msgid "updated"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:848
-msgid "skipped"
-msgstr ""
-
-#: assets/admin/src/pages/TemplatesPage.tsx:852
-msgid "failed"
 msgstr ""
 
 #: assets/admin/src/pages/groups/GroupDialog.tsx:142
@@ -3183,7 +3486,7 @@ msgid "No members yet."
 msgstr ""
 
 #: assets/admin/src/pages/groups/MemberPicker.tsx:69
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:539
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:546
 #, javascript-format
 msgid "Remove %s"
 msgstr ""
@@ -3197,12 +3500,12 @@ msgid "No users found."
 msgstr ""
 
 #: assets/admin/src/pages/groups/MemberPicker.tsx:124
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:520
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:527
 msgid "Added"
 msgstr ""
 
 #: assets/admin/src/pages/groups/MemberPicker.tsx:128
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:520
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:527
 #: assets/editor/src/core/blocks/container/ContainerProperties.tsx:385
 msgid "Add"
 msgstr ""
@@ -3263,132 +3566,132 @@ msgstr ""
 msgid "Logo URL"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:78
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:81
 msgid "Campaigns saved."
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:103
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:106
 msgid "Banner campaigns"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:104
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:107
 msgid ""
 "Promotional banners auto-injected at the bottom of every signature on "
 "export. Multiple active campaigns rotate randomly per export."
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:111
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:114
 msgid "No campaigns yet."
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:120
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:123
 msgid "Add first campaign"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:145
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:148
 msgid "Add another campaign"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:157
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:160
 msgid "Save campaigns"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:178
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:181
 msgid "Active"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:182
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:185
 msgid "Scheduled"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:186
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:189
 msgid "Expired"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:190
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:193
 msgid "Disabled"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:220
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:223
 msgid "Campaign name"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:241
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:244
 msgid "Enabled"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:247
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:250
 msgid "Remove campaign"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:256
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:259
 #: assets/editor/src/core/blocks/image/ImageSourceField.tsx:49
 #: assets/editor/src/editor/modals/AssetLibraryModal.tsx:451
 msgid "Image URL"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:265
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:268
 #: assets/editor/src/core/blocks/banner/BannerProperties.tsx:120
 #: assets/editor/src/core/blocks/button-cta/definition.tsx:66
 msgid "Link URL"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:274
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:277
 #: assets/editor/src/core/blocks/image/fields.tsx:34
 msgid "Alt text"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:279
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:282
 msgid "Describe the banner for screen readers"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:283
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:286
 #: assets/editor/src/core/blocks/banner/BannerProperties.tsx:90
 #: assets/editor/src/editor/sidebar-right/inputs/ImageSizeInput.tsx:78
 msgid "Width (px)"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:293
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:296
 msgid "Start date (optional)"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:301
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:304
 msgid "End date (optional)"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:313
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:316
 msgid "Show to"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:339
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:342
 msgid "Everyone sees this campaign. Pick groups to limit it to their members."
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:340
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:343
 msgid "Only members of the selected groups see this campaign."
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:348
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:351
 #: assets/admin/src/pages/settings/ComplianceTab.tsx:127
 #: assets/editor/src/editor/FieldsOnlyView.tsx:99
 #: assets/editor/src/editor/modals/PreviewModal.tsx:137
-#: assets/editor/src/editor/topbar/Topbar.tsx:200
+#: assets/editor/src/editor/topbar/Topbar.tsx:201
 msgid "Preview"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:356
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:359
 msgid "Open link"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:380
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:383
 msgid "Active window:"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:381
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:384
 msgid "any time"
 msgstr ""
 
-#: assets/admin/src/pages/settings/CampaignsTab.tsx:381
+#: assets/admin/src/pages/settings/CampaignsTab.tsx:384
 msgid "forever"
 msgstr ""
 
@@ -3511,42 +3814,55 @@ msgid ""
 msgstr ""
 
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:93
+#: assets/admin/src/pages/team/DeployDialogs.tsx:136
+#: assets/admin/src/pages/team/model.ts:75
 msgid "Pushed"
 msgstr ""
 
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:94
+#: assets/admin/src/pages/team/model.ts:48
 msgid "Up to date"
 msgstr ""
 
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:95
+#: assets/admin/src/pages/team/DeployDialogs.tsx:138
 msgid "No signature"
 msgstr ""
 
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:96
+#: assets/admin/src/pages/team/DeployDialogs.tsx:139
 msgid "Needs recompile"
 msgstr ""
 
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:97
+#: assets/admin/src/pages/team/DeployDialogs.tsx:140
 msgid "Other domain"
 msgstr ""
 
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:98
+#: assets/admin/src/pages/team/DeployDialogs.tsx:141
 msgid "No email"
 msgstr ""
 
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:99
+#: assets/admin/src/pages/team/DeployDialogs.tsx:142
 msgid "Unknown user"
 msgstr ""
 
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:100
+#: assets/admin/src/pages/team/DeployDialogs.tsx:143
+#: assets/admin/src/pages/team/model.ts:70
+#: assets/admin/src/pages/team/model.ts:204
 msgid "Not connected"
 msgstr ""
 
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:101
+#: assets/admin/src/pages/team/DeployDialogs.tsx:144
 msgid "Will retry"
 msgstr ""
 
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:102
+#: assets/admin/src/pages/team/DeployDialogs.tsx:145
 msgid "Error"
 msgstr ""
 
@@ -3558,6 +3874,11 @@ msgstr ""
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:194
 #: assets/admin/src/pages/settings/microsoft365/TransportRuleGenerator.tsx:306
 msgid "Copied"
+msgstr ""
+
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:194
+#: assets/admin/src/pages/settings/microsoft365/TransportRuleGenerator.tsx:306
+msgid "Copy"
 msgstr ""
 
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:309
@@ -3774,91 +4095,105 @@ msgid ""
 "allowed domain, not only on their main address."
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:652
+#. translators: singular form (count = 1)
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:651
+#, javascript-format
+msgid "Daily sync in progress: %d user checked so far."
+msgstr ""
+
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:651
 #, javascript-format
 msgid "Daily sync in progress: %d users checked so far."
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:656
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:657
 #, javascript-format
 msgid "Last daily sync (UTC %1$s): %2$d pushed, %3$d failed."
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:679
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:680
 msgid "Test with an email"
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:680
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:681
 msgid ""
 "Acts as this user and lists their Gmail send-as addresses. Nothing is "
 "changed in their mailbox."
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:691
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:692
 msgid "Email to test"
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:698
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:699
 msgid "Test"
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:718
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:719
 msgid "primary"
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:730
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:849
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:731
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:850
 #, javascript-format
 msgid "Google said: %s"
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:735
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:736
 msgid "Open the page to fix it"
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:743
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:770
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:744
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:771
 msgid "Push to everyone now"
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:744
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:745
 msgid ""
 "Writes every user’s primary signature to Gmail now. Users whose Gmail "
 "already has the current version are skipped unless you force it."
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:750
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:751
 msgid "Re-push even when Gmail is already up to date"
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:761
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:762
 msgid "Stop"
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:780
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:781
 msgid "Push progress"
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:792
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:793
 #, javascript-format
 msgid "Pushing… %1$d of %2$d users"
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:794
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:795
 #, javascript-format
 msgid "Stopped after %1$d of %2$d users."
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:795
+#. translators: singular form (count = 1)
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:796
+#, javascript-format
+msgid "Done: %d user processed."
+msgstr ""
+
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:796
 #, javascript-format
 msgid "Done: %d users processed."
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:823
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:824
 msgid "User"
 msgstr ""
 
-#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:825
+#: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:826
 msgid "Details"
 msgstr ""
 
@@ -3872,10 +4207,6 @@ msgstr ""
 
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:54
 msgid "No valid email address"
-msgstr ""
-
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:55
-msgid "No signature yet"
 msgstr ""
 
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:56
@@ -3900,148 +4231,140 @@ msgstr ""
 msgid "everyone with access to signatures"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:188
-#, javascript-format
-msgid "%s people"
-msgstr ""
-
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:189
 #, javascript-format
 msgid "Email the install link to %s?"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:204
-#, javascript-format
-msgid "%s invitation(s) queued. They are sent in batches in the background."
-msgstr ""
-
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:236
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:238
 msgid "Reminder settings saved."
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:253
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:301
-msgid "Send invitations"
-msgstr ""
-
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:254
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:256
 msgid ""
 "Emails each person a personal link where they install their signature in "
 "about a minute. Only people whose signature is ready receive it; everyone "
 "else is listed in the report below."
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:258
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:260
 msgid "Recipients"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:266
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:268
 msgid "Everyone with access to signatures"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:275
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:277
 msgid "Choose people"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:282
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:284
 msgid "Message (optional)"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:283
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:285
 msgid "Shown in the email above the install button. Plain text."
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:290
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:292
 msgid "Hi team, here is our new email signature…"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:305
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:307
 msgid "Wait until the current run finishes."
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:312
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:321
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:314
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:323
 msgid "Reminders"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:322
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:324
 msgid ""
 "Once a day, people who were invited but have not pressed \"I've installed "
 "it\" get a reminder."
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:333
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:335
 msgid "Send reminders automatically"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:337
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:339
 msgid "Days between reminders"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:338
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:340
 msgid "Counted from the invitation, then from the last reminder."
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:349
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:351
 msgid "Maximum reminders"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:349
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:351
 msgid "Per invitation."
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:367
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:369
 msgid "Save reminder settings"
-msgstr ""
-
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:383
-#, javascript-format
-msgid "Sending… %s of %s"
 msgstr ""
 
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:385
 #, javascript-format
+msgid "Sending… %s of %s"
+msgstr ""
+
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:387
+#, javascript-format
 msgid "Cancelled after %s of %s"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:386
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:388
 #, javascript-format
 msgid "Finished: %s of %s processed"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:404
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:406
 msgid "Invitations sent"
-msgstr ""
-
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:415
-#, javascript-format
-msgid "Sent: %s"
-msgstr ""
-
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:416
-#, javascript-format
-msgid "Skipped: %s"
 msgstr ""
 
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:417
 #, javascript-format
+msgid "Sent: %s"
+msgstr ""
+
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:418
+#, javascript-format
+msgid "Skipped: %s"
+msgstr ""
+
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:419
+#, javascript-format
 msgid "Failed: %s"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:421
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:423
 msgid "Groups are not available on this site; only people were invited."
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:427
+#. translators: singular form (count = 1)
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:429
 #, javascript-format
-msgid "%s person(s) not emailed"
+msgid "%s person not emailed"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:499
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:429
+#, javascript-format
+msgid "%s people not emailed"
+msgstr ""
+
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:506
 msgid "Search people by name or email…"
 msgstr ""
 
-#: assets/admin/src/pages/settings/InvitationsTab.tsx:500
+#: assets/admin/src/pages/settings/InvitationsTab.tsx:507
 msgid "Search people"
 msgstr ""
 
@@ -4071,10 +4394,6 @@ msgstr ""
 
 #: assets/admin/src/pages/settings/Microsoft365Tab.tsx:144
 msgid "Could not copy to the clipboard."
-msgstr ""
-
-#: assets/admin/src/pages/settings/Microsoft365Tab.tsx:156
-msgid "Outlook add-in"
 msgstr ""
 
 #: assets/admin/src/pages/settings/Microsoft365Tab.tsx:157
@@ -4642,11 +4961,6 @@ msgstr ""
 msgid "There are no templates yet. Create one in Templates first."
 msgstr ""
 
-#: assets/admin/src/pages/settings/microsoft365/TransportRuleGenerator.tsx:158
-#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:230
-msgid "Template"
-msgstr ""
-
 #: assets/admin/src/pages/settings/microsoft365/TransportRuleGenerator.tsx:168
 msgid "Rule name"
 msgstr ""
@@ -4727,6 +5041,261 @@ msgstr ""
 msgid "This template has no signature content."
 msgstr ""
 
+#: assets/admin/src/pages/team/DeployDialogs.tsx:64
+msgid "Send install invitations"
+msgstr ""
+
+#: assets/admin/src/pages/team/DeployDialogs.tsx:78
+#: assets/editor/src/editor/modals/ExportModal.tsx:276
+msgid "Sending…"
+msgstr ""
+
+#: assets/admin/src/pages/team/DeployDialogs.tsx:78
+msgid "Send"
+msgstr ""
+
+#. translators: singular form (count = 1)
+#: assets/admin/src/pages/team/DeployDialogs.tsx:85
+#, javascript-format
+msgid ""
+"Email %s person a personal link to install their signature in their email "
+"client."
+msgstr ""
+
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/team/DeployDialogs.tsx:85
+#, javascript-format
+msgid ""
+"Email %s people a personal link to install their signature in their email "
+"client."
+msgstr ""
+
+#: assets/admin/src/pages/team/DeployDialogs.tsx:94
+msgid "Personal message (optional)"
+msgstr ""
+
+#: assets/admin/src/pages/team/DeployDialogs.tsx:105
+msgid ""
+"People without a compiled signature are skipped and listed in Settings → "
+"Invitations, where you can also follow the sending."
+msgstr ""
+
+#: assets/admin/src/pages/team/DeployDialogs.tsx:137
+msgid "Already up to date"
+msgstr ""
+
+#: assets/admin/src/pages/team/DeployDialogs.tsx:207
+msgid "Pushing…"
+msgstr ""
+
+#: assets/admin/src/pages/team/DeployDialogs.tsx:226
+#, javascript-format
+msgid "%1$s of %2$s people"
+msgstr ""
+
+#: assets/admin/src/pages/team/DeployDialogs.tsx:227
+#, javascript-format
+msgid "%s pushed"
+msgstr ""
+
+#: assets/admin/src/pages/team/RecompilePanel.tsx:23
+#, javascript-format
+msgid "Recompiling %1$s of %2$s…"
+msgstr ""
+
+#: assets/admin/src/pages/team/RecompilePanel.tsx:25
+#, javascript-format
+msgid "Stopped after %1$s of %2$s."
+msgstr ""
+
+#: assets/admin/src/pages/team/RecompilePanel.tsx:27
+#, javascript-format
+msgid "Done: %s recompiled."
+msgstr ""
+
+#: assets/admin/src/pages/team/RecompilePanel.tsx:32
+msgid "Recompile outdated signatures"
+msgstr ""
+
+#: assets/admin/src/pages/team/RecompilePanel.tsx:47
+#, javascript-format
+msgid "%s failed"
+msgstr ""
+
+#: assets/admin/src/pages/team/RecompilePanel.tsx:85
+msgid "Hide the errors"
+msgstr ""
+
+#: assets/admin/src/pages/team/RecompilePanel.tsx:85
+msgid "Show the errors"
+msgstr ""
+
+#: assets/admin/src/pages/team/RecompilePanel.tsx:92
+#, javascript-format
+msgid "Signature #%s"
+msgstr ""
+
+#: assets/admin/src/pages/team/compileWithContext.ts:52
+msgid "This signature has no readable content."
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:35
+msgid "a template"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:36
+#, javascript-format
+msgid "Linked to %s"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:37
+#, javascript-format
+msgid "Copy of %s"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:38
+msgid "Own design"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:49
+msgid "Compiled"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:54
+#: assets/admin/src/pages/team/model.ts:79
+#: assets/admin/src/pages/team/model.ts:106
+#: assets/admin/src/pages/team/model.ts:127
+msgid "Outdated"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:55
+msgid ""
+"The design, the person’s details or the company settings changed after it "
+"was compiled."
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:62
+msgid "Not compiled"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:63
+msgid "Never saved from the editor — recompile it or open and save it."
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:80
+msgid "Last pushed"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:83
+msgid "Failed"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:85
+msgid "Skipped"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:87
+msgid "Never pushed"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:93
+msgid "Add-in off"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:100
+msgid "In use"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:101
+#: assets/admin/src/pages/team/model.ts:107
+msgid "Last fetched"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:110
+msgid "Not seen yet"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:128
+msgid "Installed before the latest change — invite them again."
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:131
+msgid "Opened"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:135
+#: assets/admin/src/pages/team/model.ts:145
+msgid "Invited"
+msgstr ""
+
+#. translators: singular form (count = 1)
+#: assets/admin/src/pages/team/model.ts:138
+#, javascript-format
+msgid "%1$s · %2$s reminder"
+msgstr ""
+
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/team/model.ts:138
+#, javascript-format
+msgid "%1$s · %2$s reminders"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:148
+msgid "Not invited"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:155
+msgid "Everyone"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:156
+#: assets/admin/src/pages/team/model.ts:189
+msgid "Without a signature"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:157
+#: assets/admin/src/pages/team/model.ts:196
+msgid "Outdated HTML"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:158
+msgid "HTML up to date"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:159
+msgid "Gmail push failed"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:160
+msgid "Not installed yet"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:161
+msgid "Installed, but outdated"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:178
+#, javascript-format
+msgid "%1$s of %2$s"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:182
+msgid "People"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:203
+msgid "In Gmail"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:217
+#: assets/editor/src/editor/modals/PreviewModal.tsx:194
+msgid "Off"
+msgstr ""
+
+#: assets/admin/src/pages/team/model.ts:223
+msgid "Installed by hand"
+msgstr ""
+
 #: assets/admin/src/services/uploads.ts:85
 #: assets/editor/src/services/uploads.ts:60
 msgid "Uploads are disabled on this site — paste an image URL instead."
@@ -4773,6 +5342,26 @@ msgstr ""
 #: assets/editor/src/services/uploads.ts:235
 #, javascript-format
 msgid "The storage service rejected the upload (HTTP %s)."
+msgstr ""
+
+#: assets/admin/src/utils/roles.ts:10
+msgid "Administrator"
+msgstr ""
+
+#: assets/admin/src/utils/roles.ts:11
+msgid "Editor"
+msgstr ""
+
+#: assets/admin/src/utils/roles.ts:12
+msgid "Author"
+msgstr ""
+
+#: assets/admin/src/utils/roles.ts:13
+msgid "Contributor"
+msgstr ""
+
+#: assets/admin/src/utils/roles.ts:14
+msgid "Subscriber"
 msgstr ""
 
 #: assets/editor/src/components/shared/ErrorBoundary.tsx:38
@@ -5063,7 +5652,7 @@ msgstr ""
 
 #: assets/editor/src/core/blocks/contact-row/ContactRowProperties.tsx:146
 #: assets/editor/src/core/blocks/social-icons/iconSet.ts:52
-#: assets/editor/src/core/compiler/compile.ts:221
+#: assets/editor/src/core/compiler/compile.ts:225
 #: assets/editor/src/core/compiler/plain-text.ts:73
 #: assets/editor/src/core/compiler/plain-text.ts:75
 #: assets/editor/src/core/compiler/plain-text.ts:127
@@ -5763,50 +6352,78 @@ msgstr ""
 msgid "No embedded (data:) images"
 msgstr ""
 
+#. translators: singular form (count = 1)
 #: assets/editor/src/core/compiler/preflight.ts:98
 #, javascript-format
-msgid "%s embedded (data:) image(s)"
+msgid "%s embedded (data:) image"
 msgstr ""
 
-#: assets/editor/src/core/compiler/preflight.ts:99
+#. translators: plural form (any other count)
+#: assets/editor/src/core/compiler/preflight.ts:98
+#, javascript-format
+msgid "%s embedded (data:) images"
+msgstr ""
+
+#: assets/editor/src/core/compiler/preflight.ts:104
 msgid ""
 "Gmail does not show embedded images. Use \"Fix embedded images\" or upload "
 "them so the signature links to hosted copies."
 msgstr ""
 
-#: assets/editor/src/core/compiler/preflight.ts:108
+#: assets/editor/src/core/compiler/preflight.ts:113
 msgid "All images use https://"
 msgstr ""
 
-#: assets/editor/src/core/compiler/preflight.ts:112
+#. translators: singular form (count = 1)
+#: assets/editor/src/core/compiler/preflight.ts:117
 #, javascript-format
-msgid "%s image(s) use http://"
+msgid "%s image uses http://"
 msgstr ""
 
-#: assets/editor/src/core/compiler/preflight.ts:113
+#. translators: plural form (any other count)
+#: assets/editor/src/core/compiler/preflight.ts:117
+#, javascript-format
+msgid "%s images use http://"
+msgstr ""
+
+#: assets/editor/src/core/compiler/preflight.ts:118
 msgid ""
 "Gmail shows a security warning or blocks insecure images. Host them on an "
 "https:// address."
 msgstr ""
 
-#: assets/editor/src/core/compiler/preflight.ts:122
+#: assets/editor/src/core/compiler/preflight.ts:127
 msgid "All images are on public addresses"
 msgstr ""
 
-#: assets/editor/src/core/compiler/preflight.ts:126
+#. translators: singular form (count = 1)
+#: assets/editor/src/core/compiler/preflight.ts:131
 #, javascript-format
-msgid "%s image(s) on localhost, .local or .test addresses"
+msgid "%s image on a localhost, .local or .test address"
 msgstr ""
 
-#: assets/editor/src/core/compiler/preflight.ts:127
+#. translators: plural form (any other count)
+#: assets/editor/src/core/compiler/preflight.ts:131
+#, javascript-format
+msgid "%s images on localhost, .local or .test addresses"
+msgstr ""
+
+#: assets/editor/src/core/compiler/preflight.ts:137
 msgid ""
 "Recipients (and Gmail’s image proxy) cannot reach these addresses. Upload "
 "the images to your public site."
 msgstr ""
 
-#: assets/editor/src/core/compiler/preflight.ts:136
+#. translators: singular form (count = 1)
+#: assets/editor/src/core/compiler/preflight.ts:146
 #, javascript-format
-msgid "%s image(s) in total"
+msgid "%s image in total"
+msgstr ""
+
+#. translators: plural form (any other count)
+#: assets/editor/src/core/compiler/preflight.ts:146
+#, javascript-format
+msgid "%s images in total"
 msgstr ""
 
 #: assets/editor/src/core/compiler/urls.ts:141
@@ -5913,7 +6530,7 @@ msgstr ""
 msgid "A link has no href."
 msgstr ""
 
-#: assets/editor/src/editor/EditorShell.tsx:86
+#: assets/editor/src/editor/EditorShell.tsx:89
 #: assets/editor/src/editor/sidebar-right/RightSidebar.tsx:53
 msgid "Block"
 msgstr ""
@@ -5922,7 +6539,7 @@ msgstr ""
 #: assets/editor/src/editor/onboarding/DetailsForm.tsx:71
 #: assets/editor/src/editor/onboarding/OnboardingModal.tsx:110
 #: assets/editor/src/editor/onboarding/YourDetailsModal.tsx:22
-#: assets/editor/src/editor/topbar/Topbar.tsx:168
+#: assets/editor/src/editor/topbar/Topbar.tsx:169
 msgid "Your details"
 msgstr ""
 
@@ -5939,11 +6556,6 @@ msgstr ""
 #: assets/editor/src/editor/FieldsOnlyView.tsx:80
 #: assets/editor/src/editor/onboarding/YourDetailsModal.tsx:85
 msgid "Used wherever this signature shows them."
-msgstr ""
-
-#: assets/editor/src/editor/FieldsOnlyView.tsx:91
-#: assets/editor/src/editor/sidebar-right/VariablesEditor.tsx:112
-msgid "Edit profile"
 msgstr ""
 
 #: assets/editor/src/editor/FieldsOnlyView.tsx:102
@@ -6017,6 +6629,22 @@ msgid ""
 "The signature keeps its current design and your text, but it becomes your "
 "own copy: future template updates will no longer reach it. This cannot be "
 "undone."
+msgstr ""
+
+#: assets/editor/src/editor/OnBehalfBanner.tsx:28
+#, javascript-format
+msgid "Editing %s’s signature"
+msgstr ""
+
+#: assets/editor/src/editor/OnBehalfBanner.tsx:29
+msgid ""
+"Changes are saved to their signature and compiled with their details, footer "
+"and campaigns."
+msgstr ""
+
+#: assets/editor/src/editor/OnBehalfBanner.tsx:44
+#: assets/editor/src/editor/topbar/Topbar.tsx:118
+msgid "Back to Team"
 msgstr ""
 
 #: assets/editor/src/editor/canvas/BlockToolbar.tsx:62
@@ -6168,13 +6796,6 @@ msgid "Your images"
 msgstr ""
 
 #: assets/editor/src/editor/modals/AssetLibraryModal.tsx:431
-#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:236
-#: assets/editor/src/editor/modals/TemplatePicker.tsx:99
-#: assets/editor/src/editor/onboarding/OnboardingModal.tsx:86
-msgid "Loading…"
-msgstr ""
-
-#: assets/editor/src/editor/modals/AssetLibraryModal.tsx:431
 msgid "Load more"
 msgstr ""
 
@@ -6253,71 +6874,81 @@ msgstr ""
 msgid "All embedded images are now hosted."
 msgstr ""
 
+#. translators: singular form (count = 1)
 #: assets/editor/src/editor/modals/ExportModal.tsx:244
 #, javascript-format
-msgid "%s item(s) could not be uploaded: %s"
+msgid "%1$s item could not be uploaded: %2$s"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:265
+#. translators: plural form (any other count)
+#: assets/editor/src/editor/modals/ExportModal.tsx:244
+#, javascript-format
+msgid "%1$s items could not be uploaded: %2$s"
+msgstr ""
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:271
 msgid ""
 "Sends the compiled HTML to your WP account email so you can copy it from "
 "your real client."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:270
-msgid "Sending…"
-msgstr ""
-
-#: assets/editor/src/editor/modals/ExportModal.tsx:270
+#: assets/editor/src/editor/modals/ExportModal.tsx:276
 msgid "Sent!"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:270
+#: assets/editor/src/editor/modals/ExportModal.tsx:276
 msgid "Send to my email"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:275
+#: assets/editor/src/editor/modals/ExportModal.tsx:281
 msgid "Export & install"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:289
+#: assets/editor/src/editor/modals/ExportModal.tsx:295
 msgid ""
 "Copies the rendered signature so it pastes visually into rich-text composers "
 "(Gmail compose, Outlook signature box, Word, etc.). Use this when the "
 "signature settings only accept rich text, not HTML source."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:294
-#: assets/editor/src/editor/modals/ExportModal.tsx:481
+#: assets/editor/src/editor/modals/ExportModal.tsx:300
+#: assets/editor/src/editor/modals/ExportModal.tsx:489
 msgid "Copy visual"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:306
+#: assets/editor/src/editor/modals/ExportModal.tsx:312
 msgid ""
 "Copies the raw HTML source. Use this when the signature settings expose an "
 "HTML / source-code mode (Gmail with Labs HTML, raw .html file editing)."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:335
+#: assets/editor/src/editor/modals/ExportModal.tsx:341
 msgid "Gmail clips messages over 102 KB. Trim images / banners."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:336
+#: assets/editor/src/editor/modals/ExportModal.tsx:342
 msgid "Compiled HTML payload size."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:339
+#: assets/editor/src/editor/modals/ExportModal.tsx:345
 #: assets/editor/src/editor/modals/PreviewModal.tsx:211
 #, javascript-format
 msgid "%s KB"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:351
+#. translators: singular form (count = 1)
+#: assets/editor/src/editor/modals/ExportModal.tsx:357
 #, javascript-format
-msgid "%s embedded image(s) or file(s) will not show in Gmail or Outlook.com"
+msgid "%s embedded image or file will not show in Gmail or Outlook.com"
 msgstr ""
 
+#. translators: plural form (any other count)
 #: assets/editor/src/editor/modals/ExportModal.tsx:357
+#, javascript-format
+msgid "%s embedded images or files will not show in Gmail or Outlook.com"
+msgstr ""
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:365
 msgid ""
 "This signature embeds images or files directly (data: URIs). Most webmail "
 "clients refuse to display them, and a single embedded photo can push the "
@@ -6325,146 +6956,153 @@ msgid ""
 "the signature links to hosted copies instead."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:369
+#: assets/editor/src/editor/modals/ExportModal.tsx:377
 #, javascript-format
 msgid "Uploading %s of %s…"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:370
+#: assets/editor/src/editor/modals/ExportModal.tsx:378
 msgid "Fix embedded images"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:374
+#: assets/editor/src/editor/modals/ExportModal.tsx:382
 msgid ""
 "Uploads are disabled on this site — replace these images with links to "
 "hosted images (https://…)."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:447
+#: assets/editor/src/editor/modals/ExportModal.tsx:455
 #, javascript-format
 msgid "Files: %s"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:455
+#: assets/editor/src/editor/modals/ExportModal.tsx:463
 #, javascript-format
 msgid ""
 "Press Windows + R, paste %1$s and press Enter. Create the \"%2$s\" folder if "
 "it does not exist."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:467
+#: assets/editor/src/editor/modals/ExportModal.tsx:475
 msgid ""
 "If your organisation syncs Microsoft 365 cloud signatures, Outlook may "
 "replace files in that folder. Then press \"Copy visual\" and paste into File "
 "→ Options → Mail → Signatures… → New instead."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:490
+#: assets/editor/src/editor/modals/ExportModal.tsx:498
 msgid "Press \"Copy visual\" so the rendered signature is in your clipboard."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:536
+#: assets/editor/src/editor/modals/ExportModal.tsx:544
 msgid ""
 "Phones cannot paste from this editor directly: send the signature to "
 "yourself, then copy it from the received email on the phone."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:544
+#: assets/editor/src/editor/modals/ExportModal.tsx:552
 msgid ""
 "Open the test email in the Mail app, touch and hold the signature and drag "
 "the selection handles over all of it, then tap \"Copy\"."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:563
+#: assets/editor/src/editor/modals/ExportModal.tsx:571
 msgid ""
 "To set the text version: in the app open Settings → your account → Mobile "
 "signature and paste the text copied from the received email."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:572
+#: assets/editor/src/editor/modals/ExportModal.tsx:580
 msgid ""
 "Copy the signature from the received email (touch and hold, select all of "
 "it, Copy)."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:596
+#: assets/editor/src/editor/modals/ExportModal.tsx:604
 msgid "Press \"Download .html\" above to save the signature to disk."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:597
+#: assets/editor/src/editor/modals/ExportModal.tsx:605
 msgid "Open Thunderbird → Account Settings → pick your account on the left."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:598
+#: assets/editor/src/editor/modals/ExportModal.tsx:606
 msgid "Tick \"Use HTML (e.g. <b>bold</b>)\" under the Signature text area."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:599
+#: assets/editor/src/editor/modals/ExportModal.tsx:607
 msgid ""
 "Tick \"Attach the signature from a file instead\" and choose the .html you "
 "just saved."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:602
+#: assets/editor/src/editor/modals/ExportModal.tsx:610
 msgid ""
 "Click \"OK\". Thunderbird re-reads the file each send so editing the file "
 "updates every future email."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:615
+#: assets/editor/src/editor/modals/ExportModal.tsx:623
 msgid "Show raw HTML"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:642
+#: assets/editor/src/editor/modals/ExportModal.tsx:650
 msgid "Before you copy"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:665
+#: assets/editor/src/editor/modals/ExportModal.tsx:673
 msgid "Copying is on hold: Gmail would save a broken signature."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:668
+#: assets/editor/src/editor/modals/ExportModal.tsx:676
 msgid ""
 "Fix the items marked in red (and the problems listed above), then copy. You "
 "can still copy anyway."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:688
+#: assets/editor/src/editor/modals/ExportModal.tsx:696
 msgid "Copy anyway"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:700
+#: assets/editor/src/editor/modals/ExportModal.tsx:708
 msgid "Check the list above, then press \"Copy for Gmail\"."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:725
+#: assets/editor/src/editor/modals/ExportModal.tsx:733
 msgid "OK"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:733
+#: assets/editor/src/editor/modals/ExportModal.tsx:741
 msgid "Warning"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:737
+#: assets/editor/src/editor/modals/ExportModal.tsx:745
 msgid "Problem"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:956
+#: assets/editor/src/editor/modals/ExportModal.tsx:964
 msgid "Select this block in the editor"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:976
+#: assets/editor/src/editor/modals/ExportModal.tsx:984
 msgid "1 problem will break this signature for recipients"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:977
+#: assets/editor/src/editor/modals/ExportModal.tsx:985
 #, javascript-format
 msgid "%s problems will break this signature for recipients"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:989
+#. translators: singular form (count = 1)
+#: assets/editor/src/editor/modals/ExportModal.tsx:997
 #, javascript-format
-msgid "%s compile warning(s)"
+msgid "%s compile warning"
+msgstr ""
+
+#. translators: plural form (any other count)
+#: assets/editor/src/editor/modals/ExportModal.tsx:997
+#, javascript-format
+msgid "%s compile warnings"
 msgstr ""
 
 #: assets/editor/src/editor/modals/ImageCropperModal.tsx:147
@@ -6534,10 +7172,6 @@ msgstr ""
 
 #: assets/editor/src/editor/modals/PreviewModal.tsx:188
 msgid "Dark mode (simulation)"
-msgstr ""
-
-#: assets/editor/src/editor/modals/PreviewModal.tsx:194
-msgid "Off"
 msgstr ""
 
 #: assets/editor/src/editor/modals/PreviewModal.tsx:195
@@ -6641,7 +7275,7 @@ msgid "Update template"
 msgstr ""
 
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:297
-#: assets/editor/src/editor/topbar/Topbar.tsx:191
+#: assets/editor/src/editor/topbar/Topbar.tsx:192
 msgid "Save as template"
 msgstr ""
 
@@ -6649,12 +7283,27 @@ msgstr ""
 msgid "Template updated."
 msgstr ""
 
+#. translators: singular form (count = 1)
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:308
+#, javascript-format
+msgid "Template updated. %s linked signature was refreshed."
+msgstr ""
+
+#. translators: plural form (any other count)
 #: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:308
 #, javascript-format
 msgid "Template updated. %s linked signatures were refreshed."
 msgstr ""
 
-#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:313
+#. translators: singular form (count = 1)
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:315
+#, javascript-format
+msgid ""
+"Template updated. %s linked signature is being refreshed in the background."
+msgstr ""
+
+#. translators: plural form (any other count)
+#: assets/editor/src/editor/modals/SaveAsTemplateModal.tsx:315
 #, javascript-format
 msgid ""
 "Template updated. %s linked signatures are being refreshed in the background."
@@ -6669,7 +7318,7 @@ msgid "Template applied. Press Ctrl+Z to undo."
 msgstr ""
 
 #: assets/editor/src/editor/modals/TemplatePicker.tsx:89
-#: assets/editor/src/editor/topbar/Topbar.tsx:154
+#: assets/editor/src/editor/topbar/Topbar.tsx:155
 msgid "Pick a template"
 msgstr ""
 
@@ -6687,6 +7336,10 @@ msgstr ""
 msgid "Replace your current signature?"
 msgstr ""
 
+#: assets/editor/src/editor/modals/TemplatePicker.tsx:112
+msgid "Apply template"
+msgstr ""
+
 #: assets/editor/src/editor/modals/TemplatePicker.tsx:120
 #, javascript-format
 msgid ""
@@ -6694,12 +7347,19 @@ msgid ""
 "variable values are kept, and you can undo this with Ctrl+Z."
 msgstr ""
 
+#. translators: singular form (count = 1)
 #: assets/editor/src/editor/modals/preview/DarkModeImageWarnings.tsx:29
 #, javascript-format
-msgid "%s image(s) may disappear in dark mode"
+msgid "%s image may disappear in dark mode"
 msgstr ""
 
-#: assets/editor/src/editor/modals/preview/DarkModeImageWarnings.tsx:32
+#. translators: plural form (any other count)
+#: assets/editor/src/editor/modals/preview/DarkModeImageWarnings.tsx:29
+#, javascript-format
+msgid "%s images may disappear in dark mode"
+msgstr ""
+
+#: assets/editor/src/editor/modals/preview/DarkModeImageWarnings.tsx:37
 msgid ""
 "These logos or icons are mostly dark on a transparent background. Clients "
 "that paint the message dark (Gmail and Outlook apps, Outlook.com, Apple "
@@ -6707,7 +7367,7 @@ msgid ""
 "readable; a version of the image with a light outline is even more robust."
 msgstr ""
 
-#: assets/editor/src/editor/modals/preview/DarkModeImageWarnings.tsx:55
+#: assets/editor/src/editor/modals/preview/DarkModeImageWarnings.tsx:60
 msgid "Add light background"
 msgstr ""
 
@@ -7292,79 +7952,83 @@ msgstr ""
 msgid "Canvas content"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:78
+#: assets/editor/src/editor/topbar/Topbar.tsx:79
 msgid "Saved"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:117
+#: assets/editor/src/editor/topbar/Topbar.tsx:118
 msgid "Back to signatures"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:141
+#: assets/editor/src/editor/topbar/Topbar.tsx:142
 msgid "Undo"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:144
+#: assets/editor/src/editor/topbar/Topbar.tsx:145
 msgid "Redo"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:153
+#: assets/editor/src/editor/topbar/Topbar.tsx:154
 msgid "This signature follows a company template"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:165
+#: assets/editor/src/editor/topbar/Topbar.tsx:166
 msgid "Edit the details this signature shows: job title, phone, photo…"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:188
+#: assets/editor/src/editor/topbar/Topbar.tsx:169
+msgid "Their details"
+msgstr ""
+
+#: assets/editor/src/editor/topbar/Topbar.tsx:189
 msgid "Save the current canvas as a global template"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:208
+#: assets/editor/src/editor/topbar/Topbar.tsx:209
 msgid "Export"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:264
+#: assets/editor/src/editor/topbar/Topbar.tsx:265
 msgid "Retry save"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:273
+#: assets/editor/src/editor/topbar/Topbar.tsx:274
 #, javascript-format
 msgid "Saved · %s"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:287
+#: assets/editor/src/editor/topbar/Topbar.tsx:288
 msgid "Save now (Cmd/Ctrl + S)"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:334
+#: assets/editor/src/editor/topbar/Topbar.tsx:335
 msgid "Plugin version (PHP and JS bundle agree)."
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:355
+#: assets/editor/src/editor/topbar/Topbar.tsx:356
 #, javascript-format
 msgid ""
 "Stale bundle detected. The plugin is on PHP %s but your browser is running "
 "JS %s. Click to hard-refresh."
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:390
+#: assets/editor/src/editor/topbar/Topbar.tsx:391
 msgid "Untitled signature"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:393
+#: assets/editor/src/editor/topbar/Topbar.tsx:394
 msgid "Signature name"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:394
+#: assets/editor/src/editor/topbar/Topbar.tsx:395
 msgid "Click to rename"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:432
+#: assets/editor/src/editor/topbar/Topbar.tsx:433
 msgid "Signature status"
 msgstr ""
 
-#: assets/editor/src/editor/topbar/Topbar.tsx:433
+#: assets/editor/src/editor/topbar/Topbar.tsx:434
 msgid "Status — controls how the row is grouped on the listing."
 msgstr ""
 
@@ -7512,36 +8176,36 @@ msgstr ""
 msgid "Add at least one block before saving — empty signatures are not stored."
 msgstr ""
 
-#: assets/editor/src/services/persistence.ts:216
+#: assets/editor/src/services/persistence.ts:226
 msgid "The server returned no signature id."
 msgstr ""
 
-#: assets/editor/src/services/persistence.ts:233
+#: assets/editor/src/services/persistence.ts:243
 msgid "Saved."
 msgstr ""
 
-#: assets/editor/src/services/persistence.ts:243
+#: assets/editor/src/services/persistence.ts:253
 #, javascript-format
 msgid "Save failed: %s"
 msgstr ""
 
-#: assets/editor/src/services/persistence.ts:276
+#: assets/editor/src/services/persistence.ts:286
 #, javascript-format
 msgid "Some content was removed for security: %s"
 msgstr ""
 
-#: assets/editor/src/services/persistence.ts:281
+#: assets/editor/src/services/persistence.ts:291
 msgid ""
 "Saved, but the server adjusted some content. The editor now shows the stored "
 "version."
 msgstr ""
 
-#: assets/editor/src/services/persistence.ts:303
+#: assets/editor/src/services/persistence.ts:313
 #, javascript-format
 msgid "Autosave paused for %s seconds (too many saves). Your changes are kept."
 msgstr ""
 
-#: assets/editor/src/services/persistence.ts:304
+#: assets/editor/src/services/persistence.ts:314
 #, javascript-format
 msgid "Too many saves in a short time. Retrying in %s seconds."
 msgstr ""
@@ -7604,10 +8268,6 @@ msgstr ""
 
 #: assets/editor/src/tiptap/toolbar/InsertFieldMenu.tsx:65
 msgid "No fields yet. Add variables in the canvas settings."
-msgstr ""
-
-#: assets/shared/templateCategories.ts:16
-msgid "General"
 msgstr ""
 
 #: assets/shared/templateCategories.ts:18
