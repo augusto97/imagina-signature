@@ -14,6 +14,7 @@ use ImaginaSignatures\Deployment\Gmail\GmailScheduler;
 use ImaginaSignatures\Deployment\Gmail\GmailSettings;
 use ImaginaSignatures\Directory\Groups;
 use ImaginaSignatures\Directory\ProfileFields;
+use ImaginaSignatures\Deployment\Install\InstallTokens;
 use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Models\Asset;
 use ImaginaSignatures\Security\Encryption;
@@ -324,6 +325,7 @@ final class Uninstaller {
 	private static function delete_user_meta(): void {
 		delete_metadata( 'user', 0, UploadPolicy::TOKEN_META_KEY, '', true );
 		delete_metadata( 'user', 0, ProfileFields::META_KEY, '', true );
+		delete_metadata( 'user', 0, InstallTokens::META_KEY, '', true );
 	}
 
 	/**

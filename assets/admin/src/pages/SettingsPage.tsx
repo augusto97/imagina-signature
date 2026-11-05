@@ -1,5 +1,5 @@
 import { useState, type FC } from 'react';
-import { Cloud, Palette, FileText, Megaphone, Globe, Mail, IdCard } from 'lucide-react';
+import { Cloud, Palette, FileText, Megaphone, Globe, Mail, IdCard, Send } from 'lucide-react';
 import { Topbar } from '@admin/components/Topbar';
 import { getConfig } from '@admin/api';
 import { __ } from '@admin/i18n';
@@ -12,6 +12,7 @@ import { FrontendTab } from './settings/FrontendTab';
 import { GoogleWorkspaceTab } from './settings/GoogleWorkspaceTab';
 import { Microsoft365Tab } from './settings/Microsoft365Tab';
 import { ProfileFieldsTab } from './settings/ProfileFieldsTab';
+import { InvitationsTab } from './settings/InvitationsTab';
 
 type Tab =
   | 'storage'
@@ -21,7 +22,8 @@ type Tab =
   | 'frontend'
   | 'google'
   | 'microsoft365'
-  | 'profile_fields';
+  | 'profile_fields'
+  | 'invitations';
 
 /** Labels / descriptions are lazy so they translate at render time. */
 const TABS: Array<{ id: Tab; label: () => string; icon: typeof Cloud; description: () => string }> = [
@@ -83,6 +85,13 @@ const TABS: Array<{ id: Tab; label: () => string; icon: typeof Cloud; descriptio
     description: () =>
       __('Where each employee profile field comes from, plus your own custom fields.'),
   },
+  {
+    id: 'invitations',
+    label: () => __('Invitations'),
+    icon: Send,
+    description: () =>
+      __('Email every employee a personal link to install their signature in a minute, follow the progress and set up reminders.'),
+  },
 ];
 
 /** Tabs that also need `imgsig_manage_team` (1.3.0). */
@@ -136,6 +145,7 @@ export const SettingsPage: FC = () => {
           {tab === 'google' && <GoogleWorkspaceTab />}
           {tab === 'microsoft365' && <Microsoft365Tab />}
           {tab === 'profile_fields' && caps.manage_team && <ProfileFieldsTab />}
+          {tab === 'invitations' && <InvitationsTab />}
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FC } from 'react';
-import { Plus, Search, FileSignature, Pencil, Copy, Trash2, X, Star } from 'lucide-react';
+import { Plus, Search, FileSignature, Pencil, Copy, Trash2, X, Star, MonitorSmartphone } from 'lucide-react';
 import { Topbar } from '@admin/components/Topbar';
 import { Button } from '@admin/components/Button';
 import { StatusPill } from '@admin/components/StatusPill';
@@ -95,6 +95,31 @@ export const SignaturesPage: FC = () => {
     } catch (e) {
       const message = e instanceof ApiError ? e.message : (e as Error).message;
       window.alert(__('Could not set the primary signature: %s', message));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  /**
+   * Opens the caller's personal install page (`GET /me/install-link`
+   * creates the token on first use). The tab is opened synchronously so
+   * popup blockers allow it, then pointed at the link.
+   */
+  const onInstall = async (row: SignatureRow): Promise<void> => {
+    const tab = window.open('', '_blank');
+    setBusyId(row.id);
+    try {
+      const link = await apiCall<{ url: string }>('/me/install-link');
+      if (tab) {
+        tab.opener = null;
+        tab.location.href = link.url;
+      } else {
+        window.location.href = link.url;
+      }
+    } catch (e) {
+      tab?.close();
+      const message = e instanceof ApiError ? e.message : (e as Error).message;
+      window.alert(__('Could not open the install page: %s', message));
     } finally {
       setBusyId(null);
     }
@@ -391,6 +416,15 @@ export const SignaturesPage: FC = () => {
                             tooltip={__('Edit')}
                             onClick={() => { window.location.href = editorUrl(row.id); }}
                           />
+                          {row.is_primary && (
+                            <IconAction
+                              icon={<MonitorSmartphone size={14} />}
+                              label={__('Install %s in your email client', row.name || __('Untitled'))}
+                              tooltip={__('Install')}
+                              disabled={busy}
+                              onClick={() => void onInstall(row)}
+                            />
+                          )}
                           {!row.is_primary && (
                             <IconAction
                               icon={<Star size={14} />}

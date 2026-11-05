@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace ImaginaSignatures\Core;
 
 use ImaginaSignatures\Api\Controllers\AssetsController;
+use ImaginaSignatures\Api\Controllers\DeployInvitationsController;
+use ImaginaSignatures\Api\Controllers\InstallController;
 use ImaginaSignatures\Api\Controllers\FrontendAccessController;
 use ImaginaSignatures\Api\Controllers\GroupsController;
 use ImaginaSignatures\Api\Controllers\MeController;
@@ -24,6 +26,11 @@ use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\Middleware\RateLimiter;
 use ImaginaSignatures\Deployment\Gmail\GmailServiceProvider;
 use ImaginaSignatures\Deployment\OutlookSignatureService;
+use ImaginaSignatures\Deployment\Install\InstallPage;
+use ImaginaSignatures\Deployment\Install\InstallReminders;
+use ImaginaSignatures\Deployment\Install\InstallService;
+use ImaginaSignatures\Deployment\Install\InvitationMailer;
+use ImaginaSignatures\Deployment\Install\InvitationQueue;
 use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\AssetRepository;
 use ImaginaSignatures\Repositories\SignatureRepository;
@@ -261,6 +268,9 @@ final class ServiceProvider {
 			}
 		);
 
+		// Install link, invitations and reminders (1.3.0).
+		self::register_install( $container );
+
 		// Privacy tools + user lifecycle.
 		$container->singleton(
 			UserDataManager::class,
@@ -270,6 +280,60 @@ final class ServiceProvider {
 					$c->make( AssetRepository::class ),
 					$c->make( StorageManager::class )
 				);
+			}
+		);
+	}
+
+	/**
+	 * Install-link bindings (Fase 2 deployment).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param Container $container The plugin's DI container.
+	 *
+	 * @return void
+	 */
+	private static function register_install( Container $container ): void {
+		$container->singleton(
+			InstallService::class,
+			static function ( Container $c ): InstallService {
+				return new InstallService( $c->make( SignatureService::class ) );
+			}
+		);
+		$container->singleton(
+			InvitationMailer::class,
+			static function (): InvitationMailer {
+				return new InvitationMailer();
+			}
+		);
+		$container->singleton(
+			InvitationQueue::class,
+			static function ( Container $c ): InvitationQueue {
+				return new InvitationQueue( $c->make( InstallService::class ), $c->make( InvitationMailer::class ) );
+			}
+		);
+		$container->singleton(
+			InstallReminders::class,
+			static function ( Container $c ): InstallReminders {
+				return new InstallReminders( $c->make( InvitationQueue::class ) );
+			}
+		);
+		$container->singleton(
+			InstallPage::class,
+			static function ( Container $c ): InstallPage {
+				return new InstallPage( $c->make( InstallService::class ) );
+			}
+		);
+		$container->singleton(
+			InstallController::class,
+			static function ( Container $c ): InstallController {
+				return new InstallController( $c->make( InstallService::class ), $c->make( RateLimiter::class ) );
+			}
+		);
+		$container->singleton(
+			DeployInvitationsController::class,
+			static function ( Container $c ): DeployInvitationsController {
+				return new DeployInvitationsController( $c->make( InvitationQueue::class ), $c->make( RateLimiter::class ) );
 			}
 		);
 	}

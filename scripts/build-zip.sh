@@ -70,6 +70,15 @@ rsync -a \
   --exclude='*.tsbuildinfo' \
   ./ "$SLUG_DIR/"
 
+# Runtime files outside build/ that must ship (no build step):
+# the install-link page script is served straight from assets/install/.
+for required in "assets/install/install.js"; do
+  if [[ ! -f "$SLUG_DIR/$required" ]]; then
+    echo "Missing from the package: $required" >&2
+    exit 1
+  fi
+done
+
 (
   cd "$STAGE"
   zip -rq "../../$ZIP_FILE" "imagina-signatures"

@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Frontend;
 
+use ImaginaSignatures\Deployment\Install\InstallPage;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -31,6 +33,11 @@ defined( 'ABSPATH' ) || exit;
  * The `{id}` segment is a positive integer; any non-numeric value
  * falls through to a 404 because the rewrite rule's regex won't match.
  *
+ * Plus the personal install link (1.3.0), which is independent of the
+ * editor route — it works while the frontend editor is disabled:
+ *
+ *   /<slug>/install/{token}/ — install page ({@see InstallPage}, no login)
+ *
  * @since 1.0.24
  */
 final class FrontendRouter {
@@ -40,6 +47,9 @@ final class FrontendRouter {
 
 	/** Custom query var: optional signature id for the editor view. */
 	public const QV_ID = 'imgsig_signature_id';
+
+	/** Custom query var: install-link token (1.3.0). */
+	public const QV_INSTALL = 'imgsig_install';
 
 	/**
 	 * Boot hooks. Idempotent.
@@ -110,12 +120,16 @@ final class FrontendRouter {
 	 * @return bool
 	 */
 	private static function is_our_main_query( $query ): bool {
-		return is_object( $query )
-			&& method_exists( $query, 'is_main_query' )
-			&& method_exists( $query, 'get' )
-			&& $query->is_main_query()
-			&& '' !== (string) $query->get( self::QV_VIEW )
-			&& FrontendAccess::is_enabled();
+		if ( ! is_object( $query ) || ! method_exists( $query, 'is_main_query' ) || ! method_exists( $query, 'get' ) || ! $query->is_main_query() ) {
+			return false;
+		}
+
+		// The install link works whether or not the editor route is on.
+		if ( '' !== (string) $query->get( self::QV_INSTALL ) ) {
+			return true;
+		}
+
+		return '' !== (string) $query->get( self::QV_VIEW ) && FrontendAccess::is_enabled();
 	}
 
 	/**
@@ -153,6 +167,28 @@ final class FrontendRouter {
 			'index.php?' . self::QV_VIEW . '=editor&' . self::QV_ID . '=$matches[1]',
 			'top'
 		);
+
+		self::register_install_rewrite_rule( $quoted );
+	}
+
+	/**
+	 * Adds the install-link rule (`/<slug>/install/<64 hex>/`). Its own
+	 * query var, so it is served even when the editor route is disabled.
+	 * Registered with the other rules, so activation, in-place upgrades
+	 * and slug changes flush it too.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string $quoted Regex-quoted slug.
+	 *
+	 * @return void
+	 */
+	private static function register_install_rewrite_rule( string $quoted ): void {
+		add_rewrite_rule(
+			'^' . $quoted . '/install/([a-f0-9]{64})/?$',
+			'index.php?' . self::QV_INSTALL . '=$matches[1]',
+			'top'
+		);
 	}
 
 	/**
@@ -173,7 +209,8 @@ final class FrontendRouter {
 		}
 
 		foreach ( array_keys( $wp_rewrite->extra_rules_top ) as $regex ) {
-			if ( false !== strpos( (string) $wp_rewrite->extra_rules_top[ $regex ], self::QV_VIEW . '=' ) ) {
+			$target = (string) $wp_rewrite->extra_rules_top[ $regex ];
+			if ( false !== strpos( $target, self::QV_VIEW . '=' ) || false !== strpos( $target, self::QV_INSTALL . '=' ) ) {
 				unset( $wp_rewrite->extra_rules_top[ $regex ] );
 			}
 		}
@@ -192,6 +229,7 @@ final class FrontendRouter {
 	public static function register_query_vars( array $vars ): array {
 		$vars[] = self::QV_VIEW;
 		$vars[] = self::QV_ID;
+		$vars[] = self::QV_INSTALL;
 		return $vars;
 	}
 
@@ -205,6 +243,14 @@ final class FrontendRouter {
 	 * @return void
 	 */
 	public function dispatch(): void {
+		// Install link first: public (token-authenticated) and served
+		// whether or not the editor route is enabled.
+		$install = (string) get_query_var( self::QV_INSTALL );
+		if ( '' !== $install ) {
+			InstallPage::serve( $install );
+			exit;
+		}
+
 		$view = (string) get_query_var( self::QV_VIEW );
 		if ( '' === $view ) {
 			return;

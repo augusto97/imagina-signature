@@ -17,6 +17,8 @@ use ImaginaSignatures\Admin\Pages\EditorPage;
 use ImaginaSignatures\Frontend\FrontendRouter;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 use ImaginaSignatures\Api\Controllers\AssetsController;
+use ImaginaSignatures\Api\Controllers\DeployInvitationsController;
+use ImaginaSignatures\Api\Controllers\InstallController;
 use ImaginaSignatures\Api\Controllers\FrontendAccessController;
 use ImaginaSignatures\Api\Controllers\GmailDeployController;
 use ImaginaSignatures\Api\Controllers\GroupsController;
@@ -35,6 +37,7 @@ use ImaginaSignatures\Deployment\OutlookWellKnown;
 use ImaginaSignatures\Directory\Groups;
 use ImaginaSignatures\Directory\ProfilePrivacy;
 use ImaginaSignatures\Directory\ProfileScreen;
+use ImaginaSignatures\Deployment\Install\InstallModule;
 use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\SignatureRepository;
@@ -160,6 +163,9 @@ final class Plugin {
 		// the profile fields' privacy exporter / eraser.
 		Groups::boot();
 		ProfilePrivacy::boot();
+
+		// Install link: invitation batches, reminders, outdated installs.
+		InstallModule::register( $this->container );
 
 		// Public-facing route — runs on EVERY request, admin or not.
 		// The router self-gates on its own settings; when the feature
@@ -336,6 +342,8 @@ final class Plugin {
 				$this->container->make( ProfileController::class ),
 				$this->container->make( GroupsController::class ),
 				$this->container->make( ProfileImportController::class ),
+				$this->container->make( InstallController::class ),
+				$this->container->make( DeployInvitationsController::class ),
 			]
 		);
 		$router->register();
