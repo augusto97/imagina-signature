@@ -11,12 +11,15 @@ import { validateContrast, validateEmailOutput } from './validate';
 import { substituteVariables } from './variables';
 import { enforceSafeUrls } from './urls';
 import { report, stripBlockMarkers, type CompileIssue } from './issues';
+import { ensureImageAlts, localeDirection, localeToLang } from './accessibility';
+import { collectImages, type CompiledImage } from './images';
 import { htmlToPlainText, schemaToPlainText } from './plain-text';
 import { getConfig } from '@/bridge/apiClient';
 import type { AppConfig } from '@/bridge/types';
 import { attr, intPx } from './css';
 
 export type { CompileIssue, CompileIssueLevel } from './issues';
+export type { CompiledImage } from './images';
 export { compileBlock, compileBlocks } from './compile-block';
 
 export interface CompileResult {
@@ -37,6 +40,20 @@ export interface CompileResult {
   issues: CompileIssue[];
   /** Byte size of `html`. */
   size: number;
+  /**
+   * Every image of the export as non-Outlook clients see it (http(s)
+   * only, in source order), attributed to its block when known. Used by
+   * the Gmail pre-flight and the dark-mode logo check.
+   */
+  images: CompiledImage[];
+  /** Pixel width of the signature shell (clamped `canvas.width`). */
+  width: number;
+  /** True when the shell is fluid (`width:100%;max-width:Wpx`, stacking columns). */
+  fluid: boolean;
+  /** BCP 47 language set on the shell ('' when the editor locale is unknown). */
+  lang: string;
+  /** Writing direction set on the shell. */
+  dir: 'ltr' | 'rtl';
 }
 
 /**
@@ -45,20 +62,26 @@ export interface CompileResult {
  * Pipeline:
  *   1. Compile each block via its registered `compile()` and concat.
  *   2. Wrap in the email shell (DOCTYPE + mso pixels-per-inch +
- *      outer table sized to canvas.width).
- *   3. Apply Outlook-specific fixes (mso line-height, conditional
- *      reset).
- *   4. Append the campaign banner and the site-wide compliance footer
+ *      outer table sized to canvas.width, `lang` / `dir` from the
+ *      editor locale).
+ *   3. Append the campaign banner and the site-wide compliance footer
  *      (1.0.13+) inside the outer table so they share its width.
+ *   4. Apply Outlook-specific fixes (mso line-height rule before every
+ *      line-height, unitless line-heights → px, conditional reset) —
+ *      after step 3 so the banner / footer markup gets them too.
  *   5. Substitute variables. Read-only `wp_*` system variables (from
  *      `IMGSIG_EDITOR_CONFIG.systemVariables`) are merged with the
  *      schema's user-defined ones; user-defined variables win on
  *      key conflict so the user can override any auto-merged value.
- *   6. URL safety pass on the substituted document: unsafe hrefs →
+ *   6. Document-level checks that still need the block boundary
+ *      markers: text contrast against the effective background, image
+ *      inventory, alt-text enforcement (`alt=""` added where missing).
+ *      Then the markers are stripped.
+ *   7. URL safety pass on the substituted document: unsafe hrefs →
  *      `#`, data: / javascript: / blob: images removed (errors),
  *      http / local / placeholder images flagged (warnings).
- *   7. Minify (drop non-conditional comments + structural whitespace).
- *   8. Validate the final output (size, Gmail length limit, leftovers).
+ *   8. Minify (drop non-conditional comments + structural whitespace).
+ *   9. Validate the final output (size, Gmail length limit, leftovers).
  *
  * Unknown block types contribute nothing to the output but produce
  * a warning so the bug is visible.
@@ -70,31 +93,36 @@ export interface CompileResult {
 export function compileSignature(input: SignatureSchema): CompileResult {
   const schema = schemaNeedsMigration(input) ? migrateSchema(input) : input;
   const merged = mergedVariables(schema.variables);
+  const width = canvasWidth(schema.canvas);
   const ctx: CompileContext = {
     variables: merged,
     warnings: [],
     issues: [],
     canvas: schema.canvas,
-    availableWidth: canvasWidth(schema.canvas),
+    availableWidth: width,
     markBlocks: true,
   };
+  const language = signatureLanguage();
 
   // Every block — top-level and nested — goes through compileBlock():
   // hidden blocks (Layers panel "eye") are skipped, unknown types warn,
   // `block.box` is applied. Until 1.0.24 the visible flag was honoured
   // on the canvas only, so "hidden" banners still reached recipients.
   const concatenated = compileBlocks(schema.blocks, ctx);
+  const fluid = usesStackedColumns(schema);
   const shelled = wrapInEmailShell(concatenated, schema.canvas, {
-    fluid: usesStackedColumns(schema),
+    fluid,
+    lang: language.lang || undefined,
+    dir: language.dir,
   });
-  const withOutlookFixes = applyOutlookFixes(shelled);
   // Campaign banner first (sits visually right under the user's
   // signature content), THEN the compliance footer (which always
   // wants to be the very last thing the recipient sees).
-  const withCampaign = appendBannerCampaign(withOutlookFixes, canvasWidth(schema.canvas));
+  const withCampaign = appendBannerCampaign(shelled, width);
   const withFooter = appendComplianceFooter(withCampaign);
+  const withOutlookFixes = applyOutlookFixes(withFooter);
 
-  const { html: substituted, missing } = substituteVariables(withFooter, merged);
+  const { html: substituted, missing } = substituteVariables(withOutlookFixes, merged);
   for (const name of missing) {
     report(
       ctx,
@@ -105,10 +133,13 @@ export function compileSignature(input: SignatureSchema): CompileResult {
     );
   }
 
-  // Contrast needs the block boundary markers; strip them afterwards.
+  // Document-level checks that need the block boundary markers
+  // (stripped right after).
   validateContrast(substituted, ctx);
+  const images = collectImages(substituted);
+  const withAlts = ensureImageAlts(substituted, ctx);
 
-  const urlSafe = enforceSafeUrls(stripBlockMarkers(substituted), ctx);
+  const urlSafe = enforceSafeUrls(stripBlockMarkers(withAlts), ctx);
   const minified = minifyHtml(urlSafe);
   const fragment = extractBodyFragment(minified);
 
@@ -126,7 +157,23 @@ export function compileSignature(input: SignatureSchema): CompileResult {
     errors: issues.filter((i) => i.level === 'error').map((i) => i.message),
     issues,
     size: new Blob([minified]).size,
+    images,
+    width,
+    fluid,
+    lang: language.lang,
+    dir: language.dir,
   };
+}
+
+/** `lang` / `dir` of the export, from the editor locale (`getConfig().locale`). */
+function signatureLanguage(): { lang: string; dir: 'ltr' | 'rtl' } {
+  let locale = '';
+  try {
+    locale = getConfig().locale ?? '';
+  } catch {
+    // Bootstrap config unavailable (test / standalone): no language.
+  }
+  return { lang: localeToLang(locale), dir: localeDirection(locale) };
 }
 
 /**

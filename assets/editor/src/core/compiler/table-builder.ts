@@ -1,5 +1,5 @@
 import type { CanvasConfig } from '@/core/schema/signature';
-import { bgcolorAttr, fontStack, inlineStyle, intPx, safeColor } from './css';
+import { attr, bgcolorAttr, fontStack, inlineStyle, intPx, safeColor } from './css';
 
 /** Pixel width of the signature (clamped `canvas.width`). */
 export function canvasWidth(canvas: CanvasConfig): number {
@@ -41,7 +41,7 @@ export function buildShellTable(
   });
   const cellStyle = inlineStyle({ 'background-color': bg });
 
-  const table = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${width}"${bgcolorAttr(bg)} style="${tableStyle}">
+  const table = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${width}"${bgcolorAttr(bg)}${languageAttrs(options)} style="${tableStyle}">
 <tr><td${bgcolorAttr(bg)} style="${cellStyle}">
 ${content}
 </td></tr>
@@ -53,6 +53,28 @@ ${content}
 export interface ShellOptions {
   /** Fluid width up to the canvas width (see {@link buildShellTable}). */
   fluid?: boolean;
+  /**
+   * BCP 47 language of the signature (`es-ES`). Set on `<html>` AND on
+   * the shell table, so the pasted fragment keeps it for screen readers.
+   */
+  lang?: string;
+  /**
+   * Writing direction. Set on `<html>` and the shell table: the
+   * signature keeps the direction it was designed in (the editor canvas
+   * inherits the page's direction) even when pasted into a message
+   * written in the other one.
+   */
+  dir?: 'ltr' | 'rtl';
+}
+
+/** ` dir="…" lang="…"` (leading space) for the values that are set. */
+function languageAttrs(options: ShellOptions): string {
+  const dir = options.dir === 'rtl' || options.dir === 'ltr' ? ` dir="${options.dir}"` : '';
+  const lang =
+    options.lang && /^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})*$/.test(options.lang)
+      ? ` lang="${attr(options.lang)}"`
+      : '';
+  return `${dir}${lang}`;
 }
 
 /**
@@ -64,7 +86,11 @@ export interface ShellOptions {
  * a font stack such as `"Courier New", Courier, monospace` used to be
  * interpolated raw and its double quotes closed the `style` attribute.
  */
-export function wrapDocument(shellTable: string, canvas: CanvasConfig): string {
+export function wrapDocument(
+  shellTable: string,
+  canvas: CanvasConfig,
+  options: Pick<ShellOptions, 'lang' | 'dir'> = {},
+): string {
   const bodyStyle = inlineStyle({
     margin: 0,
     padding: 0,
@@ -72,7 +98,7 @@ export function wrapDocument(shellTable: string, canvas: CanvasConfig): string {
   });
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"${languageAttrs(options)}>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -91,5 +117,5 @@ export function wrapInEmailShell(
   canvas: CanvasConfig,
   options: ShellOptions = {},
 ): string {
-  return wrapDocument(buildShellTable(content, canvas, options), canvas);
+  return wrapDocument(buildShellTable(content, canvas, options), canvas, options);
 }

@@ -53,6 +53,9 @@ const ALLOWED_ATTRS = new Set([
   'http-equiv',
   'content',
   'name',
+  // Language / direction of the shell (html + outer table).
+  'lang',
+  'dir',
 ]);
 
 const DECLARATION = /^-?[a-z][a-z-]*:[^;"<>{}]+$/;
