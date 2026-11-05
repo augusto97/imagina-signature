@@ -20,10 +20,10 @@ import { replaceVariables, substituteVariables } from '@/core/compiler/variables
  *    compiled HTML; every other string gets the raw value (React
  *    escapes it when rendering).
  *  - Structural keys (`id`, `type`, `*_hash`) are copied verbatim.
- *  - {@link EXPORT_LITERAL_FIELDS} are copied verbatim too: their value
- *    is baked into a hosted file (QR PNG) without substitution, so
- *    resolving them on the canvas would show something the export
- *    doesn't contain.
+ *  - {@link EXPORT_LITERAL_FIELDS} are copied verbatim too: the block
+ *    resolves them itself when it renders its hosted file (the QR
+ *    block's `qrData()` — preview and uploaded PNG alike), so the
+ *    resolution happens in exactly one place.
  */
 
 /** Per block type, top-level string fields that hold HTML. */
@@ -31,7 +31,7 @@ const HTML_FIELDS: Readonly<Record<string, ReadonlySet<string>>> = {
   text: new Set(['content']),
 };
 
-/** Per block type, fields the export never substitutes. */
+/** Per block type, fields the block resolves on its own (see the module doc). */
 const EXPORT_LITERAL_FIELDS: Readonly<Record<string, ReadonlySet<string>>> = {
   qr_code: new Set(['data']),
 };
