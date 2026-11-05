@@ -1,5 +1,5 @@
 import { useState, type FC } from 'react';
-import { Cloud, Palette, FileText, Megaphone, Globe } from 'lucide-react';
+import { Cloud, Palette, FileText, Megaphone, Globe, Send } from 'lucide-react';
 import { Topbar } from '@admin/components/Topbar';
 import { __ } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
@@ -8,8 +8,9 @@ import { BrandingTab } from './settings/BrandingTab';
 import { ComplianceTab } from './settings/ComplianceTab';
 import { CampaignsTab } from './settings/CampaignsTab';
 import { FrontendTab } from './settings/FrontendTab';
+import { InvitationsTab } from './settings/InvitationsTab';
 
-type Tab = 'storage' | 'branding' | 'compliance' | 'campaigns' | 'frontend';
+type Tab = 'storage' | 'branding' | 'compliance' | 'campaigns' | 'frontend' | 'invitations';
 
 /** Labels / descriptions are lazy so they translate at render time. */
 const TABS: Array<{ id: Tab; label: () => string; icon: typeof Cloud; description: () => string }> = [
@@ -49,6 +50,13 @@ const TABS: Array<{ id: Tab; label: () => string; icon: typeof Cloud; descriptio
     icon: Globe,
     description: () =>
       __('Expose the editor on a public-facing URL so non-admin users (e.g. subscribers) can manage their own signatures without entering wp-admin.'),
+  },
+  {
+    id: 'invitations',
+    label: () => __('Invitations'),
+    icon: Send,
+    description: () =>
+      __('Email every employee a personal link to install their signature in a minute, follow the progress and set up reminders.'),
   },
 ];
 
@@ -95,6 +103,7 @@ export const SettingsPage: FC = () => {
           {tab === 'compliance' && <ComplianceTab />}
           {tab === 'campaigns' && <CampaignsTab />}
           {tab === 'frontend' && <FrontendTab />}
+          {tab === 'invitations' && <InvitationsTab />}
         </div>
       </div>
     </div>
