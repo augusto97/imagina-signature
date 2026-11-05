@@ -1,5 +1,13 @@
 import type { FC } from 'react';
-import { FileSignature, LayoutTemplate, Settings, ExternalLink, Home } from 'lucide-react';
+import {
+  FileSignature,
+  LayoutTemplate,
+  Settings,
+  ExternalLink,
+  Home,
+  UserRound,
+  Users,
+} from 'lucide-react';
 import { __ } from '@admin/i18n';
 import { getConfig } from '@admin/api';
 import { cn } from '@admin/utils/cn';
@@ -18,12 +26,20 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { key: 'signatures', label: () => __('My Signatures'), icon: FileSignature, href: 'signatures' },
+  { key: 'profile', label: () => __('My profile'), icon: UserRound, href: 'profile' },
   {
     key: 'templates',
     label: () => __('Templates'),
     icon: LayoutTemplate,
     href: 'templates',
     requiresCap: 'manage_templates',
+  },
+  {
+    key: 'groups',
+    label: () => __('Groups'),
+    icon: Users,
+    href: 'groups',
+    requiresCap: 'manage_team',
   },
   {
     key: 'settings',
@@ -33,6 +49,9 @@ const NAV: NavItem[] = [
     requiresCap: 'manage_storage',
   },
 ];
+
+/** Pages the public `/<slug>/` route serves. */
+const PUBLIC_PAGES: PageKey[] = ['signatures', 'profile'];
 
 interface Props {
   page: PageKey;
@@ -51,14 +70,18 @@ export const SidebarNav: FC<Props> = ({ page }) => {
   const isPublic = config.frontendContext === 'public';
 
   // Two filters compose: capability-gating (always) AND a public-route
-  // gate that hides everything except "My Signatures". The capability
+  // gate that hides everything except "My Signatures" / "My profile". The capability
   // gate already hides Settings / Templates for users who lack the
   // caps, but on the public route we want them hidden even for admins
   // who happen to be visiting `/signatures/` — that route is intended
   // as the end-user signature workspace, not a back-door into the
   // admin surfaces (which still live in wp-admin where they belong).
   const visible = NAV.filter((item) => {
-    if (isPublic && item.key !== 'signatures') {
+    if (isPublic && !PUBLIC_PAGES.includes(item.key)) {
+      return false;
+    }
+    // Pages a host bootstrap doesn't route yet stay hidden.
+    if (config.urls[item.href] === undefined) {
       return false;
     }
     return !item.requiresCap || config.capabilities[item.requiresCap];

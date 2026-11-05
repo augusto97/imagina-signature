@@ -1,6 +1,7 @@
 import { useState, type FC } from 'react';
-import { Cloud, Palette, FileText, Megaphone, Globe } from 'lucide-react';
+import { Cloud, Palette, FileText, Megaphone, Globe, IdCard } from 'lucide-react';
 import { Topbar } from '@admin/components/Topbar';
+import { getConfig } from '@admin/api';
 import { __ } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
 import { StorageTab } from './settings/StorageTab';
@@ -8,8 +9,9 @@ import { BrandingTab } from './settings/BrandingTab';
 import { ComplianceTab } from './settings/ComplianceTab';
 import { CampaignsTab } from './settings/CampaignsTab';
 import { FrontendTab } from './settings/FrontendTab';
+import { ProfileFieldsTab } from './settings/ProfileFieldsTab';
 
-type Tab = 'storage' | 'branding' | 'compliance' | 'campaigns' | 'frontend';
+type Tab = 'storage' | 'branding' | 'compliance' | 'campaigns' | 'frontend' | 'profile_fields';
 
 /** Labels / descriptions are lazy so they translate at render time. */
 const TABS: Array<{ id: Tab; label: () => string; icon: typeof Cloud; description: () => string }> = [
@@ -50,7 +52,17 @@ const TABS: Array<{ id: Tab; label: () => string; icon: typeof Cloud; descriptio
     description: () =>
       __('Expose the editor on a public-facing URL so non-admin users (e.g. subscribers) can manage their own signatures without entering wp-admin.'),
   },
+  {
+    id: 'profile_fields',
+    label: () => __('Profile fields'),
+    icon: IdCard,
+    description: () =>
+      __('Where each employee profile field comes from, plus your own custom fields.'),
+  },
 ];
+
+/** Tabs that also need `imgsig_manage_team` (1.3.0). */
+const TEAM_TABS: Tab[] = ['profile_fields'];
 
 /**
  * Settings host — tabs: Storage, Brand kit, Compliance, Campaigns,
@@ -60,7 +72,9 @@ const TABS: Array<{ id: Tab; label: () => string; icon: typeof Cloud; descriptio
  */
 export const SettingsPage: FC = () => {
   const [tab, setTab] = useState<Tab>('storage');
-  const active = TABS.find((t) => t.id === tab) ?? TABS[0];
+  const caps = getConfig().capabilities;
+  const tabs = TABS.filter((t) => !TEAM_TABS.includes(t.id) || caps.manage_team);
+  const active = tabs.find((t) => t.id === tab) ?? tabs[0]!;
 
   return (
     <div className="flex h-full flex-col">
@@ -69,7 +83,7 @@ export const SettingsPage: FC = () => {
       <div className="flex-1 overflow-auto p-6">
         <div className="mx-auto max-w-3xl space-y-4">
           <div className="flex gap-1 rounded-lg border border-[var(--border-default)] bg-[var(--bg-panel)] p-1 text-[12.5px]">
-            {TABS.map(({ id, label, icon: Icon }) => {
+            {tabs.map(({ id, label, icon: Icon }) => {
               const isActive = id === tab;
               return (
                 <button
@@ -95,6 +109,7 @@ export const SettingsPage: FC = () => {
           {tab === 'compliance' && <ComplianceTab />}
           {tab === 'campaigns' && <CampaignsTab />}
           {tab === 'frontend' && <FrontendTab />}
+          {tab === 'profile_fields' && caps.manage_team && <ProfileFieldsTab />}
         </div>
       </div>
     </div>

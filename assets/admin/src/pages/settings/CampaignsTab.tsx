@@ -1,11 +1,12 @@
 import { useEffect, useState, type FC } from 'react';
-import { Plus, Save, Trash2, Calendar, ExternalLink } from 'lucide-react';
+import { Plus, Save, Trash2, Calendar, ExternalLink, Users } from 'lucide-react';
 import { Button } from '@admin/components/Button';
 import { Spinner } from '@admin/components/Spinner';
 import { apiCall, ApiError } from '@admin/api';
 import { __ } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
 import type { BannerCampaign, SiteSettings } from '@admin/types';
+import type { GroupRow } from '@admin/directoryTypes';
 import { Banner, Field, Section, type Flash } from './_shared';
 
 const MAX_CAMPAIGNS = 50;
@@ -27,11 +28,16 @@ export const CampaignsTab: FC = () => {
   const [busy, setBusy] = useState<'idle' | 'saving'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [flash, setFlash] = useState<Flash | null>(null);
+  // 1.3.0 targeting: empty when groups are unavailable (no imgsig_manage_team).
+  const [groups, setGroups] = useState<GroupRow[]>([]);
 
   useEffect(() => {
     void apiCall<SiteSettings>('/admin/site-settings')
       .then((s) => setCampaigns(s.banner_campaigns))
       .catch((e: Error) => setError(e.message));
+    void apiCall<GroupRow[]>('/admin/groups')
+      .then((rows) => setGroups(Array.isArray(rows) ? rows : []))
+      .catch(() => setGroups([]));
   }, []);
 
   const updateCampaign = (id: string, patch: Partial<BannerCampaign>): void => {
@@ -121,6 +127,7 @@ export const CampaignsTab: FC = () => {
                     key={c.id}
                     campaign={c}
                     status={statusFor(c)}
+                    groups={groups}
                     onChange={(patch) => updateCampaign(c.id, patch)}
                     onRemove={() => removeCampaign(c.id)}
                   />
@@ -188,12 +195,19 @@ const STATUS_STYLES: Record<Status, { label: () => string; cls: string }> = {
 interface CampaignRowProps {
   campaign: BannerCampaign;
   status: Status;
+  /** Groups the campaign can target (empty hides the targeting field). */
+  groups: GroupRow[];
   onChange: (patch: Partial<BannerCampaign>) => void;
   onRemove: () => void;
 }
 
-const CampaignRow: FC<CampaignRowProps> = ({ campaign, status, onChange, onRemove }) => {
+const CampaignRow: FC<CampaignRowProps> = ({ campaign, status, groups, onChange, onRemove }) => {
   const statusStyle = STATUS_STYLES[status];
+  const targeted = campaign.groups ?? [];
+  const toggleGroup = (id: number): void =>
+    onChange({
+      groups: targeted.includes(id) ? targeted.filter((g) => g !== id) : [...targeted, id],
+    });
 
   return (
     <li className="overflow-hidden rounded-lg border border-[var(--border-default)] bg-[var(--bg-panel-soft)]">
@@ -291,6 +305,42 @@ const CampaignRow: FC<CampaignRowProps> = ({ campaign, status, onChange, onRemov
             onChange={(e) => onChange({ end_date: e.target.value })}
           />
         </Field>
+
+        {groups.length > 0 && (
+          <div className="sm:col-span-2">
+            <span className="mb-1 flex items-center gap-1 text-[12px] font-medium text-[var(--text-secondary)]">
+              <Users size={12} />
+              {__('Show to')}
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {groups.map((g) => {
+                const on = targeted.includes(g.id);
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggleGroup(g.id)}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-medium transition-colors',
+                      on
+                        ? 'border-[var(--accent)] bg-[var(--bg-selected)] text-[var(--accent)]'
+                        : 'border-[var(--border-default)] bg-[var(--bg-panel)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]',
+                    )}
+                  >
+                    <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: g.color }} />
+                    {g.name}
+                  </button>
+                );
+              })}
+            </div>
+            <span className="mt-1 block text-[11px] text-[var(--text-muted)]">
+              {targeted.length === 0
+                ? __('Everyone sees this campaign. Pick groups to limit it to their members.')
+                : __('Only members of the selected groups see this campaign.')}
+            </span>
+          </div>
+        )}
 
         {campaign.image_url && (
           <div className="sm:col-span-2">
