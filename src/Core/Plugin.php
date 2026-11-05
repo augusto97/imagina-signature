@@ -16,6 +16,7 @@ use ImaginaSignatures\Admin\Pages\EditorPage;
 use ImaginaSignatures\Frontend\FrontendRouter;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 use ImaginaSignatures\Api\Controllers\AssetsController;
+use ImaginaSignatures\Api\Controllers\DeployInvitationsController;
 use ImaginaSignatures\Api\Controllers\InstallController;
 use ImaginaSignatures\Api\Controllers\FrontendAccessController;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
@@ -144,7 +145,7 @@ final class Plugin {
 		// Personal-data exporter / eraser + delete_user cleanup.
 		$this->container->make( UserDataManager::class )->register();
 
-		// Install link: outdated installs.
+		// Install link: invitation batches, reminders, outdated installs.
 		InstallModule::register( $this->container );
 
 		// Public-facing route — runs on EVERY request, admin or not.
@@ -310,6 +311,7 @@ final class Plugin {
 				$this->container->make( SiteSettingsController::class ),
 				$this->container->make( FrontendAccessController::class ),
 				$this->container->make( InstallController::class ),
+				$this->container->make( DeployInvitationsController::class ),
 			]
 		);
 		$router->register();
