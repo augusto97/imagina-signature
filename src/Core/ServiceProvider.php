@@ -161,7 +161,8 @@ final class ServiceProvider {
 				return new SignaturesController(
 					$c->make( SignatureService::class ),
 					$c->make( SignatureRepository::class ),
-					$c->make( RateLimiter::class )
+					$c->make( RateLimiter::class ),
+					$c->make( HtmlSanitizer::class )
 				);
 			}
 		);
