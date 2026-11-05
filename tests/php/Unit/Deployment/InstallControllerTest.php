@@ -135,8 +135,16 @@ final class InstallControllerTest extends TestCase {
 		$this->assertSame( InstallService::STATE_INSTALLED, InstallService::state( $record, $this->primary->html_hash ) );
 	}
 
-	public function test_installed_refuses_while_the_signature_is_not_ready(): void {
+	public function test_installed_accepts_outdated_html_that_the_page_served(): void {
 		$this->primary = self::signature( 9, false );
+		$response      = $this->controller()->installed( $this->request( $this->token ) );
+
+		$this->assertInstanceOf( \WP_REST_Response::class, $response );
+		$this->assertSame( $this->primary->html_hash, $this->meta[9]['imgsig_deploy_status']['install']['hash'] );
+	}
+
+	public function test_installed_refuses_while_the_signature_is_not_ready(): void {
+		$this->primary = self::never_compiled( 9 );
 		$response      = $this->controller()->installed( $this->request( $this->token ) );
 
 		$this->assertInstanceOf( \WP_Error::class, $response );

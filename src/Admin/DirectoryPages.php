@@ -19,6 +19,9 @@ defined( 'ABSPATH' ) || exit;
  *
  *  - "My profile" (`imagina-signatures-profile`, `imgsig_use_signatures`)
  *    → app page `profile`;
+ *  - "Team" (`imagina-signatures-team`, `imgsig_manage_team`, 1.3.0)
+ *    → app page `team` (team console: every user's signature and
+ *    deployment state, recompile, bulk actions);
  *  - "Groups" (`imagina-signatures-groups`, `imgsig_manage_team`)
  *    → app page `groups` (groups + CSV profile import).
  *
@@ -30,6 +33,7 @@ defined( 'ABSPATH' ) || exit;
 final class DirectoryPages {
 
 	public const PROFILE_SLUG = 'imagina-signatures-profile';
+	public const TEAM_SLUG    = 'imagina-signatures-team';
 	public const GROUPS_SLUG  = 'imagina-signatures-groups';
 
 	/**
@@ -60,6 +64,15 @@ final class DirectoryPages {
 			[ new AdminAppPage( CapabilitiesInstaller::CAP_USE ), 'render' ]
 		);
 
+		$team_hook = add_submenu_page(
+			AdminMenu::MENU_SLUG,
+			__( 'Team', 'imagina-signatures' ),
+			__( 'Team', 'imagina-signatures' ),
+			CapabilitiesInstaller::CAP_MANAGE_TEAM,
+			self::TEAM_SLUG,
+			[ new AdminAppPage( CapabilitiesInstaller::CAP_MANAGE_TEAM ), 'render' ]
+		);
+
 		$groups_hook = add_submenu_page(
 			AdminMenu::MENU_SLUG,
 			__( 'Groups', 'imagina-signatures' ),
@@ -72,6 +85,9 @@ final class DirectoryPages {
 		$hook_pages = [];
 		if ( is_string( $profile_hook ) && '' !== $profile_hook ) {
 			$hook_pages[ $profile_hook ] = 'profile';
+		}
+		if ( is_string( $team_hook ) && '' !== $team_hook ) {
+			$hook_pages[ $team_hook ] = 'team';
 		}
 		if ( is_string( $groups_hook ) && '' !== $groups_hook ) {
 			$hook_pages[ $groups_hook ] = 'groups';
@@ -91,6 +107,23 @@ final class DirectoryPages {
 	 */
 	public static function profile_url(): string {
 		return esc_url_raw( admin_url( 'admin.php?page=' . self::PROFILE_SLUG ) );
+	}
+
+	/**
+	 * URL of the wp-admin "Team" page (1.3.0).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param array<string, int|string> $query Extra query args (e.g. `profile` => user id).
+	 *
+	 * @return string
+	 */
+	public static function team_url( array $query = [] ): string {
+		$url = admin_url( 'admin.php?page=' . self::TEAM_SLUG );
+		foreach ( $query as $key => $value ) {
+			$url .= '&' . rawurlencode( (string) $key ) . '=' . rawurlencode( (string) $value );
+		}
+		return esc_url_raw( $url );
 	}
 
 	/**

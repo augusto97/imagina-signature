@@ -20,6 +20,7 @@ import { OnboardingModal } from './onboarding/OnboardingModal';
 import { YourDetailsModal } from './onboarding/YourDetailsModal';
 import { FieldsOnlyView } from './FieldsOnlyView';
 import { LinkBanner } from './LinkBanner';
+import { OnBehalfBanner } from './OnBehalfBanner';
 import { useEditorStore } from '@/stores/editorStore';
 import { useEditPolicy } from '@/stores/linkStore';
 
@@ -30,7 +31,8 @@ import { useEditPolicy } from '@/stores/linkStore';
  * Keyboard shortcuts are also installed here so they're listening
  * for the lifetime of the app.
  *
- * A signature built from a company template shows the {@link LinkBanner};
+ * A team manager editing someone else's signature sees the
+ * {@link OnBehalfBanner}. A signature built from a company template shows the {@link LinkBanner};
  * in the template's `fields_only` mode the sidebars and canvas give way
  * to the "Your details" form + preview ({@link FieldsOnlyView}).
  */
@@ -53,6 +55,7 @@ export const EditorShell: FC = () => {
   return (
     <div className="flex h-full w-full flex-col">
       <Topbar />
+      <OnBehalfBanner />
       <LinkBanner />
       {policy.fieldsOnly ? (
         <FieldsOnlyView />

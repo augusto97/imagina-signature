@@ -2,7 +2,7 @@ import { useEffect, useState, type FC } from 'react';
 import { Plus, Save, Trash2, Calendar, ExternalLink, Users } from 'lucide-react';
 import { Button } from '@admin/components/Button';
 import { Spinner } from '@admin/components/Spinner';
-import { apiCall, ApiError } from '@admin/api';
+import { apiCall, ApiError, getConfig } from '@admin/api';
 import { __ } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
 import type { BannerCampaign, SiteSettings } from '@admin/types';
@@ -35,6 +35,9 @@ export const CampaignsTab: FC = () => {
     void apiCall<SiteSettings>('/admin/site-settings')
       .then((s) => setCampaigns(s.banner_campaigns))
       .catch((e: Error) => setError(e.message));
+    // Group targeting needs `/admin/groups` (imgsig_manage_team): don't
+    // even ask without it.
+    if (getConfig().capabilities.manage_team !== true) return;
     void apiCall<GroupRow[]>('/admin/groups')
       .then((rows) => setGroups(Array.isArray(rows) ? rows : []))
       .catch(() => setGroups([]));

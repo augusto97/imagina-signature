@@ -21,11 +21,13 @@ use ImaginaSignatures\Api\Controllers\ProfileImportController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Api\Controllers\StorageController;
+use ImaginaSignatures\Api\Controllers\TeamConsoleController;
 use ImaginaSignatures\Api\Controllers\TeamSignaturesController;
 use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\Middleware\RateLimiter;
 use ImaginaSignatures\Deployment\Gmail\GmailServiceProvider;
+use ImaginaSignatures\Deployment\Gmail\GmailSettings;
 use ImaginaSignatures\Deployment\OutlookSignatureService;
 use ImaginaSignatures\Deployment\Install\InstallPage;
 use ImaginaSignatures\Deployment\Install\InstallReminders;
@@ -42,10 +44,12 @@ use ImaginaSignatures\Services\HtmlSanitizer;
 use ImaginaSignatures\Services\JsonSchemaValidator;
 use ImaginaSignatures\Services\SchemaSanitizer;
 use ImaginaSignatures\Services\SignatureService;
+use ImaginaSignatures\Services\StaleHtmlMarker;
 use ImaginaSignatures\Services\TemplateAssignmentService;
 use ImaginaSignatures\Services\TemplatePropagator;
 use ImaginaSignatures\Services\TemplateService;
 use ImaginaSignatures\Storage\StorageManager;
+use ImaginaSignatures\Team\TeamDirectory;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -174,6 +178,13 @@ final class ServiceProvider {
 				);
 			}
 		);
+		// Stored HTML goes stale when profiles / groups / site inputs change (1.3.0).
+		$container->singleton(
+			StaleHtmlMarker::class,
+			static function ( Container $c ): StaleHtmlMarker {
+				return new StaleHtmlMarker( $c->make( SignatureRepository::class ) );
+			}
+		);
 		$container->singleton(
 			TemplateService::class,
 			static function ( Container $c ): TemplateService {
@@ -223,6 +234,25 @@ final class ServiceProvider {
 					$c->make( SignatureRepository::class ),
 					$c->make( SignatureService::class )
 				);
+			}
+		);
+		// Team console listing (1.3.0).
+		$container->singleton(
+			TeamDirectory::class,
+			static function ( Container $c ): TeamDirectory {
+				global $wpdb;
+				return new TeamDirectory(
+					$c->make( SignatureRepository::class ),
+					$c->make( TemplateRepository::class ),
+					$c->make( GmailSettings::class ),
+					$wpdb
+				);
+			}
+		);
+		$container->singleton(
+			TeamConsoleController::class,
+			static function ( Container $c ): TeamConsoleController {
+				return new TeamConsoleController( $c->make( TeamDirectory::class ) );
 			}
 		);
 		$container->singleton(

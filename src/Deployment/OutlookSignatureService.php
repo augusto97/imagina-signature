@@ -17,9 +17,13 @@ defined( 'ABSPATH' ) || exit;
  * Maps the add-in's `userProfile.emailAddress` to a WordPress user and
  * returns that user's deployable HTML: the primary signature
  * ({@see SignatureService::primary_for_user()}) when its server-held
- * compiled HTML (`html_cache`) exists and is fresh.
+ * compiled HTML (`html_cache`) exists. Outdated HTML (compiled before
+ * the last edit or before the owner's profile / a site-wide input
+ * changed) is still served — the last compiled copy beats inserting
+ * nothing — and is replaced as soon as a browser recompiles it.
  *
- * Anything else — unknown email, no signature, stale or oversized HTML —
+ * Anything else — unknown email, no signature, never-compiled, empty or
+ * oversized HTML —
  * resolves to null, which the controller turns into the same 404, so
  * the endpoint never tells a caller more than "there is a signature for
  * this address" or not.
@@ -120,7 +124,7 @@ class OutlookSignatureService {
 		}
 
 		$signature = $this->signatures->primary_for_user( (int) $user->ID );
-		if ( null === $signature || $signature->is_html_stale() ) {
+		if ( null === $signature || null === $signature->html_cache ) {
 			return null;
 		}
 

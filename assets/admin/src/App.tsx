@@ -5,6 +5,7 @@ import { TemplatesPage } from '@admin/pages/TemplatesPage';
 import { SettingsPage } from '@admin/pages/SettingsPage';
 import { ProfilePage } from '@admin/pages/ProfilePage';
 import { GroupsPage } from '@admin/pages/GroupsPage';
+import { TeamPage } from '@admin/pages/TeamPage';
 import { getConfig } from '@admin/api';
 
 export const App: FC = () => {
@@ -17,6 +18,7 @@ export const App: FC = () => {
       {page === 'settings' && <SettingsPage />}
       {page === 'profile' && <ProfilePage />}
       {page === 'groups' && <GroupsPage />}
+      {page === 'team' && <TeamPage />}
     </Layout>
   );
 };

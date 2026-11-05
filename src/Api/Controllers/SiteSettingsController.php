@@ -150,6 +150,10 @@ final class SiteSettingsController extends BaseController {
 		$persist_ok = true;
 		$persist_errors = [];
 
+		// 1.3.0: what the compiled signatures contain, before the save —
+		// compared with the readback below to announce real changes.
+		$before = self::output_inputs_uncached();
+
 		if ( null !== $request->get_param( 'brand_palette' ) ) {
 			$palette = self::sanitize_palette( (array) $request->get_param( 'brand_palette' ) );
 			$ok      = self::force_save_option( self::OPT_BRAND_PALETTE, $palette );
@@ -296,7 +300,57 @@ final class SiteSettingsController extends BaseController {
 			);
 		}
 
+		$after   = [
+			'compliance_footer' => $current['compliance_footer'],
+			'banner_campaigns'  => $current['banner_campaigns'],
+			'brand_kit'         => $current['brand_kit'],
+		];
+		$changed = [];
+		foreach ( $after as $key => $value ) {
+			if ( $before[ $key ] !== $value ) {
+				$changed[] = $key;
+			}
+		}
+		if ( ! empty( $changed ) ) {
+			/**
+			 * Fires after a save changed the compliance footer, the banner
+			 * campaigns and / or the brand kit (values that end up in every
+			 * compiled signature). Not fired by a save that changed nothing.
+			 *
+			 * @since 1.3.0
+			 *
+			 * @param string[]             $changed Keys that changed: `compliance_footer`, `banner_campaigns`, `brand_kit`.
+			 * @param array<string, mixed> $before  The three settings before the save.
+			 * @param array<string, mixed> $after   The three settings after the save.
+			 */
+			do_action( 'imgsig/site_settings/changed', $changed, $before, $after );
+		}
+
 		return rest_ensure_response( $current );
+	}
+
+	/**
+	 * The stored compliance footer, campaigns and brand kit, read past
+	 * every cache and normalised like {@see update()}'s readback.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return array{compliance_footer: array{enabled: bool, html: string}, banner_campaigns: array<int, array<string, mixed>>, brand_kit: array<string, mixed>}
+	 */
+	private static function output_inputs_uncached(): array {
+		$footer    = self::read_option_uncached( self::OPT_COMPLIANCE_FOOTER, [] );
+		$footer    = is_array( $footer ) ? $footer : [];
+		$campaigns = self::read_option_uncached( self::OPT_BANNER_CAMPAIGNS, [] );
+		$kit       = self::read_option_uncached( self::OPT_BRAND_KIT, [] );
+
+		return [
+			'compliance_footer' => [
+				'enabled' => ! empty( $footer['enabled'] ),
+				'html'    => isset( $footer['html'] ) ? (string) $footer['html'] : '',
+			],
+			'banner_campaigns'  => self::sanitize_campaigns( is_array( $campaigns ) ? $campaigns : [] ),
+			'brand_kit'         => BrandKit::sanitize( is_array( $kit ) ? $kit : [] ),
+		];
 	}
 
 	/**

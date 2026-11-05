@@ -187,6 +187,26 @@ class SignatureRepository extends BaseRepository {
 	}
 
 	/**
+	 * Owner of a signature (`SELECT user_id`), 0 when it doesn't exist —
+	 * the cheap probe of the "edit on behalf" permission check (1.3.0).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int $signature_id Primary key.
+	 *
+	 * @return int
+	 */
+	public function owner_of( int $signature_id ): int {
+		if ( $signature_id <= 0 ) {
+			return 0;
+		}
+		return (int) $this->wpdb->get_var(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$this->wpdb->prepare( "SELECT user_id FROM {$this->table()} WHERE id = %d", $signature_id )
+		);
+	}
+
+	/**
 	 * Drops cached rows for an id (after any write to it).
 	 *
 	 * @param int $signature_id Primary key.
@@ -325,6 +345,102 @@ class SignatureRepository extends BaseRepository {
 			[ '%d', '%s' ]
 		);
 		return is_int( $rows ) ? $rows : 0;
+	}
+
+	/**
+	 * Most user ids bound into one `IN (...)` list.
+	 */
+	public const ID_CHUNK = 500;
+
+	/**
+	 * Marks the stored HTML of every signature of `$user_ids` (null =
+	 * every user) as outdated, because something it was compiled from
+	 * changed outside the signature itself: the owner's profile or WP
+	 * user fields, their groups, the brand kit, the compliance footer,
+	 * the banner campaigns or the profile field mapping (1.3.0).
+	 *
+	 * Clears `compiled_at` — {@see STALE_CONDITION} then holds — and
+	 * nothing else: `json_content`, `html_cache` (still served by the
+	 * install page and the Outlook add-in until recompiled) and
+	 * `updated_at` are untouched, so listing order and the implicit
+	 * primary signature ("most recently updated") never move.
+	 * Idempotent: rows that are already outdated are not rewritten.
+	 * One UPDATE (per {@see ID_CHUNK} users).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int[]|null $user_ids Owners, or null for everyone.
+	 *
+	 * @return int Rows marked.
+	 */
+	public function mark_html_outdated( ?array $user_ids ): int {
+		$this->owned_cache = [];
+
+		if ( null === $user_ids ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- plugin table, no input.
+			$rows = $this->wpdb->query( "UPDATE {$this->table()} SET compiled_at = NULL WHERE compiled_at IS NOT NULL" );
+			return is_int( $rows ) ? $rows : 0;
+		}
+
+		$marked = 0;
+		foreach ( array_chunk( self::positive_ids( $user_ids ), self::ID_CHUNK ) as $chunk ) {
+			$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+			$rows         = $this->wpdb->query(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholders built above.
+				$this->wpdb->prepare( "UPDATE {$this->table()} SET compiled_at = NULL WHERE compiled_at IS NOT NULL AND user_id IN ({$placeholders})", ...$chunk )
+			);
+			$marked += is_int( $rows ) ? $rows : 0;
+		}
+		return $marked;
+	}
+
+	/**
+	 * Narrow rows (no LONGTEXT blobs, plus `html_hash`) of every signature
+	 * owned by `$user_ids`, newest first per user — what the team console
+	 * needs to resolve each user's primary signature and its deployment
+	 * state without one query per user. One SELECT per {@see ID_CHUNK}
+	 * users.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int[] $user_ids Owners.
+	 *
+	 * @return array<int, Signature[]> User id => signatures (updated_at DESC, id DESC).
+	 */
+	public function summaries_for_users( array $user_ids ): array {
+		$out     = [];
+		$columns = self::SUMMARY_COLUMNS . ', html_hash';
+		foreach ( array_chunk( self::positive_ids( $user_ids ), self::ID_CHUNK ) as $chunk ) {
+			$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+			$rows         = $this->wpdb->get_results(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholders built above.
+				$this->wpdb->prepare( "SELECT {$columns} FROM {$this->table()} WHERE user_id IN ({$placeholders}) ORDER BY user_id ASC, updated_at DESC, id DESC", ...$chunk ),
+				ARRAY_A
+			);
+			foreach ( is_array( $rows ) ? $rows : [] as $row ) {
+				$signature                    = Signature::from_row( $row );
+				$out[ $signature->user_id ][] = $signature;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Unique positive integer ids.
+	 *
+	 * @param array<int, mixed> $ids Raw ids.
+	 *
+	 * @return int[]
+	 */
+	private static function positive_ids( array $ids ): array {
+		$out = [];
+		foreach ( $ids as $id ) {
+			$id = is_numeric( $id ) ? (int) $id : 0;
+			if ( $id > 0 ) {
+				$out[ $id ] = $id;
+			}
+		}
+		return array_values( $out );
 	}
 
 	/**
@@ -525,8 +641,10 @@ class SignatureRepository extends BaseRepository {
 			'html_text'      => $data['html_text'] ?? null,
 			'html_hash'      => $data['html_hash'] ?? null,
 			// A compile sent with the create belongs to this exact row
-			// state, so it is stamped with the same instant as updated_at.
-			'compiled_at'    => isset( $data['html_cache'] ) ? $now : null,
+			// state, so it is stamped with the same instant as updated_at —
+			// unless it was compiled from inputs that changed since
+			// (`html_outdated`, 1.3.0): then it stays outdated.
+			'compiled_at'    => isset( $data['html_cache'] ) && empty( $data['html_outdated'] ) ? $now : null,
 			// 1.3.0: only a row with a template can follow it.
 			'link_mode'      => Signature::LINK_LINKED === ( $data['link_mode'] ?? '' ) && isset( $data['template_id'] )
 				? Signature::LINK_LINKED
@@ -616,8 +734,10 @@ class SignatureRepository extends BaseRepository {
 
 		// HTML compiled alongside this write describes exactly this row
 		// state: stamp it with the same instant so it isn't seen as stale.
+		// HTML compiled from inputs that changed since (`html_outdated`,
+		// 1.3.0) is stored but stays outdated.
 		if ( array_key_exists( 'html_cache', $data ) ) {
-			$update['compiled_at'] = $update['updated_at'];
+			$update['compiled_at'] = empty( $data['html_outdated'] ) ? $update['updated_at'] : null;
 			$formats[]             = '%s';
 		}
 

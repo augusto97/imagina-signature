@@ -160,8 +160,8 @@ final class InstallPageTest extends TestCase {
 		$this->assertStringNotContainsString( 'Ana', $response['body'] );
 	}
 
-	public function test_missing_or_stale_html_shows_the_being_prepared_state(): void {
-		foreach ( [ null, self::signature( 9, false ) ] as $primary ) {
+	public function test_missing_or_never_compiled_html_shows_the_being_prepared_state(): void {
+		foreach ( [ null, self::never_compiled( 9 ) ] as $primary ) {
 			$this->primary = $primary;
 			$response      = $this->page()->build( $this->token );
 
@@ -171,6 +171,16 @@ final class InstallPageTest extends TestCase {
 			$this->assertStringNotContainsString( '<iframe', $response['body'] );
 			$this->assertStringNotContainsString( 'imgsig-install-data', $response['body'] );
 		}
+	}
+
+	public function test_outdated_html_keeps_being_served(): void {
+		$this->primary = self::signature( 9, false );
+		$response      = $this->page()->build( $this->token );
+
+		$this->assertSame( 200, $response['status'] );
+		$this->assertStringNotContainsString( 'Your signature is being prepared', $response['body'] );
+		$this->assertStringContainsString( '<iframe', $response['body'] );
+		$this->assertStringContainsString( 'imgsig-install-data', $response['body'] );
 	}
 
 	public function test_page_renders_the_signature_with_nonce_csp_and_escaped_values(): void {

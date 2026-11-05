@@ -92,7 +92,8 @@ final class Actions {
 	public const PROFILE_UPDATED = 'imgsig/profile/updated';
 
 	/**
-	 * Fires after Settings → Profile fields (mapping / custom fields) is saved.
+	 * Fires after Settings → Profile fields (mapping / custom fields) is saved
+	 * with a change (1.3.0: not on a save that changed nothing).
 	 *
 	 * @since 1.3.0
 	 *
@@ -159,6 +160,46 @@ final class Actions {
 	 * @param array<string, mixed> $result      `{ processed, created, updated, skipped, failed, total, next_offset }`.
 	 */
 	public const TEMPLATE_ASSIGNED = 'imgsig/template/assigned';
+
+	/**
+	 * Fires after a team manager saved another user's signature on their
+	 * behalf (`PATCH /signatures/:id` from the Team page's "Edit signature
+	 * on their behalf") — {@see \ImaginaSignatures\Team\OnBehalf::announce()}.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param \ImaginaSignatures\Models\Signature $signature The saved signature (owner = `$signature->user_id`).
+	 * @param int                                $editor_id User who saved it.
+	 * @param string[]                           $fields    Fields that were sent (`json_content`, `name`, `html`…).
+	 */
+	public const SIGNATURE_EDITED_ON_BEHALF = 'imgsig/signature/edited_on_behalf';
+
+	/**
+	 * Fires after stored signature HTML was marked outdated because an
+	 * input outside the signature changed (profile, WP user fields,
+	 * groups, field mapping, compliance footer, campaigns, brand kit
+	 * company data) — {@see \ImaginaSignatures\Services\StaleHtmlMarker}.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int[]|null $user_ids Owners whose signatures were marked (null = everyone).
+	 * @param string     $reason   `profile` | `user` | `group` | `profile_fields` | `site_settings` | `campaign_window`.
+	 * @param int        $rows     Rows that were fresh and are now outdated.
+	 */
+	public const SIGNATURE_HTML_OUTDATED = 'imgsig/signature/html_outdated';
+
+	/**
+	 * Fires after `PATCH /admin/site-settings` changed the compliance
+	 * footer, the banner campaigns and / or the brand kit (not on a save
+	 * that changed nothing).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string[]             $changed Keys that changed: `compliance_footer`, `banner_campaigns`, `brand_kit`.
+	 * @param array<string, mixed> $before  The three settings before the save.
+	 * @param array<string, mixed> $after   The three settings after the save.
+	 */
+	public const SITE_SETTINGS_CHANGED = 'imgsig/site_settings/changed';
 
 	/**
 	 * Constructor is private — this class is a static registry.

@@ -83,11 +83,34 @@ final class InstallServiceTest extends TestCase {
 		$this->assertSame( 'outdated', InstallService::state( [ 'installed_at' => '2026-11-02 10:00:00' ], null ) );
 	}
 
-	public function test_only_fresh_server_html_is_deployable(): void {
+	public function test_any_compiled_server_html_is_deployable(): void {
 		$this->assertTrue( InstallService::is_deployable( self::signature( 3 ) ) );
-		$this->assertFalse( InstallService::is_deployable( self::signature( 3, false ) ), 'stale HTML' );
+		// Outdated HTML keeps being served until a browser recompiles it.
+		$this->assertTrue( InstallService::is_deployable( self::signature( 3, false ) ), 'stale HTML' );
+		$this->assertFalse( InstallService::is_deployable( self::never_compiled( 3 ) ), 'never compiled' );
 		$this->assertFalse( InstallService::is_deployable( self::signature( 3, true, '   ' ) ), 'blank HTML' );
 		$this->assertFalse( InstallService::is_deployable( null ) );
+	}
+
+	public function test_is_fresh_also_requires_html_newer_than_the_last_change(): void {
+		$this->assertTrue( InstallService::is_fresh( self::signature( 3 ) ) );
+		$this->assertFalse( InstallService::is_fresh( self::signature( 3, false ) ) );
+		$this->assertFalse( InstallService::is_fresh( self::never_compiled( 3 ) ) );
+		$this->assertFalse( InstallService::is_fresh( null ) );
+	}
+
+	public function test_summary_flags_outdated_html_that_is_still_served(): void {
+		$summary = $this->service( self::signature( 3, false ) )->summary( 3 );
+		$this->assertTrue( $summary['ready'] );
+		$this->assertTrue( $summary['outdated'] );
+
+		$summary = $this->service( self::signature( 3 ) )->summary( 3 );
+		$this->assertTrue( $summary['ready'] );
+		$this->assertFalse( $summary['outdated'] );
+
+		$summary = $this->service( self::never_compiled( 3 ) )->summary( 3 );
+		$this->assertFalse( $summary['ready'] );
+		$this->assertFalse( $summary['outdated'] );
 	}
 
 	public function test_mark_installed_records_hash_client_and_time(): void {

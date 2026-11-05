@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace ImaginaSignatures\Tests\Unit\Api;
 
 use Brain\Monkey;
+use Brain\Monkey\Actions;
 use Brain\Monkey\Functions;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Settings\BrandKit;
@@ -215,6 +216,28 @@ final class SiteSettingsBrandKitTest extends TestCase {
 
 		$this->assertSame( 'no', $this->db->rows[ SiteSettingsController::OPT_BRAND_PALETTE ]['autoload'] );
 		$this->assertArrayNotHasKey( BrandKit::OPTION, $this->db->rows, 'kit untouched when not sent' );
+	}
+
+	public function test_saves_announce_only_changes_that_reach_compiled_signatures(): void {
+		Functions\when( 'current_user_can' )->justReturn( true );
+		Functions\when( 'wp_kses_post' )->returnArg( 1 );
+		$events = [];
+		Actions\expectDone( 'imgsig/site_settings/changed' )->zeroOrMoreTimes()->whenHappen(
+			static function ( $changed ) use ( &$events ): void {
+				$events[] = $changed;
+			}
+		);
+
+		$footer = [
+			'enabled' => true,
+			'html'    => '<p>Confidential</p>',
+		];
+		$this->patch( [ 'compliance_footer' => $footer ] );
+		$this->patch( [ 'compliance_footer' => $footer ] );
+		$this->patch( [ 'brand_palette' => [ '#ffffff' ] ] );
+		$this->patch( [ 'brand_kit' => [ 'company' => [ 'name' => 'Acme' ] ] ] );
+
+		$this->assertSame( [ [ 'compliance_footer' ], [ 'brand_kit' ] ], $events, 'Identical re-saves and palette edits change nothing.' );
 	}
 
 	public function test_signature_users_can_read_the_kit(): void {

@@ -18,6 +18,7 @@ use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Services\HtmlSanitizer;
 use ImaginaSignatures\Services\SignatureService;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
+use ImaginaSignatures\Team\OnBehalf;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -34,8 +35,11 @@ defined( 'ABSPATH' ) || exit;
  *
  * Every gate goes through {@see OwnershipCheck} for routes carrying
  * an `id` parameter, so by the time the handler runs we know the row
- * exists and is owned by the current user. Service-layer exceptions
- * are translated to `WP_Error` via {@see exception_to_wp_error()}.
+ * exists and is owned by the current user — or, for `GET` and the
+ * update methods of `/signatures/:id` only, that a team manager is
+ * editing it on its owner's behalf ({@see OnBehalf}, 1.3.0; delete,
+ * duplicate and "make primary" stay with the owner). Service-layer
+ * exceptions are translated to `WP_Error` via {@see exception_to_wp_error()}.
  *
  * Rate limits (fixed windows, per user, filterable through
  * `imgsig/rate_limit/max`): create 30/hour, duplicate 30/hour,
@@ -118,6 +122,13 @@ final class SignaturesController extends BaseController {
 			CapabilitiesInstaller::CAP_USE,
 			[ $this, 'owns_signature' ]
 		) )->callback();
+		// Read + save also for a team manager acting for the owner (1.3.0).
+		$ownership_or_team = ( new OwnershipCheck(
+			CapabilitiesInstaller::CAP_USE,
+			[ $this, 'owns_signature' ],
+			'id',
+			[ $this, 'may_edit_on_behalf' ]
+		) )->callback();
 
 		register_rest_route(
 			self::NAMESPACE,
@@ -145,7 +156,7 @@ final class SignaturesController extends BaseController {
 				[
 					'methods'             => 'GET',
 					'callback'            => [ $this, 'show' ],
-					'permission_callback' => $ownership,
+					'permission_callback' => $ownership_or_team,
 				],
 				[
 					// `WP_REST_Server::EDITABLE` = POST | PUT | PATCH.
@@ -155,7 +166,7 @@ final class SignaturesController extends BaseController {
 					// strips PATCH at the proxy layer.
 					'methods'             => \WP_REST_Server::EDITABLE,
 					'callback'            => [ $this, 'update' ],
-					'permission_callback' => $ownership,
+					'permission_callback' => $ownership_or_team,
 					'args'                => $this->write_args( false ),
 				],
 				[
@@ -228,6 +239,40 @@ final class SignaturesController extends BaseController {
 		// `SELECT 1` — the permission callback only needs a yes/no; the
 		// handler fetches the row it actually uses.
 		return $this->repo->exists_owned_by( $signature_id, $user_id );
+	}
+
+	/**
+	 * Non-owner probe for {@see OwnershipCheck}: a team manager may read
+	 * and save another user's signature (1.3.0).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int $signature_id Signature primary key.
+	 * @param int $user_id      Caller's user ID (unused: OnBehalf reads the current user).
+	 *
+	 * @return bool
+	 */
+	public function may_edit_on_behalf( int $signature_id, int $user_id ): bool {
+		unset( $user_id );
+		return OnBehalf::current_user_can_edit( $this->repo->owner_of( $signature_id ) );
+	}
+
+	/**
+	 * Owner id the caller acts for on `$signature_id`: their own id when
+	 * they own it, the owner's when they may edit it on their behalf,
+	 * else 0.
+	 *
+	 * @param int $signature_id Signature primary key.
+	 *
+	 * @return int
+	 */
+	private function acting_owner( int $signature_id ): int {
+		$me = get_current_user_id();
+		if ( $this->repo->exists_owned_by( $signature_id, $me ) ) {
+			return $me;
+		}
+		$owner = $this->repo->owner_of( $signature_id );
+		return OnBehalf::current_user_can_edit( $owner ) ? $owner : 0;
 	}
 
 	/**
@@ -351,9 +396,11 @@ final class SignaturesController extends BaseController {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function show( \WP_REST_Request $request ) {
+		$signature_id = (int) $request['id'];
+		$owner        = $this->acting_owner( $signature_id );
 		// Served from the repository's request cache when the service
 		// already loaded this row.
-		$signature = $this->repo->find_owned_by( (int) $request['id'], get_current_user_id() );
+		$signature = $owner > 0 ? $this->repo->find_owned_by( $signature_id, $owner ) : null;
 		if ( null === $signature ) {
 			return new \WP_Error(
 				'imgsig_not_found',
@@ -361,7 +408,12 @@ final class SignaturesController extends BaseController {
 				[ 'status' => 404 ]
 			);
 		}
-		return rest_ensure_response( $signature->to_array() );
+
+		$payload = $signature->to_array();
+		if ( get_current_user_id() !== $owner ) {
+			$payload['on_behalf'] = true;
+		}
+		return rest_ensure_response( $payload );
 	}
 
 	/**
@@ -374,12 +426,21 @@ final class SignaturesController extends BaseController {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function update( \WP_REST_Request $request ) {
+		$signature_id = (int) $request['id'];
+		$editor_id    = get_current_user_id();
+		$owner        = $this->acting_owner( $signature_id );
+		$on_behalf    = $owner > 0 && $owner !== $editor_id;
+		$payload      = $this->read_payload( $request );
+
 		try {
-			$this->rate_limiter->check( self::RL_ACTION_UPDATE, get_current_user_id(), self::RL_MAX_UPDATE, self::RL_WINDOW_SECONDS );
+			$this->rate_limiter->check( self::RL_ACTION_UPDATE, $editor_id, self::RL_MAX_UPDATE, self::RL_WINDOW_SECONDS );
+			// On behalf: saved as the owner's row, and the template's
+			// employee mode doesn't bind the team manager (`trusted`).
 			$signature = $this->service->update(
-				(int) $request['id'],
-				get_current_user_id(),
-				$this->read_payload( $request )
+				$signature_id,
+				$owner > 0 ? $owner : $editor_id,
+				$payload,
+				$on_behalf
 			);
 		} catch ( ImaginaSignaturesException $e ) {
 			return $this->exception_to_wp_error( $e );
@@ -389,7 +450,13 @@ final class SignaturesController extends BaseController {
 			return $this->persistence_error();
 		}
 
-		return rest_ensure_response( $this->with_notes( $signature->to_array() ) );
+		$response = $this->with_notes( $signature->to_array() );
+		if ( $on_behalf ) {
+			OnBehalf::announce( $signature, $editor_id, array_keys( $payload ) );
+			$response['on_behalf'] = true;
+		}
+
+		return rest_ensure_response( $response );
 	}
 
 	/**
@@ -630,6 +697,10 @@ final class SignaturesController extends BaseController {
 			if ( is_string( $request->get_param( 'text' ) ) ) {
 				$payload['text'] = (string) $request->get_param( 'text' );
 			}
+			// 1.3.0: fingerprint of the bootstrap inputs the HTML was compiled with.
+			if ( is_string( $request->get_param( 'inputs_hash' ) ) ) {
+				$payload['inputs_hash'] = (string) $request->get_param( 'inputs_hash' );
+			}
 		}
 
 		return $payload;
@@ -718,6 +789,11 @@ final class SignaturesController extends BaseController {
 			],
 			'text'         => [
 				'type' => 'string',
+			],
+			// 1.3.0: `IMGSIG_EDITOR_CONFIG.inputsHash` of the page that compiled `html`.
+			'inputs_hash'  => [
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			],
 		];
 	}

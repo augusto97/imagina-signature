@@ -37,7 +37,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * Users are skipped (and reported) when they no longer exist, lost
  * access to signatures, have no valid email, have no primary signature,
- * or its server-compiled HTML is missing / stale. Reminders also skip
+ * or it was never compiled on the server (outdated HTML still goes out:
+ * the install page serves the last compiled copy). Reminders also skip
  * users who installed in the meantime.
  *
  * Not `final` so PHPUnit 9 can double it in controller / reminder tests.

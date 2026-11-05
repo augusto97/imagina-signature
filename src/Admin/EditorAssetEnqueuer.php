@@ -11,12 +11,13 @@ namespace ImaginaSignatures\Admin;
 
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Core\I18n;
-use ImaginaSignatures\Directory\Groups;
-use ImaginaSignatures\Directory\ProfileFields;
+use ImaginaSignatures\Core\Plugin;
+use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Settings\BrandKit;
+use ImaginaSignatures\Services\RenderInputs;
 use ImaginaSignatures\Services\SignatureLinkConfig;
-use ImaginaSignatures\Settings\SystemVariables;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
+use ImaginaSignatures\Team\OnBehalf;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -31,6 +32,13 @@ defined( 'ABSPATH' ) || exit;
  *
  * Loaded only on the editor page hook suffix that {@see AdminMenu}
  * registers — never globally.
+ *
+ * Editing someone else's signature on their behalf (1.3.0, team
+ * managers — {@see OnBehalf}): everything the compiler reads (system
+ * variables, footer, campaigns, output language) is the OWNER's, so the
+ * HTML stored on save is what the owner's own editor would produce; the
+ * UI stays in the manager's language, `onBehalfOf` drives the banner and
+ * the back arrow returns to the Team page.
  *
  * @since 1.0.6
  */
@@ -145,9 +153,15 @@ final class EditorAssetEnqueuer {
 	 * @return array<string, mixed>
 	 */
 	private function build_config( int $signature_id ): array {
-		$user_id        = get_current_user_id();
-		$user           = wp_get_current_user();
-		$site_opts      = SiteSettingsController::current_settings();
+		$user_id   = get_current_user_id();
+		$user      = wp_get_current_user();
+		$site_opts = SiteSettingsController::current_settings();
+		$owner     = null;
+		try {
+			$owner = self::on_behalf_owner( $signature_id, Plugin::instance()->container()->make( SignatureRepository::class ) );
+		} catch ( \Throwable $e ) {
+			$owner = null;
+		}
 		// Read the active driver ID directly from the option rather
 		// than spinning up a `StorageManager` instance (which would
 		// also instantiate `Encryption` just to know the driver ID).
@@ -157,20 +171,19 @@ final class EditorAssetEnqueuer {
 		$upload_enabled = 'url_only' !== $active_driver;
 
 		return [
-			'pluginVersion'    => defined( 'IMGSIG_VERSION' ) ? IMGSIG_VERSION : '0.0.0',
-			'signatureId'      => $signature_id,
-			'userId'           => $user_id,
-			'apiBase'          => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),
-			'restNonce'        => wp_create_nonce( 'wp_rest' ),
+			'pluginVersion'  => defined( 'IMGSIG_VERSION' ) ? IMGSIG_VERSION : '0.0.0',
+			'signatureId'    => $signature_id,
+			'userId'         => $user_id,
+			'apiBase'        => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),
+			'restNonce'      => wp_create_nonce( 'wp_rest' ),
 			// For refreshing an expired REST nonce via core's
 			// `admin-ajax.php?action=rest-nonce`.
-			'ajaxUrl'          => esc_url_raw( admin_url( 'admin-ajax.php' ) ),
-			'locale'           => get_user_locale( $user_id ),
+			'ajaxUrl'        => esc_url_raw( admin_url( 'admin-ajax.php' ) ),
+			'locale'         => get_user_locale( $user_id ),
 			// `{ msgid: msgstr }` for the user's locale ({} for English).
-			'translations'     => I18n::js_translations( get_user_locale( $user_id ) ),
-			'pluginUrl'        => esc_url_raw( plugins_url( '', IMGSIG_FILE ) ),
-			'signaturesUrl'    => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures' ) ),
-			'capabilities'     => [
+			'translations'   => I18n::js_translations( get_user_locale( $user_id ) ),
+			'pluginUrl'      => esc_url_raw( plugins_url( '', IMGSIG_FILE ) ),
+			'capabilities'   => [
 				'use'              => current_user_can( CapabilitiesInstaller::CAP_USE ),
 				'manage_templates' => current_user_can( CapabilitiesInstaller::CAP_MANAGE_TEMPLATES ),
 			],
@@ -179,27 +192,86 @@ final class EditorAssetEnqueuer {
 			// affordances (Crop button, image picker) and surface
 			// only URL inputs in the Image / Avatar / Banner property
 			// panels.
-			'uploadEnabled'    => $upload_enabled,
-			// `wp_*` user fields + `company_*` brand-kit fields, filtered
-			// through `imgsig/editor/system_variables`.
-			'systemVariables'  => SystemVariables::for_user( $user, $site_opts['brand_kit'] ),
+			'uploadEnabled'  => $upload_enabled,
 			// Public brand kit: new signatures start from its typography.
-			'brandKit'         => BrandKit::public_payload( $site_opts['brand_kit'] ),
-			'brandPalette'     => $site_opts['brand_palette'],
-			// 1.3.0: the user's first group with a footer override wins.
-			'complianceFooter' => Groups::effective_compliance_footer( $user_id, $site_opts['compliance_footer'] ),
+			'brandKit'       => BrandKit::public_payload( $site_opts['brand_kit'] ),
+			'brandPalette'   => $site_opts['brand_palette'],
+			'canBypassLocks' => SignatureLinkConfig::can_bypass_locks( $user_id ),
+		] + self::owner_context( $signature_id, $user, $owner, $site_opts );
+	}
+
+	/**
+	 * The owner of `$signature_id` when the current user is editing it on
+	 * their behalf ({@see OnBehalf}), else null (their own signature, a
+	 * new one, or no permission — {@see EditorPage} already refused that).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int                 $signature_id Signature (0 = new).
+	 * @param SignatureRepository $repo         Signature repository.
+	 *
+	 * @return \WP_User|null
+	 */
+	public static function on_behalf_owner( int $signature_id, SignatureRepository $repo ): ?\WP_User {
+		if ( $signature_id <= 0 ) {
+			return null;
+		}
+		$owner_id = $repo->owner_of( $signature_id );
+		if ( ! OnBehalf::current_user_can_edit( $owner_id ) ) {
+			return null;
+		}
+		$owner = get_userdata( $owner_id );
+		return $owner instanceof \WP_User ? $owner : null;
+	}
+
+	/**
+	 * The bootstrap keys that depend on whose signature is open: the
+	 * compile inputs ({@see RenderInputs}) of the signature's owner — the
+	 * viewer's own, or the owner's when editing on their behalf — plus
+	 * the link state, the back-arrow / profile URLs and `onBehalfOf`.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int                  $signature_id Signature (0 = new).
+	 * @param \WP_User             $viewer       Current user.
+	 * @param \WP_User|null        $owner        Owner when editing on their behalf.
+	 * @param array<string, mixed> $site         {@see SiteSettingsController::current_settings()}.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function owner_context( int $signature_id, \WP_User $viewer, ?\WP_User $owner, array $site ): array {
+		$subject = null !== $owner ? $owner : $viewer;
+		// `wp_*` / profile / `company_*` variables (filtered through
+		// `imgsig/editor/system_variables`), the footer of the first group
+		// with an override, and only the campaigns active today and
+		// targeted at the subject.
+		$inputs = RenderInputs::for_user( $subject, $site );
+
+		return [
+			'signaturesUrl'    => null !== $owner
+				? DirectoryPages::team_url()
+				: esc_url_raw( admin_url( 'admin.php?page=imagina-signatures' ) ),
+			'systemVariables'  => $inputs['systemVariables'],
+			'complianceFooter' => $inputs['complianceFooter'],
+			'bannerCampaigns'  => $inputs['bannerCampaigns'],
 			// 1.3.0: profile field definitions (Variables panel) + where to edit them.
-			'profileFields'    => ProfileFields::public_definitions(),
-			'profileUrl'       => DirectoryPages::profile_url(),
-			// Editor only sees CURRENTLY-ACTIVE campaigns (filtered by
-			// enabled + date window) so the compile pipeline doesn't
-			// have to know about scheduling. The admin sees the full
-			// list via /admin/site-settings.
-			'bannerCampaigns'  => SiteSettingsController::active_banner_campaigns(),
+			'profileFields'    => $inputs['profileFields'],
+			'profileUrl'       => null !== $owner
+				? DirectoryPages::team_url( [ 'profile' => (int) $owner->ID ] )
+				: DirectoryPages::profile_url(),
+			// Language of the compiled output (`lang` / `dir`): the subject's.
+			'signatureLocale'  => $inputs['locale'],
+			// Sent back with each save: HTML compiled from inputs that changed
+			// since this page loaded is stored as outdated (1.3.0).
+			'inputsHash'       => RenderInputs::fingerprint( $inputs ),
 			// 1.3.0: whether the signature follows a template and what its
-			// employee mode lets this user change (see SignatureLinkConfig).
-			'signatureLink'    => SignatureLinkConfig::for_signature( $signature_id, $user_id ),
-			'canBypassLocks'   => SignatureLinkConfig::can_bypass_locks( $user_id ),
+			// employee mode lets the subject change (see SignatureLinkConfig).
+			'signatureLink'    => SignatureLinkConfig::for_signature( $signature_id, (int) $subject->ID ),
+			'onBehalfOf'       => null === $owner ? null : [
+				'userId'      => (int) $owner->ID,
+				'displayName' => (string) $owner->display_name,
+				'email'       => (string) $owner->user_email,
+			],
 		];
 	}
 }

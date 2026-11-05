@@ -7,6 +7,7 @@ import {
   Home,
   UserRound,
   Users,
+  UsersRound,
 } from 'lucide-react';
 import { __ } from '@admin/i18n';
 import { getConfig } from '@admin/api';
@@ -33,6 +34,13 @@ const NAV: NavItem[] = [
     icon: LayoutTemplate,
     href: 'templates',
     requiresCap: 'manage_templates',
+  },
+  {
+    key: 'team',
+    label: () => __('Team'),
+    icon: UsersRound,
+    href: 'team',
+    requiresCap: 'manage_team',
   },
   {
     key: 'groups',

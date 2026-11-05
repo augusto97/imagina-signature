@@ -11,6 +11,7 @@ namespace ImaginaSignatures\Admin\Pages;
 
 use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
+use ImaginaSignatures\Team\OnBehalf;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -27,6 +28,8 @@ defined( 'ABSPATH' ) || exit;
  * Ownership for an existing signature is verified BEFORE rendering —
  * a user passing another user's `?id=` lands on a 403 instead of
  * loading the editor and discovering they can't read their own data.
+ * The one exception (1.3.0): a team manager editing someone's signature
+ * on their behalf ({@see OnBehalf}).
  *
  * @since 1.0.0
  */
@@ -62,7 +65,7 @@ final class EditorPage {
 
 		if ( $signature_id > 0 ) {
 			$signature = $this->repo->find_owned_by( $signature_id, $user_id );
-			if ( null === $signature ) {
+			if ( null === $signature && ! OnBehalf::current_user_can_edit( $this->repo->owner_of( $signature_id ) ) ) {
 				wp_die(
 					esc_html__( 'Signature not found or you do not have access to it.', 'imagina-signatures' ),
 					'',

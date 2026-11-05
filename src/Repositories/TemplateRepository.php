@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace ImaginaSignatures\Repositories;
 
 use ImaginaSignatures\Models\Template;
+use ImaginaSignatures\Setup\DefaultTemplatesSeeder;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -56,6 +57,43 @@ class TemplateRepository extends BaseRepository {
 			ARRAY_A
 		);
 		return is_array( $row ) ? Template::from_row( $row ) : null;
+	}
+
+	/**
+	 * Display names of several templates in one query (system templates
+	 * translated, like the gallery shows them).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int[] $ids Template ids.
+	 *
+	 * @return array<int, string> Id => name (missing ids are absent).
+	 */
+	public function names_by_ids( array $ids ): array {
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
+		if ( empty( $ids ) ) {
+			return [];
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$rows         = $this->wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholders built above.
+			$this->wpdb->prepare( "SELECT id, slug, name, is_system FROM {$this->table()} WHERE id IN ({$placeholders})", ...$ids ),
+			ARRAY_A
+		);
+
+		$out = [];
+		foreach ( is_array( $rows ) ? $rows : [] as $row ) {
+			$localized               = DefaultTemplatesSeeder::localize(
+				[
+					'slug'      => (string) $row['slug'],
+					'name'      => (string) $row['name'],
+					'is_system' => ! empty( $row['is_system'] ),
+				]
+			);
+			$out[ (int) $row['id'] ] = (string) $localized['name'];
+		}
+		return $out;
 	}
 
 	/**

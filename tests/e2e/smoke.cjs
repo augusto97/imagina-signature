@@ -285,6 +285,51 @@ async function waitSaved(page) {
   const subProfile = await rest(sp, 'GET', '/me/profile');
   check('subscriber reads their own profile', subProfile.status === 200, `status=${subProfile.status}`);
 
+  // ---------- Fase 2: team console, recompile, edit on behalf ----------
+  const adminId = await page.evaluate(() => (window.IMGSIG_ADMIN_CONFIG || window.IMGSIG_EDITOR_CONFIG).userId);
+  const teamRow = async () => {
+    const res = await rest(page, 'GET', `/admin/team?per_page=100`);
+    const items = (res.json && res.json.items) || [];
+    return { res, row: items.find((r) => r.id === adminId) };
+  };
+  const before = await teamRow();
+  check(
+    'team console lists people with their HTML state',
+    before.res.status === 200 && !!before.row && !!before.res.json.summary,
+    `status=${before.res.status}`,
+  );
+  // The profile saved above marked the admin's signature outdated.
+  check('a profile change marks the stored HTML outdated', !!before.row && before.row.html.state === 'outdated', JSON.stringify(before.row && before.row.html));
+  const subTeam = await rest(sp, 'GET', '/admin/team');
+  check('subscriber cannot read the team console', subTeam.status === 403, `status=${subTeam.status}`);
+
+  await page.goto(`${BASE}/wp-admin/admin.php?page=imagina-signatures-team`);
+  const recompileButton = page.getByRole('button', { name: /Recompile|Recompilar/ });
+  await recompileButton.waitFor({ timeout: 20000 });
+  await recompileButton.click();
+  await page.locator('text=/Done:|Listo:/').first().waitFor({ timeout: 60000 }).catch(() => {});
+  await page.screenshot({ path: path.join(OUT, 'team.png') });
+  const after = await teamRow();
+  check('recompile in the console makes the HTML fresh again', !!after.row && after.row.html.state === 'fresh', JSON.stringify(after.row && after.row.html));
+
+  const mariaSig = await rest(sp, 'POST', '/signatures', {
+    name: 'María E2E',
+    json_content: { schema_version: '1.1', meta: {}, canvas: { width: 600 }, blocks: [], variables: {} },
+  });
+  const mariaId = mariaSig.json && mariaSig.json.id;
+  const behalfRead = await rest(page, 'GET', `/signatures/${mariaId}`);
+  const behalfSave = await rest(page, 'PATCH', `/signatures/${mariaId}`, { name: 'María E2E (admin)' });
+  check(
+    "a team manager reads and saves someone else's signature",
+    behalfRead.status === 200 && behalfRead.json.on_behalf === true && behalfSave.status === 200 && behalfSave.json.user_id !== adminId,
+    `read=${behalfRead.status} save=${behalfSave.status}`,
+  );
+  const behalfDelete = await rest(page, 'DELETE', `/signatures/${mariaId}`);
+  check("deleting someone else's signature stays forbidden", behalfDelete.status === 403, `status=${behalfDelete.status}`);
+  await openEditor(page, `${BASE}/wp-admin/admin.php?page=imagina-signatures-editor&id=${mariaId}`);
+  const behalfBanner = await page.locator('[role="status"]', { hasText: /Editing|Editando/ }).first().isVisible().catch(() => false);
+  check('the editor says whose signature it is', behalfBanner);
+
   // ---------- Console / server problems ----------
   const problems = [...admin.problems, ...sub.problems];
   check('no page errors, console errors or 5xx responses', problems.length === 0, problems.slice(0, 5).join(' | '));

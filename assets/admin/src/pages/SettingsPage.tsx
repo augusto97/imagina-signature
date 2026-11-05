@@ -94,19 +94,30 @@ const TABS: Array<{ id: Tab; label: () => string; icon: typeof Cloud; descriptio
   },
 ];
 
-/** Tabs that also need `imgsig_manage_team` (1.3.0). */
-const TEAM_TABS: Tab[] = ['profile_fields'];
+/**
+ * Tabs whose endpoints need `imgsig_manage_team` (1.3.0): hidden — not
+ * rendered at all — for someone who can open Settings
+ * (`imgsig_manage_storage`) but doesn't manage the team.
+ */
+const TEAM_TABS: Tab[] = ['google', 'microsoft365', 'profile_fields', 'invitations'];
+
+/** The tabs this user may see. */
+function visibleTabs(canManageTeam: boolean): Tab[] {
+  return TABS.map((t) => t.id).filter((id) => canManageTeam || !TEAM_TABS.includes(id));
+}
 
 /**
  * Settings host — tabs: Storage, Brand kit, Compliance, Campaigns,
- * Frontend. Each
- * tab is its own component owning its own data fetch / save flow,
- * so a slow storage round-trip never blocks the branding tab.
+ * Frontend, and for team managers Google Workspace, Microsoft 365,
+ * Profile fields and Invitations. Each tab is its own component owning
+ * its own data fetch / save flow, so a slow storage round-trip never
+ * blocks the branding tab.
  */
 export const SettingsPage: FC = () => {
   const [tab, setTab] = useState<Tab>('storage');
   const caps = getConfig().capabilities;
-  const tabs = TABS.filter((t) => !TEAM_TABS.includes(t.id) || caps.manage_team);
+  const allowed = visibleTabs(caps.manage_team === true);
+  const tabs = TABS.filter((t) => allowed.includes(t.id));
   const active = tabs.find((t) => t.id === tab) ?? tabs[0]!;
 
   return (
@@ -117,7 +128,7 @@ export const SettingsPage: FC = () => {
         <div className="mx-auto max-w-3xl space-y-4">
           <div className="flex gap-1 rounded-lg border border-[var(--border-default)] bg-[var(--bg-panel)] p-1 text-[12.5px]">
             {tabs.map(({ id, label, icon: Icon }) => {
-              const isActive = id === tab;
+              const isActive = id === active.id;
               return (
                 <button
                   key={id}
@@ -137,15 +148,15 @@ export const SettingsPage: FC = () => {
             })}
           </div>
 
-          {tab === 'storage' && <StorageTab />}
-          {tab === 'branding' && <BrandingTab />}
-          {tab === 'compliance' && <ComplianceTab />}
-          {tab === 'campaigns' && <CampaignsTab />}
-          {tab === 'frontend' && <FrontendTab />}
-          {tab === 'google' && <GoogleWorkspaceTab />}
-          {tab === 'microsoft365' && <Microsoft365Tab />}
-          {tab === 'profile_fields' && caps.manage_team && <ProfileFieldsTab />}
-          {tab === 'invitations' && <InvitationsTab />}
+          {active.id === 'storage' && <StorageTab />}
+          {active.id === 'branding' && <BrandingTab />}
+          {active.id === 'compliance' && <ComplianceTab />}
+          {active.id === 'campaigns' && <CampaignsTab />}
+          {active.id === 'frontend' && <FrontendTab />}
+          {active.id === 'google' && <GoogleWorkspaceTab />}
+          {active.id === 'microsoft365' && <Microsoft365Tab />}
+          {active.id === 'profile_fields' && <ProfileFieldsTab />}
+          {active.id === 'invitations' && <InvitationsTab />}
         </div>
       </div>
     </div>

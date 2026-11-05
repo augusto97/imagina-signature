@@ -271,6 +271,8 @@ class SignatureService {
 			unset( $prepared['link_mode'] );
 		}
 
+		$prepared = $this->flag_html_from_old_inputs( $prepared, $data, $user_id );
+
 		do_action( 'imgsig/signature/before_create', $prepared, $user_id );
 
 		$signature = $this->repo->insert( $prepared );
@@ -341,6 +343,8 @@ class SignatureService {
 			unset( $prepared['link_mode'] );
 		}
 
+		$prepared = $this->flag_html_from_old_inputs( $prepared, $changes, $existing->user_id );
+
 		do_action( 'imgsig/signature/before_update', $existing, $prepared );
 
 		$updated = $this->repo->update( $signature_id, $prepared );
@@ -404,6 +408,41 @@ class SignatureService {
 		}
 
 		return $this->update( $signature->id, $signature->user_id, $payload, true );
+	}
+
+	/**
+	 * HTML sent with a save is compiled from the editor's bootstrap — the
+	 * owner's profile, groups, brand kit, footer and campaigns as they were
+	 * when the editor page loaded. When the save carries that bootstrap's
+	 * fingerprint (`inputs_hash`) and it no longer matches the owner's
+	 * current inputs ({@see RenderInputs}), the HTML is still stored (the
+	 * install page and the Outlook add-in can serve it) but flagged
+	 * `html_outdated`: the repository leaves `compiled_at` empty, so the
+	 * signature shows as outdated until it is recompiled. Without this, an
+	 * editor left open across a brand-kit or profile change would mark
+	 * stale HTML as fresh (1.3.0).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param array<string, mixed> $prepared Sanitised change set.
+	 * @param array<string, mixed> $data     Raw input (`inputs_hash`).
+	 * @param int                  $owner_id Signature owner.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function flag_html_from_old_inputs( array $prepared, array $data, int $owner_id ): array {
+		$sent = $data['inputs_hash'] ?? null;
+		if ( ! array_key_exists( 'html_cache', $prepared ) || ! is_string( $sent ) || '' === $sent ) {
+			return $prepared;
+		}
+		$owner = get_userdata( $owner_id );
+		if ( ! $owner instanceof \WP_User ) {
+			return $prepared;
+		}
+		if ( ! hash_equals( RenderInputs::fingerprint( RenderInputs::for_user( $owner ) ), $sent ) ) {
+			$prepared['html_outdated'] = true;
+		}
+		return $prepared;
 	}
 
 	/**

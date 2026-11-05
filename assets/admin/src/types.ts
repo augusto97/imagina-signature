@@ -7,7 +7,7 @@ import type { BrandKit } from '@shared/brandKit';
 /** Bootstrap config injected by PHP as `window.IMGSIG_ADMIN_CONFIG`. */
 export interface AdminConfig {
   /** Initial page slug — selected by which wp-admin URL the user opened. */
-  page: 'signatures' | 'templates' | 'settings' | 'profile' | 'groups';
+  page: 'signatures' | 'templates' | 'settings' | 'profile' | 'groups' | 'team';
   /** Logged-in user info. */
   userId: number;
   /** Map of plugin caps the user holds. */
@@ -67,6 +67,8 @@ export interface AdminConfig {
     profile?: string;
     /** Groups + CSV import (1.3.0; wp-admin only). */
     groups?: string;
+    /** Team console (1.3.0; wp-admin only, `imgsig_manage_team`). */
+    team?: string;
   };
 }
 

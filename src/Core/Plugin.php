@@ -29,6 +29,7 @@ use ImaginaSignatures\Api\Controllers\MeController;
 use ImaginaSignatures\Api\Controllers\OutlookController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
 use ImaginaSignatures\Api\Controllers\StorageController;
+use ImaginaSignatures\Api\Controllers\TeamConsoleController;
 use ImaginaSignatures\Api\Controllers\TeamSignaturesController;
 use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
@@ -42,6 +43,7 @@ use ImaginaSignatures\Deployment\Install\InstallModule;
 use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\SignatureRepository;
+use ImaginaSignatures\Services\StaleHtmlMarker;
 use ImaginaSignatures\Services\TemplatePropagator;
 
 defined( 'ABSPATH' ) || exit;
@@ -160,6 +162,10 @@ final class Plugin {
 
 		// Template → linked signatures propagation (cron batches, 1.3.0).
 		$this->container->make( TemplatePropagator::class )->register();
+
+		// Stored HTML is marked outdated when profiles, groups or the
+		// brand kit / footer / campaigns change (1.3.0).
+		$this->container->make( StaleHtmlMarker::class )->register();
 
 		// Personal-data exporter / eraser + delete_user cleanup.
 		$this->container->make( UserDataManager::class )->register();
@@ -350,6 +356,7 @@ final class Plugin {
 				$this->container->make( InstallController::class ),
 				$this->container->make( DeployInvitationsController::class ),
 				$this->container->make( TeamSignaturesController::class ),
+				$this->container->make( TeamConsoleController::class ),
 			]
 		);
 		$router->register();
