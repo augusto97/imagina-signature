@@ -45,6 +45,12 @@ final class SiteSettingsController extends BaseController {
 	public const OPT_COMPLIANCE_FOOTER = 'imgsig_compliance_footer';
 	public const OPT_BANNER_CAMPAIGNS  = 'imgsig_banner_campaigns';
 
+	/**
+	 * When true, deleting the plugin also drops its tables, options and
+	 * stored files. Default false (data survives a delete/reinstall).
+	 */
+	public const OPT_DELETE_DATA_ON_UNINSTALL = 'imgsig_delete_data_on_uninstall';
+
 	public const MAX_PALETTE_SIZE   = 12;
 	public const MAX_CAMPAIGNS      = 50;
 	public const MAX_CAMPAIGN_WIDTH = 800;
@@ -159,6 +165,15 @@ final class SiteSettingsController extends BaseController {
 			$payload['compliance_footer_sent'] = $footer;
 		}
 
+		if ( null !== $request->get_param( 'delete_data_on_uninstall' ) ) {
+			$delete_data = rest_sanitize_boolean( $request->get_param( 'delete_data_on_uninstall' ) );
+			$ok          = self::force_save_option( self::OPT_DELETE_DATA_ON_UNINSTALL, $delete_data ? 1 : 0 );
+			if ( ! $ok ) {
+				$persist_ok       = false;
+				$persist_errors[] = 'delete_data_on_uninstall';
+			}
+		}
+
 		if ( null !== $request->get_param( 'banner_campaigns' ) ) {
 			$raw       = (array) $request->get_param( 'banner_campaigns' );
 			$campaigns = self::sanitize_campaigns( $raw );
@@ -205,6 +220,8 @@ final class SiteSettingsController extends BaseController {
 			),
 			'banner_campaigns'  => self::read_option_uncached( self::OPT_BANNER_CAMPAIGNS, [] ),
 		];
+
+		$current['delete_data_on_uninstall'] = (bool) (int) self::read_option_uncached( self::OPT_DELETE_DATA_ON_UNINSTALL, 0 );
 
 		// Normalise the readback through the same sanitisers we used
 		// going in. This way any difference between what we sent and
@@ -404,9 +421,11 @@ final class SiteSettingsController extends BaseController {
 	 */
 	public static function current_settings(): array {
 		return [
-			'brand_palette'     => self::current_palette(),
-			'compliance_footer' => self::current_compliance_footer(),
-			'banner_campaigns'  => self::current_banner_campaigns(),
+			'brand_palette'            => self::current_palette(),
+			'compliance_footer'        => self::current_compliance_footer(),
+			'banner_campaigns'         => self::current_banner_campaigns(),
+			// 1.0.40: opt-in data purge on plugin deletion (admin-writable).
+			'delete_data_on_uninstall' => (bool) (int) get_option( self::OPT_DELETE_DATA_ON_UNINSTALL, 0 ),
 		];
 	}
 

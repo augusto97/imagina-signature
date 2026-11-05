@@ -117,6 +117,43 @@ class SignatureRepository extends BaseRepository {
 	}
 
 	/**
+	 * Moves every signature of `$from_user_id` to `$to_user_id`.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param int $from_user_id Current owner.
+	 * @param int $to_user_id   New owner.
+	 *
+	 * @return int Rows updated.
+	 */
+	public function reassign_user( int $from_user_id, int $to_user_id ): int {
+		$this->owned_cache = [];
+		$rows              = $this->wpdb->update(
+			$this->table(),
+			[ 'user_id' => $to_user_id ],
+			[ 'user_id' => $from_user_id ],
+			[ '%d' ],
+			[ '%d' ]
+		);
+		return is_int( $rows ) ? $rows : 0;
+	}
+
+	/**
+	 * Deletes every signature of a user.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param int $user_id Owner.
+	 *
+	 * @return int Rows deleted.
+	 */
+	public function delete_by_user( int $user_id ): int {
+		$this->owned_cache = [];
+		$rows              = $this->wpdb->delete( $this->table(), [ 'user_id' => $user_id ], [ '%d' ] );
+		return is_int( $rows ) ? $rows : 0;
+	}
+
+	/**
 	 * Cheap ownership probe (`SELECT 1`) for permission callbacks.
 	 *
 	 * @since 1.0.40

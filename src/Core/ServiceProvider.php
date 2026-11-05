@@ -18,6 +18,7 @@ use ImaginaSignatures\Api\Controllers\StorageController;
 use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\Middleware\RateLimiter;
+use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\AssetRepository;
 use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Repositories\TemplateRepository;
@@ -212,6 +213,18 @@ final class ServiceProvider {
 			FrontendAccessController::class,
 			static function (): FrontendAccessController {
 				return new FrontendAccessController();
+			}
+		);
+
+		// Privacy tools + user lifecycle.
+		$container->singleton(
+			UserDataManager::class,
+			static function ( Container $c ): UserDataManager {
+				return new UserDataManager(
+					$c->make( SignatureRepository::class ),
+					$c->make( AssetRepository::class ),
+					$c->make( StorageManager::class )
+				);
 			}
 		);
 	}

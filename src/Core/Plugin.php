@@ -25,6 +25,7 @@ use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\RestRouter;
 use ImaginaSignatures\Hooks\Actions;
+use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\SignatureRepository;
 
 defined( 'ABSPATH' ) || exit;
@@ -133,6 +134,9 @@ final class Plugin {
 
 		// WP-Cron handlers (daily rate-limit purge).
 		Cron::boot();
+
+		// Personal-data exporter / eraser + delete_user cleanup.
+		$this->container->make( UserDataManager::class )->register();
 
 		// Public-facing route — runs on EVERY request, admin or not.
 		// The router self-gates on its own settings; when the feature
