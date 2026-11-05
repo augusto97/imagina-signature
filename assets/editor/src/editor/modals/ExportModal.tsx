@@ -9,19 +9,29 @@ import {
   AlertOctagon,
   ChevronRight,
   Eye,
+  CheckCircle2,
+  XCircle,
+  FolderOpen,
+  AppWindow,
 } from 'lucide-react';
-import { compileSignature, type CompileIssue } from '@/core/compiler/compile';
+import { compileSignature, type CompileIssue, type CompileResult } from '@/core/compiler/compile';
+import { gmailPreflight, type PreflightStatus } from '@/core/compiler/preflight';
+import {
+  UTF8_BOM,
+  buildOutlookSignatureDocument,
+  buildPlainTextSignature,
+  buildStandaloneSignaturePage,
+  signatureFileBaseName,
+} from '@/core/compiler/export-documents';
 import type { Block, QrCodeBlock, VCardBlock } from '@/core/schema/blocks';
 import { childLists } from '@/core/schema/tree';
 import { findBlockByIdDeep, useSchemaStore } from '@/stores/schemaStore';
 import { useEditorStore } from '@/stores/editorStore';
+import { usePersistenceStore } from '@/stores/persistenceStore';
+import { useSelectionStore } from '@/stores/selectionStore';
 import { apiCall, ApiError, isUploadEnabled } from '@/bridge/apiClient';
 import { qrContentHash, uploadQrImage } from '@/core/blocks/qr-code/definition';
-import {
-  uploadVCardFile,
-  vcardContentHash,
-  vcardHasDetails,
-} from '@/core/blocks/vcard/definition';
+import { uploadVCardFile, vcardContentHash, vcardHasDetails } from '@/core/blocks/vcard/definition';
 import {
   dataUrlToBlob,
   extensionFor,
@@ -37,106 +47,51 @@ import { copyText, copyRichHtml } from '@/utils/clipboard';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 import { Modal } from '@/components/shared/Modal';
+import { DarkModeImageWarnings } from './preview/DarkModeImageWarnings';
 
 /**
- * Export modal — three-stage flow:
+ * Export modal:
  *
- *  1. Compile the signature and surface size + warnings.
- *  2. Big "Copy HTML" / "Send to my email" actions for the easy
- *     paths.
- *  3. Per-client install tabs with deep-links to the right settings
- *     screen and numbered paste-here steps. This is the path real
- *     users take — competitors that push OAuth admit (in their own
- *     usage data) that 80%+ of installations are still copy / paste.
+ *  1. Compile the signature and surface size, errors / warnings and
+ *     dark-mode risks (each issue links to its block).
+ *  2. Generic actions: "Copy visual", "Copy HTML", "Send to my email",
+ *     "Download .html".
+ *  3. Per-client install tabs, each with the export that client really
+ *     needs and accurate steps:
+ *     - Gmail / Google Workspace — pre-flight checklist (10,000-char
+ *       limit, data: URIs, https, public hosts) gating the copy;
+ *     - Outlook for Windows (classic) — .htm + .txt signature files for
+ *       %APPDATA%\Microsoft\Signatures;
+ *     - New Outlook / Outlook on the web — copy visual;
+ *     - Apple Mail — signature-only page in a new tab to select and copy;
+ *     - Mobile — "Send to my email", then copy on the phone;
+ *     - Thunderbird — .html file.
  */
-type Client = 'gmail' | 'outlook-web' | 'outlook-desktop' | 'apple-mail' | 'thunderbird';
+type Client = 'gmail' | 'outlook-desktop' | 'outlook-web' | 'apple-mail' | 'mobile' | 'thunderbird';
 
-/**
- * Per-client install guides. Labels and steps are functions so they
- * are translated at render time (and stay literal `__()` calls for
- * the extractor). Step texts quote the client's own menu labels and
- * our "Copy visual" / "Download .html" buttons — translations should
- * use the names those UIs show in the target language.
- */
-const CLIENTS: Array<{
-  id: Client;
-  label: () => string;
-  /** Which copy mode the steps assume the user took — drives the highlighted button. */
-  recommend: 'visual' | 'html';
-  deepLink?: string;
-  steps: () => string[];
-}> = [
-  {
-    id: 'gmail',
-    label: () => __('Gmail'),
-    recommend: 'visual',
-    deepLink: 'https://mail.google.com/mail/u/0/#settings/general',
-    steps: () => [
-      __('Press "Copy visual" above so the rendered signature is in your clipboard.'),
-      __('Click the link below — Gmail opens on the General settings tab in a new window.'),
-      __('Scroll to the "Signature" section, click "Create new", give it a name.'),
-      __('Click into the editor and paste (Cmd/Ctrl + V). The signature renders visually.'),
-      __('Pick the new signature in the "For new emails use" dropdown, then "Save changes" at the bottom.'),
-    ],
-  },
-  {
-    id: 'outlook-web',
-    label: () => __('Outlook Web'),
-    recommend: 'visual',
-    deepLink: 'https://outlook.live.com/mail/0/options/mail/messageContent',
-    steps: () => [
-      __('Press "Copy visual" above so the rendered signature is in your clipboard.'),
-      __('Click the link below to open Outlook on the web on the message-content settings page.'),
-      __('Under "Email signature", click "+ New signature" and give it a name.'),
-      __('Click into the rich-text area and paste (Cmd/Ctrl + V). The signature renders visually.'),
-      __('Set it as default for new messages and replies if you want, then click "Save".'),
-    ],
-  },
-  {
-    id: 'outlook-desktop',
-    label: () => __('Outlook Desktop'),
-    recommend: 'visual',
-    steps: () => [
-      __('Press "Copy visual" above so the rendered signature is in your clipboard.'),
-      __('Open Outlook → File → Options → Mail → Signatures…'),
-      __('Click "New", give the signature a name, click "OK".'),
-      __('Click into the editor area at the bottom and paste (Cmd/Ctrl + V).'),
-      __('Outlook 2007–2019 freezes animated GIFs on the first frame — the editor offers a static-fallback URL field to handle that. Click "OK" twice when done.'),
-    ],
-  },
-  {
-    id: 'apple-mail',
-    label: () => __('Apple Mail'),
-    recommend: 'visual',
-    steps: () => [
-      __('Press "Copy visual" above so the rendered signature is in your clipboard.'),
-      __('Open Mail → Settings… → Signatures.'),
-      __('Pick the email account on the left, click "+" to add a new signature, give it a name.'),
-      __('Click into the editor on the right and paste (Cmd + V). The signature renders visually.'),
-      __('If images don\'t show, untick "Always match my default message font" in the same panel.'),
-    ],
-  },
-  {
-    id: 'thunderbird',
-    label: () => __('Thunderbird'),
-    recommend: 'html',
-    steps: () => [
-      __('Press "Download .html" above to save the signature to disk.'),
-      __('Open Thunderbird → Account Settings → pick your account on the left.'),
-      __('Tick "Use HTML (e.g. <b>bold</b>)" under the Signature text area.'),
-      __('Tick "Attach the signature from a file instead" and choose the .html you just saved.'),
-      __('Click "OK". Thunderbird re-reads the file each send so editing the file updates every future email.'),
-    ],
-  },
+/** Labels are lazy so they translate at render time. */
+const CLIENTS: Array<{ id: Client; label: () => string }> = [
+  { id: 'gmail', label: () => __('Gmail / Google Workspace') },
+  { id: 'outlook-desktop', label: () => __('Outlook for Windows (classic)') },
+  { id: 'outlook-web', label: () => __('New Outlook / Outlook on the web') },
+  { id: 'apple-mail', label: () => __('Apple Mail') },
+  { id: 'mobile', label: () => __('Mobile') },
+  { id: 'thunderbird', label: () => __('Thunderbird') },
 ];
+
+const GMAIL_SETTINGS_URL = 'https://mail.google.com/mail/u/0/#settings/general';
+const OUTLOOK_WEB_SETTINGS_URL = 'https://outlook.live.com/mail/0/options/mail/messageContent';
+/** Where classic Outlook for Windows reads signature files from. */
+const OUTLOOK_SIGNATURES_FOLDER = '%APPDATA%\\Microsoft\\Signatures';
 
 export const ExportModal: FC = () => {
   const modal = useEditorStore((s) => s.modal);
   const closeModal = useEditorStore((s) => s.closeModal);
   const schema = useSchemaStore((s) => s.schema);
+  const signatureName = usePersistenceStore((s) => s.signatureName);
   const showToast = useToastStore((s) => s.show);
 
-  const [copied, setCopied] = useState<'html' | 'visual' | null>(null);
+  const [copied, setCopied] = useState<'html' | 'visual' | 'gmail' | 'folder' | null>(null);
   const [sending, setSending] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [client, setClient] = useState<Client>('gmail');
@@ -162,56 +117,94 @@ export const ExportModal: FC = () => {
     }
   }, [open]);
 
+  const flashCopied = (what: 'html' | 'visual' | 'gmail' | 'folder'): void => {
+    setCopied(what);
+    window.setTimeout(() => setCopied(null), 2000);
+  };
+
   const copyHtml = async (): Promise<void> => {
     if (!result) return;
     const ok = await copyText(result.html);
     if (ok) {
-      setCopied('html');
-      window.setTimeout(() => setCopied(null), 2000);
+      flashCopied('html');
     } else {
       showToast(__('Could not copy — try selecting the HTML below manually.'), 'error');
     }
   };
 
-  const copyVisual = async (): Promise<void> => {
+  const copyVisual = async (source: 'visual' | 'gmail' = 'visual'): Promise<void> => {
     if (!result) return;
     // Paste-into-composer path: only the signature fragment (the shell
     // table — no doctype / <head> / <title> / mso settings) plus the
     // schema-generated plain text, so a plain-text paste reads cleanly.
     const ok = await copyRichHtml(result.fragment, result.text);
     if (ok) {
-      setCopied('visual');
-      window.setTimeout(() => setCopied(null), 2000);
+      flashCopied(source);
     } else {
       showToast(
-        __('Could not copy — your browser blocked rich-clipboard access. Try the "Copy HTML" button instead.'),
+        __(
+          'Could not copy — your browser blocked rich-clipboard access. Try the "Copy HTML" button instead.',
+        ),
         'error',
       );
     }
   };
 
+  const copyFolderPath = async (): Promise<void> => {
+    if (await copyText(OUTLOOK_SIGNATURES_FOLDER)) flashCopied('folder');
+  };
+
   const download = (): void => {
     if (!result) return;
-    const blob = new Blob([result.html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
+    downloadFile(result.html, 'signature.html', 'text/html;charset=utf-8');
+  };
+
+  const fileBase = signatureFileBaseName(signatureName, __('Signature'));
+
+  const downloadOutlookHtm = (): void => {
+    if (!result) return;
+    const doc = buildOutlookSignatureDocument(result.fragment, {
+      lang: result.lang,
+      dir: result.dir,
+      title: fileBase,
+    });
+    downloadFile(UTF8_BOM + doc, `${fileBase}.htm`, 'text/html;charset=utf-8');
+  };
+
+  const downloadOutlookTxt = (): void => {
+    if (!result) return;
+    downloadFile(
+      UTF8_BOM + buildPlainTextSignature(result.text),
+      `${fileBase}.txt`,
+      'text/plain;charset=utf-8',
+    );
+  };
+
+  const openInNewTab = (): void => {
+    if (!result) return;
+    const page = buildStandaloneSignaturePage(result.fragment, {
+      lang: result.lang,
+      dir: result.dir,
+      title: __('Signature — press Cmd + A, then Cmd + C'),
+    });
+    const url = URL.createObjectURL(new Blob([page], { type: 'text/html;charset=utf-8' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'signature.html';
+    a.target = '_blank';
+    a.rel = 'noopener';
     a.click();
-    URL.revokeObjectURL(url);
+    // The new tab needs the URL while it loads; free it a minute later.
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
   const sendToEmail = async (): Promise<void> => {
     if (!result || sending) return;
     setSending(true);
     try {
-      const resp = await apiCall<{ sent: boolean; recipient: string }>(
-        '/signatures/test-send',
-        {
-          method: 'POST',
-          body: { html: result.html },
-        },
-      );
+      const resp = await apiCall<{ sent: boolean; recipient: string }>('/signatures/test-send', {
+        method: 'POST',
+        body: { html: result.html },
+      });
       setSentTo(resp.recipient);
       showToast(__('Sent to %s', resp.recipient), 'success');
     } catch (e) {
@@ -247,12 +240,31 @@ export const ExportModal: FC = () => {
     }
   };
 
+  const selectIssueBlock = (blockId: string): void => {
+    useSelectionStore.getState().select(blockId);
+    closeModal();
+  };
+
   const sizeKb = result ? (result.size / 1024).toFixed(1) : '0';
   const oversize = result ? result.size > 102 * 1024 : false;
-  const activeClient = CLIENTS.find((c) => c.id === client) ?? CLIENTS[0]!;
+
+  const sendButton = (
+    <button
+      type="button"
+      onClick={() => void sendToEmail()}
+      disabled={sending}
+      className="inline-flex h-9 items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-3 font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] disabled:opacity-50"
+      title={__(
+        'Sends the compiled HTML to your WP account email so you can copy it from your real client.',
+      )}
+    >
+      <Mail size={14} />
+      {sending ? __('Sending…') : sentTo ? __('Sent!') : __('Send to my email')}
+    </button>
+  );
 
   return (
-    <Modal open={open} title={__('Export & install')} onClose={closeModal} width={760}>
+    <Modal open={open} title={__('Export & install')} onClose={closeModal} width={780}>
       {result && (
         <div className="flex flex-col gap-4 text-[13px]">
           {/* Action row */}
@@ -266,7 +278,9 @@ export const ExportModal: FC = () => {
                   ? 'bg-emerald-600 text-white'
                   : 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]',
               )}
-              title={__('Copies the rendered signature so it pastes visually into rich-text composers (Gmail compose, Outlook signature box, Word, etc.). Use this when the signature settings only accept rich text, not HTML source.')}
+              title={__(
+                'Copies the rendered signature so it pastes visually into rich-text composers (Gmail compose, Outlook signature box, Word, etc.). Use this when the signature settings only accept rich text, not HTML source.',
+              )}
             >
               {copied === 'visual' ? <Check size={14} /> : <Eye size={14} />}
               {copied === 'visual' ? __('Copied!') : __('Copy visual')}
@@ -281,22 +295,15 @@ export const ExportModal: FC = () => {
                   ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
                   : 'border-[var(--border-default)] bg-[var(--bg-panel)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)]',
               )}
-              title={__('Copies the raw HTML source. Use this when the signature settings expose an HTML / source-code mode (Gmail with Labs HTML, raw .html file editing).')}
+              title={__(
+                'Copies the raw HTML source. Use this when the signature settings expose an HTML / source-code mode (Gmail with Labs HTML, raw .html file editing).',
+              )}
             >
               {copied === 'html' ? <Check size={14} /> : <Copy size={14} />}
               {copied === 'html' ? __('Copied!') : __('Copy HTML')}
             </button>
 
-            <button
-              type="button"
-              onClick={() => void sendToEmail()}
-              disabled={sending}
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-3 font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] disabled:opacity-50"
-              title={__('Sends the compiled HTML to your WP account email so you can copy it from your real client.')}
-            >
-              <Mail size={14} />
-              {sending ? __('Sending…') : sentTo ? __('Sent!') : __('Send to my email')}
-            </button>
+            {sendButton}
 
             <button
               type="button"
@@ -364,7 +371,8 @@ export const ExportModal: FC = () => {
             </div>
           )}
 
-          <CompileIssues issues={result.issues} />
+          <CompileIssues issues={result.issues} onSelect={selectIssueBlock} />
+          <DarkModeImageWarnings images={result.images} enabled={open} />
 
           {/* Install guides */}
           <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-panel)]">
@@ -373,15 +381,22 @@ export const ExportModal: FC = () => {
                 {__('Install in your email client')}
               </div>
               <p className="text-[11px] text-[var(--text-muted)]">
-                {__('Copy the HTML above first, then follow the steps for your client.')}
+                {__(
+                  'Pick your email client: each tab has the export it needs and the exact steps.',
+                )}
               </p>
             </header>
 
-            <div className="flex flex-wrap gap-1 border-b border-[var(--border-default)] bg-[var(--bg-panel-soft)] px-3 py-2">
+            <div
+              role="tablist"
+              className="flex flex-wrap gap-1 border-b border-[var(--border-default)] bg-[var(--bg-panel-soft)] px-3 py-2"
+            >
               {CLIENTS.map((c) => (
                 <button
                   key={c.id}
                   type="button"
+                  role="tab"
+                  aria-selected={client === c.id}
                   onClick={() => setClient(c.id)}
                   className={cn(
                     'h-7 rounded-md px-2.5 text-[11.5px] font-medium transition-colors',
@@ -395,33 +410,193 @@ export const ExportModal: FC = () => {
               ))}
             </div>
 
-            <div className="space-y-3 px-4 py-3">
-              <div className="flex flex-wrap items-center gap-2">
-                {activeClient.deepLink && (
-                  <a
-                    href={activeClient.deepLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--accent)]/30 bg-[var(--bg-selected)] px-3 text-[12px] font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent)]/15"
-                  >
-                    {__('Open %s settings', activeClient.label())}
-                    <ExternalLink size={12} />
-                  </a>
-                )}
-                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-slate-600">
-                  {activeClient.recommend === 'visual'
-                    ? __('Use “Copy visual”')
-                    : __('Use “Download .html”')}
-                </span>
-              </div>
+            <div role="tabpanel" className="space-y-3 px-4 py-3">
+              {client === 'gmail' && (
+                <GmailPanel
+                  result={result}
+                  copied={copied === 'gmail'}
+                  onCopy={() => void copyVisual('gmail')}
+                />
+              )}
 
-              <ol className="flex flex-col gap-1.5 text-[12.5px] text-[var(--text-secondary)]">
-                {activeClient.steps().map((step, i) => (
-                  <Step key={i} number={i + 1}>
-                    {step}
-                  </Step>
-                ))}
-              </ol>
+              {client === 'outlook-desktop' && (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <PrimaryButton onClick={downloadOutlookHtm} icon={<Download size={13} />}>
+                      {__('Download for Outlook (.htm)')}
+                    </PrimaryButton>
+                    <SecondaryButton onClick={downloadOutlookTxt} icon={<Download size={13} />}>
+                      {__('Download plain text (.txt)')}
+                    </SecondaryButton>
+                    <SecondaryButton
+                      onClick={() => void copyFolderPath()}
+                      icon={copied === 'folder' ? <Check size={13} /> : <FolderOpen size={13} />}
+                    >
+                      {copied === 'folder' ? __('Copied!') : __('Copy folder path')}
+                    </SecondaryButton>
+                  </div>
+                  <p className="text-[11.5px] text-[var(--text-muted)]">
+                    {__('Files: %s', `${fileBase}.htm · ${fileBase}.txt`)}
+                  </p>
+                  <Steps
+                    steps={[
+                      __(
+                        'Download both files above. Keep their names identical — only the extension differs; the name is what Outlook lists.',
+                      ),
+                      __('Close Outlook completely.'),
+                      __(
+                        'Press Windows + R, paste %s and press Enter. Create the "Signatures" folder if it does not exist.',
+                        OUTLOOK_SIGNATURES_FOLDER,
+                      ),
+                      __('Move the two downloaded files into that folder.'),
+                      __(
+                        'Open Outlook → File → Options → Mail → Signatures…, choose the new signature for "New messages" and "Replies/forwards", then click "OK".',
+                      ),
+                    ]}
+                  />
+                  <Note>
+                    {__(
+                      'If your organisation syncs Microsoft 365 cloud signatures, Outlook may replace files in that folder. Then press "Copy visual" and paste into File → Options → Mail → Signatures… → New instead.',
+                    )}
+                  </Note>
+                </>
+              )}
+
+              {client === 'outlook-web' && (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <PrimaryButton
+                      onClick={() => void copyVisual()}
+                      icon={copied === 'visual' ? <Check size={13} /> : <Eye size={13} />}
+                    >
+                      {copied === 'visual' ? __('Copied!') : __('Copy visual')}
+                    </PrimaryButton>
+                    <SettingsLink
+                      href={OUTLOOK_WEB_SETTINGS_URL}
+                      label={__('Outlook on the web')}
+                    />
+                  </div>
+                  <Steps
+                    steps={[
+                      __('Press "Copy visual" so the rendered signature is in your clipboard.'),
+                      __(
+                        'Outlook on the web: Settings (gear) → Account → Signatures. New Outlook for Windows: Settings → Accounts → Signatures.',
+                      ),
+                      __(
+                        'Click "+ New signature", give it a name, click into the editor and paste (Cmd/Ctrl + V).',
+                      ),
+                      __(
+                        'Pick it under "Select default signatures" for new messages and for replies/forwards, then click "Save".',
+                      ),
+                    ]}
+                  />
+                </>
+              )}
+
+              {client === 'apple-mail' && (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <PrimaryButton onClick={openInNewTab} icon={<AppWindow size={13} />}>
+                      {__('Open signature in a new tab')}
+                    </PrimaryButton>
+                  </div>
+                  <Steps
+                    steps={[
+                      __(
+                        'Press "Open signature in a new tab" (Safari works best). The tab shows only the signature.',
+                      ),
+                      __('In that tab press Cmd + A, then Cmd + C.'),
+                      __(
+                        'Open Mail → Settings… → Signatures, pick the account on the left and click "+" to add a signature.',
+                      ),
+                      __(
+                        'Untick "Always match my default message font" — otherwise Mail replaces the signature’s fonts with your default font.',
+                      ),
+                      __(
+                        'Click into the signature area on the right, delete the placeholder text and paste (Cmd + V). Close the window; Mail saves automatically.',
+                      ),
+                    ]}
+                  />
+                  <Note>{__('Send yourself a test message to check the result.')}</Note>
+                </>
+              )}
+
+              {client === 'mobile' && (
+                <>
+                  <p className="text-[12px] text-[var(--text-secondary)]">
+                    {__(
+                      'Phones cannot paste from this editor directly: send the signature to yourself, then copy it from the received email on the phone.',
+                    )}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">{sendButton}</div>
+                  <SubSection title={__('iPhone / iPad (Mail)')}>
+                    <Steps
+                      steps={[
+                        __(
+                          'Open the test email in the Mail app, touch and hold the signature and drag the selection handles over all of it, then tap "Copy".',
+                        ),
+                        __(
+                          'Open Settings → Apps → Mail → Signature (older iOS: Settings → Mail → Signature), choose "All Accounts" or "Per Account", clear the field and paste.',
+                        ),
+                        __(
+                          'iOS removes the formatting right after pasting: immediately shake the iPhone and tap "Undo" to bring the formatting back.',
+                        ),
+                        __('Go back to save.'),
+                      ]}
+                    />
+                  </SubSection>
+                  <SubSection title={__('Gmail app (Android / iPhone)')}>
+                    <Steps
+                      steps={[
+                        __(
+                          'The Gmail app’s own "Mobile signature" is plain text only — images, colours and links are not kept. For the full visual signature, install it in Gmail on a computer (Gmail tab).',
+                        ),
+                        __(
+                          'To set the text version: in the app open Settings → your account → Mobile signature and paste the text copied from the received email.',
+                        ),
+                      ]}
+                    />
+                  </SubSection>
+                  <SubSection title={__('Outlook app (Android / iPhone)')}>
+                    <Steps
+                      steps={[
+                        __(
+                          'Copy the signature from the received email (touch and hold, select all of it, Copy).',
+                        ),
+                        __(
+                          'Open the Outlook app → Settings → Signature (per account when offered) and paste.',
+                        ),
+                        __(
+                          'How much formatting survives depends on the app version: send yourself a message to check, and keep the mobile signature simple if images are dropped.',
+                        ),
+                      ]}
+                    />
+                  </SubSection>
+                </>
+              )}
+
+              {client === 'thunderbird' && (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <PrimaryButton onClick={download} icon={<Download size={13} />}>
+                      {__('Download .html')}
+                    </PrimaryButton>
+                  </div>
+                  <Steps
+                    steps={[
+                      __('Press "Download .html" above to save the signature to disk.'),
+                      __('Open Thunderbird → Account Settings → pick your account on the left.'),
+                      __('Tick "Use HTML (e.g. <b>bold</b>)" under the Signature text area.'),
+                      __(
+                        'Tick "Attach the signature from a file instead" and choose the .html you just saved.',
+                      ),
+                      __(
+                        'Click "OK". Thunderbird re-reads the file each send so editing the file updates every future email.',
+                      ),
+                    ]}
+                  />
+                </>
+              )}
             </div>
           </div>
 
@@ -439,6 +614,194 @@ export const ExportModal: FC = () => {
     </Modal>
   );
 };
+
+/**
+ * Gmail / Google Workspace tab: pre-flight checklist, then a copy
+ * button that is held back while something would break the signature
+ * in Gmail ("Copy anyway" stays available).
+ */
+const GmailPanel: FC<{ result: CompileResult; copied: boolean; onCopy: () => void }> = ({
+  result,
+  copied,
+  onCopy,
+}) => {
+  const preflight = useMemo(() => gmailPreflight(result), [result]);
+  return (
+    <>
+      <div className="rounded-md border border-[var(--border-default)] bg-[var(--bg-panel-soft)] px-3 py-2">
+        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+          {__('Before you copy')}
+        </div>
+        <ul className="flex flex-col gap-1">
+          {preflight.checks.map((check) => (
+            <li key={check.id} className="flex items-start gap-2 text-[12px]">
+              <StatusIcon status={check.status} />
+              <span className="flex-1">
+                <span className="text-[var(--text-primary)]">{check.label}</span>
+                {check.detail && (
+                  <span className="block text-[11px] text-[var(--text-muted)]">{check.detail}</span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {preflight.blocked && (
+        <div
+          role="alert"
+          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[11.5px] text-red-800"
+        >
+          <div className="font-semibold">
+            {__('Copying is on hold: Gmail would save a broken signature.')}
+          </div>
+          <p className="mt-0.5">
+            {__(
+              'Fix the items marked in red (and the problems listed above), then copy. You can still copy anyway.',
+            )}
+          </p>
+          {preflight.errors.length > 0 && (
+            <ul className="mt-1 list-disc pl-4">
+              {preflight.errors.map((issue, i) => (
+                <li key={`${issue.blockId ?? 'doc'}-${i}`}>{issue.message}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2">
+        {preflight.blocked ? (
+          <SecondaryButton
+            onClick={onCopy}
+            icon={copied ? <Check size={13} /> : <Copy size={13} />}
+          >
+            {copied ? __('Copied!') : __('Copy anyway')}
+          </SecondaryButton>
+        ) : (
+          <PrimaryButton onClick={onCopy} icon={copied ? <Check size={13} /> : <Eye size={13} />}>
+            {copied ? __('Copied!') : __('Copy for Gmail')}
+          </PrimaryButton>
+        )}
+        <SettingsLink href={GMAIL_SETTINGS_URL} label={__('Gmail')} />
+      </div>
+
+      <Steps
+        steps={[
+          __('Check the list above, then press "Copy for Gmail".'),
+          __(
+            'Open Gmail settings (link above) — or the gear icon → "See all settings" → "General" tab.',
+          ),
+          __('Scroll to "Signature", click "Create new" and give it a name.'),
+          __(
+            'Click into the signature box and paste (Cmd/Ctrl + V). Avoid editing it there afterwards — Gmail may drop formatting.',
+          ),
+          __(
+            'Under "Signature defaults" pick it for new emails and for replies/forwards, then click "Save changes" at the bottom of the page.',
+          ),
+        ]}
+      />
+      <Note>
+        {__(
+          'Google Workspace: if the signature box is missing or locked, your administrator manages signatures centrally.',
+        )}
+      </Note>
+    </>
+  );
+};
+
+const StatusIcon: FC<{ status: PreflightStatus }> = ({ status }) => {
+  if (status === 'ok') {
+    return (
+      <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-emerald-600" aria-label={__('OK')} />
+    );
+  }
+  if (status === 'warn') {
+    return (
+      <AlertTriangle
+        size={14}
+        className="mt-0.5 shrink-0 text-amber-600"
+        aria-label={__('Warning')}
+      />
+    );
+  }
+  return <XCircle size={14} className="mt-0.5 shrink-0 text-red-600" aria-label={__('Problem')} />;
+};
+
+const PrimaryButton: FC<{ onClick: () => void; icon: ReactNode; children: ReactNode }> = ({
+  onClick,
+  icon,
+  children,
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--accent)] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
+  >
+    {icon}
+    {children}
+  </button>
+);
+
+const SecondaryButton: FC<{ onClick: () => void; icon: ReactNode; children: ReactNode }> = ({
+  onClick,
+  icon,
+  children,
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-3 text-[12px] font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)]"
+  >
+    {icon}
+    {children}
+  </button>
+);
+
+const SettingsLink: FC<{ href: string; label: string }> = ({ href, label }) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--accent)]/30 bg-[var(--bg-selected)] px-3 text-[12px] font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent)]/15"
+  >
+    {__('Open %s settings', label)}
+    <ExternalLink size={12} />
+  </a>
+);
+
+const Steps: FC<{ steps: string[] }> = ({ steps }) => (
+  <ol className="flex flex-col gap-1.5 text-[12.5px] text-[var(--text-secondary)]">
+    {steps.map((step, i) => (
+      <Step key={i} number={i + 1}>
+        {step}
+      </Step>
+    ))}
+  </ol>
+);
+
+const SubSection: FC<{ title: string; children: ReactNode }> = ({ title, children }) => (
+  <section className="space-y-1.5">
+    <h4 className="text-[12px] font-semibold text-[var(--text-primary)]">{title}</h4>
+    {children}
+  </section>
+);
+
+const Note: FC<{ children: ReactNode }> = ({ children }) => (
+  <p className="rounded-md bg-[var(--bg-panel-soft)] px-3 py-2 text-[11.5px] leading-relaxed text-[var(--text-muted)]">
+    {children}
+  </p>
+);
+
+/** Saves `content` as a file through a temporary object URL. */
+function downloadFile(content: string, filename: string, type: string): void {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 type EmbeddedAsset =
   | { kind: 'image'; blockId: string; field: 'src' | 'static_fallback_url' }
@@ -521,7 +884,11 @@ async function hostEmbeddedAsset(asset: EmbeddedAsset): Promise<void> {
 
   const isAvatar = block.type === 'avatar';
   const displayWidth =
-    block.type === 'avatar' ? block.size : block.type === 'banner' ? block.width : (block.width ?? 600);
+    block.type === 'avatar'
+      ? block.size
+      : block.type === 'banner'
+        ? block.width
+        : (block.width ?? 600);
   const original = dataUrlToBlob(dataUrl);
   let upload: Blob = original;
   let mime = original.type;
@@ -555,13 +922,37 @@ function canvasAvailable(): boolean {
 
 /**
  * Leveled compile diagnostics: errors (the export is broken for
- * recipients) are always expanded in red; warnings sit in a collapsed
- * amber list. Shared with the Preview modal.
+ * recipients) are always expanded in red; warnings sit in an amber list
+ * (collapsed unless `expanded`). Shared with the Preview modal.
+ *
+ * With `onSelect`, every issue that belongs to a block becomes a button
+ * that selects that block in the editor.
  */
-export const CompileIssues: FC<{ issues: CompileIssue[] }> = ({ issues }) => {
+export const CompileIssues: FC<{
+  issues: CompileIssue[];
+  onSelect?: (blockId: string) => void;
+  expanded?: boolean;
+}> = ({ issues, onSelect, expanded = false }) => {
   const errors = issues.filter((i) => i.level === 'error');
   const warnings = issues.filter((i) => i.level === 'warning');
   if (errors.length === 0 && warnings.length === 0) return null;
+
+  const item = (issue: CompileIssue, i: number): ReactNode => (
+    <li key={`${issue.blockId ?? 'doc'}-${i}`}>
+      {onSelect && issue.blockId ? (
+        <button
+          type="button"
+          onClick={() => onSelect(issue.blockId!)}
+          className="text-left underline decoration-dotted underline-offset-2 hover:decoration-solid"
+          title={__('Select this block in the editor')}
+        >
+          {issue.message}
+        </button>
+      ) : (
+        issue.message
+      )}
+    </li>
+  );
 
   return (
     <div className="flex flex-col gap-2">
@@ -576,24 +967,19 @@ export const CompileIssues: FC<{ issues: CompileIssue[] }> = ({ issues }) => {
               ? __('1 problem will break this signature for recipients')
               : __('%s problems will break this signature for recipients', String(errors.length))}
           </div>
-          <ul className="mt-1.5 list-disc pl-4">
-            {errors.map((issue, i) => (
-              <li key={`${issue.blockId ?? 'doc'}-${i}`}>{issue.message}</li>
-            ))}
-          </ul>
+          <ul className="mt-1.5 list-disc pl-4">{errors.map(item)}</ul>
         </div>
       )}
       {warnings.length > 0 && (
-        <details className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800">
+        <details
+          open={expanded || undefined}
+          className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800"
+        >
           <summary className="flex cursor-pointer items-center gap-1.5 font-medium">
             <AlertTriangle size={12} />
             {__('%s compile warning(s)', String(warnings.length))}
           </summary>
-          <ul className="mt-2 list-disc pl-4">
-            {warnings.map((issue, i) => (
-              <li key={`${issue.blockId ?? 'doc'}-${i}`}>{issue.message}</li>
-            ))}
-          </ul>
+          <ul className="mt-2 list-disc pl-4">{warnings.map(item)}</ul>
         </details>
       )}
     </div>

@@ -152,7 +152,7 @@ describe('Outlook signature document (.htm)', () => {
     expect(buildPlainTextSignature('Jane\nDoe\r\nacme.com\n\n')).toBe(
       'Jane\r\nDoe\r\nacme.com\r\n',
     );
-    expect(UTF8_BOM).toBe('﻿');
+    expect(UTF8_BOM).toBe('\uFEFF');
   });
 });
 
