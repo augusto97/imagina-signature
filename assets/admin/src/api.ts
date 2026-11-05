@@ -49,6 +49,17 @@ export async function apiCall<T = unknown>(
   path: string,
   options: ApiCallOptions = {},
 ): Promise<T> {
+  return (await apiCallWithHeaders<T>(path, options)).data;
+}
+
+/**
+ * {@link apiCall} that also returns the response headers (pagination:
+ * `X-WP-Total`, `X-WP-TotalPages`).
+ */
+export async function apiCallWithHeaders<T = unknown>(
+  path: string,
+  options: ApiCallOptions = {},
+): Promise<{ data: T; headers: Headers }> {
   const config = getConfig();
   const url = `${config.apiBase}${path.startsWith('/') ? path : `/${path}`}`;
   const { body, headers, ...rest } = options;
@@ -88,8 +99,8 @@ export async function apiCall<T = unknown>(
   }
 
   if (response.status === 204) {
-    return undefined as T;
+    return { data: undefined as T, headers: response.headers };
   }
 
-  return (await response.json()) as T;
+  return { data: (await response.json()) as T, headers: response.headers };
 }
