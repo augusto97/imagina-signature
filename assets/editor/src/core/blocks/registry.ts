@@ -29,9 +29,11 @@ export interface CompileContext {
   canvas: CanvasConfig;
   /**
    * Pixel width available to the block being compiled. The root value
-   * is `canvas.width`; a 2-column container compiles each cell's
-   * children with that cell's inner width. Image-like blocks clamp their
-   * `width` attribute to it (minus their own horizontal padding).
+   * is `canvas.width`; a container compiles each column's children with
+   * that column's inner width, and `compileBlock()` subtracts a block's
+   * box padding / borders before calling its `compile()`. Image-like
+   * blocks clamp their `width` attribute to it (minus their own
+   * horizontal padding).
    */
   availableWidth: number;
 }

@@ -119,17 +119,22 @@ describe('plain text', () => {
     expect(text).not.toMatch(/96|Email Signature|<|>|✉|☎/);
   });
 
-  it('walks both container cells and skips hidden blocks', () => {
+  it('walks every container column and skips hidden blocks', () => {
     const { text } = compile([
       {
         id: 'row',
         type: 'container',
-        columns: 2,
         gap: 0,
-        children: [{ id: 'a', type: 'heading', content: 'Left', style }],
-        right_children: [
-          { id: 'b', type: 'heading', content: 'Right', style },
-          { id: 'c', type: 'heading', content: 'Hidden', style, visible: false },
+        columns: [
+          { id: 'l', width: 50, children: [{ id: 'a', type: 'heading', content: 'Left', style }] },
+          {
+            id: 'r',
+            width: 50,
+            children: [
+              { id: 'b', type: 'heading', content: 'Right', style },
+              { id: 'c', type: 'heading', content: 'Hidden', style, visible: false },
+            ],
+          },
         ],
       },
     ]);

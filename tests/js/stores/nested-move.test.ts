@@ -24,10 +24,11 @@ const txt = (id: string): TextBlock => ({
 const containerWith = (id: string, children: TextBlock[]): ContainerBlock => ({
   id,
   type: 'container',
-  columns: 1,
+  columns: [{ id: `${id}-c0`, width: 100, children }],
   gap: 0,
-  children,
 });
+
+const kids = (c: ContainerBlock) => c.columns[0]!.children;
 
 describe('schemaStore: nested mutations walk into Container children', () => {
   beforeEach(() => {
@@ -47,7 +48,7 @@ describe('schemaStore: nested mutations walk into Container children', () => {
     const top = useSchemaStore.getState().schema.blocks;
     expect(top).toHaveLength(1);
     const cnt = top[0] as ContainerBlock;
-    expect(cnt.children.map((c) => c.id)).toEqual(['a', 'new', 'b']);
+    expect(kids(cnt).map((c) => c.id)).toEqual(['a', 'new', 'b']);
   });
 
   it('moveBlock can reorder a nested block inside its parent', () => {
@@ -60,7 +61,7 @@ describe('schemaStore: nested mutations walk into Container children', () => {
     useSchemaStore.getState().moveBlock('a', 'c', 'after');
 
     const cnt = useSchemaStore.getState().schema.blocks[0] as ContainerBlock;
-    expect(cnt.children.map((c) => c.id)).toEqual(['b', 'c', 'a']);
+    expect(kids(cnt).map((c) => c.id)).toEqual(['b', 'c', 'a']);
   });
 
   it('moveBlock with a missing target does NOT corrupt the schema', () => {
@@ -88,9 +89,9 @@ describe('schemaStore: nested mutations walk into Container children', () => {
     useSchemaStore.getState().duplicateBlock('a');
 
     const cnt = useSchemaStore.getState().schema.blocks[0] as ContainerBlock;
-    expect(cnt.children).toHaveLength(3);
-    expect(cnt.children[0]?.id).toBe('a');
-    expect(cnt.children[1]?.id).not.toBe('a'); // fresh id for the clone
-    expect(cnt.children[2]?.id).toBe('b');
+    expect(kids(cnt)).toHaveLength(3);
+    expect(kids(cnt)[0]?.id).toBe('a');
+    expect(kids(cnt)[1]?.id).not.toBe('a'); // fresh id for the clone
+    expect(kids(cnt)[2]?.id).toBe('b');
   });
 });

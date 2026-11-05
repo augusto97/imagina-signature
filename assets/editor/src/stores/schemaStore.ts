@@ -1,39 +1,29 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import type { Block, ContainerBlock } from '@/core/schema/blocks';
+import type { Block, ContainerBlock, ContainerColumn } from '@/core/schema/blocks';
 import type { CanvasConfig, SignatureSchema } from '@/core/schema/signature';
 import { createEmptySchema } from '@/core/schema/signature';
-import { migrateContainersInPlace } from '@/core/schema/migrate';
-import { useHistoryStore } from './historyStore';
+import { migrateBlock, migrateSchemaInPlace } from '@/core/schema/migrate';
 import {
-  cloneBlockWithFreshIds,
-  cloneSchema,
-  containerCellArrays,
-  findParentAndIndex,
-} from './schemaUtils';
+  canPlaceAtDepth,
+  findBlock,
+  findColumn,
+  isContainer,
+  isDescendantOf,
+  locateBlock,
+} from '@/core/schema/tree';
+import {
+  clampColumnCount,
+  normalizeWidths,
+  removeColumnInPlace,
+  sameWidths,
+  setColumnCountInPlace,
+} from '@/core/schema/columns';
+import { useHistoryStore } from './historyStore';
+import { cloneBlockWithFreshIds, cloneSchema, findParentAndIndex } from './schemaUtils';
 
-/**
- * Identifier for the cell side inside a 2-column container. The
- * Container schema stores left-cell children under `children` and
- * right-cell children under `right_children`; helper actions use
- * this string to pick the right array.
- */
-export type ContainerCell = 'left' | 'right';
-
-/**
- * Returns the children array for the given cell side. For 1-col
- * containers (or the "left" side of any container), this is just
- * `children`. For the right cell, returns the `right_children`
- * array, lazy-initialising it as an empty array if missing so
- * callers can splice into it directly.
- */
-function cellChildren(container: ContainerBlock, cell: ContainerCell): Block[] {
-  if (cell === 'left') return container.children;
-  if (!Array.isArray(container.right_children)) {
-    container.right_children = [];
-  }
-  return container.right_children;
-}
+/** Column fields editable through {@link SchemaState.updateContainerColumn}. */
+export type ContainerColumnUpdates = Partial<Pick<ContainerColumn, 'valign' | 'box'>>;
 
 /**
  * Idle gap (ms) after which the next property edit opens a new undo
@@ -123,50 +113,90 @@ interface SchemaState {
   /** Redo one step. Returns false when there is nothing to redo. */
   redo: () => boolean;
 
-  addBlock: (block: Block, position?: number) => void;
-  insertBlockBefore: (target_id: string, block: Block) => void;
-  insertBlockAfter: (target_id: string, block: Block) => void;
+  /**
+   * Insertion / move actions return `false` (and change nothing) when
+   * the target is missing or the result would nest containers deeper
+   * than `MAX_CONTAINER_NESTING` (a container inside a column of a
+   * top-level container is fine; one level further is not).
+   */
+  addBlock: (block: Block, position?: number) => boolean;
+  insertBlockBefore: (target_id: string, block: Block) => boolean;
+  insertBlockAfter: (target_id: string, block: Block) => boolean;
   updateBlock: (id: string, updates: Partial<Block>) => void;
   deleteBlock: (id: string) => void;
-  moveBlock: (id: string, target_id: string, position: 'before' | 'after') => void;
+  moveBlock: (id: string, target_id: string, position: 'before' | 'after') => boolean;
   duplicateBlock: (id: string) => void;
 
   /**
-   * Insert a copy of `block` (ids regenerated recursively) right after
+   * Insert a copy of `block` (migrated to the current schema, ids
+   * regenerated recursively — columns included) right after
    * `after_id`, or at the end of the top level when `after_id` is
-   * null / not found. Returns the inserted copy's id.
+   * null / not found. Returns the inserted copy's id, or `null` when
+   * the paste was rejected because it would nest containers too deep.
    */
-  pasteBlock: (block: Block, after_id: string | null) => string;
+  pasteBlock: (block: Block, after_id: string | null) => string | null;
 
   /**
-   * Append a block to a Container cell. The optional `cell` argument
-   * defaults to `'left'` (back-compat with old call sites that
-   * didn't know about cells). Use `'right'` to drop into the right
-   * cell of a 2-column container.
+   * Insert a block into column `columnId` of container `containerId`
+   * at `position` (default: end of the column).
    */
-  addChildToContainer: (parent_id: string, child: Block, cell?: ContainerCell) => void;
-
-  /**
-   * Move an existing block into a specific container cell at a
-   * specific position. Used by canvas drag-and-drop when the user
-   * drops on an empty cell or between two siblings inside a cell.
-   * The block is removed from its current parent and spliced into
-   * the destination cell at `position` (defaults to end-of-cell).
-   */
-  moveBlockToContainerCell: (
-    block_id: string,
-    parent_id: string,
-    cell: ContainerCell,
+  addChildToColumn: (
+    containerId: string,
+    columnId: string,
+    block: Block,
     position?: number,
-  ) => void;
+  ) => boolean;
 
   /**
-   * Toggle a Container between 1 and 2 columns. Going 1→2 leaves
-   * everything in the left cell (so the user can drag pieces into
-   * the new right cell). Going 2→1 merges right_children back into
-   * children so no block is silently lost.
+   * Move an existing block (from anywhere in the tree) into column
+   * `columnId` of container `containerId` at `position` (default: end
+   * of the column). Used by drag-and-drop on a column drop zone and
+   * by the Layers panel.
    */
-  setContainerColumns: (container_id: string, columns: 1 | 2) => void;
+  moveBlockToColumn: (
+    blockId: string,
+    containerId: string,
+    columnId: string,
+    position?: number,
+  ) => boolean;
+
+  /**
+   * Set the number of columns (clamped 1..4) with an even split.
+   * Removed columns hand their children to the previous column, in
+   * order — no block is ever lost. Added columns are empty.
+   */
+  setContainerColumns: (containerId: string, count: number) => void;
+
+  /**
+   * Apply a layout preset: as many columns as `widths` entries (same
+   * child-preserving rules as {@link setContainerColumns}) with those
+   * widths (normalised to sum 100).
+   */
+  setContainerLayout: (containerId: string, widths: number[]) => void;
+
+  /**
+   * Set every column's width at once (normalised to sum 100; length
+   * must match the column count). Coalesced into one undo step while
+   * the user drags / types.
+   */
+  setColumnWidths: (containerId: string, widths: number[]) => void;
+
+  /**
+   * Remove one column; its children move to the end of the previous
+   * column (or the start of the next one for the first column), which
+   * also absorbs its width. A container keeps at least one column.
+   */
+  removeContainerColumn: (containerId: string, columnId: string) => void;
+
+  /** Swap a column with its left (`-1`) or right (`1`) neighbour. */
+  moveContainerColumn: (containerId: string, columnId: string, direction: -1 | 1) => void;
+
+  /** Edit a column's vertical alignment / box (coalesced history). */
+  updateContainerColumn: (
+    containerId: string,
+    columnId: string,
+    updates: ContainerColumnUpdates,
+  ) => void;
 
   /** Swap a block with its previous sibling (within its current parent). */
   moveBlockUp: (id: string) => void;
@@ -192,42 +222,35 @@ function markEdited(state: { schema: SignatureSchema; hasUserEdited: boolean }):
 }
 
 /**
- * Recursive lookup — walks into Container children so nested blocks
- * are reachable by id without callers needing to know the parent.
- * Walks BOTH the left cell (`children`) and the right cell
- * (`right_children`) so 2-column nested blocks are reachable too.
+ * Recursive lookup — walks every container column at any depth, so
+ * nested blocks are reachable by id without callers needing to know
+ * the parent. Alias of `findBlock()` from `core/schema/tree`.
  */
 export function findBlockByIdDeep(blocks: Block[], id: string): Block | undefined {
-  for (const block of blocks) {
-    if (block.id === id) return block;
-    if (block.type === 'container') {
-      for (const cell of containerCellArrays(block)) {
-        const found = findBlockByIdDeep(cell, id);
-        if (found) return found;
-      }
-    }
-  }
-  return undefined;
+  return findBlock(blocks, id);
+}
+
+/** Recursive splice — returns true on first hit, mutates the tree in place. */
+function removeBlockByIdDeep(blocks: Block[], id: string): boolean {
+  const loc = locateBlock(blocks, id);
+  if (!loc) return false;
+  loc.list.splice(loc.index, 1);
+  return true;
+}
+
+/** Container `id` (any depth) or undefined. */
+function findContainer(blocks: Block[], id: string): ContainerBlock | undefined {
+  const block = findBlock(blocks, id);
+  return isContainer(block) ? block : undefined;
 }
 
 /**
- * Recursive splice — returns true on first hit, mutates `blocks` in place.
- * Also walks both cells of every container.
+ * Whether `block` may land in the list that holds `targetId` (i.e.
+ * before / after it). Unknown targets resolve to the top level.
  */
-function removeBlockByIdDeep(blocks: Block[], id: string): boolean {
-  const idx = blocks.findIndex((b) => b.id === id);
-  if (idx >= 0) {
-    blocks.splice(idx, 1);
-    return true;
-  }
-  for (const block of blocks) {
-    if (block.type === 'container') {
-      for (const cell of containerCellArrays(block)) {
-        if (removeBlockByIdDeep(cell, id)) return true;
-      }
-    }
-  }
-  return false;
+function canPlaceNextTo(blocks: Block[], targetId: string, block: Block): boolean {
+  const loc = locateBlock(blocks, targetId);
+  return canPlaceAtDepth(block, loc ? loc.depth : 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -307,12 +330,12 @@ export const useSchemaStore = create<SchemaState>()(
     hasUserEdited: false,
 
     setSchema: (schema) => {
-      // Run the in-place container migration BEFORE the schema lands
-      // in state. Older 2-col rows used a single `children` array
-      // the compiler split in half; 1.0.31+ stores left vs right as
-      // explicit arrays. The walker only mutates rows that need it
-      // (idempotent), so re-loading a fresh signature is a no-op.
-      migrateContainersInPlace(schema);
+      // Run the in-place migration BEFORE the schema lands in state:
+      // 1.0 containers (`children` / `right_children`, and the
+      // pre-1.0.31 single list) become 1.1 `columns`, and the version
+      // is stamped 1.1. Idempotent, so re-loading a current signature
+      // is a no-op.
+      migrateSchemaInPlace(schema);
       set((state) => {
         state.schema = schema;
         // Loading is not editing — clear the flag so the autosave
@@ -328,7 +351,7 @@ export const useSchemaStore = create<SchemaState>()(
       // Clone so we never migrate / freeze an object the caller still
       // holds (e.g. the template row cached in the picker).
       const next = cloneSchema(schema);
-      migrateContainersInPlace(next);
+      migrateSchemaInPlace(next);
       if (undoable) {
         pushSnapshot();
       } else {
@@ -346,7 +369,7 @@ export const useSchemaStore = create<SchemaState>()(
       // hasUserEdited so the autosave still fires for the replayed
       // state. See comment on the interface declaration above.
       editBurst = null;
-      migrateContainersInPlace(schema);
+      migrateSchemaInPlace(schema);
       set((state) => {
         state.schema = schema;
         state.hasUserEdited = true;
@@ -369,6 +392,7 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     addBlock: (block, position) => {
+      if (!canPlaceAtDepth(block, 0)) return false;
       pushSnapshot();
       set((state) => {
         if (position === undefined) {
@@ -378,12 +402,14 @@ export const useSchemaStore = create<SchemaState>()(
         }
         markEdited(state);
       });
+      return true;
     },
 
     insertBlockBefore: (target_id, block) => {
+      if (!canPlaceNextTo(get().schema.blocks, target_id, block)) return false;
       pushSnapshot();
       set((state) => {
-        // Walk into Container children so dropping a library card
+        // Walk into container columns so dropping a library card
         // onto a nested block inserts at the right depth instead of
         // landing at the top level (which used to silently re-parent
         // the new block to root before 1.0.25).
@@ -395,9 +421,11 @@ export const useSchemaStore = create<SchemaState>()(
         }
         markEdited(state);
       });
+      return true;
     },
 
     insertBlockAfter: (target_id, block) => {
+      if (!canPlaceNextTo(get().schema.blocks, target_id, block)) return false;
       pushSnapshot();
       set((state) => {
         const found = findParentAndIndex(state.schema.blocks, target_id);
@@ -408,6 +436,7 @@ export const useSchemaStore = create<SchemaState>()(
         }
         markEdited(state);
       });
+      return true;
     },
 
     updateBlock: (id, updates) => {
@@ -436,88 +465,150 @@ export const useSchemaStore = create<SchemaState>()(
       });
     },
 
-    addChildToContainer: (parent_id, child, cell = 'left') => {
-      const parent = findBlockByIdDeep(get().schema.blocks, parent_id);
-      if (!parent || parent.type !== 'container') return;
+    addChildToColumn: (containerId, columnId, block, position) => {
+      const dest = findColumn(get().schema.blocks, containerId, columnId);
+      if (!dest || !canPlaceAtDepth(block, dest.depth)) return false;
       pushSnapshot();
       set((state) => {
-        const target = findBlockByIdDeep(state.schema.blocks, parent_id);
-        if (target && target.type === 'container') {
-          // 1-col containers ignore `cell` — there's only one cell.
-          // 2-col containers route to the requested cell.
-          const list =
-            target.columns === 2 ? cellChildren(target as ContainerBlock, cell) : target.children;
-          list.push(child);
-          markEdited(state);
-        }
+        const target = findColumn(state.schema.blocks, containerId, columnId);
+        if (!target) return;
+        const list = target.column.children;
+        const insertAt =
+          typeof position === 'number' ? Math.max(0, Math.min(position, list.length)) : list.length;
+        list.splice(insertAt, 0, block);
+        markEdited(state);
       });
+      return true;
     },
 
-    moveBlockToContainerCell: (block_id, parent_id, cell, position) => {
-      if (block_id === parent_id) return;
+    moveBlockToColumn: (blockId, containerId, columnId, position) => {
+      if (blockId === containerId) return false;
       const blocks = get().schema.blocks;
-      const dest = findBlockByIdDeep(blocks, parent_id);
-      if (!dest || dest.type !== 'container' || !findParentAndIndex(blocks, block_id)) return;
+      const moving = findBlock(blocks, blockId);
+      const dest = findColumn(blocks, containerId, columnId);
+      if (!moving || !dest) return false;
+      // A container can't move into one of its own columns, nor nest
+      // deeper than MAX_CONTAINER_NESTING.
+      if (isDescendantOf(blocks, blockId, containerId)) return false;
+      if (!canPlaceAtDepth(moving, dest.depth)) return false;
       pushSnapshot();
       set((state) => {
-        // Resolve the destination FIRST so we know it's reachable
-        // before pulling the block from its current parent.
-        const parent = findBlockByIdDeep(state.schema.blocks, parent_id);
-        if (!parent || parent.type !== 'container') return;
-
-        const source = findParentAndIndex(state.schema.blocks, block_id);
+        const source = locateBlock(state.schema.blocks, blockId);
         if (!source) return;
+        const [block] = source.list.splice(source.index, 1);
+        if (!block) return;
 
-        const [moving] = source.parent.splice(source.index, 1);
-        if (!moving) return;
-
-        // Re-resolve the destination cell AFTER removal — the source
-        // cell and the destination cell can be the same array, in
-        // which case the index we computed earlier shifted by one.
-        const target =
-          parent.columns === 2
-            ? cellChildren(parent as ContainerBlock, cell)
-            : parent.children;
-
+        // Re-resolve the destination AFTER removal — source and
+        // destination can be the same column, whose indices just
+        // shifted by one.
+        const target = findColumn(state.schema.blocks, containerId, columnId);
+        if (!target) {
+          source.list.splice(source.index, 0, block);
+          return;
+        }
+        const list = target.column.children;
         const insertAt =
-          typeof position === 'number'
-            ? Math.max(0, Math.min(position, target.length))
-            : target.length;
+          typeof position === 'number' ? Math.max(0, Math.min(position, list.length)) : list.length;
+        list.splice(insertAt, 0, block);
+        markEdited(state);
+      });
+      return true;
+    },
 
-        target.splice(insertAt, 0, moving);
+    setContainerColumns: (containerId, count) => {
+      const existing = findContainer(get().schema.blocks, containerId);
+      const target = clampColumnCount(count);
+      if (!existing || existing.columns.length === target) return;
+      pushSnapshot();
+      set((state) => {
+        const container = findContainer(state.schema.blocks, containerId);
+        if (!container) return;
+        setColumnCountInPlace(container, target);
         markEdited(state);
       });
     },
 
-    setContainerColumns: (container_id, columns) => {
-      const existing = findBlockByIdDeep(get().schema.blocks, container_id);
-      if (!existing || existing.type !== 'container' || existing.columns === columns) return;
+    setContainerLayout: (containerId, widths) => {
+      const existing = findContainer(get().schema.blocks, containerId);
+      if (!existing || widths.length === 0) return;
+      const count = clampColumnCount(widths.length);
+      const normalized = normalizeWidths(widths.slice(0, count));
+      const current = existing.columns.map((c) => c.width);
+      if (existing.columns.length === count && sameWidths(current, normalized)) return;
       pushSnapshot();
       set((state) => {
-        const container = findBlockByIdDeep(state.schema.blocks, container_id);
-        if (!container || container.type !== 'container') return;
-        const c = container as ContainerBlock;
+        const container = findContainer(state.schema.blocks, containerId);
+        if (!container) return;
+        setColumnCountInPlace(container, count, normalized);
+        markEdited(state);
+      });
+    },
 
-        if (c.columns === columns) return;
+    setColumnWidths: (containerId, widths) => {
+      const existing = findContainer(get().schema.blocks, containerId);
+      if (!existing || widths.length !== existing.columns.length) return;
+      const normalized = normalizeWidths(widths);
+      if (existing.columns.every((c, i) => c.width === normalized[i])) return;
+      pushCoalescedSnapshot(`columns:${containerId}:width`);
+      set((state) => {
+        const container = findContainer(state.schema.blocks, containerId);
+        if (!container) return;
+        container.columns.forEach((column, i) => {
+          column.width = normalized[i] ?? column.width;
+        });
+        markEdited(state);
+      });
+    },
 
-        if (columns === 1) {
-          // Going 2 → 1: merge right_children back into children so
-          // no block is silently lost when the right cell goes away.
-          if (Array.isArray(c.right_children) && c.right_children.length > 0) {
-            c.children.push(...c.right_children);
-          }
-          c.right_children = [];
-        } else {
-          // Going 1 → 2: keep everything in the LEFT cell. The user
-          // can drag pieces over to the new right cell from there.
-          // We don't auto-split because the user just chose to add a
-          // right column — they want to place things deliberately.
-          if (!Array.isArray(c.right_children)) {
-            c.right_children = [];
+    removeContainerColumn: (containerId, columnId) => {
+      const existing = findContainer(get().schema.blocks, containerId);
+      if (!existing || existing.columns.length <= 1) return;
+      if (!existing.columns.some((c) => c.id === columnId)) return;
+      pushSnapshot();
+      set((state) => {
+        const container = findContainer(state.schema.blocks, containerId);
+        if (!container) return;
+        removeColumnInPlace(
+          container,
+          container.columns.findIndex((c) => c.id === columnId),
+        );
+        markEdited(state);
+      });
+    },
+
+    moveContainerColumn: (containerId, columnId, direction) => {
+      const existing = findContainer(get().schema.blocks, containerId);
+      if (!existing) return;
+      const from = existing.columns.findIndex((c) => c.id === columnId);
+      const to = from + direction;
+      if (from < 0 || to < 0 || to >= existing.columns.length) return;
+      pushSnapshot();
+      set((state) => {
+        const container = findContainer(state.schema.blocks, containerId);
+        if (!container) return;
+        const [column] = container.columns.splice(from, 1);
+        if (!column) return;
+        container.columns.splice(to, 0, column);
+        markEdited(state);
+      });
+    },
+
+    updateContainerColumn: (containerId, columnId, updates) => {
+      const found = findColumn(get().schema.blocks, containerId, columnId);
+      if (!found) return;
+      const fields = changedFields(found.column, updates);
+      if (fields.length === 0) return;
+      pushCoalescedSnapshot(`column:${columnId}:${fields.join('|')}`);
+      set((state) => {
+        const target = findColumn(state.schema.blocks, containerId, columnId);
+        if (!target) return;
+        for (const [key, value] of Object.entries(updates)) {
+          if (value === undefined) {
+            delete (target.column as unknown as Record<string, unknown>)[key];
+          } else {
+            (target.column as unknown as Record<string, unknown>)[key] = value;
           }
         }
-
-        c.columns = columns;
         markEdited(state);
       });
     },
@@ -558,9 +649,14 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     moveBlock: (id, target_id, position) => {
-      if (id === target_id) return;
+      if (id === target_id) return false;
       const blocks = get().schema.blocks;
-      if (!findParentAndIndex(blocks, id) || !findParentAndIndex(blocks, target_id)) return;
+      const moving = findBlock(blocks, id);
+      const targetLoc = locateBlock(blocks, target_id);
+      if (!moving || !targetLoc) return false;
+      // Never into its own subtree, never deeper than allowed.
+      if (isDescendantOf(blocks, id, target_id)) return false;
+      if (!canPlaceAtDepth(moving, targetLoc.depth)) return false;
       pushSnapshot();
       set((state) => {
         // Walk into Container children for BOTH the source and target
@@ -591,6 +687,7 @@ export const useSchemaStore = create<SchemaState>()(
         );
         markEdited(state);
       });
+      return true;
     },
 
     duplicateBlock: (id) => {
@@ -616,7 +713,11 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     pasteBlock: (block, after_id) => {
-      const copy = cloneBlockWithFreshIds(block);
+      // The clipboard may hold a block copied before an upgrade (1.0
+      // container shape) — migrate it, then re-id everything.
+      const copy = cloneBlockWithFreshIds(migrateBlock(block));
+      const anchor = after_id ? locateBlock(get().schema.blocks, after_id) : null;
+      if (!canPlaceAtDepth(copy, anchor ? anchor.depth : 0)) return null;
       pushSnapshot();
       set((state) => {
         const loc = after_id ? findParentAndIndex(state.schema.blocks, after_id) : null;

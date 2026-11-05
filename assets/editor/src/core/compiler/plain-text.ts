@@ -8,6 +8,7 @@ import type {
   VCardBlock,
 } from '@/core/schema/blocks';
 import type { SignatureSchema } from '@/core/schema/signature';
+import { childLists } from '@/core/schema/tree';
 import { __ } from '@/i18n/helpers';
 import { sanitizeEmailHtml } from './sanitize';
 
@@ -134,9 +135,9 @@ function vcardLines(block: VCardBlock): string[] {
   return [labelled(block.label || __('Save my contact'), block.vcf_url)];
 }
 
+/** Columns read left to right, each column top to bottom. */
 function containerLines(block: ContainerBlock): string[] {
-  const right = Array.isArray(block.right_children) ? block.right_children : [];
-  return [...blockLines(block.children ?? []), ...blockLines(right)];
+  return childLists(block).flatMap((children) => blockLines(children));
 }
 
 /** "Label: url" — or just the URL when the label adds nothing. */

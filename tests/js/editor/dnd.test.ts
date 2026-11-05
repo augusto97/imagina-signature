@@ -235,10 +235,11 @@ describe('useDragAndDrop drop handling', () => {
     const cnt: ContainerBlock = {
       id: 'cnt',
       type: 'container',
-      columns: 2,
       gap: 0,
-      children: [text('x')],
-      right_children: [],
+      columns: [
+        { id: 'left', width: 50, children: [text('x')] },
+        { id: 'right', width: 50, children: [] },
+      ],
     };
     schema.blocks.push(cnt);
     useSchemaStore.setState({ schema });
@@ -250,6 +251,118 @@ describe('useDragAndDrop drop handling', () => {
       } as unknown as DragEndEvent),
     );
     expect(useSchemaStore.getState().schema.blocks.map((b) => b.id)).toEqual(['cnt']);
+    expect(useHistoryStore.getState().past).toHaveLength(0);
+  });
+});
+
+describe('useDragAndDrop: column drops and the nesting limit', () => {
+  type Column = ContainerBlock['columns'][number];
+  const col = (id: string, children: Column['children']): Column => ({ id, width: 50, children });
+
+  beforeEach(() => {
+    const schema = createEmptySchema();
+    const inner: ContainerBlock = {
+      id: 'inner',
+      type: 'container',
+      gap: 0,
+      columns: [col('ia', [text('x')]), col('ib', [])],
+    };
+    const outer: ContainerBlock = {
+      id: 'outer',
+      type: 'container',
+      gap: 0,
+      columns: [col('oa', [inner]), col('ob', [])],
+    };
+    schema.blocks.push(outer, text('t'));
+    useSchemaStore.setState({ schema, hasUserEdited: false });
+    useHistoryStore.setState({ past: [], future: [] });
+    useSelectionStore.setState({ selectedBlockId: null, hoveredBlockId: null });
+    useDropIndicatorStore.setState({ targetId: null, position: null });
+    endHistoryBurst();
+    resetDragPointer();
+  });
+
+  const outerCols = () => (useSchemaStore.getState().schema.blocks[0] as ContainerBlock).columns;
+
+  it('drops a library card into an empty column zone', () => {
+    const { result } = renderHook(() => useDragAndDrop());
+    act(() =>
+      result.current.handleDragEnd({
+        active: activeOf('library-text', { source: 'library', blockType: 'text' }),
+        over: overOf('container-cell:outer:ob', rect(0, 100)),
+      } as unknown as DragEndEvent),
+    );
+    expect(outerCols()[1]!.children).toHaveLength(1);
+    expect(useSelectionStore.getState().selectedBlockId).toBe(outerCols()[1]!.children[0]!.id);
+  });
+
+  it('allows a library container in a top-level column but not in a nested one', () => {
+    const { result } = renderHook(() => useDragAndDrop());
+    act(() =>
+      result.current.handleDragEnd({
+        active: activeOf('library-container', { source: 'library', blockType: 'container' }),
+        over: overOf('container-cell:outer:ob', rect(0, 100)),
+      } as unknown as DragEndEvent),
+    );
+    expect(outerCols()[1]!.children.map((b) => b.type)).toEqual(['container']);
+
+    const pastBefore = useHistoryStore.getState().past.length;
+    act(() =>
+      result.current.handleDragEnd({
+        active: activeOf('library-container', { source: 'library', blockType: 'container' }),
+        over: overOf('container-cell:inner:ib', rect(0, 100)),
+      } as unknown as DragEndEvent),
+    );
+    const inner = outerCols()[0]!.children[0] as ContainerBlock;
+    expect(inner.columns[1]!.children).toHaveLength(0);
+    expect(useHistoryStore.getState().past).toHaveLength(pastBefore);
+  });
+
+  it('shows no drop indicator next to a nested-container child for a container drag', () => {
+    const { result } = renderHook(() => useDragAndDrop());
+    act(() =>
+      result.current.handleDragMove({
+        active: activeOf(
+          'library-container',
+          { source: 'library', blockType: 'container' },
+          rect(0, 10),
+        ),
+        over: overOf('x', rect(0, 40)),
+      } as unknown as DragMoveEvent),
+    );
+    expect(useDropIndicatorStore.getState().targetId).toBeNull();
+
+    // A leaf may go there.
+    act(() =>
+      result.current.handleDragMove({
+        active: activeOf('library-text', { source: 'library', blockType: 'text' }, rect(0, 10)),
+        over: overOf('x', rect(0, 40)),
+      } as unknown as DragMoveEvent),
+    );
+    expect(useDropIndicatorStore.getState().targetId).toBe('x');
+  });
+
+  it('refuses to move a 2-level container into another container’s column', () => {
+    const schema = useSchemaStore.getState().schema;
+    const other: ContainerBlock = {
+      id: 'other',
+      type: 'container',
+      gap: 0,
+      columns: [{ ...col('pa', []), width: 100 }],
+    };
+    useSchemaStore.setState({ schema: { ...schema, blocks: [...schema.blocks, other] } });
+    const { result } = renderHook(() => useDragAndDrop());
+    act(() =>
+      result.current.handleDragEnd({
+        active: activeOf('outer', { kind: 'block', zone: CANVAS_ROOT_DROP_ID }, rect(0, 10)),
+        over: overOf('container-cell:other:pa', rect(0, 100)),
+      } as unknown as DragEndEvent),
+    );
+    expect(useSchemaStore.getState().schema.blocks.map((b) => b.id)).toEqual([
+      'outer',
+      't',
+      'other',
+    ]);
     expect(useHistoryStore.getState().past).toHaveLength(0);
   });
 });

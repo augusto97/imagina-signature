@@ -38,11 +38,16 @@ describe('compile honours block.visible', () => {
     const container: ContainerBlock = {
       id: 'cnt',
       type: 'container',
-      columns: 1,
       gap: 0,
-      children: [
-        textBlock('child-visible', 'kept-child'),
-        textBlock('child-hidden', 'dropped-child', true),
+      columns: [
+        {
+          id: 'col',
+          width: 100,
+          children: [
+            textBlock('child-visible', 'kept-child'),
+            textBlock('child-hidden', 'dropped-child', true),
+          ],
+        },
       ],
     };
     schema.blocks.push(container);

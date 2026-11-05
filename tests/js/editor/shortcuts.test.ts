@@ -23,10 +23,11 @@ function seed(): void {
   const cnt: ContainerBlock = {
     id: 'cnt',
     type: 'container',
-    columns: 2,
     gap: 16,
-    children: [text('l1'), text('l2')],
-    right_children: [text('r1')],
+    columns: [
+      { id: 'col_l', width: 50, children: [text('l1'), text('l2')] },
+      { id: 'col_r', width: 50, children: [text('r1')] },
+    ],
   };
   schema.blocks.push(text('a'), cnt, text('b'));
   useSchemaStore.setState({ schema, hasUserEdited: false });

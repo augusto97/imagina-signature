@@ -67,6 +67,22 @@ function textOf(html: string): string {
   );
 }
 
+/**
+ * Child lists of a container in visual order, for raw template JSON in
+ * either shape: 1.1 `columns[].children` or 1.0 `children` + `right_children`.
+ */
+function childListsOf(block: Block): Block[][] {
+  const raw = block as unknown as {
+    columns?: unknown;
+    children?: Block[];
+    right_children?: Block[];
+  };
+  if (Array.isArray(raw.columns)) {
+    return (raw.columns as Array<{ children?: Block[] }>).map((c) => c.children ?? []);
+  }
+  return [raw.children ?? [], raw.right_children ?? []];
+}
+
 /** Visible strings each block must produce, in schema order. */
 function expectedTexts(blocks: Block[], variables: Record<string, string>): string[] {
   const out: string[] = [];
@@ -90,10 +106,7 @@ function expectedTexts(blocks: Block[], variables: Record<string, string>): stri
         out.push(norm(sub(b.label)));
         break;
       case 'container':
-        out.push(
-          ...expectedTexts(b.children, variables),
-          ...expectedTexts(b.right_children ?? [], variables),
-        );
+        for (const list of childListsOf(b)) out.push(...expectedTexts(list, variables));
         break;
       default:
         break;
