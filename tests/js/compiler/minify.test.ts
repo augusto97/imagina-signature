@@ -50,6 +50,45 @@ describe('minifyHtml', () => {
     expect(minifyHtml('<p>hello world</p>')).toBe('<p>hello world</p>');
   });
 
+  it('keeps the space between adjacent inline elements', () => {
+    expect(minifyHtml('<td><strong>Jane</strong> <em>Doe</em></td>')).toBe(
+      '<td><strong>Jane</strong> <em>Doe</em></td>',
+    );
+    expect(minifyHtml('<td><strong>Jane</strong>\n  <em>Doe</em></td>')).toBe(
+      '<td><strong>Jane</strong> <em>Doe</em></td>',
+    );
+  });
+
+  it('does not join words split across lines', () => {
+    expect(minifyHtml('<p>Senior\nEngineer</p>')).toBe('<p>Senior Engineer</p>');
+    expect(minifyHtml('<td>Call me\n   <a href="tel:1">now</a></td>')).toBe(
+      '<td>Call me <a href="tel:1">now</a></td>',
+    );
+  });
+
+  it('keeps whitespace between text and an inline element', () => {
+    expect(minifyHtml('<td>Phone: <span>123</span> ext.</td>')).toBe(
+      '<td>Phone: <span>123</span> ext.</td>',
+    );
+  });
+
+  it('removes whitespace between structural tags only', () => {
+    expect(minifyHtml('<td>\n<table> <tr>\n<td><a href="x">a</a> <a href="y">b</a></td></tr></table></td>')).toBe(
+      '<td><table><tr><td><a href="x">a</a> <a href="y">b</a></td></tr></table></td>',
+    );
+  });
+
+  it('keeps a literal non-breaking space', () => {
+    expect(minifyHtml('<td>a b</td>')).toBe('<td>a b</td>');
+  });
+
+  it('keeps a multi-line conditional byte-identical next to collapsed markup', () => {
+    const cond = '<!--[if mso]>\n<v:roundrect   href="x">\n  <center>Go</center>\n</v:roundrect>\n<![endif]-->';
+    const revealed = '<!--[if !mso]><!-- --><table><tr><td>Go</td></tr></table><!--<![endif]-->';
+    const out = minifyHtml(`<td>\n  ${cond}\n  ${revealed}\n</td>`);
+    expect(out).toBe(`<td>${cond} ${revealed}</td>`);
+  });
+
   it('handles two siblings with conditional comments without merging them', () => {
     const input =
       '<!--[if mso]><a>one</a><![endif]-->' +

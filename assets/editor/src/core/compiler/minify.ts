@@ -1,64 +1,86 @@
 /**
- * Minifies the compiled HTML.
+ * Minifies the compiled HTML without changing what it renders.
  *
- * Strips inter-tag whitespace and HTML comments — but very carefully,
- * because Outlook conditional comments must survive verbatim or the
- * VML buttons / Outlook fixes break.
- *
- * Two conditional-comment forms are in play:
- *
- *  1. **Downlevel-hidden** (most common):
- *       <!--[if mso]>…content only Outlook sees…<![endif]-->
- *     Other browsers parse this as a single HTML comment, content
- *     is hidden everywhere except Outlook.
- *
- *  2. **Downlevel-revealed** (used by the Button block + the GIF
- *     fallback in 1.0.16):
- *       <!--[if !mso]><!--><a …>…</a><!--<![endif]-->
- *     The opener `<!--[if !mso]><!-->` ends a comment in non-Outlook
- *     so the `<a>` shows; the closer `<!--<![endif]-->` re-opens a
- *     comment in non-Outlook just to close the Outlook conditional.
- *     If we strip the closer the opener has no `-->` to terminate
- *     and the comment swallows everything that follows.
- *
- * Strategy: extract every conditional block (matched from the
- * `<!--[if…]>` opener to the matching `<![endif]-->` closer)
- * into a placeholder before stripping plain comments, then put
- * them back. Both forms have the same opener prefix `<!--[if` and
- * end with `<![endif]-->`, so a single regex captures both.
- *
- * Doesn't touch text content (preserves spaces inside attribute
- * values and between adjacent inline elements).
+ * Rules:
+ *  1. Outlook conditional comments are kept byte-identical. Two forms
+ *     are in play:
+ *       - downlevel-hidden   `<!--[if mso]>…<![endif]-->`
+ *       - downlevel-revealed `<!--[if !mso]><!-->…<!--<![endif]-->`
+ *     If the `<!--<![endif]-->` closer of the second form were
+ *     stripped, its opener would have no `-->` and the comment would
+ *     swallow everything after it. Every block from an `<!--[if` opener
+ *     to the next `<![endif]-->` is stashed before anything else runs.
+ *  2. Every other HTML comment is removed.
+ *  3. Runs of ASCII whitespace collapse to a single space. (U+00A0 is
+ *     NOT whitespace here — a literal non-breaking space stays.)
+ *  4. Whitespace is removed ONLY between two tags that are table /
+ *     block structure (table, tr, td, div, p, br, body, …) — or between
+ *     such a tag and a stashed conditional. Whitespace next to inline
+ *     elements or text is left alone, so `<strong>Jane</strong>
+ *     <em>Doe</em>` keeps its separating space (the previous minifier
+ *     produced "JaneDoe", and joined text lines with nothing).
  */
-const PLACEHOLDER_PREFIX = 'IMGSIG_COND_';
-const PLACEHOLDER_SUFFIX = '';
+const PLACEHOLDER = (idx: number): string => `\uE000${idx}\uE000`;
+const PLACEHOLDER_RE = /\uE000(\d+)\uE000/g;
+
+const STRUCTURAL_TAGS = new Set([
+  'table',
+  'tbody',
+  'thead',
+  'tfoot',
+  'tr',
+  'td',
+  'th',
+  'div',
+  'p',
+  'br',
+  'html',
+  'head',
+  'body',
+  'meta',
+  'title',
+  'style',
+  '!doctype',
+]);
+
+/** A tag (attribute values may contain `>` when quoted) or a stashed conditional. */
+const TOKEN = String.raw`(?:<(?:[^>"']|"[^"]*"|'[^']*')*>|\uE000\d+\uE000)`;
+const GAP_BETWEEN_TOKENS = new RegExp(`(${TOKEN}) (?=(${TOKEN}))`, 'g');
+
+type TokenKind = 'structural' | 'conditional' | 'other';
+
+function kindOf(token: string): TokenKind {
+  if (token.startsWith('\uE000')) return 'conditional';
+  const m = /^<\/?\s*(!?[a-zA-Z][\w:-]*)/.exec(token);
+  if (!m) return 'other';
+  return STRUCTURAL_TAGS.has(m[1]!.toLowerCase()) ? 'structural' : 'other';
+}
+
+function removable(a: TokenKind, b: TokenKind): boolean {
+  if (a === 'structural' && b === 'structural') return true;
+  if (a === 'structural' && b === 'conditional') return true;
+  if (a === 'conditional' && b === 'structural') return true;
+  return false;
+}
 
 export function minifyHtml(html: string): string {
-  // 1. Pull conditional comments out and stash them in placeholders.
-  //    The capture is greedy enough to span the full opener-content-closer
-  //    pattern but non-greedy to avoid swallowing across two siblings.
+  // 1. Stash conditional comments.
   const conditionals: string[] = [];
-  const stashed = html.replace(
-    /<!--\[if[\s\S]*?<!\[endif\]-->/g,
-    (match) => {
-      const idx = conditionals.length;
-      conditionals.push(match);
-      return `${PLACEHOLDER_PREFIX}${idx}${PLACEHOLDER_SUFFIX}`;
-    },
-  );
+  const stashed = html.replace(/<!--\[if[\s\S]*?<!\[endif\]-->/g, (match) => {
+    conditionals.push(match);
+    return PLACEHOLDER(conditionals.length - 1);
+  });
 
-  // 2. Strip every other comment (`<!-- … -->`) and collapse whitespace.
-  const minified = stashed
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/>\s+</g, '><')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .join('');
+  // 2. Drop plain comments, 3. collapse ASCII whitespace runs.
+  const collapsed = stashed.replace(/<!--[\s\S]*?-->/g, '').replace(/[ \t\n\r\f]+/g, ' ');
 
-  // 3. Restore conditionals exactly as they were.
-  return minified.replace(
-    new RegExp(`${PLACEHOLDER_PREFIX}(\\d+)${PLACEHOLDER_SUFFIX}`, 'g'),
-    (_, idx: string) => conditionals[Number.parseInt(idx, 10)] ?? '',
-  );
+  // 4. Remove the single space only between structural neighbours.
+  const tightened = collapsed
+    .replace(GAP_BETWEEN_TOKENS, (match, left: string, right: string) =>
+      removable(kindOf(left), kindOf(right)) ? left : match,
+    )
+    .trim();
+
+  // Restore conditionals exactly as they were.
+  return tightened.replace(PLACEHOLDER_RE, (_, idx: string) => conditionals[Number(idx)] ?? '');
 }
