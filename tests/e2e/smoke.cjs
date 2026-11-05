@@ -228,7 +228,12 @@ async function waitSaved(page) {
   await sp.waitForTimeout(1500);
   check('subscriber can open /signatures/', listResp.status() === 200);
   const nav = await sp.locator('aside nav').innerText().catch(() => '');
-  check('public sidebar shows only My Signatures', /My Signatures/.test(nav) && !/Templates|Settings/.test(nav), JSON.stringify(nav));
+  // English or Spanish (the subscriber may use either locale).
+  check(
+    'public sidebar shows the user pages only (no templates / settings / groups)',
+    /My Signatures|Mis firmas/.test(nav) && !/Templates|Settings|Groups|Plantillas|Ajustes|Grupos/.test(nav),
+    JSON.stringify(nav),
+  );
   await sp.screenshot({ path: path.join(OUT, 'subscriber-list.png') });
   const foreign = await rest(sp, 'GET', `/signatures/${id}`);
   check("subscriber cannot read the admin's signature", foreign.status === 403 || foreign.status === 404, `status=${foreign.status}`);

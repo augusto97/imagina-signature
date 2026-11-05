@@ -1,30 +1,62 @@
 {
-  "_brandKit-CLPgTarO.js": {
-    "file": "brandKit-CLPgTarO.js",
+  "_brandKit-BvRTkj2l.js": {
+    "file": "brandKit-BvRTkj2l.js",
     "name": "brandKit"
   },
+  "_compile-CgR_7rz6.js": {
+    "file": "compile-CgR_7rz6.js",
+    "name": "compile",
+    "isDynamicEntry": true,
+    "imports": [
+      "_plain-text-CaCpdifd.js",
+      "_brandKit-BvRTkj2l.js"
+    ]
+  },
+  "_index-DAMEH_1r.js": {
+    "file": "index-DAMEH_1r.js",
+    "name": "index",
+    "isDynamicEntry": true,
+    "imports": [
+      "_brandKit-BvRTkj2l.js",
+      "_plain-text-CaCpdifd.js"
+    ]
+  },
+  "_plain-text-CaCpdifd.js": {
+    "file": "plain-text-CaCpdifd.js",
+    "name": "plain-text",
+    "imports": [
+      "_brandKit-BvRTkj2l.js"
+    ]
+  },
   "assets/admin/src/main.tsx": {
-    "file": "admin.Cph7oD7-.js",
+    "file": "admin.00k4YHKW.js",
     "name": "admin",
     "src": "assets/admin/src/main.tsx",
     "isEntry": true,
     "imports": [
-      "_brandKit-CLPgTarO.js"
+      "_brandKit-BvRTkj2l.js"
+    ],
+    "dynamicImports": [
+      "_compile-CgR_7rz6.js",
+      "_index-DAMEH_1r.js"
     ],
     "css": [
-      "admin.DZITwW1V.css"
+      "admin.CCLILCLf.css"
     ]
   },
   "assets/editor/src/main.tsx": {
-    "file": "editor.DqYB5oTL.js",
+    "file": "editor.3D3iEDtT.js",
     "name": "editor",
     "src": "assets/editor/src/main.tsx",
     "isEntry": true,
     "imports": [
-      "_brandKit-CLPgTarO.js"
+      "_brandKit-BvRTkj2l.js",
+      "_index-DAMEH_1r.js",
+      "_plain-text-CaCpdifd.js",
+      "_compile-CgR_7rz6.js"
     ],
     "css": [
-      "editor.CC1J4xSC.css"
+      "editor.DXETuLRh.css"
     ]
   }
 }
