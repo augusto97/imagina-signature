@@ -160,8 +160,8 @@ export function mergeTemplateIntoSchema(
     ...(current.variables ?? {}),
   };
   next.meta = {
-    ...(next.meta ?? { editor_version: current.meta.editor_version }),
-    created_at: current.meta.created_at,
+    editor_version: next.meta?.editor_version ?? current.meta?.editor_version ?? '1.0.0',
+    created_at: current.meta?.created_at ?? now,
     updated_at: now,
   };
   if (!Array.isArray(next.blocks)) next.blocks = [];
