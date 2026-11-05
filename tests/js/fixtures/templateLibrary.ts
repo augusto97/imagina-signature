@@ -73,7 +73,9 @@ export const templateSlugs: string[] = readdirSync(TEMPLATES_DIR)
   .sort();
 
 export function loadTemplate(slug: string): SignatureSchema {
-  return JSON.parse(readFileSync(resolve(TEMPLATES_DIR, `${slug}.json`), 'utf8')) as SignatureSchema;
+  return JSON.parse(
+    readFileSync(resolve(TEMPLATES_DIR, `${slug}.json`), 'utf8'),
+  ) as SignatureSchema;
 }
 
 /** Template variables over the mock system variables (the export's merged map). */

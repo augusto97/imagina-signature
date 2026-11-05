@@ -101,22 +101,31 @@ export function withHostedAssets(
   return { ...schema, blocks: (schema.blocks ?? []).map(visit) };
 }
 
+export interface PreviewOptions {
+  /** Fill blank profile / brand-kit values with samples (gallery cards). Default true. */
+  samples?: boolean;
+  /** System variables to preview with; default the bootstrap's. */
+  system?: Record<string, string>;
+}
+
 /**
  * Compiled HTML of `template` with `values` (signature variables, e.g.
- * the onboarding form) over the template's own examples, previewed with
- * sample brand-kit values and placeholder hosted assets. Null when the
- * template cannot be compiled.
+ * the onboarding form) over the template's own examples, with
+ * placeholder hosted assets and — unless `samples` is false — sample
+ * values for blank brand-kit fields. Null when the template cannot be
+ * compiled.
  */
 export function previewTemplateHtml(
   template: SignatureSchema,
   values: Record<string, string> = {},
-  system: Record<string, string> = systemVariables(),
+  options: PreviewOptions = {},
 ): string | null {
   try {
     // Older (1.0) admin templates: migrate first so nested QR / vCard
     // blocks are reached through `columns`.
     const current = schemaNeedsMigration(template) ? migrateSchema(template) : template;
-    const previewSystem = previewSystemVariables(system);
+    const system = options.system ?? systemVariables();
+    const previewSystem = options.samples === false ? system : previewSystemVariables(system);
     const own = { ...(current.variables ?? {}), ...values };
     const merged = resolvedVariables(own, previewSystem);
     const base = assetsUrl(previewSystem);

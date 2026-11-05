@@ -62,7 +62,10 @@ const IMAGE_VARIABLES = new Set(['{{company_logo}}', '{{photo_url}}']);
 const TOKEN = /\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g;
 
 function normFamily(name: string): string {
-  return name.trim().replace(/^['"]|['"]$/g, '').toLowerCase();
+  return name
+    .trim()
+    .replace(/^['"]|['"]$/g, '')
+    .toLowerCase();
 }
 
 /** Every string in a JSON value, with the key it sits under. */
@@ -153,16 +156,24 @@ function contrastProblems(schema: SignatureSchema): ContrastProblem[] {
         }
         case 'contact_row':
           check(where, block.style.color, here, block.style.font_size, false);
-          if (block.link_color) check(`${where} link`, block.link_color, here, block.style.font_size, false);
+          if (block.link_color)
+            check(`${where} link`, block.link_color, here, block.style.font_size, false);
           break;
         case 'button_cta': {
           const size = block.style?.font_size ?? canvas.font_size;
-          const filled = block.preset === undefined || block.preset === 'solid' || block.preset === 'pill';
+          const filled =
+            block.preset === undefined || block.preset === 'solid' || block.preset === 'pill';
           check(where, block.text_color, filled ? block.background_color : here, size, true);
           break;
         }
         case 'vcard':
-          check(where, block.text_color, block.link_style === 'text' ? here : block.background_color, 13, false);
+          check(
+            where,
+            block.text_color,
+            block.link_style === 'text' ? here : block.background_color,
+            13,
+            false,
+          );
           break;
         case 'qr_code':
           if (block.caption) check(`${where} caption`, '#475569', here, 11, false);
@@ -244,7 +255,9 @@ describe('template library', () => {
       collect(raw.blocks);
       for (const src of images) {
         const asset = ASSET_IMAGE.exec(src);
-        expect(IMAGE_VARIABLES.has(src) || (asset !== null && assetExists(asset[1]!)), src).toBe(true);
+        expect(IMAGE_VARIABLES.has(src) || (asset !== null && assetExists(asset[1]!)), src).toBe(
+          true,
+        );
       }
       const photo = raw.variables?.photo_url;
       if (photo !== undefined) {
