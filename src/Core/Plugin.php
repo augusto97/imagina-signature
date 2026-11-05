@@ -11,6 +11,7 @@ namespace ImaginaSignatures\Core;
 
 use ImaginaSignatures\Admin\AdminAppPage;
 use ImaginaSignatures\Admin\AdminMenu;
+use ImaginaSignatures\Admin\Notices;
 use ImaginaSignatures\Admin\Pages\EditorPage;
 use ImaginaSignatures\Frontend\FrontendRouter;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
@@ -227,6 +228,8 @@ final class Plugin {
 
 		$admin_menu = new AdminMenu( $signatures_page, $templates_page, $settings_page, $editor_page );
 		$admin_menu->boot();
+
+		( new Notices() )->boot();
 	}
 
 	/**

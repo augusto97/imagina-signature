@@ -57,6 +57,14 @@ class StorageManager {
 	public const OPTION_CONFIG = 'imgsig_storage_config';
 
 	/**
+	 * Option set (to the failure timestamp) while the stored config blob
+	 * can't be decrypted — drives the admin notice in
+	 * {@see \ImaginaSignatures\Admin\Notices}. Cleared on the next
+	 * successful decrypt or save.
+	 */
+	public const OPTION_DECRYPT_ERROR = 'imgsig_storage_decrypt_error';
+
+	/**
 	 * Encryption service used for round-tripping the config blob.
 	 *
 	 * @var Encryption
@@ -215,7 +223,19 @@ class StorageManager {
 		try {
 			$plaintext = $this->encryption->decrypt( $encoded );
 		} catch ( \Throwable $e ) {
+			// Usually means the WordPress salts (or IMGSIG_ENCRYPTION_KEY)
+			// changed since the credentials were saved. Don't fail
+			// silently: flag it for the admin notice and the log.
+			if ( false === get_option( self::OPTION_DECRYPT_ERROR, false ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[imagina-signatures] stored storage credentials could not be decrypted: ' . $e->getMessage() );
+				update_option( self::OPTION_DECRYPT_ERROR, time(), true );
+			}
 			return [];
+		}
+
+		if ( false !== get_option( self::OPTION_DECRYPT_ERROR, false ) ) {
+			delete_option( self::OPTION_DECRYPT_ERROR );
 		}
 
 		if ( '' === $plaintext ) {
@@ -265,6 +285,7 @@ class StorageManager {
 		// permanent options cache for every request.
 		update_option( self::OPTION_CONFIG, $encoded, false );
 		update_option( self::OPTION_DRIVER, $driver_id );
+		delete_option( self::OPTION_DECRYPT_ERROR );
 
 		// Invalidate the cached driver so the next call rebuilds.
 		$this->cached_driver    = null;
