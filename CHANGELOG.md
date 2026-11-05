@@ -31,6 +31,8 @@ Fase 1 of the November 2026 roadmap: premium design. Verified with `tests/e2e/sm
 ### Fixed
 - Uploaded QR / vCard URLs no longer create undo steps.
 - Social and contact links built from variables resolve before the link is created.
+- On sites using the SQLite database driver, users without template management saw an empty template library (the role filter used MySQL-only SQL).
+- Outlook's signatures folder follows the UI language ("Firmas" in Spanish).
 
 ## [1.1.0] — 2026-11-05
 

@@ -234,6 +234,8 @@ async function waitSaved(page) {
   check("subscriber cannot read the admin's signature", foreign.status === 403 || foreign.status === 404, `status=${foreign.status}`);
   await openEditor(sp, `${BASE}/signatures/editor/`);
   check('subscriber editor loads on the public route', true);
+  const subTemplates = await rest(sp, 'GET', '/templates?per_page=100');
+  check('subscriber sees the template library', Array.isArray(subTemplates.json) && subTemplates.json.length >= 40, `count=${Array.isArray(subTemplates.json) ? subTemplates.json.length : subTemplates.status}`);
   await sp.screenshot({ path: path.join(OUT, 'subscriber-editor.png') });
 
   // ---------- Fase 2: profile, groups, install link, Outlook, Gmail ----------

@@ -82,7 +82,15 @@ const CLIENTS: Array<{ id: Client; label: () => string }> = [
 const GMAIL_SETTINGS_URL = 'https://mail.google.com/mail/u/0/#settings/general';
 const OUTLOOK_WEB_SETTINGS_URL = 'https://outlook.live.com/mail/0/options/mail/messageContent';
 /** Where classic Outlook for Windows reads signature files from. */
-const OUTLOOK_SIGNATURES_FOLDER = '%APPDATA%\\Microsoft\\Signatures';
+/**
+ * Outlook's signatures folder. Its last segment is localised by Outlook
+ * itself ("Firmas" in Spanish, "Signaturen" in German…), so it follows
+ * the UI language — translators: use the folder name of Outlook in your
+ * language.
+ */
+const outlookSignaturesFolderName = (): string => __('Signatures');
+const outlookSignaturesFolder = (): string =>
+  `%APPDATA%\\Microsoft\\${outlookSignaturesFolderName()}`;
 
 export const ExportModal: FC = () => {
   const modal = useEditorStore((s) => s.modal);
@@ -151,7 +159,7 @@ export const ExportModal: FC = () => {
   };
 
   const copyFolderPath = async (): Promise<void> => {
-    if (await copyText(OUTLOOK_SIGNATURES_FOLDER)) flashCopied('folder');
+    if (await copyText(outlookSignaturesFolder())) flashCopied('folder');
   };
 
   const download = (): void => {
@@ -445,8 +453,9 @@ export const ExportModal: FC = () => {
                       ),
                       __('Close Outlook completely.'),
                       __(
-                        'Press Windows + R, paste %s and press Enter. Create the "Signatures" folder if it does not exist.',
-                        OUTLOOK_SIGNATURES_FOLDER,
+                        'Press Windows + R, paste %1$s and press Enter. Create the "%2$s" folder if it does not exist.',
+                        outlookSignaturesFolder(),
+                        outlookSignaturesFolderName(),
                       ),
                       __('Move the two downloaded files into that folder.'),
                       __(
