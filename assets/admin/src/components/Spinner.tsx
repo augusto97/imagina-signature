@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { __ } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
 
 interface Props {
@@ -11,7 +12,7 @@ interface Props {
  */
 export const Spinner: FC<Props> = ({ size = 16, className }) => (
   <span
-    aria-label="Loading"
+    aria-label={__('Loading')}
     role="status"
     className={cn('inline-block animate-spin rounded-full border-2 border-current border-r-transparent', className)}
     style={{ width: size, height: size }}

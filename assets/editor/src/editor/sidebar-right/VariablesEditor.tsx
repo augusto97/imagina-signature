@@ -175,7 +175,7 @@ const VariableRow: FC<RowProps> = ({ name, value, onRename, onChangeValue, onRem
       return;
     }
     if (!isValidVariableName(next)) {
-      setRenameError('Invalid name.');
+      setRenameError(__('Invalid name.'));
       setDraftName(name);
       return;
     }

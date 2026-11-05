@@ -1,5 +1,6 @@
 import { Type } from 'lucide-react';
 import type { TextBlock } from '@/core/schema/blocks';
+import { __ } from '@/i18n/helpers';
 import { generateId } from '@/utils/idGenerator';
 import { registerBlock, type BlockDefinition } from '../registry';
 import { TextBlock as TextBlockRenderer } from './TextBlock';
@@ -16,7 +17,7 @@ const definition: BlockDefinition<TextBlock> = {
   create: (): TextBlock => ({
     id: generateId('text'),
     type: 'text',
-    content: 'Edit me',
+    content: __('Edit me'),
     style: {
       font_family: 'Arial, sans-serif',
       font_size: 14,

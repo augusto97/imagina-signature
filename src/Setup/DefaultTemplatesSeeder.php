@@ -123,6 +123,153 @@ final class DefaultTemplatesSeeder {
 	];
 
 	/**
+	 * Translated name / description of every seeded template, keyed by
+	 * slug.
+	 *
+	 * The DB keeps the English source strings from {@see self::META}
+	 * (seeding may run in any locale), and the REST layer swaps them for
+	 * these at read time via {@see self::localize()}. The literal
+	 * `__()` calls are what lets `npm run i18n:pot` extract them — keep
+	 * them in sync with META (a unit test enforces it).
+	 *
+	 * @since 1.1.0
+	 *
+	 * @return array<string, array{name: string, description: string}>
+	 */
+	public static function translated_meta(): array {
+		return [
+			'minimal-modern'    => [
+				'name'        => __( 'Minimal Modern', 'imagina-signatures' ),
+				'description' => __( 'Single column, generous spacing, sans-serif.', 'imagina-signatures' ),
+			],
+			'corporate-classic' => [
+				'name'        => __( 'Corporate Classic', 'imagina-signatures' ),
+				'description' => __( 'Serif typography with a short rule.', 'imagina-signatures' ),
+			],
+			'sales-active'      => [
+				'name'        => __( 'Sales Active', 'imagina-signatures' ),
+				'description' => __( 'Conversion-focused with a CTA button.', 'imagina-signatures' ),
+			],
+			'medical'           => [
+				'name'        => __( 'Medical', 'imagina-signatures' ),
+				'description' => __( 'Professional credentials with a confidentiality disclaimer.', 'imagina-signatures' ),
+			],
+			'legal'             => [
+				'name'        => __( 'Legal', 'imagina-signatures' ),
+				'description' => __( 'Serif type with a long privilege disclaimer.', 'imagina-signatures' ),
+			],
+			'creative'          => [
+				'name'        => __( 'Creative', 'imagina-signatures' ),
+				'description' => __( 'Vibrant accent colours and social icons.', 'imagina-signatures' ),
+			],
+			'developer'         => [
+				'name'        => __( 'Developer', 'imagina-signatures' ),
+				'description' => __( 'Monospace type with a GitHub link.', 'imagina-signatures' ),
+			],
+			'tech-startup'      => [
+				'name'        => __( 'Tech Startup', 'imagina-signatures' ),
+				'description' => __( 'Modern type with a product CTA.', 'imagina-signatures' ),
+			],
+			'consultant'        => [
+				'name'        => __( 'Consultant', 'imagina-signatures' ),
+				'description' => __( 'Credentials front-and-centre with LinkedIn.', 'imagina-signatures' ),
+			],
+			'e-commerce'        => [
+				'name'        => __( 'E-commerce', 'imagina-signatures' ),
+				'description' => __( 'Shop CTA + social icons for storefront teams.', 'imagina-signatures' ),
+			],
+			'logo-left'         => [
+				'name'        => __( 'Logo + info (2-column)', 'imagina-signatures' ),
+				'description' => __( 'Square logo on the left, name / role / contact / socials on the right.', 'imagina-signatures' ),
+			],
+			'avatar-pro'        => [
+				'name'        => __( 'Avatar + info (2-column)', 'imagina-signatures' ),
+				'description' => __( 'Round profile photo + role on the left, contacts and socials on the right.', 'imagina-signatures' ),
+			],
+			'two-col-balanced'  => [
+				'name'        => __( 'Balanced split (2-column)', 'imagina-signatures' ),
+				'description' => __( 'Headline + tagline on the left, contacts + Book-a-call CTA on the right.', 'imagina-signatures' ),
+			],
+		];
+	}
+
+	/**
+	 * Swaps a seeded system template's English name / description for
+	 * the current locale's translation.
+	 *
+	 * Only fields still holding the seeded source text are touched: an
+	 * admin who renamed a system template keeps their wording, and
+	 * user-created templates are never translated.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param array<string, mixed> $template Serialised template ({@see \ImaginaSignatures\Models\Template::to_array()}).
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function localize( array $template ): array {
+		$slug = isset( $template['slug'] ) ? (string) $template['slug'] : '';
+		if ( empty( $template['is_system'] ) || ! isset( self::META[ $slug ] ) ) {
+			return $template;
+		}
+
+		$translated = self::translated_meta()[ $slug ] ?? null;
+		if ( null === $translated ) {
+			return $template;
+		}
+
+		foreach ( [ 'name', 'description' ] as $field ) {
+			if ( isset( $template[ $field ] ) && self::META[ $slug ][ $field ] === $template[ $field ] ) {
+				$template[ $field ] = $translated[ $field ];
+			}
+		}
+		return $template;
+	}
+
+	/**
+	 * Inverse of {@see self::localize()} for writes: when an admin saves
+	 * a system template's metadata form without changing the (translated)
+	 * name / description it was shown, store the English source again so
+	 * other locales keep seeing their own translation.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param string               $slug    Slug of the template being updated.
+	 * @param bool                 $is_system Whether it's a seeded system row.
+	 * @param array<string, mixed> $payload Incoming update payload.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function delocalize( string $slug, bool $is_system, array $payload ): array {
+		if ( ! $is_system || ! isset( self::META[ $slug ] ) ) {
+			return $payload;
+		}
+
+		$translated = self::translated_meta()[ $slug ] ?? null;
+		if ( null === $translated ) {
+			return $payload;
+		}
+
+		foreach ( [ 'name', 'description' ] as $field ) {
+			if ( isset( $payload[ $field ] ) && is_string( $payload[ $field ] ) && trim( $payload[ $field ] ) === $translated[ $field ] ) {
+				$payload[ $field ] = self::META[ $slug ][ $field ];
+			}
+		}
+		return $payload;
+	}
+
+	/**
+	 * English source metadata of the seeded templates (slug => meta).
+	 *
+	 * @since 1.1.0
+	 *
+	 * @return array<string, array{name: string, category: string, sort_order: int, description: string}>
+	 */
+	public static function source_meta(): array {
+		return self::META;
+	}
+
+	/**
 	 * @var TemplateRepository
 	 */
 	private TemplateRepository $repo;

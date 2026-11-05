@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { Field } from './_shared';
 
+// i18n-ignore-file — font family names are not translated.
 const WEB_SAFE_FONTS = [
   { value: 'Arial, sans-serif', label: 'Arial' },
   { value: 'Helvetica, Arial, sans-serif', label: 'Helvetica' },

@@ -1,5 +1,6 @@
 import type { FC } from 'react';
 import type { FontWeight } from '@/core/schema/styles';
+import { __ } from '@/i18n/helpers';
 import { Field } from './_shared';
 
 interface Props {
@@ -8,11 +9,12 @@ interface Props {
   onChange: (value: FontWeight) => void;
 }
 
-const WEIGHTS: Array<{ value: FontWeight; label: string }> = [
-  { value: 400, label: 'Regular' },
-  { value: 500, label: 'Medium' },
-  { value: 600, label: 'Semibold' },
-  { value: 700, label: 'Bold' },
+/** Labels are lazy so they translate at render time. */
+const WEIGHTS: Array<{ value: FontWeight; label: () => string }> = [
+  { value: 400, label: () => __('Regular') },
+  { value: 500, label: () => __('Medium') },
+  { value: 600, label: () => __('Semibold') },
+  { value: 700, label: () => __('Bold') },
 ];
 
 /**
@@ -25,7 +27,7 @@ export const FontWeightInput: FC<Props> = ({ label, value, onChange }) => (
     <select value={value} onChange={(e) => onChange(Number(e.target.value) as FontWeight)}>
       {WEIGHTS.map((w) => (
         <option key={w.value} value={w.value}>
-          {w.label}
+          {w.label()}
         </option>
       ))}
     </select>

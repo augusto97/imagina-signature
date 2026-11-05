@@ -31,6 +31,7 @@ export const RightSidebar: FC = () => {
             <>
               <span className="text-[10px] text-[var(--text-muted)]">/</span>
               <span className="truncate text-[12px] font-semibold text-[var(--text-primary)]">
+                {/* i18n-dynamic: registry labels are listed in i18n/dynamic-strings.ts. */}
                 {__(definition.label)}
               </span>
             </>

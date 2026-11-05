@@ -9,24 +9,25 @@ type PageKey = AdminConfig['page'];
 
 interface NavItem {
   key: PageKey;
-  label: string;
+  /** Lazy so the label is translated at render time (and stays a literal for the extractor). */
+  label: () => string;
   icon: typeof FileSignature;
   href: keyof AdminConfig['urls'];
   requiresCap?: keyof AdminConfig['capabilities'];
 }
 
 const NAV: NavItem[] = [
-  { key: 'signatures', label: 'My Signatures', icon: FileSignature, href: 'signatures' },
+  { key: 'signatures', label: () => __('My Signatures'), icon: FileSignature, href: 'signatures' },
   {
     key: 'templates',
-    label: 'Templates',
+    label: () => __('Templates'),
     icon: LayoutTemplate,
     href: 'templates',
     requiresCap: 'manage_templates',
   },
   {
     key: 'settings',
-    label: 'Settings',
+    label: () => __('Settings'),
     icon: Settings,
     href: 'settings',
     requiresCap: 'manage_storage',
@@ -96,7 +97,7 @@ export const SidebarNav: FC<Props> = ({ page }) => {
               )}
             >
               <Icon size={17} strokeWidth={1.9} />
-              <span>{__(item.label)}</span>
+              <span>{item.label()}</span>
             </a>
           );
         })}

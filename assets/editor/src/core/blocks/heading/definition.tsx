@@ -98,7 +98,7 @@ const definition: BlockDefinition<HeadingBlock> = {
   create: (): HeadingBlock => ({
     id: generateId('h'),
     type: 'heading',
-    content: 'Your Name',
+    content: __('Your Name'),
     style: {
       font_family: 'Arial, sans-serif',
       font_size: 18,

@@ -339,7 +339,7 @@ const Properties: FC<{
           rows={3}
           value={block.data}
           onChange={(e) => onChange({ data: e.target.value })}
-          placeholder="https://example.com or BEGIN:VCARD…"
+          placeholder={__('https://example.com or BEGIN:VCARD…')}
         />
         <span className="text-[10.5px] text-[var(--text-muted)]">
           {__('A URL, mailto:, tel:, or any other QR-encodable string.')}

@@ -9,6 +9,7 @@ import { apiCall, ApiError, getConfig } from '@admin/api';
 import { __ } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
 import type { BulkApplyResult, TemplateRow } from '@admin/types';
+import { templateCategoryLabel } from '@shared/templateCategories';
 
 /**
  * Standard WordPress role slugs surfaced in the role picker. Custom
@@ -16,13 +17,19 @@ import type { BulkApplyResult, TemplateRow } from '@admin/types';
  * the server stores whatever slug we POST so a custom role can still
  * be wired manually via the JSON API.
  */
-const WP_ROLES: Array<{ slug: string; label: string }> = [
-  { slug: 'administrator', label: 'Administrator' },
-  { slug: 'editor', label: 'Editor' },
-  { slug: 'author', label: 'Author' },
-  { slug: 'contributor', label: 'Contributor' },
-  { slug: 'subscriber', label: 'Subscriber' },
+const WP_ROLES: Array<{ slug: string; label: () => string }> = [
+  { slug: 'administrator', label: () => __('Administrator') },
+  { slug: 'editor', label: () => __('Editor') },
+  { slug: 'author', label: () => __('Author') },
+  { slug: 'contributor', label: () => __('Contributor') },
+  { slug: 'subscriber', label: () => __('Subscriber') },
 ];
+
+/** Translated name of a standard role; custom role slugs are shown as-is. */
+function roleLabel(slug: string): string {
+  const role = WP_ROLES.find((r) => r.slug === slug);
+  return role ? role.label() : slug;
+}
 
 /**
  * Templates listing — read-open to anyone with `imgsig_use_signatures`,
@@ -132,7 +139,7 @@ export const TemplatesPage: FC = () => {
                   {row.description || __('No description provided.')}
                 </p>
                 <div className="mt-auto flex items-center justify-between gap-2">
-                  <span className="is-section-label">{row.category}</span>
+                  <span className="is-section-label">{templateCategoryLabel(row.category)}</span>
                   <RoleChips roles={row.visible_to_roles} />
                 </div>
                 {canManage && (
@@ -211,7 +218,7 @@ const RoleChips: FC<{ roles: string[] }> = ({ roles }) => {
           key={r}
           className="rounded-full bg-[var(--bg-selected)] px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-[var(--accent)] ring-1 ring-inset ring-[var(--accent)]/20"
         >
-          {r}
+          {roleLabel(r)}
         </span>
       ))}
       {roles.length > 3 && (
@@ -478,7 +485,7 @@ const EditTemplateModal: FC<EditTemplateModalProps> = ({ open, template, onClose
                       : 'border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]',
                   )}
                 >
-                  {label}
+                  {label()}
                 </button>
               );
             })}
@@ -653,7 +660,7 @@ const ApplyTemplateModal: FC<ApplyTemplateModalProps> = ({ open, template, onClo
               >
                 {WP_ROLES.map(({ slug, label }) => (
                   <option key={slug} value={slug}>
-                    {label}
+                    {label()}
                   </option>
                 ))}
               </select>

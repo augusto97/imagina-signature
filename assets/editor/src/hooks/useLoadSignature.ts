@@ -77,7 +77,7 @@ export function useLoadSignature(): LoadState {
         // the user can edit them. Status defaults to 'draft' when the
         // server didn't include it (back-compat with very old rows).
         hydrateRowMeta({
-          name: row.name || 'Untitled',
+          name: row.name || __('Untitled'),
           status: row.status ?? 'draft',
         });
         setState({ loading: false, notFound: false, error: null });

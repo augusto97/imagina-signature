@@ -63,6 +63,7 @@ export function report(
 export function blockLabel(type: string | undefined): string {
   if (!type) return __('Signature');
   const def = getBlockDefinition(type);
+  // i18n-dynamic: registry labels are listed in i18n/dynamic-strings.ts.
   return def ? __(def.label) : type;
 }
 

@@ -262,6 +262,7 @@ const LayerRow: FC<LayerRowProps> = ({ block, depth, index, siblingsCount, dragg
               )}
             />
           )}
+          {/* i18n-dynamic: registry labels are listed in i18n/dynamic-strings.ts. */}
           <span className="truncate font-medium">{def ? __(def.label) : block.type}</span>
           <span className="ml-1 truncate text-[11px] font-normal text-[var(--text-muted)]">
             {labelForBlock(block)}

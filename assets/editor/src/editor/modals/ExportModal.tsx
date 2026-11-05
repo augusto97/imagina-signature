@@ -50,74 +50,81 @@ import { Modal } from '@/components/shared/Modal';
  */
 type Client = 'gmail' | 'outlook-web' | 'outlook-desktop' | 'apple-mail' | 'thunderbird';
 
+/**
+ * Per-client install guides. Labels and steps are functions so they
+ * are translated at render time (and stay literal `__()` calls for
+ * the extractor). Step texts quote the client's own menu labels and
+ * our "Copy visual" / "Download .html" buttons — translations should
+ * use the names those UIs show in the target language.
+ */
 const CLIENTS: Array<{
   id: Client;
-  label: string;
+  label: () => string;
   /** Which copy mode the steps assume the user took — drives the highlighted button. */
   recommend: 'visual' | 'html';
   deepLink?: string;
-  steps: string[];
+  steps: () => string[];
 }> = [
   {
     id: 'gmail',
-    label: 'Gmail',
+    label: () => __('Gmail'),
     recommend: 'visual',
     deepLink: 'https://mail.google.com/mail/u/0/#settings/general',
-    steps: [
-      'Press "Copy visual" above so the rendered signature is in your clipboard.',
-      'Click the link below — Gmail opens on the General settings tab in a new window.',
-      'Scroll to the "Signature" section, click "Create new", give it a name.',
-      'Click into the editor and paste (Cmd/Ctrl + V). The signature renders visually.',
-      'Pick the new signature in the "For new emails use" dropdown, then "Save changes" at the bottom.',
+    steps: () => [
+      __('Press "Copy visual" above so the rendered signature is in your clipboard.'),
+      __('Click the link below — Gmail opens on the General settings tab in a new window.'),
+      __('Scroll to the "Signature" section, click "Create new", give it a name.'),
+      __('Click into the editor and paste (Cmd/Ctrl + V). The signature renders visually.'),
+      __('Pick the new signature in the "For new emails use" dropdown, then "Save changes" at the bottom.'),
     ],
   },
   {
     id: 'outlook-web',
-    label: 'Outlook Web',
+    label: () => __('Outlook Web'),
     recommend: 'visual',
     deepLink: 'https://outlook.live.com/mail/0/options/mail/messageContent',
-    steps: [
-      'Press "Copy visual" above so the rendered signature is in your clipboard.',
-      'Click the link below to open Outlook on the web on the message-content settings page.',
-      'Under "Email signature", click "+ New signature" and give it a name.',
-      'Click into the rich-text area and paste (Cmd/Ctrl + V). The signature renders visually.',
-      'Set it as default for new messages and replies if you want, then click "Save".',
+    steps: () => [
+      __('Press "Copy visual" above so the rendered signature is in your clipboard.'),
+      __('Click the link below to open Outlook on the web on the message-content settings page.'),
+      __('Under "Email signature", click "+ New signature" and give it a name.'),
+      __('Click into the rich-text area and paste (Cmd/Ctrl + V). The signature renders visually.'),
+      __('Set it as default for new messages and replies if you want, then click "Save".'),
     ],
   },
   {
     id: 'outlook-desktop',
-    label: 'Outlook Desktop',
+    label: () => __('Outlook Desktop'),
     recommend: 'visual',
-    steps: [
-      'Press "Copy visual" above so the rendered signature is in your clipboard.',
-      'Open Outlook → File → Options → Mail → Signatures…',
-      'Click "New", give the signature a name, click "OK".',
-      'Click into the editor area at the bottom and paste (Cmd/Ctrl + V).',
-      'Outlook 2007–2019 freezes animated GIFs on the first frame — the editor offers a static-fallback URL field to handle that. Click "OK" twice when done.',
+    steps: () => [
+      __('Press "Copy visual" above so the rendered signature is in your clipboard.'),
+      __('Open Outlook → File → Options → Mail → Signatures…'),
+      __('Click "New", give the signature a name, click "OK".'),
+      __('Click into the editor area at the bottom and paste (Cmd/Ctrl + V).'),
+      __('Outlook 2007–2019 freezes animated GIFs on the first frame — the editor offers a static-fallback URL field to handle that. Click "OK" twice when done.'),
     ],
   },
   {
     id: 'apple-mail',
-    label: 'Apple Mail',
+    label: () => __('Apple Mail'),
     recommend: 'visual',
-    steps: [
-      'Press "Copy visual" above so the rendered signature is in your clipboard.',
-      'Open Mail → Settings… → Signatures.',
-      'Pick the email account on the left, click "+" to add a new signature, give it a name.',
-      'Click into the editor on the right and paste (Cmd + V). The signature renders visually.',
-      'If images don\'t show, untick "Always match my default message font" in the same panel.',
+    steps: () => [
+      __('Press "Copy visual" above so the rendered signature is in your clipboard.'),
+      __('Open Mail → Settings… → Signatures.'),
+      __('Pick the email account on the left, click "+" to add a new signature, give it a name.'),
+      __('Click into the editor on the right and paste (Cmd + V). The signature renders visually.'),
+      __('If images don\'t show, untick "Always match my default message font" in the same panel.'),
     ],
   },
   {
     id: 'thunderbird',
-    label: 'Thunderbird',
+    label: () => __('Thunderbird'),
     recommend: 'html',
-    steps: [
-      'Press "Download .html" above to save the signature to disk.',
-      'Open Thunderbird → Account Settings → pick your account on the left.',
-      'Tick "Use HTML (e.g. <b>bold</b>)" under the Signature text area.',
-      'Tick "Attach the signature from a file instead" and choose the .html you just saved.',
-      'Click "OK". Thunderbird re-reads the file each send so editing the file updates every future email.',
+    steps: () => [
+      __('Press "Download .html" above to save the signature to disk.'),
+      __('Open Thunderbird → Account Settings → pick your account on the left.'),
+      __('Tick "Use HTML (e.g. <b>bold</b>)" under the Signature text area.'),
+      __('Tick "Attach the signature from a file instead" and choose the .html you just saved.'),
+      __('Click "OK". Thunderbird re-reads the file each send so editing the file updates every future email.'),
     ],
   },
 ];
@@ -313,7 +320,7 @@ export const ExportModal: FC = () => {
                     : __('Compiled HTML payload size.')
                 }
               >
-                {sizeKb} KB
+                {__('%s KB', sizeKb)}
               </span>
             </span>
           </div>
@@ -382,7 +389,7 @@ export const ExportModal: FC = () => {
                       : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]',
                   )}
                 >
-                  {c.label}
+                  {c.label()}
                 </button>
               ))}
             </div>
@@ -396,7 +403,7 @@ export const ExportModal: FC = () => {
                     rel="noopener noreferrer"
                     className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--accent)]/30 bg-[var(--bg-selected)] px-3 text-[12px] font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent)]/15"
                   >
-                    {__('Open %s settings', activeClient.label)}
+                    {__('Open %s settings', activeClient.label())}
                     <ExternalLink size={12} />
                   </a>
                 )}
@@ -408,7 +415,7 @@ export const ExportModal: FC = () => {
               </div>
 
               <ol className="flex flex-col gap-1.5 text-[12.5px] text-[var(--text-secondary)]">
-                {activeClient.steps.map((step, i) => (
+                {activeClient.steps().map((step, i) => (
                   <Step key={i} number={i + 1}>
                     {step}
                   </Step>

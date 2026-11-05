@@ -75,9 +75,9 @@ const Properties: FC<{ block: ContactRowBlock; onChange: (u: Partial<ContactRowB
               onChange={(e) => setRow(i, { icon: e.target.value as RowIcon })}
               className="rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1"
             >
-              <option value="email">email</option>
-              <option value="phone">phone</option>
-              <option value="web">web</option>
+              <option value="email">{__('Email')}</option>
+              <option value="phone">{__('Phone')}</option>
+              <option value="web">{__('Website')}</option>
             </select>
             <input
               type="text"

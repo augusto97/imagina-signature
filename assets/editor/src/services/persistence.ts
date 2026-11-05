@@ -155,7 +155,7 @@ class Persistence {
 
     const schema = useSchemaStore.getState().schema;
     const meta = usePersistenceStore.getState();
-    const rowName = meta.signatureName.trim() || 'Untitled';
+    const rowName = meta.signatureName.trim() || __('Untitled');
     const rowStatus = meta.signatureStatus;
 
     // Never create an empty row: the listing would show a phantom

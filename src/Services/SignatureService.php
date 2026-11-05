@@ -150,7 +150,7 @@ class SignatureService {
 	public function update( int $signature_id, int $user_id, array $changes ): Signature {
 		$existing = $this->repo->find_owned_by( $signature_id, $user_id );
 		if ( null === $existing ) {
-			throw new OwnershipException( 'Signature not found or not owned by the caller.' );
+			throw new OwnershipException( __( 'Signature not found or not owned by the caller.', 'imagina-signatures' ) );
 		}
 
 		$prepared = $this->prepare_for_save( $changes, 'update' );
@@ -269,7 +269,7 @@ class SignatureService {
 	public function delete( int $signature_id, int $user_id ): void {
 		$existing = $this->repo->find_owned_by( $signature_id, $user_id );
 		if ( null === $existing ) {
-			throw new OwnershipException( 'Signature not found or not owned by the caller.' );
+			throw new OwnershipException( __( 'Signature not found or not owned by the caller.', 'imagina-signatures' ) );
 		}
 
 		do_action( 'imgsig/signature/before_delete', $existing );
@@ -299,7 +299,7 @@ class SignatureService {
 	public function duplicate( int $signature_id, int $user_id ): Signature {
 		$source = $this->repo->find_owned_by( $signature_id, $user_id );
 		if ( null === $source ) {
-			throw new OwnershipException( 'Signature not found or not owned by the caller.' );
+			throw new OwnershipException( __( 'Signature not found or not owned by the caller.', 'imagina-signatures' ) );
 		}
 
 		// Re-sanitise on the way through: rows saved before server-side
@@ -358,11 +358,11 @@ class SignatureService {
 			$status = (string) $data['status'];
 			if ( ! in_array( $status, Signature::STATUSES, true ) ) {
 				throw new ValidationException(
-					'Invalid status value.',
+					__( 'Invalid status value.', 'imagina-signatures' ),
 					[
 						[
 							'path'    => 'status',
-							'message' => 'Status must be one of: draft, ready, archived.',
+							'message' => __( 'Status must be one of: draft, ready, archived.', 'imagina-signatures' ),
 						],
 					]
 				);
@@ -380,11 +380,11 @@ class SignatureService {
 
 			if ( ! is_array( $decoded ) ) {
 				throw new ValidationException(
-					'json_content must be a JSON object.',
+					__( 'json_content must be a JSON object.', 'imagina-signatures' ),
 					[
 						[
 							'path'    => 'json_content',
-							'message' => 'Could not decode payload.',
+							'message' => __( 'Could not decode payload.', 'imagina-signatures' ),
 						],
 					]
 				);

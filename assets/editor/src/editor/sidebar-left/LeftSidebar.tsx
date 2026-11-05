@@ -7,9 +7,10 @@ import { BlockLibrary } from './BlockLibrary';
 import { LayersPanel } from './LayersPanel';
 import '@/core/blocks';
 
+/** Labels are lazy so they translate at render time. */
 const TABS = [
-  { value: 'blocks' as const, label: 'Blocks', icon: Library },
-  { value: 'layers' as const, label: 'Layers', icon: Layers },
+  { value: 'blocks' as const, label: () => __('Blocks'), icon: Library },
+  { value: 'layers' as const, label: () => __('Layers'), icon: Layers },
 ];
 
 /**
@@ -40,7 +41,7 @@ export const LeftSidebar: FC = () => {
               )}
             >
               <Icon size={13} strokeWidth={1.8} />
-              {__(label)}
+              {label()}
             </button>
           );
         })}

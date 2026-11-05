@@ -5,11 +5,16 @@ import { BlockCard } from './BlockCard';
 
 const CATEGORY_ORDER: BlockCategory[] = ['layout', 'content', 'social'];
 
-const CATEGORY_LABELS: Record<BlockCategory, string> = {
-  layout: 'Layout',
-  content: 'Content',
-  social: 'Social',
-};
+function categoryLabel(category: BlockCategory): string {
+  switch (category) {
+    case 'layout':
+      return __('Layout');
+    case 'content':
+      return __('Content');
+    case 'social':
+      return __('Social');
+  }
+}
 
 /**
  * Block library, grouped by category.
@@ -36,13 +41,14 @@ export const BlockLibrary: FC = () => {
 
         return (
           <section key={category}>
-            <h3 className="is-section-label mb-2 px-1">{__(CATEGORY_LABELS[category])}</h3>
+            <h3 className="is-section-label mb-2 px-1">{categoryLabel(category)}</h3>
             <div className="grid grid-cols-2 gap-1.5">
               {blocks.map((definition) => (
                 <BlockCard
                   key={definition.type}
                   type={definition.type}
                   label={definition.label}
+                  description={definition.description}
                   icon={definition.icon}
                 />
               ))}

@@ -1,3 +1,4 @@
+import { __ } from '@shared/i18n';
 import { createRestNonceManager } from '@shared/restNonce';
 import type { AdminConfig } from './types';
 
@@ -80,7 +81,7 @@ export async function apiCall<T = unknown>(
     }
     throw new ApiError(
       payload.code ?? 'unknown',
-      payload.message ?? `Request failed (${response.status})`,
+      payload.message ?? __('Request failed (%s)', response.status),
       response.status,
       payload.data,
     );

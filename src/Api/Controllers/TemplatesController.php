@@ -17,6 +17,7 @@ use ImaginaSignatures\Repositories\TemplateRepository;
 use ImaginaSignatures\Services\SignatureService;
 use ImaginaSignatures\Services\TemplateService;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
+use ImaginaSignatures\Setup\DefaultTemplatesSeeder;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -175,7 +176,7 @@ final class TemplatesController extends BaseController {
 
 		$payload = [];
 		foreach ( $items as $template ) {
-			$payload[] = $template->to_array();
+			$payload[] = DefaultTemplatesSeeder::localize( $template->to_array() );
 		}
 
 		return $this->paginated_response( $payload, $total, (int) $args['per_page'] );
@@ -217,7 +218,7 @@ final class TemplatesController extends BaseController {
 				[ 'status' => 404 ]
 			);
 		}
-		return rest_ensure_response( $template->to_array() );
+		return rest_ensure_response( DefaultTemplatesSeeder::localize( $template->to_array() ) );
 	}
 
 	/**
@@ -255,7 +256,7 @@ final class TemplatesController extends BaseController {
 			return $this->exception_to_wp_error( $e );
 		}
 
-		$response = rest_ensure_response( $this->with_notes( $template->to_array() ) );
+		$response = rest_ensure_response( $this->with_notes( DefaultTemplatesSeeder::localize( $template->to_array() ) ) );
 		$response->set_status( 201 );
 		return $response;
 	}
@@ -275,7 +276,7 @@ final class TemplatesController extends BaseController {
 		} catch ( ImaginaSignaturesException $e ) {
 			return $this->exception_to_wp_error( $e );
 		}
-		return rest_ensure_response( $this->with_notes( $template->to_array() ) );
+		return rest_ensure_response( $this->with_notes( DefaultTemplatesSeeder::localize( $template->to_array() ) ) );
 	}
 
 	/**
@@ -381,7 +382,8 @@ final class TemplatesController extends BaseController {
 				$this->signature_service->create(
 					$user_id,
 					[
-						'name'         => $template->name,
+						// Seeded templates: the name as the admin saw it (translated).
+						'name'         => (string) DefaultTemplatesSeeder::localize( $template->to_array() )['name'],
 						'json_content' => $json_content,
 						'template_id'  => $template->id,
 					]
