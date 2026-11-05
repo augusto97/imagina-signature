@@ -30,23 +30,26 @@ function systemVariables(): Record<string, string> {
  * `{{key}}` token at the caret — the compiler substitutes it on export.
  */
 export const InsertFieldMenu: FC<Props> = ({ editor }) => {
-  const userVariables = useSchemaStore((s) => s.schema.variables);
+  const userVariables = useSchemaStore((s) => s.schema.variables) ?? {};
   const system = systemVariables();
+  // A signature variable overrides the profile field of the same name
+  // at compile time, so show the value that will actually ship.
+  const valueOf = (key: string) => userVariables[key] ?? system[key] ?? '';
 
   const groups: FieldGroup[] = [
     {
       title: __('Profile fields'),
       fields: Object.keys(system)
         .sort()
-        .map((key) => ({ key, value: system[key] ?? '' })),
+        .map((key) => ({ key, value: valueOf(key) })),
     },
     {
       title: __('Signature variables'),
-      fields: Object.keys(userVariables ?? {})
-        // A user variable overrides the system one of the same name.
+      fields: Object.keys(userVariables)
+        // Listed once, under the profile fields, when names collide.
         .filter((key) => !(key in system))
         .sort()
-        .map((key) => ({ key, value: userVariables[key] ?? '' })),
+        .map((key) => ({ key, value: valueOf(key) })),
     },
   ].filter((g) => g.fields.length > 0);
 
