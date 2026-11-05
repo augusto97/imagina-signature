@@ -7,39 +7,9 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
-| 1.0.33 | [imagina-signatures-1.0.33.zip](imagina-signatures-1.0.33.zip) |
-| 1.0.32 | [imagina-signatures-1.0.32.zip](imagina-signatures-1.0.32.zip) |
-| 1.0.31 | [imagina-signatures-1.0.31.zip](imagina-signatures-1.0.31.zip) |
-| 1.0.30 (hotfix) | [imagina-signatures-1.0.30.zip](imagina-signatures-1.0.30.zip) |
-| ~~1.0.29~~ — DO NOT USE, fatal error on activation | [imagina-signatures-1.0.29.zip](imagina-signatures-1.0.29.zip) |
-| 1.0.28 | [imagina-signatures-1.0.28.zip](imagina-signatures-1.0.28.zip) |
-| 1.0.27 | [imagina-signatures-1.0.27.zip](imagina-signatures-1.0.27.zip) |
-| 1.0.26 | [imagina-signatures-1.0.26.zip](imagina-signatures-1.0.26.zip) |
-| 1.0.25 | [imagina-signatures-1.0.25.zip](imagina-signatures-1.0.25.zip) |
-| 1.0.23 | [imagina-signatures-1.0.23.zip](imagina-signatures-1.0.23.zip) |
-| 1.0.22 | [imagina-signatures-1.0.22.zip](imagina-signatures-1.0.22.zip) |
-| 1.0.21 | [imagina-signatures-1.0.21.zip](imagina-signatures-1.0.21.zip) |
-| 1.0.20 | [imagina-signatures-1.0.20.zip](imagina-signatures-1.0.20.zip) |
-| 1.0.19 | [imagina-signatures-1.0.19.zip](imagina-signatures-1.0.19.zip) |
-| 1.0.18 | [imagina-signatures-1.0.18.zip](imagina-signatures-1.0.18.zip) |
-| 1.0.17 | [imagina-signatures-1.0.17.zip](imagina-signatures-1.0.17.zip) |
-| 1.0.16 | [imagina-signatures-1.0.16.zip](imagina-signatures-1.0.16.zip) |
-| 1.0.15 | [imagina-signatures-1.0.15.zip](imagina-signatures-1.0.15.zip) |
-| 1.0.14 | [imagina-signatures-1.0.14.zip](imagina-signatures-1.0.14.zip) |
-| 1.0.13 | [imagina-signatures-1.0.13.zip](imagina-signatures-1.0.13.zip) |
-| 1.0.12 | [imagina-signatures-1.0.12.zip](imagina-signatures-1.0.12.zip) |
-| 1.0.11 | [imagina-signatures-1.0.11.zip](imagina-signatures-1.0.11.zip) |
-| 1.0.10 | [imagina-signatures-1.0.10.zip](imagina-signatures-1.0.10.zip) |
-| 1.0.9 | [imagina-signatures-1.0.9.zip](imagina-signatures-1.0.9.zip) |
-| 1.0.8 | [imagina-signatures-1.0.8.zip](imagina-signatures-1.0.8.zip) |
-| 1.0.7 | [imagina-signatures-1.0.7.zip](imagina-signatures-1.0.7.zip) |
-| 1.0.6 | [imagina-signatures-1.0.6.zip](imagina-signatures-1.0.6.zip) |
-| 1.0.5 | [imagina-signatures-1.0.5.zip](imagina-signatures-1.0.5.zip) |
-| 1.0.4 | [imagina-signatures-1.0.4.zip](imagina-signatures-1.0.4.zip) |
-| 1.0.3 | [imagina-signatures-1.0.3.zip](imagina-signatures-1.0.3.zip) |
-| 1.0.2 | [imagina-signatures-1.0.2.zip](imagina-signatures-1.0.2.zip) |
-| 1.0.1 | [imagina-signatures-1.0.1.zip](imagina-signatures-1.0.1.zip) |
-| 1.0.0 | [imagina-signatures-1.0.0.zip](imagina-signatures-1.0.0.zip) |
+| 1.2.0 | [imagina-signatures-1.2.0.zip](imagina-signatures-1.2.0.zip) |
+
+Only the current release is kept on this branch; older builds can be rebuilt from their tag on `main` (see below).
 
 Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Upload Plugin):
 
@@ -96,7 +66,7 @@ Strict [semver](https://semver.org/):
 - **Minor** (`1.x.0`) — new features, no breaking changes.
 - **Patch** (`1.0.x`) — bug fixes only.
 
-Each release is committed here as `imagina-signatures-<x.y.z>.zip`, and `imagina-signatures-latest.zip` is updated to point at the most recent build.
+Each release is committed here as `imagina-signatures-<x.y.z>.zip` (replacing the previous one), and `imagina-signatures-latest.zip` is the same build.
 
 ## Building locally
 
@@ -115,6 +85,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.2.0
+**Premium design (roadmap Fase 1).** Box styling for every block and containers with 1–4 columns; full typography inherited from the canvas; rich headings and disclaimers; new image, avatar, button, divider, banner, QR and vCard blocks; real hosted icons for social and contact blocks; company brand kit with `{{company_*}}` variables and live data on the canvas; asset library with in-browser image optimisation; 48 templates with a searchable gallery and a guided "Create your signature"; per-client export and install steps, realistic previews with dark mode, contrast and dark-logo checks. The server now keeps each signature's compiled HTML and every user has a primary signature (groundwork for central deployment). Fully translated to Spanish. Upgrading from 1.1.0 or 1.0.x migrates automatically on the next admin page load.
 
 ### 1.0.33
 **Fixed: multi-column templates didn't appear after upgrading from 1.0.31.** Root cause: `register_activation_hook` only fires when the user clicks **Activate** in `wp-admin/plugins.php`. Replacing the plugin via "Upload Plugin → Replace current with uploaded" does NOT re-run the activation hook, so when 1.0.32 shipped with three new template JSON files + three new entries in `DefaultTemplatesSeeder::META`, the seeder never ran on existing installs and the templates never landed in `wp_imgsig_templates`. Fix: `Plugin::boot()` now compares the stored `imgsig_version` option against the current `IMGSIG_VERSION` constant on every page load and re-runs `Installer::install()` when stored < current. Every step inside is idempotent (dbDelta diffs the schema, role-cap adds are no-op when present, the seeder skips existing slugs, options use add_option which doesn't overwrite). Wrapped in try/catch so a failed upgrade logs to error_log without crashing the site. **After installing 1.0.33, the next admin page load will detect the upgrade and the three multi-column templates will appear in the Template Picker.**
