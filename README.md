@@ -7,7 +7,7 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
-| 1.3.0 | [imagina-signatures-1.3.0.zip](imagina-signatures-1.3.0.zip) |
+| 1.3.1 | [imagina-signatures-1.3.1.zip](imagina-signatures-1.3.1.zip) |
 
 Only the current release is kept on this branch; an older build can be rebuilt from the matching release commit on `main` (see below).
 
@@ -85,6 +85,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.3.1
+**Fix for sites behind Cloudflare with Rocket Loader.** The public `/signatures/` page stayed blank ("IMGSIG_ADMIN_CONFIG is missing" and a Content-Security-Policy error in the console) because Rocket Loader re-creates scripts without their security nonce. Every script the plugin prints now opts out of Rocket Loader (`data-cfasync="false"`), so it can stay enabled for the rest of the site.
 
 ### 1.3.0
 **Central management and deployment (roadmap Fase 2).** Deploy every employee's signature to Gmail (Google Workspace service account, authorised once by the administrator), to Outlook through a Microsoft 365 add-in (plus an Exchange mail-flow rule generator) or with a personal install link sent by email with reminders. Company-managed signatures: linked templates with block locks and employee modes, employee profile fields, groups / departments and CSV import. New Team console with each person's signature, HTML freshness and deployment status, bulk actions, in-browser recompilation of outdated signatures and editing on someone's behalf. Admin screens fixed (buttons had lost their styling) and Settings regrouped. Fully translated to Spanish. Upgrading from 1.2.0, 1.1.0 or 1.0.x migrates automatically on the next admin page load.
