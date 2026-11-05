@@ -112,6 +112,22 @@ class RateLimitStore {
 	}
 
 	/**
+	 * Builds the bucket key for an arbitrary subject (an IP address, an
+	 * API key…). The subject is hashed, so raw IPs / secrets never reach
+	 * the `rl_key` column and the key stays within its 191 characters.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string $action  Logical action name.
+	 * @param string $subject What the window is counted for.
+	 *
+	 * @return string
+	 */
+	public function subject_key( string $action, string $subject ): string {
+		return self::KEY_PREFIX . sanitize_key( $action ) . '_s' . substr( hash( 'sha256', $subject ), 0, 24 );
+	}
+
+	/**
 	 * Records one hit and returns the bucket state after it.
 	 *
 	 * @since 1.0.40
