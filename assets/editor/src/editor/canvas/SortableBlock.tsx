@@ -1,39 +1,51 @@
-import type { FC } from 'react';
+import { memo, type FC } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Block } from '@/core/schema/blocks';
 import { useSelectionStore } from '@/stores/selectionStore';
+import { useDropIndicatorStore } from '@/stores/dropIndicatorStore';
 import { BlockRenderer } from './BlockRenderer';
 import { SelectionOverlay } from './SelectionOverlay';
 import { BlockToolbar } from './BlockToolbar';
+import { DropIndicator } from './DropIndicators';
+import { CANVAS_ROOT_DROP_ID, type BlockDragData } from './dnd';
 
 interface Props {
   block: Block;
+  /**
+   * Droppable id of the zone this block lives in: the canvas root for
+   * top-level blocks, `container-cell:{id}:{side}` for nested ones.
+   * Lets the collision detection resolve "pointer in the zone's empty
+   * space" to the nearest block of that zone.
+   */
+  zone?: string;
 }
 
 /**
- * Sortable wrapper for a block on the canvas.
+ * Sortable wrapper for a block on the canvas — used for top-level
+ * blocks AND for blocks nested inside container cells, so both get
+ * the same selection outline, hover outline, floating
+ * {@link BlockToolbar} and drop indicator.
  *
  * dnd-kit's `useSortable` hook handles registration with the parent
- * SortableContext; we layer it on top of {@link SelectionOverlay}
- * (selection / hover outline) and {@link BlockToolbar} (duplicate /
- * delete / drag handle). Activation distance is tuned at the
- * DndContext level so a click-to-select doesn't trigger a drag.
+ * SortableContext. Activation distance is tuned at the DndContext
+ * level so a click-to-select doesn't trigger a drag. Selection /
+ * hover / indicator subscriptions are per-block booleans so a hover
+ * change re-renders two blocks, not the whole canvas; `memo` skips
+ * blocks whose (immer-shared) data didn't change.
  */
-export const SortableBlock: FC<Props> = ({ block }) => {
+const SortableBlockImpl: FC<Props> = ({ block, zone = CANVAS_ROOT_DROP_ID }) => {
+  const data: BlockDragData = { kind: 'block', zone };
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
+    data,
   });
 
-  // Granular selectors per CLAUDE.md §6.4. Destructuring the whole
-  // store re-rendered every SortableBlock on every selection / hover
-  // change, which made dragging stutter when a signature had many
-  // blocks (and made Tiptap typing feel laggy through the cascade).
-  const selectedBlockId = useSelectionStore((s) => s.selectedBlockId);
-  const hoveredBlockId = useSelectionStore((s) => s.hoveredBlockId);
+  const isSelected = useSelectionStore((s) => s.selectedBlockId === block.id);
+  const isHovered = useSelectionStore((s) => s.hoveredBlockId === block.id);
   const select = useSelectionStore((s) => s.select);
   const hover = useSelectionStore((s) => s.hover);
-  const isSelected = block.id === selectedBlockId;
+  const indicator = useDropIndicatorStore((s) => (s.targetId === block.id ? s.position : null));
 
   // Hidden blocks (Layers panel eye toggle flips `block.visible` to
   // false) get a faded canvas treatment and are skipped entirely by
@@ -48,17 +60,25 @@ export const SortableBlock: FC<Props> = ({ block }) => {
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={style} data-imgsig-block-id={block.id}>
       <SelectionOverlay
         selected={isSelected}
-        hovered={block.id === hoveredBlockId}
+        hovered={isHovered}
         onSelect={() => select(block.id)}
-        onHoverEnter={() => hover(block.id)}
-        onHoverLeave={() => hover(null)}
+        onHoverEnter={() => {
+          if (useSelectionStore.getState().hoveredBlockId !== block.id) hover(block.id);
+        }}
+        onHoverLeave={() => {
+          if (useSelectionStore.getState().hoveredBlockId === block.id) hover(null);
+        }}
       >
         <BlockRenderer block={block} />
       </SelectionOverlay>
+      {indicator && <DropIndicator position={indicator} />}
       {isSelected && <BlockToolbar block={block} dragHandleProps={{ ...attributes, ...listeners }} />}
     </div>
   );
 };
+
+export const SortableBlock = memo(SortableBlockImpl);
+SortableBlock.displayName = 'SortableBlock';

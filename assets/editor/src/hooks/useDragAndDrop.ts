@@ -2,55 +2,107 @@ import { useState } from 'react';
 import {
   KeyboardSensor,
   PointerSensor,
-  closestCenter,
   useSensor,
   useSensors,
+  type Active,
   type DragEndEvent,
+  type DragMoveEvent,
   type DragStartEvent,
+  type Over,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { useSchemaStore, type ContainerCell } from '@/stores/schemaStore';
+import { useSchemaStore } from '@/stores/schemaStore';
+import { useSelectionStore } from '@/stores/selectionStore';
+import { useDropIndicatorStore } from '@/stores/dropIndicatorStore';
+import { isDescendantOf } from '@/stores/schemaUtils';
 import { getBlockDefinition } from '@/core/blocks/registry';
 import type { Block } from '@/core/schema/blocks';
+import {
+  CANVAS_ROOT_DROP_ID,
+  editorCollisionDetection,
+  getLastDragPointer,
+  isZoneId,
+  parseCellDropId,
+  resetDragPointer,
+  resolveDropPosition,
+  type DropPosition,
+} from '@/editor/canvas/dnd';
 
-/**
- * Decode a `container-cell:{containerId}:{left|right}` drop-target
- * id back into the container id + cell side. Returns null when the
- * id doesn't match the format (i.e. the drop landed on a regular
- * block / the canvas root).
- */
-function parseCellDropId(id: string): { containerId: string; cell: ContainerCell } | null {
-  if (!id.startsWith('container-cell:')) return null;
-  const parts = id.split(':');
-  if (parts.length !== 3) return null;
-  const cell = parts[2];
-  if (cell !== 'left' && cell !== 'right') return null;
-  return { containerId: parts[1] ?? '', cell };
+interface LibraryDragData {
+  source?: string;
+  blockType?: string;
+}
+
+function libraryTypeOf(active: Active): string | null {
+  const data = active.data.current as LibraryDragData | undefined;
+  return data?.source === 'library' && typeof data.blockType === 'string' ? data.blockType : null;
 }
 
 /**
- * Owns the drag lifecycle shared by the library and the canvas.
+ * Vertical position used to decide before/after: the pointer for
+ * mouse / touch drags, the centre of the dragged rect for keyboard
+ * drags (which have no pointer).
+ */
+function dragY(active: Active): number | null {
+  const pointer = getLastDragPointer();
+  if (pointer) return pointer.y;
+  const rect = active.rect.current.translated;
+  return rect ? rect.top + rect.height / 2 : null;
+}
+
+/**
+ * Where a drop over `over` would land, or null when it would be a
+ * no-op / invalid (over itself, over a zone, inside its own subtree).
+ */
+function blockDropTarget(
+  active: Active,
+  over: Over | null,
+): { targetId: string; position: DropPosition } | null {
+  if (!over) return null;
+  const overId = String(over.id);
+  const activeId = String(active.id);
+  if (overId === activeId || isZoneId(overId)) return null;
+  if (
+    libraryTypeOf(active) === null &&
+    isDescendantOf(useSchemaStore.getState().schema.blocks, activeId, overId)
+  ) {
+    return null;
+  }
+  return { targetId: overId, position: resolveDropPosition(over.rect, dragY(active)) };
+}
+
+/**
+ * Owns the drag lifecycle shared by the library and the canvas
+ * (CLAUDE.md §11).
  *
  * Library cards carry `{ source: 'library', blockType }` in their
- * data; canvas blocks just use their schema id. `handleDragEnd`
- * branches accordingly so a single DndContext can serve both flows
- * (CLAUDE.md §11.1).
+ * data; canvas blocks are sortables carrying `{ kind: 'block', zone }`.
+ * Drop targets (see `editor/canvas/dnd.ts`):
  *
- * 1.0.31 added cell-aware drop targets — Container renders each
- * cell as a `useDroppable` zone with id
- * `container-cell:{containerId}:{left|right}`. Drops on these ids
- * route to `addChildToContainer(parent_id, fresh, cell)` for
- * library cards or `moveBlockToContainerCell(...)` for existing
- * canvas blocks. Drops on a regular block id keep the original
- * insertBlockAfter / moveBlock behaviour, with `findParentAndIndex`
- * walking into both cells of any container.
+ *   - a block → insert / move BEFORE or AFTER it, depending on which
+ *     half of the block the pointer is in (keyboard drags: the dragged
+ *     rect's centre). Works at any depth: the store helpers walk both
+ *     container cells.
+ *   - an empty container cell (`container-cell:{id}:{side}`) → append
+ *     to that cell.
+ *   - the canvas root (`canvas-root`, only reported for an empty
+ *     canvas — otherwise the collision detection resolves to the
+ *     nearest top-level block) → append.
+ *
+ * While dragging, the would-be target + position are mirrored into
+ * {@link useDropIndicatorStore} so the target block draws a 2px line
+ * above / below itself.
  */
 export function useDragAndDrop() {
   const moveBlock = useSchemaStore((s) => s.moveBlock);
   const insertBlockAfter = useSchemaStore((s) => s.insertBlockAfter);
+  const insertBlockBefore = useSchemaStore((s) => s.insertBlockBefore);
   const addBlock = useSchemaStore((s) => s.addBlock);
   const addChildToContainer = useSchemaStore((s) => s.addChildToContainer);
   const moveBlockToContainerCell = useSchemaStore((s) => s.moveBlockToContainerCell);
+  const select = useSelectionStore((s) => s.select);
+  const showIndicator = useDropIndicatorStore((s) => s.show);
+  const clearIndicator = useDropIndicatorStore((s) => s.clear);
 
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [draggingLibraryType, setDraggingLibraryType] = useState<string | null>(null);
@@ -60,78 +112,101 @@ export function useDragAndDrop() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
+  const reset = (): void => {
+    setDraggingId(null);
+    setDraggingLibraryType(null);
+    clearIndicator();
+    resetDragPointer();
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
-    const data = event.active.data.current as { source?: string; blockType?: string } | undefined;
-    if (data?.source === 'library' && typeof data.blockType === 'string') {
-      setDraggingLibraryType(data.blockType);
+    resetDragPointer();
+    clearIndicator();
+    const libraryType = libraryTypeOf(event.active);
+    if (libraryType) {
+      setDraggingLibraryType(libraryType);
       return;
     }
     setDraggingId(String(event.active.id));
   };
 
+  const handleDragMove = (event: DragMoveEvent) => {
+    const target = blockDropTarget(event.active, event.over);
+    if (target) {
+      showIndicator(target.targetId, target.position);
+    } else {
+      clearIndicator();
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    setDraggingId(null);
-    setDraggingLibraryType(null);
+    const target = blockDropTarget(active, over);
+    reset();
 
     if (!over) return;
 
-    const data = active.data.current as { source?: string; blockType?: string } | undefined;
     const overId = String(over.id);
     const cellTarget = parseCellDropId(overId);
+    const libraryType = libraryTypeOf(active);
 
     // ---- Library card → schema -------------------------------------
-    if (data?.source === 'library' && typeof data.blockType === 'string') {
-      const definition = getBlockDefinition(data.blockType);
+    if (libraryType) {
+      const definition = getBlockDefinition(libraryType);
       if (!definition) return;
       // create() returns the concrete Block subtype but the registry
       // is type-erased; cast back to the discriminated union.
       const fresh = definition.create() as Block;
 
       if (cellTarget) {
-        // Drop landed on a Container's cell drop zone (empty cell or
-        // the cell's padding around its children). Route to that
-        // exact cell so the user gets the column they aimed at.
         addChildToContainer(cellTarget.containerId, fresh, cellTarget.cell);
+      } else if (overId === CANVAS_ROOT_DROP_ID) {
+        addBlock(fresh);
+      } else if (target) {
+        if (target.position === 'before') {
+          insertBlockBefore(target.targetId, fresh);
+        } else {
+          insertBlockAfter(target.targetId, fresh);
+        }
+      } else {
         return;
       }
-
-      if (overId === 'canvas-empty') {
-        addBlock(fresh);
-      } else {
-        // Drop landed on an existing block — insert AFTER it. Works
-        // for top-level AND nested children because
-        // `insertBlockAfter` uses `findParentAndIndex` which walks
-        // into both Container cells.
-        insertBlockAfter(overId, fresh);
-      }
+      select(fresh.id);
       return;
     }
 
     // ---- Canvas block → schema -------------------------------------
-    if (active.id === over.id) return;
+    const activeId = String(active.id);
+    if (activeId === overId) return;
 
     if (cellTarget) {
-      // Block dragged onto an empty cell (or the empty drop zone of
-      // a non-empty cell — useDroppable always covers the cell). Move
-      // it to the END of that cell so the user can refine ordering
-      // afterwards by dragging onto a specific sibling.
-      moveBlockToContainerCell(String(active.id), cellTarget.containerId, cellTarget.cell);
+      // Empty cell (or a container dropped onto its own cell, which
+      // the store rejects): append to that cell.
+      if (cellTarget.containerId === activeId) return;
+      if (isDescendantOf(useSchemaStore.getState().schema.blocks, activeId, cellTarget.containerId)) {
+        return;
+      }
+      moveBlockToContainerCell(activeId, cellTarget.containerId, cellTarget.cell);
       return;
     }
 
-    // Reorder relative to a sibling block — `moveBlock` walks both
-    // cells of every container, so this works for top-level AND
-    // nested cross-cell drags (drop a left-cell block onto a right-
-    // cell block to move it across).
-    moveBlock(String(active.id), overId, 'after');
+    if (!target) return;
+    // `moveBlock` walks both cells of every container, so this works
+    // for top-level AND nested / cross-cell drags.
+    moveBlock(activeId, target.targetId, target.position);
+  };
+
+  const handleDragCancel = () => {
+    reset();
   };
 
   return {
     sensors,
-    collisionDetection: closestCenter,
+    collisionDetection: editorCollisionDetection,
     handleDragStart,
+    handleDragMove,
     handleDragEnd,
+    handleDragCancel,
     draggingId,
     draggingLibraryType,
   };
