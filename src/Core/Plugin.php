@@ -17,6 +17,7 @@ use ImaginaSignatures\Frontend\FrontendRouter;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 use ImaginaSignatures\Api\Controllers\AssetsController;
 use ImaginaSignatures\Api\Controllers\FrontendAccessController;
+use ImaginaSignatures\Api\Controllers\GmailDeployController;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Api\Controllers\MeController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
@@ -24,6 +25,7 @@ use ImaginaSignatures\Api\Controllers\StorageController;
 use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\RestRouter;
+use ImaginaSignatures\Deployment\Gmail\GmailScheduler;
 use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\SignatureRepository;
@@ -138,6 +140,9 @@ final class Plugin {
 
 		// WP-Cron handlers (daily rate-limit purge).
 		Cron::boot();
+
+		// Gmail push: auto-push listener, retries, daily sync (1.3.0).
+		$this->container->make( GmailScheduler::class )->boot();
 
 		// Personal-data exporter / eraser + delete_user cleanup.
 		$this->container->make( UserDataManager::class )->register();
@@ -304,6 +309,7 @@ final class Plugin {
 				$this->container->make( AssetsController::class ),
 				$this->container->make( SiteSettingsController::class ),
 				$this->container->make( FrontendAccessController::class ),
+				$this->container->make( GmailDeployController::class ),
 			]
 		);
 		$router->register();

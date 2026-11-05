@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace ImaginaSignatures\Core;
 
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
+use ImaginaSignatures\Deployment\Gmail\GmailScheduler;
+use ImaginaSignatures\Deployment\Gmail\GmailSettings;
 use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Models\Asset;
 use ImaginaSignatures\Security\Encryption;
@@ -79,6 +81,8 @@ final class Uninstaller {
 		'imgsig_compliance_footer',
 		'imgsig_banner_campaigns',
 		'imgsig_frontend_access',
+		GmailSettings::OPTION,
+		GmailScheduler::SYNC_OPTION,
 		'imgsig_delete_data_on_uninstall',
 		'imgsig_upgrade_lock',
 		'imgsig_template_hashes',
@@ -147,6 +151,7 @@ final class Uninstaller {
 		// Always: plugin wiring that is meaningless without the plugin.
 		self::remove_capabilities();
 		wp_clear_scheduled_hook( Cron::DAILY_HOOK );
+		GmailScheduler::unschedule_all();
 		self::delete_transients( $wpdb );
 
 		if ( ! $purge ) {

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Core;
 
+use ImaginaSignatures\Deployment\Gmail\GmailScheduler;
 use ImaginaSignatures\Frontend\FrontendRouter;
 use ImaginaSignatures\Hooks\Actions;
 
@@ -41,6 +42,7 @@ final class Deactivator {
 	public static function deactivate(): void {
 		// Drop every plugin-scheduled event.
 		Cron::unschedule();
+		GmailScheduler::unschedule_all();
 
 		// Drop the public `/<slug>/` route from the permalink cache. Our
 		// rules were registered on this request's `init`, so remove them
