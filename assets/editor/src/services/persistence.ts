@@ -1,65 +1,89 @@
 /**
- * Persistence engine — rewrite #3 (1.0.26).
+ * Persistence engine.
  *
- * The autosave + self-coalescing-loop model from 1.0.20 → 1.0.25 kept
- * producing edge cases that lied to the user about whether their work
- * was actually saved (false-positive `markSaved`, empty-row creation,
- * etc.). 1.0.26 deletes the autosave entirely.
+ * One save = one round trip:
+ *   1. POST /signatures (new) or PATCH /signatures/:id (existing).
+ *   2. The backend sanitises, writes, re-reads and hash-verifies the
+ *      row, then returns the canonical stored state.
+ *   3. If the server removed something (it reports
+ *      `sanitization_notes`), the editor adopts the server's copy so
+ *      what the user sees is what is stored, and says what changed.
  *
- * The new model is much smaller and verifiable end-to-end:
- *
- *   1. The user edits the schema. `markDirty()` flips a flag. No
- *      network call happens. The Save button lights up.
- *   2. The user clicks Save (or hits Cmd-S, or the back-arrow / page-
- *      unload listener fires).
- *   3. `saveNow()` runs ONE round-trip:
- *        a. POST /signatures   (when signatureId === 0)
- *           OR
- *           PATCH /signatures/:id
- *        b. Backend writes, re-reads, hash-verifies the row, returns
- *           the canonical persisted state.
- *        c. Frontend compares its sent json_content against the
- *           response's json_content. If they differ, it surfaces a
- *           warning so the user knows the server changed something.
- *      The Save button shows "Saving…" → "Saved · HH:MM" / "Failed"
- *      based on the actual outcome.
- *   4. `beforeunload` warns the user when `isDirty` is true so they
- *      can't lose work by accident.
- *
- * No timers. No `dirty/inFlight` race surfaces. The Save button is
- * the ONE way to commit. If it doesn't toast "Saved", nothing landed.
+ * Autosave is a debounced call to the same path. It is silent on
+ * success (the Save button shows "Saved · HH:MM"); only manual saves
+ * toast. A 429 from the rate limiter pauses autosave until the
+ * server's Retry-After window passes instead of reporting a failure.
  */
 
 import { apiCall, ApiError, getConfig } from '@/bridge/apiClient';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { usePersistenceStore } from '@/stores/persistenceStore';
 import { useToastStore } from '@/stores/toastStore';
+import type { SignatureSchema } from '@/core/schema/signature';
 import { __ } from '@/i18n/helpers';
 
-/**
- * Debounce window between the user's last edit and the autosave
- * firing. 1500 ms balances "saves often enough that the user can't
- * lose much by closing the tab" against "doesn't slam the server on
- * every keystroke".
- */
+/** Delay between the last edit and the autosave. */
 const AUTOSAVE_DEBOUNCE_MS = 1500;
+
+/** Fallback pause when a 429 carries no usable retry_after. */
+const DEFAULT_RETRY_AFTER_S = 60;
+
+interface SaveOptions {
+  /** Autosave: no success toast, 429 schedules a retry instead of erroring. */
+  silent?: boolean;
+}
+
+interface SanitizationNote {
+  path: string;
+  message: string;
+}
+
+interface SaveResponse {
+  id: number;
+  json_content: unknown;
+  name: string;
+  status: 'draft' | 'ready' | 'archived';
+  sanitization_notes?: SanitizationNote[];
+}
+
+/**
+ * Structural equality that treats an empty array and an empty object as
+ * the same value — PHP's JSON round trip can't tell them apart.
+ */
+export function sameJson(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  const emptyA = isEmptyContainer(a);
+  const emptyB = isEmptyContainer(b);
+  if (emptyA || emptyB) return emptyA && emptyB;
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    return a.every((item, i) => sameJson(item, b[i]));
+  }
+  if (a && b && typeof a === 'object' && typeof b === 'object') {
+    const ra = a as Record<string, unknown>;
+    const rb = b as Record<string, unknown>;
+    const keys = new Set([...Object.keys(ra), ...Object.keys(rb)]);
+    for (const key of keys) {
+      if (!sameJson(ra[key], rb[key])) return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+function isEmptyContainer(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length === 0;
+  return value !== null && typeof value === 'object' && Object.keys(value).length === 0;
+}
 
 class Persistence {
   private signatureId = 0;
   private initialized = false;
-  /**
-   * In-flight save promise, exposed so concurrent `saveNow()` calls
-   * (rapid Cmd-S double-tap, button click during the back-arrow's
-   * own save) chain off the same network request rather than
-   * launching duplicates.
-   */
+  /** Shared by concurrent saveNow() calls so they never double-POST. */
   private inFlight: Promise<number> | null = null;
-  /**
-   * Timer handle for the pending autosave. `scheduleSave()` resets
-   * it on every call, so a burst of edits collapses into one save
-   * 1500 ms after the LAST edit. `saveNow()` clears it.
-   */
   private autosaveTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Epoch ms until which autosave is paused after a 429. */
+  private pausedUntil = 0;
 
   /** Bind to the bootstrap config. Idempotent. */
   initialize(): void {
@@ -70,8 +94,7 @@ class Persistence {
 
   /**
    * Drop the in-memory signature id so the next save POSTs a fresh
-   * row. Called from `useLoadSignature` when `?id=N` 404s — falling
-   * back to "new" is better than PATCH-looping a non-existent row.
+   * row. Called from `useLoadSignature` when `?id=N` 404s.
    */
   resetToNew(): void {
     this.signatureId = 0;
@@ -85,25 +108,14 @@ class Persistence {
     }
   }
 
-  /**
-   * Schedule a debounced autosave. `useAutosave` calls this on every
-   * schema mutation (1.0.28 — autosave restored after 1.0.26 deleted
-   * it). Each call resets the timer; rapid edits collapse into one
-   * save AUTOSAVE_DEBOUNCE_MS ms after the last edit.
-   *
-   * The save itself goes through the same `saveNow()` path as the
-   * manual Save button, so the backend hash-verify still catches any
-   * silent corruption — but the user no longer has to remember to
-   * click Save for incremental edits to land.
-   */
+  /** Debounced autosave; each call restarts the timer. */
   scheduleSave(): void {
-    if (this.autosaveTimer !== null) {
-      clearTimeout(this.autosaveTimer);
-    }
+    this.cancelScheduledSave();
+    const wait = Math.max(AUTOSAVE_DEBOUNCE_MS, this.pausedUntil - Date.now());
     this.autosaveTimer = setTimeout(() => {
       this.autosaveTimer = null;
-      void this.saveNow();
-    }, AUTOSAVE_DEBOUNCE_MS);
+      void this.saveNow({ silent: true });
+    }, wait);
   }
 
   /** Cancel any pending autosave. Used by the back-arrow handler. */
@@ -120,26 +132,15 @@ class Persistence {
   }
 
   /**
-   * Force-save now. The single entry point — called from the topbar
-   * Save button, the Cmd-S keyboard shortcut, and the back-arrow.
-   *
-   * Returns the assigned signature id on success (positive integer)
-   * OR 0 when the save was refused (empty signature). Throws if the
-   * server reported a persistence failure — the caller's catch
-   * handler is responsible for the user-facing error toast (the
-   * engine already surfaced its own toast and stored the error in
-   * `persistenceStore.lastError`).
+   * Save now. Called by the Save button, Cmd/Ctrl+S, the back arrow
+   * (all loud) and the autosave timer (silent). Returns the signature
+   * id on success, 0 when nothing was stored.
    */
-  async saveNow(): Promise<number> {
-    // Cancel any pending autosave — `saveNow` always preempts the
-    // debounced timer to avoid a back-to-back save right after a
-    // manual one.
+  async saveNow(options: SaveOptions = {}): Promise<number> {
     this.cancelScheduledSave();
-
-    // Coalesce concurrent calls onto the same in-flight request.
     if (this.inFlight) return this.inFlight;
 
-    this.inFlight = this.runSave();
+    this.inFlight = this.runSave(options);
     try {
       return await this.inFlight;
     } finally {
@@ -147,12 +148,8 @@ class Persistence {
     }
   }
 
-  /**
-   * Body of one save round-trip. Reads the latest schema + meta off
-   * the stores, POSTs / PATCHes it, compares the response to what we
-   * sent, updates the persistence store with the outcome.
-   */
-  private async runSave(): Promise<number> {
+  private async runSave(options: SaveOptions): Promise<number> {
+    const silent = options.silent === true;
     const persistence = usePersistenceStore.getState();
     const showToast = useToastStore.getState().show;
 
@@ -161,27 +158,19 @@ class Persistence {
     const rowName = meta.signatureName.trim() || 'Untitled';
     const rowStatus = meta.signatureStatus;
 
-    // Refuse to POST a brand-new row whose canvas has zero blocks.
-    // The server would happily store it, but the listing would show
-    // a phantom empty row that the user has to manually delete.
-    // PATCH on an existing signature is allowed even when blocks ===
-    // 0 (the user might be intentionally clearing the canvas).
+    // Never create an empty row: the listing would show a phantom
+    // signature. PATCHing an existing one to empty is allowed.
     if (this.signatureId === 0 && schema.blocks.length === 0) {
-      showToast(
-        __('Add at least one block before saving — empty signatures are not stored.'),
-        'info',
-      );
+      if (!silent) {
+        showToast(
+          __('Add at least one block before saving — empty signatures are not stored.'),
+          'info',
+        );
+      }
       return 0;
     }
 
     persistence.markSaving();
-
-    type SaveResponse = {
-      id: number;
-      json_content: unknown;
-      name: string;
-      status: 'draft' | 'ready' | 'archived';
-    };
 
     try {
       let response: SaveResponse;
@@ -195,11 +184,8 @@ class Persistence {
           method: 'POST',
           body: { name: rowName, status: rowStatus, json_content: schema },
         });
-
-        // Stamp the new id in memory + URL BEFORE we toast success
-        // so a refresh during the toast lands on the right row.
         if (typeof response?.id !== 'number' || response.id <= 0) {
-          throw new Error('Server returned no signature id on create.');
+          throw new Error(__('The server returned no signature id.'));
         }
         this.signatureId = response.id;
         try {
@@ -211,43 +197,86 @@ class Persistence {
         }
       }
 
-      // Defence in depth: the backend already hash-verifies the row,
-      // but we do a client-side sanity check too. If the server's
-      // returned json_content doesn't deep-equal what we sent, that's
-      // a bug somewhere (filter mutating the schema, sanitiser
-      // dropping a field, etc.) and the user should know the saved
-      // state isn't quite what they typed.
-      const sent = JSON.stringify(schema);
-      const got = JSON.stringify(response.json_content ?? null);
-      if (sent !== got) {
-        showToast(
-          __(
-            'Saved, but the server-stored copy differs from what you sent. Reload to see the canonical version.',
-          ),
-          'info',
-        );
-      }
+      this.pausedUntil = 0;
+      this.reconcile(schema, response, showToast);
 
       persistence.markSaved();
-      showToast(
-        this.signatureId > 0
-          ? __('Saved (signature #%s).', String(this.signatureId))
-          : __('Saved.'),
-        'success',
-      );
+      if (!silent) {
+        showToast(__('Saved.'), 'success');
+      }
       return this.signatureId;
     } catch (e) {
+      if (e instanceof ApiError && e.status === 429) {
+        return this.handleRateLimit(e, silent, showToast);
+      }
       const message =
-        e instanceof ApiError
-          ? `${e.message} [${e.code}, ${e.status}]`
-          : (e as Error).message;
+        e instanceof ApiError ? `${e.message} [${e.code}, ${e.status}]` : (e as Error).message;
       persistence.setError(message);
       showToast(__('Save failed: %s', message), 'error');
-      // Don't rethrow — the caller (back-arrow handler, etc.) should
-      // be able to await without a try/catch and decide what to do
-      // based on `persistenceStore.lastError`.
       return 0;
     }
+  }
+
+  /**
+   * Compare what we sent with what the server stored. When the server
+   * removed content for safety, adopt its copy (keeping undo history)
+   * and tell the user what changed instead of a vague "differs" note.
+   */
+  private reconcile(
+    sent: SignatureSchema,
+    response: SaveResponse,
+    showToast: (message: string, kind: 'success' | 'error' | 'info') => void,
+  ): void {
+    const stored = response.json_content;
+    if (sameJson(sent, stored)) return;
+
+    const notes = Array.isArray(response.sanitization_notes) ? response.sanitization_notes : [];
+    const looksLikeSchema =
+      stored !== null &&
+      typeof stored === 'object' &&
+      !Array.isArray(stored) &&
+      Array.isArray((stored as { blocks?: unknown }).blocks);
+
+    // Only adopt when the user hasn't edited further while the request
+    // was in flight; otherwise the next save carries their newer edits.
+    if (looksLikeSchema && useSchemaStore.getState().schema === sent) {
+      useSchemaStore.getState().replaceSchemaForHistory(stored as SignatureSchema);
+    }
+
+    if (notes.length > 0) {
+      showToast(
+        __('Some content was removed for security: %s', notes.map((n) => n.message).join('; ')),
+        'info',
+      );
+    } else {
+      showToast(
+        __('Saved, but the server adjusted some content. The editor now shows the stored version.'),
+        'info',
+      );
+    }
+  }
+
+  private handleRateLimit(
+    e: ApiError,
+    silent: boolean,
+    showToast: (message: string, kind: 'success' | 'error' | 'info') => void,
+  ): number {
+    const data = (e.data ?? {}) as { retry_after?: unknown };
+    const retryAfter = Number(data.retry_after);
+    const seconds = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : DEFAULT_RETRY_AFTER_S;
+    this.pausedUntil = Date.now() + seconds * 1000;
+
+    // Keep the document dirty and try again once the window passes.
+    usePersistenceStore.getState().markDirty();
+    this.scheduleSave();
+
+    showToast(
+      silent
+        ? __('Autosave paused for %s seconds (too many saves). Your changes are kept.', String(Math.ceil(seconds)))
+        : __('Too many saves in a short time. Retrying in %s seconds.', String(Math.ceil(seconds))),
+      'info',
+    );
+    return 0;
   }
 }
 

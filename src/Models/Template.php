@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Models;
 
+use ImaginaSignatures\Services\SchemaShape;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -135,7 +137,7 @@ final class Template extends BaseModel {
 			'category'         => $this->category,
 			'description'      => $this->description,
 			'preview_url'      => $this->preview_url,
-			'json_content'     => is_array( $decoded ) ? $decoded : [],
+			'json_content'     => is_array( $decoded ) ? SchemaShape::restore_objects( $decoded ) : [],
 			'is_system'        => $this->is_system,
 			'sort_order'       => $this->sort_order,
 			'schema_version'   => $this->schema_version,

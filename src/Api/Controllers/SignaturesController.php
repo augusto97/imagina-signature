@@ -39,7 +39,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * Rate limits (fixed windows, per user, filterable through
  * `imgsig/rate_limit/max`): create 30/hour, duplicate 30/hour,
- * update 240/hour, test-send 6/hour per user + 100/hour site-wide.
+ * update 1800/hour (autosave-friendly), test-send 6/hour per user + 100/hour site-wide.
  *
  * @since 1.0.0
  */
@@ -57,7 +57,7 @@ final class SignaturesController extends BaseController {
 	 * Per-user hourly limits.
 	 */
 	private const RL_MAX_CREATE    = 30;
-	private const RL_MAX_UPDATE    = 240;
+	private const RL_MAX_UPDATE    = 1800;
 	private const RL_MAX_DUPLICATE = 30;
 	private const RL_MAX_TEST_SEND = 6;
 

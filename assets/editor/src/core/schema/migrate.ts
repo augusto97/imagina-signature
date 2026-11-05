@@ -23,7 +23,28 @@ import type { SignatureSchema } from './signature';
  * leaves the container alone.
  */
 export function migrateContainersInPlace(schema: SignatureSchema): void {
+  normalizeTopLevelShapes(schema);
   walk(schema.blocks);
+}
+
+/**
+ * PHP's `json_decode(..., true)` turns an empty `{}` into `[]`, so a
+ * signature saved with no variables can come back as `variables: []`.
+ * Keys added to an array are dropped by `JSON.stringify`, which would
+ * silently lose the user's variables on the next save. Force the
+ * object-typed fields back to plain objects.
+ */
+function normalizeTopLevelShapes(schema: SignatureSchema): void {
+  const s = schema as unknown as Record<string, unknown>;
+  for (const key of ['variables'] as const) {
+    const value = s[key];
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+      s[key] = {};
+    }
+  }
+  if (!Array.isArray(s.blocks)) {
+    s.blocks = [];
+  }
 }
 
 function walk(blocks: Block[]): void {

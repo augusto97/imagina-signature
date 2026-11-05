@@ -107,7 +107,7 @@ final class SchemaSanitizer {
 			$schema[ $key ] = $this->sanitize_value( $value, $key, '', $key );
 		}
 
-		return $schema;
+		return SchemaShape::restore_objects( $schema );
 	}
 
 	/**

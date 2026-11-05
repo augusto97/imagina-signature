@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Models;
 
+use ImaginaSignatures\Services\SchemaShape;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -158,7 +160,7 @@ final class Signature extends BaseModel {
 			'id'             => $this->id,
 			'user_id'        => $this->user_id,
 			'name'           => $this->name,
-			'json_content'   => is_array( $decoded ) ? $decoded : [],
+			'json_content'   => is_array( $decoded ) ? SchemaShape::restore_objects( $decoded ) : [],
 			'html_cache'     => $this->html_cache,
 			'preview_url'    => $this->preview_url,
 			'template_id'    => $this->template_id,
