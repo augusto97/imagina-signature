@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   applicableOverrides,
   detachedSchema,
-  detailFields,
   editPolicy,
   lockedBlockIds,
   referencedVariables,
@@ -192,8 +191,8 @@ describe('detach / save as template', () => {
   });
 });
 
-describe('detailFields', () => {
-  it('lists own and missing variables as editable, used profile values as read-only', () => {
+describe('referencedVariables', () => {
+  it('lists the tokens the design uses, in order of first appearance', () => {
     const s = template('fields_only');
     s.blocks.push({
       id: 't2',
@@ -201,11 +200,6 @@ describe('detailFields', () => {
       content: '<p>{{job_title}} · {{company_name}} · {{phone}}</p>',
       style: {},
     } as TextBlock);
-    const fields = detailFields(s, {
-      wp_display_name: 'Ana',
-      job_title: 'CEO',
-      company_name: 'Acme',
-    });
 
     expect(referencedVariables(s)).toEqual([
       'wp_display_name',
@@ -213,11 +207,6 @@ describe('detailFields', () => {
       'job_title',
       'company_name',
       'phone',
-    ]);
-    expect(fields.editable).toEqual(['tagline', 'phone']);
-    expect(fields.profile).toEqual([
-      ['wp_display_name', 'Ana'],
-      ['job_title', 'CEO'],
     ]);
   });
 });

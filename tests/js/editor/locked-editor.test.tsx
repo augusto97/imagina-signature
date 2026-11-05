@@ -89,16 +89,17 @@ afterEach(() => {
 describe('fields_only — "Your details"', () => {
   beforeEach(() => link('fields_only'));
 
-  it('shows the signature variables as inputs and profile values read-only', () => {
+  it('uses the onboarding details form: own fields editable, profile values read-only', () => {
     render(<FieldsOnlyView />);
 
-    expect(screen.getByText('Your details')).toBeInTheDocument();
-    expect(screen.getByLabelText('Tagline')).toBeInTheDocument();
-    expect(screen.getByText('Head of Sales')).toBeInTheDocument();
-    expect(screen.getByText('Ana Pérez')).toBeInTheDocument();
-    // Company brand-kit values aren't the user's details.
-    expect(screen.queryByText('Acme')).not.toBeInTheDocument();
-    expect(screen.getByText('Edit profile to change these values.')).toBeInTheDocument();
+    expect(screen.getAllByText('Your details').length).toBeGreaterThan(0);
+    expect(screen.getByLabelText('Tagline')).not.toHaveAttribute('readonly');
+    expect(screen.getByDisplayValue('Head of Sales')).toHaveAttribute('readonly');
+    expect(screen.getByDisplayValue('Ana Pérez')).toHaveAttribute('readonly');
+    // Only what the design uses: it never references {{company_name}}.
+    expect(screen.queryByDisplayValue('Acme')).not.toBeInTheDocument();
+    // No profile page configured: no dead link.
+    expect(screen.queryByText('Edit profile')).not.toBeInTheDocument();
   });
 
   it('typing updates the variable and the live preview', () => {

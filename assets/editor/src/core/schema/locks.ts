@@ -263,46 +263,6 @@ export function referencedVariables(schema: SignatureSchema): string[] {
   return variableTokenNames(JSON.stringify(schema.blocks ?? []));
 }
 
-/** Prefix of the brand-kit variables (company-wide, not the user's). */
-const COMPANY_PREFIX = 'company_';
-
-/** Fields of the `fields_only` "Your details" form. */
-export interface DetailFields {
-  /** Signature variables the user fills in. */
-  editable: string[];
-  /** Profile values the design uses (read-only there). */
-  profile: Array<[string, string]>;
-}
-
-/**
- * Which fields the "Your details" form shows: the signature's own
- * variables plus every `{{token}}` the design uses that no system
- * variable provides (editable), and the profile values the design uses
- * (read-only; company brand-kit values are left out).
- */
-export function detailFields(
-  schema: SignatureSchema,
-  system: Record<string, string>,
-): DetailFields {
-  const own = Object.keys(schema.variables ?? {});
-  const used = referencedVariables(schema);
-  const isSystem = (name: string): boolean => Object.prototype.hasOwnProperty.call(system, name);
-
-  const editable = [...own];
-  for (const name of used) {
-    if (!isSystem(name) && !editable.includes(name)) editable.push(name);
-  }
-
-  const profile: Array<[string, string]> = [];
-  for (const name of used) {
-    if (isSystem(name) && !own.includes(name) && !name.startsWith(COMPANY_PREFIX)) {
-      profile.push([name, system[name] ?? '']);
-    }
-  }
-
-  return { editable, profile };
-}
-
 function isPlainObject(value: unknown): value is Record<string, BlockOverride> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

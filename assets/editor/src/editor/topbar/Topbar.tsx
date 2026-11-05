@@ -59,7 +59,9 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
   const showToast = useToastStore((s) => s.show);
   const [manualSaving, setManualSaving] = useState(false);
   // A signature that follows a company template can't swap its design (1.3.0).
-  const designLocked = useEditPolicy().enforced;
+  const policy = useEditPolicy();
+  const designLocked = policy.enforced;
+  const fieldsOnly = policy.fieldsOnly;
 
   const onManualSave = async (): Promise<void> => {
     if (manualSaving) return;
@@ -132,7 +134,9 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
       {/* Center: device switcher + data/fields toggle + history controls */}
       <div className="flex items-center gap-3">
         <DeviceSwitcher />
-        <CanvasDataToggle />
+        {/* Fields-only employees fill a form beside a preview: the
+            canvas-only controls and the duplicate "Your details" go. */}
+        {!fieldsOnly && <CanvasDataToggle />}
         <div className="inline-flex items-center gap-0.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] p-0.5">
           <IconButton title={__('Undo')} onClick={onUndo} disabled={!canUndo}>
             <Undo2 size={16} />
@@ -141,26 +145,30 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
             <Redo2 size={16} />
           </IconButton>
         </div>
-        <IconButton
-          title={
-            designLocked
-              ? __('This signature follows a company template')
-              : __('Pick a template')
-          }
-          disabled={designLocked}
-          onClick={() => openModal('template-picker')}
-        >
-          <LayoutTemplate size={16} />
-        </IconButton>
-        <button
-          type="button"
-          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-2.5 text-[12.5px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
-          onClick={() => openModal('your-details')}
-          title={__('Edit the details this signature shows: job title, phone, photo…')}
-        >
-          <UserRound size={14} />
-          {__('Your details')}
-        </button>
+        {!fieldsOnly && (
+          <>
+            <IconButton
+              title={
+                designLocked
+                  ? __('This signature follows a company template')
+                  : __('Pick a template')
+              }
+              disabled={designLocked}
+              onClick={() => openModal('template-picker')}
+            >
+              <LayoutTemplate size={16} />
+            </IconButton>
+            <button
+              type="button"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-2.5 text-[12.5px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
+              onClick={() => openModal('your-details')}
+              title={__('Edit the details this signature shows: job title, phone, photo…')}
+            >
+              <UserRound size={14} />
+              {__('Your details')}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Right: save state + actions */}
