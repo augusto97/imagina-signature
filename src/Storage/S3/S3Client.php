@@ -112,6 +112,29 @@ final class S3Client {
 	}
 
 	/**
+	 * GETs the first `$bytes` bytes of an object (HTTP Range request).
+	 *
+	 * Used by upload finalize to check a small text upload's signature
+	 * (e.g. `BEGIN:VCARD`) without downloading the whole object.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param string $key   Object key.
+	 * @param int    $bytes Number of bytes from the start.
+	 *
+	 * @return array{code: int, body: string, headers: array<string, string>}
+	 *
+	 * @throws StorageException On HTTP transport failure.
+	 */
+	public function get_object_range( string $key, int $bytes ): array {
+		$url     = $this->object_url( $key );
+		$range   = 'bytes=0-' . max( 0, $bytes - 1 );
+		$headers = $this->signer->sign_request( 'GET', $url, [ 'range' => $range ] );
+
+		return $this->execute( 'GET', $url, $headers );
+	}
+
+	/**
 	 * Deletes a single object.
 	 *
 	 * Returns the response array — callers should treat 204 / 404 as
@@ -204,17 +227,34 @@ final class S3Client {
 	 * @throws StorageException On transport-level failure.
 	 */
 	private function execute( string $method, string $url, array $headers, string $body = '' ): array {
-		$response = wp_remote_request(
-			$url,
-			[
-				'method'      => $method,
-				'headers'     => $headers,
-				'body'        => $body,
-				'timeout'     => $this->timeout,
-				'redirection' => 0,
-				'sslverify'   => true,
-			]
-		);
+		$args = [
+			'method'      => $method,
+			'headers'     => $headers,
+			'body'        => $body,
+			'timeout'     => $this->timeout,
+			'redirection' => 0,
+			'sslverify'   => true,
+		];
+
+		/**
+		 * Filters whether the S3 endpoint may resolve to a private /
+		 * loopback address (or a non-standard port).
+		 *
+		 * Off by default: requests go through wp_safe_remote_request(),
+		 * which refuses internal hosts so a storage endpoint setting
+		 * can't be turned into an SSRF probe of the server's network.
+		 * Return true for self-hosted MinIO / Ceph on a private network.
+		 *
+		 * @since 1.0.40
+		 *
+		 * @param bool   $allow Default false.
+		 * @param string $url   Request URL.
+		 */
+		$allow_private = (bool) apply_filters( 'imgsig/storage/allow_private_endpoints', false, $url );
+
+		$response = $allow_private
+			? wp_remote_request( $url, $args )
+			: wp_safe_remote_request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
 			throw new StorageException( 'S3 HTTP request failed: ' . $response->get_error_message() );

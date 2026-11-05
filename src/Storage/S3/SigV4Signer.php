@@ -154,9 +154,11 @@ final class SigV4Signer {
 	/**
 	 * Returns a presigned URL the browser can use directly.
 	 *
-	 * The signature lives in the query string, not the headers. Only
-	 * `host` is signed (sufficient for browser PUT uploads). The payload
-	 * hash is `UNSIGNED-PAYLOAD`.
+	 * The signature lives in the query string, not the headers. `host`
+	 * is always signed; `$signed_headers` adds more (the upload flow
+	 * signs `content-type`, so the PUT is only accepted with exactly the
+	 * Content-Type `/upload/init` authorised). The payload hash is
+	 * `UNSIGNED-PAYLOAD`.
 	 *
 	 * @since 1.0.0
 	 *
@@ -165,6 +167,7 @@ final class SigV4Signer {
 	 * @param int                   $expires_seconds Validity window in seconds.
 	 * @param array<string, string> $extra_query     Extra query parameters to include in the signature.
 	 * @param int|null              $timestamp       Optional Unix timestamp override (for tests).
+	 * @param array<string, string> $signed_headers  Extra headers the request must carry verbatim (name => value).
 	 *
 	 * @return string Presigned URL.
 	 *
@@ -175,7 +178,8 @@ final class SigV4Signer {
 		string $url,
 		int $expires_seconds,
 		array $extra_query = [],
-		?int $timestamp = null
+		?int $timestamp = null,
+		array $signed_headers = []
 	): string {
 		$timestamp  = $timestamp ?? time();
 		$amz_date   = gmdate( 'Ymd\\THis\\Z', $timestamp );
@@ -197,6 +201,11 @@ final class SigV4Signer {
 			parse_str( $parts['query'], $existing_query );
 		}
 
+		$headers_to_sign         = $this->lowercase_keys( $signed_headers );
+		$headers_to_sign['host'] = $parts['host'];
+		$signed_names            = array_keys( $headers_to_sign );
+		sort( $signed_names );
+
 		$query_params = array_merge(
 			$existing_query,
 			$extra_query,
@@ -205,7 +214,7 @@ final class SigV4Signer {
 				'X-Amz-Credential'    => $this->access_key . '/' . $credential_scope,
 				'X-Amz-Date'          => $amz_date,
 				'X-Amz-Expires'       => (string) $expires_seconds,
-				'X-Amz-SignedHeaders' => 'host',
+				'X-Amz-SignedHeaders' => implode( ';', $signed_names ),
 			]
 		);
 
@@ -215,7 +224,7 @@ final class SigV4Signer {
 			$method,
 			$parts['path'],
 			$query,
-			[ 'host' => $parts['host'] ],
+			$headers_to_sign,
 			self::UNSIGNED_PAYLOAD
 		);
 

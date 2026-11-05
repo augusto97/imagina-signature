@@ -25,9 +25,11 @@ defined( 'ABSPATH' ) || exit;
  * same user, the upload controller can return that row instead of
  * writing a duplicate.
  *
+ * Not declared `final` so PHPUnit 9 can produce mock doubles.
+ *
  * @since 1.0.0
  */
-final class AssetRepository extends BaseRepository {
+class AssetRepository extends BaseRepository {
 
 	/**
 	 * @inheritDoc
@@ -132,6 +134,25 @@ final class AssetRepository extends BaseRepository {
 		return (int) $this->wpdb->get_var(
 			$this->wpdb->prepare(
 				"SELECT COUNT(*) FROM {$this->table()} WHERE user_id = %d",
+				$user_id
+			)
+		);
+	}
+
+	/**
+	 * Total bytes stored by the user (for the storage quota).
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param int $user_id Owner.
+	 *
+	 * @return int
+	 */
+	public function sum_size_by_user( int $user_id ): int {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		return (int) $this->wpdb->get_var(
+			$this->wpdb->prepare(
+				"SELECT COALESCE(SUM(size_bytes), 0) FROM {$this->table()} WHERE user_id = %d",
 				$user_id
 			)
 		);

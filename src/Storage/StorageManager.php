@@ -40,9 +40,11 @@ defined( 'ABSPATH' ) || exit;
  *      surfaces a partial or null shape (returns an empty array on any
  *      failure so callers don't have to handle three states).
  *
+ * Not declared `final` so PHPUnit 9 can produce mock doubles.
+ *
  * @since 1.0.0
  */
-final class StorageManager {
+class StorageManager {
 
 	/**
 	 * Option key for the active driver ID.
