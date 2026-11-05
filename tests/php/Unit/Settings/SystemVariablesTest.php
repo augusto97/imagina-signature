@@ -28,6 +28,8 @@ final class SystemVariablesTest extends TestCase {
 		parent::setUp();
 		Monkey\setUp();
 		$this->stub_sanitizers();
+		Functions\when( 'get_user_meta' )->justReturn( '' );
+		Functions\when( 'get_option' )->justReturn( [] );
 	}
 
 	protected function tearDown(): void {
@@ -78,7 +80,37 @@ final class SystemVariablesTest extends TestCase {
 		$this->assertArrayHasKey( 'company_tiktok', $vars );
 		$this->assertSame( '', $vars['company_tiktok'] );
 		$this->assertSame( '', $vars['company_phone'] );
-		$this->assertCount( 5 + 15, $vars );
+
+		// 1.3.0: every canonical profile key, '' when the profile is empty.
+		$this->assertSame( '', $vars['job_title'] );
+		$this->assertSame( '', $vars['pronouns'] );
+		$this->assertCount( 5 + 10 + 15, $vars );
+	}
+
+	public function test_includes_profile_values(): void {
+		$vars = SystemVariables::for_user(
+			$this->user(),
+			$this->kit(),
+			[
+				'job_title' => 'CTO',
+				'phone'     => '+34 600 000 000',
+			]
+		);
+
+		$this->assertSame( 'CTO', $vars['job_title'] );
+		$this->assertSame( '+34 600 000 000', $vars['phone'] );
+		$this->assertSame( 'Acme', $vars['company_name'] );
+	}
+
+	public function test_resolves_profile_values_from_user_meta(): void {
+		Functions\when( 'get_user_meta' )->alias(
+			static function ( $user_id, $key ) {
+				return 7 === $user_id && 'imgsig_profile' === $key ? [ 'department' => 'Ventas' ] : '';
+			}
+		);
+
+		$vars = SystemVariables::for_user( $this->user(), $this->kit() );
+		$this->assertSame( 'Ventas', $vars['department'] );
 	}
 
 	public function test_reads_the_stored_kit_when_none_is_given(): void {

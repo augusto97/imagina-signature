@@ -219,6 +219,8 @@ final class SiteSettingsBrandKitTest extends TestCase {
 
 	public function test_signature_users_can_read_the_kit(): void {
 		Functions\when( 'current_user_can' )->justReturn( false );
+		Functions\when( 'get_current_user_id' )->justReturn( 5 );
+		Functions\when( 'wp_get_object_terms' )->justReturn( [] );
 		$this->db->rows[ BrandKit::OPTION ] = [
 			'value'    => serialize( [ 'company' => [ 'name' => 'Acme' ] ] ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
 			'autoload' => 'yes',

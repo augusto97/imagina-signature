@@ -13,6 +13,8 @@ use ImaginaSignatures\Admin\ManifestReader;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Core\I18n;
 use ImaginaSignatures\Core\Plugin;
+use ImaginaSignatures\Directory\Groups;
+use ImaginaSignatures\Directory\ProfileFields;
 use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Settings\BrandKit;
 use ImaginaSignatures\Settings\SystemVariables;
@@ -44,6 +46,20 @@ defined( 'ABSPATH' ) || exit;
  * @since 1.0.24
  */
 final class FrontendPage {
+
+	/** Query arg that switches the dashboard to another app page (1.3.0). */
+	public const VIEW_PARAM = 'view';
+
+	/**
+	 * Public URL of "My profile" (the dashboard with `?view=profile`).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return string
+	 */
+	public static function profile_url(): string {
+		return esc_url_raw( add_query_arg( self::VIEW_PARAM, 'profile', FrontendAccess::dashboard_url() ) );
+	}
 
 	/**
 	 * Entry point. Picks the view, runs the auth checks, dispatches
@@ -98,9 +114,14 @@ final class FrontendPage {
 	 * @return void
 	 */
 	private function render_index(): void {
-		$config = $this->build_admin_config( 'signatures' );
+		// `?view=profile` (1.3.0) opens "My profile" in the same bundle.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view switch.
+		$view    = isset( $_GET[ self::VIEW_PARAM ] ) ? sanitize_key( wp_unslash( $_GET[ self::VIEW_PARAM ] ) ) : '';
+		$profile = 'profile' === $view;
+
+		$config = $this->build_admin_config( $profile ? 'profile' : 'signatures' );
 		$this->render_shell(
-			__( 'My Signatures', 'imagina-signatures' ),
+			$profile ? __( 'My profile', 'imagina-signatures' ) : __( 'My Signatures', 'imagina-signatures' ),
 			'imagina-admin-root',
 			'IMGSIG_ADMIN_CONFIG',
 			$config,
@@ -476,6 +497,7 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 				'use'              => current_user_can( CapabilitiesInstaller::CAP_USE ),
 				'manage_templates' => current_user_can( CapabilitiesInstaller::CAP_MANAGE_TEMPLATES ),
 				'manage_storage'   => current_user_can( CapabilitiesInstaller::CAP_MANAGE_STORAGE ),
+				'manage_team'      => current_user_can( CapabilitiesInstaller::CAP_MANAGE_TEAM ),
 			],
 			'apiBase'          => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),
 			'restNonce'        => wp_create_nonce( 'wp_rest' ),
@@ -504,6 +526,9 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 				// introduced in 1.0.27 — braces lost their escaping
 				// through `esc_url_raw` and broke every Edit link.
 				'editor'     => FrontendAccess::editor_url( '__ID__' ),
+				// 1.3.0: "My profile" on the public route; Groups stays in wp-admin.
+				'profile'    => self::profile_url(),
+				'groups'     => FrontendAccess::dashboard_url(),
 			],
 			'frontendContext'  => 'public',
 			'brandPalette'     => $site_opts['brand_palette'],
@@ -561,7 +586,10 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 			'brandKit'         => BrandKit::public_payload( $site_opts['brand_kit'] ),
 			'frontendContext'  => 'public',
 			'brandPalette'     => $site_opts['brand_palette'],
-			'complianceFooter' => $site_opts['compliance_footer'],
+			// 1.3.0: the user's first group with a footer override wins.
+			'complianceFooter' => Groups::effective_compliance_footer( $user_id, $site_opts['compliance_footer'] ),
+			'profileFields'    => ProfileFields::public_definitions(),
+			'profileUrl'       => self::profile_url(),
 			'bannerCampaigns'  => SiteSettingsController::active_banner_campaigns(),
 		];
 	}
