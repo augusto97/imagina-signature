@@ -182,6 +182,9 @@ final class AdminAssetEnqueuer {
 			],
 			'brandPalette'     => $site_opts['brand_palette'],
 			'complianceFooter' => $site_opts['compliance_footer'],
+			// 1.2.0: the Brand kit tab hides its logo "Upload" button in
+			// URL-only storage mode (same flag as the editor's).
+			'uploadEnabled'    => 'url_only' !== (string) get_option( 'imgsig_storage_driver', 'media_library' ),
 			// Admin sees the FULL campaign list (enabled + disabled +
 			// out-of-window) for editing. The editor bootstrap only
 			// receives currently-active campaigns.

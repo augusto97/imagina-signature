@@ -4,6 +4,7 @@ import { useSchemaStore } from '@/stores/schemaStore';
 import { usePersistenceStore } from '@/stores/persistenceStore';
 import { useToastStore } from '@/stores/toastStore';
 import { persistence } from '@/services/persistence';
+import { newSignatureSchema } from '@/services/brandKitDefaults';
 import type { SignatureSchema } from '@/core/schema/signature';
 import { __ } from '@/i18n/helpers';
 
@@ -23,7 +24,9 @@ interface LoadState {
 /**
  * Loads the signature identified by `IMGSIG_EDITOR_CONFIG.signatureId`
  * once on mount. When the id is `0` (new signature flow), nothing is
- * fetched but `markLoaded()` still fires so the autosave gate opens.
+ * fetched: the store gets the brand-kit-styled empty schema
+ * (`newSignatureSchema()`) and `markLoaded()` still fires so the
+ * autosave gate opens.
  *
  * On success the schema replaces the in-store empty default and the
  * history stack is cleared (setSchema does this). On failure the user
@@ -44,6 +47,9 @@ export function useLoadSignature(): LoadState {
   useEffect(() => {
     const { signatureId } = getConfig();
     if (signatureId === 0) {
+      // New signature: start on-brand (company brand-kit typography on
+      // the canvas). Existing signatures keep whatever they saved.
+      setSchema(newSignatureSchema());
       markLoaded();
       return;
     }

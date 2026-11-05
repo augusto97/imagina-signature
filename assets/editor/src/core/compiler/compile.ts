@@ -8,7 +8,7 @@ import { compileBlocks } from './compile-block';
 import { applyOutlookFixes } from './outlook-fixes';
 import { minifyHtml } from './minify';
 import { validateEmailOutput } from './validate';
-import { substituteVariables } from './variables';
+import { resolvedVariables, substituteVariables } from './variables';
 import { enforceSafeUrls } from './urls';
 import { report, type CompileIssue } from './issues';
 import { htmlToPlainText, schemaToPlainText } from './plain-text';
@@ -50,8 +50,9 @@ export interface CompileResult {
  *      reset).
  *   4. Append the campaign banner and the site-wide compliance footer
  *      (1.0.13+) inside the outer table so they share its width.
- *   5. Substitute variables. Read-only `wp_*` system variables (from
- *      `IMGSIG_EDITOR_CONFIG.systemVariables`) are merged with the
+ *   5. Substitute variables. Read-only `wp_*` / `company_*` system
+ *      variables (from `IMGSIG_EDITOR_CONFIG.systemVariables`) are
+ *      merged (`resolvedVariables()`) with the
  *      schema's user-defined ones; user-defined variables win on
  *      key conflict so the user can override any auto-merged value.
  *   6. URL safety pass on the substituted document: unsafe hrefs →
@@ -69,7 +70,7 @@ export interface CompileResult {
  */
 export function compileSignature(input: SignatureSchema): CompileResult {
   const schema = schemaNeedsMigration(input) ? migrateSchema(input) : input;
-  const merged = mergedVariables(schema.variables);
+  const merged = resolvedVariables(schema.variables);
   const ctx: CompileContext = {
     variables: merged,
     warnings: [],
@@ -174,17 +175,6 @@ function plainTextExtras(): string[] {
     lines.push('', htmlToPlainText(footer.html));
   }
   return lines;
-}
-
-function mergedVariables(userDefined: Record<string, string>): Record<string, string> {
-  let system: Record<string, string> = {};
-  try {
-    system = getConfig().systemVariables ?? {};
-  } catch {
-    // Bootstrap config unavailable (test / standalone). System vars
-    // simply contribute nothing — user-defined variables work as before.
-  }
-  return { ...system, ...userDefined };
 }
 
 /**

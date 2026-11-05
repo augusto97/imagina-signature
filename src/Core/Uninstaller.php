@@ -75,6 +75,7 @@ final class Uninstaller {
 		'imgsig_storage_decrypt_error',
 		'imgsig_settings',
 		'imgsig_brand_palette',
+		'imgsig_brand_kit',
 		'imgsig_compliance_footer',
 		'imgsig_banner_campaigns',
 		'imgsig_frontend_access',

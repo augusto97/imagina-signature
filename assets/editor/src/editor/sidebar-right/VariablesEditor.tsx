@@ -32,7 +32,9 @@ export const VariablesEditor: FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const entries = Object.entries(variables);
-  const systemEntries = Object.entries(getConfig().systemVariables ?? {});
+  const { profile: profileEntries, company: companyEntries } = groupSystemVariables(
+    getConfig().systemVariables ?? {},
+  );
 
   const addVariable = (): void => {
     const key = draftKey.trim();
@@ -78,17 +80,41 @@ export const VariablesEditor: FC = () => {
         )}
       </p>
 
-      {systemEntries.length > 0 && (
-        <ul className="flex flex-col gap-1">
-          {systemEntries.map(([key, value]) => (
+      {profileEntries.length > 0 && (
+        <SystemVariableGroup title={__('Your profile')}>
+          {profileEntries.map(([key, value]) => (
             <SystemVariableRow
               key={key}
               name={key}
               value={value}
+              emptyLabel={__('(empty in profile)')}
+              overridden={Object.prototype.hasOwnProperty.call(variables, key)}
               onCopy={() => void copyToken(key)}
             />
           ))}
-        </ul>
+        </SystemVariableGroup>
+      )}
+
+      {companyEntries.length > 0 && (
+        <SystemVariableGroup
+          title={__('Company')}
+          hint={__('From the brand kit your administrator set up.')}
+        >
+          {companyEntries.map(([key, value]) => (
+            <SystemVariableRow
+              key={key}
+              name={key}
+              value={value}
+              emptyLabel={__('(not set in brand kit)')}
+              overridden={Object.prototype.hasOwnProperty.call(variables, key)}
+              onCopy={() => void copyToken(key)}
+            />
+          ))}
+        </SystemVariableGroup>
+      )}
+
+      {entries.length > 0 && (profileEntries.length > 0 || companyEntries.length > 0) && (
+        <span className="is-section-label">{__('This signature')}</span>
       )}
 
       {entries.length > 0 && (
@@ -230,19 +256,65 @@ const VariableRow: FC<RowProps> = ({ name, value, onRename, onChangeValue, onRem
   );
 };
 
+/** Prefix of the read-only brand-kit variables (`company_name`, …). */
+const COMPANY_PREFIX = 'company_';
+
+/**
+ * Splits the read-only system variables into the user's own profile
+ * fields (`wp_*` and filter-added extras) and the company brand kit
+ * (`company_*`), keeping their order.
+ */
+function groupSystemVariables(system: Record<string, string>): {
+  profile: Array<[string, string]>;
+  company: Array<[string, string]>;
+} {
+  const profile: Array<[string, string]> = [];
+  const company: Array<[string, string]> = [];
+  for (const entry of Object.entries(system)) {
+    (entry[0].startsWith(COMPANY_PREFIX) ? company : profile).push(entry);
+  }
+  return { profile, company };
+}
+
+const SystemVariableGroup: FC<{
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}> = ({ title, hint, children }) => (
+  <div className="flex flex-col gap-1">
+    <span className="flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+      <Lock size={10} className="shrink-0" />
+      {title}
+    </span>
+    {hint && <span className="text-[10.5px] text-[var(--text-muted)]">{hint}</span>}
+    <ul className="flex flex-col gap-1">{children}</ul>
+  </div>
+);
+
 const SystemVariableRow: FC<{
   name: string;
   value: string;
+  emptyLabel: string;
+  /** A signature variable with the same name wins at export. */
+  overridden?: boolean;
   onCopy: () => void;
-}> = ({ name, value, onCopy }) => (
-  <li className="flex items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel-soft)] p-2 text-[11.5px]">
+}> = ({ name, value, emptyLabel, overridden, onCopy }) => (
+  <li
+    className="flex items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel-soft)] p-2 text-[11.5px]"
+    title={
+      overridden ? __("Overridden by this signature's own variable of the same name.") : undefined
+    }
+  >
     <Lock size={11} className="shrink-0 text-[var(--text-muted)]" />
-    <span className="shrink-0 truncate font-mono text-[10.5px] text-[var(--text-primary)]">
+    <span
+      className={cn(
+        'shrink-0 truncate font-mono text-[10.5px] text-[var(--text-primary)]',
+        overridden && 'line-through opacity-60',
+      )}
+    >
       {name}
     </span>
-    <span className="flex-1 truncate text-[var(--text-muted)]">
-      {value || __('(empty in profile)')}
-    </span>
+    <span className="flex-1 truncate text-[var(--text-muted)]">{value || emptyLabel}</span>
     <button
       type="button"
       onClick={onCopy}

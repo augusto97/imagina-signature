@@ -11,6 +11,7 @@ namespace ImaginaSignatures\Api\Controllers;
 
 use ImaginaSignatures\Api\BaseController;
 use ImaginaSignatures\Api\Middleware\CapabilityCheck;
+use ImaginaSignatures\Settings\BrandKit;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 
 defined( 'ABSPATH' ) || exit;
@@ -30,6 +31,10 @@ defined( 'ABSPATH' ) || exit;
  *    CAN-SPAM disclaimers an admin wants to enforce site-wide
  *    without trusting every user to add their own Disclaimer block.
  *    Stored in the `imgsig_compliance_footer` option as an array.
+ *  - **Brand kit** (1.2.0) — company details, social profiles and
+ *    default typography ({@see BrandKit}). Stored in the autoloaded
+ *    `imgsig_brand_kit` option; surfaced to the editor as `brandKit`
+ *    and as read-only `{{company_*}}` variables.
  *
  * Read access is gated on `imgsig_use_signatures` so the editor
  * (which runs as an end user, not an admin) can fetch the same
@@ -44,6 +49,7 @@ final class SiteSettingsController extends BaseController {
 	public const OPT_BRAND_PALETTE     = 'imgsig_brand_palette';
 	public const OPT_COMPLIANCE_FOOTER = 'imgsig_compliance_footer';
 	public const OPT_BANNER_CAMPAIGNS  = 'imgsig_banner_campaigns';
+	public const OPT_BRAND_KIT         = BrandKit::OPTION;
 
 	/**
 	 * When true, deleting the plugin also drops its tables, options and
@@ -185,6 +191,20 @@ final class SiteSettingsController extends BaseController {
 			$payload['banner_campaigns_sent'] = $campaigns;
 		}
 
+		if ( null !== $request->get_param( 'brand_kit' ) ) {
+			// Partial update: fields the request omits keep their stored
+			// value (read past the caches, like the readback below).
+			// Autoloaded — both editor bootstraps read it on every boot.
+			$stored = self::read_option_uncached( self::OPT_BRAND_KIT, [] );
+			$kit    = BrandKit::merge( is_array( $stored ) ? $stored : [], $request->get_param( 'brand_kit' ) );
+			$ok     = self::force_save_option( self::OPT_BRAND_KIT, $kit, 'yes' );
+			if ( ! $ok ) {
+				$persist_ok       = false;
+				$persist_errors[] = 'brand_kit';
+			}
+			$payload['brand_kit_sent'] = $kit;
+		}
+
 		if ( ! $persist_ok ) {
 			global $wpdb;
 			// The raw DB error stays in the server log; the response only
@@ -223,6 +243,9 @@ final class SiteSettingsController extends BaseController {
 
 		$current['delete_data_on_uninstall'] = (bool) (int) self::read_option_uncached( self::OPT_DELETE_DATA_ON_UNINSTALL, 0 );
 
+		$kit_raw              = self::read_option_uncached( self::OPT_BRAND_KIT, [] );
+		$current['brand_kit'] = BrandKit::sanitize( is_array( $kit_raw ) ? $kit_raw : [] );
+
 		// Normalise the readback through the same sanitisers we used
 		// going in. This way any difference between what we sent and
 		// what came back is a real divergence, not a sanitisation
@@ -249,6 +272,14 @@ final class SiteSettingsController extends BaseController {
 			);
 		}
 
+		if ( isset( $payload['brand_kit_sent'] ) && $payload['brand_kit_sent'] !== $current['brand_kit'] ) {
+			return new \WP_Error(
+				'imgsig_brand_kit_persist_failed',
+				__( 'Brand kit write did not round-trip. Check the WordPress error log.', 'imagina-signatures' ),
+				[ 'status' => 500 ]
+			);
+		}
+
 		if ( isset( $payload['banner_campaigns_sent'] )
 			&& count( $payload['banner_campaigns_sent'] ) !== count( $current['banner_campaigns'] ) ) {
 			return new \WP_Error(
@@ -267,7 +298,8 @@ final class SiteSettingsController extends BaseController {
 
 	/**
 	 * Direct-to-DB option write that bypasses `update_option` and
-	 * every WP-level cache. Forces `autoload = 'no'`. Used by
+	 * every WP-level cache. Sets `autoload` explicitly (`no` unless the
+	 * caller asks otherwise — the brand kit is autoloaded). Used by
 	 * {@see update()} so the save path is immune to cache layers
 	 * that were producing the "saved but reload shows empty" symptom
 	 * the user reported in 1.0.27.
@@ -278,14 +310,16 @@ final class SiteSettingsController extends BaseController {
 	 *
 	 * @since 1.0.28
 	 *
-	 * @param string $name  Option name (must already be sanitised).
-	 * @param mixed  $value Option value (will be `maybe_serialize`d).
+	 * @param string $name     Option name (must already be sanitised).
+	 * @param mixed  $value    Option value (will be `maybe_serialize`d).
+	 * @param string $autoload `yes` | `no`.
 	 *
 	 * @return bool True on success, false on SQL error.
 	 */
-	private static function force_save_option( string $name, $value ): bool {
+	private static function force_save_option( string $name, $value, string $autoload = 'no' ): bool {
 		global $wpdb;
 
+		$autoload   = 'yes' === $autoload ? 'yes' : 'no';
 		$serialized = maybe_serialize( $value );
 
 		// Try UPDATE first.
@@ -293,7 +327,7 @@ final class SiteSettingsController extends BaseController {
 			$wpdb->options,
 			[
 				'option_value' => $serialized,
-				'autoload'     => 'no',
+				'autoload'     => $autoload,
 			],
 			[ 'option_name' => $name ],
 			[ '%s', '%s' ],
@@ -325,7 +359,7 @@ final class SiteSettingsController extends BaseController {
 					[
 						'option_name'  => $name,
 						'option_value' => $serialized,
-						'autoload'     => 'no',
+						'autoload'     => $autoload,
 					],
 					[ '%s', '%s', '%s' ]
 				);
@@ -426,6 +460,8 @@ final class SiteSettingsController extends BaseController {
 			'banner_campaigns'         => self::current_banner_campaigns(),
 			// 1.0.40: opt-in data purge on plugin deletion (admin-writable).
 			'delete_data_on_uninstall' => (bool) (int) get_option( self::OPT_DELETE_DATA_ON_UNINSTALL, 0 ),
+			// 1.2.0: company brand kit (readable by every signature user).
+			'brand_kit'                => BrandKit::current(),
 		];
 	}
 

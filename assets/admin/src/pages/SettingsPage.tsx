@@ -22,10 +22,12 @@ const TABS: Array<{ id: Tab; label: () => string; icon: typeof Cloud; descriptio
   },
   {
     id: 'branding',
-    label: () => __('Branding'),
+    label: () => __('Brand kit'),
     icon: Palette,
     description: () =>
-      __('Site-wide brand palette shown as quick-pick swatches in every editor color picker.'),
+      __(
+        'Company details, social profiles, typography and colours shared by every signature, plus the brand palette shown in every editor color picker.',
+      ),
   },
   {
     id: 'compliance',
@@ -51,7 +53,8 @@ const TABS: Array<{ id: Tab; label: () => string; icon: typeof Cloud; descriptio
 ];
 
 /**
- * Settings host — three tabs: Storage, Branding, Compliance. Each
+ * Settings host — tabs: Storage, Brand kit, Compliance, Campaigns,
+ * Frontend. Each
  * tab is its own component owning its own data fetch / save flow,
  * so a slow storage round-trip never blocks the branding tab.
  */
