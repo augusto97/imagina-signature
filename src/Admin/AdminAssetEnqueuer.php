@@ -11,6 +11,7 @@ namespace ImaginaSignatures\Admin;
 
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Core\I18n;
+use ImaginaSignatures\Core\ScriptTags;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 
 defined( 'ABSPATH' ) || exit;
@@ -130,11 +131,16 @@ final class AdminAssetEnqueuer {
 	public function tag_as_module( string $tag, string $handle ): string {
 		// Idempotent: several enqueuer instances (AdminMenu, DirectoryPages)
 		// each add this filter for the same handle.
-		if ( self::HANDLE !== $handle || false !== strpos( $tag, 'type="module"' ) ) {
+		if ( self::HANDLE !== $handle ) {
 			return $tag;
 		}
-		// `<script src="..."></script>` -> `<script type="module" src="..."></script>`.
-		return str_replace( ' src=', ' type="module" src=', $tag );
+		if ( false === strpos( $tag, 'type="module"' ) ) {
+			// `<script src="..."></script>` -> `<script type="module" src="..."></script>`.
+			$tag = str_replace( ' src=', ' type="module" src=', $tag );
+		}
+		// The tag includes the inline `IMGSIG_ADMIN_CONFIG` bootstrap:
+		// keep both away from Rocket Loader so they run, in order.
+		return ScriptTags::opt_out_of_optimizers( $tag );
 	}
 
 	/**

@@ -2,6 +2,11 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] — 2026-11-05
+
+### Fixed
+- **Sites behind Cloudflare with Rocket Loader**: the public `/signatures/` route showed a blank page ("IMGSIG_ADMIN_CONFIG is missing" and a Content-Security-Policy error in the console). Rocket Loader re-creates every script without its CSP nonce, so the browser blocked the page's configuration. Every script the plugin prints — public route, install page, wp-admin pages and the Outlook add-in runtime — now carries Cloudflare's opt-out (`data-cfasync="false"`), so Rocket Loader can stay on for the rest of the site.
+
 ## [1.3.0] — 2026-11-05
 
 Fase 2 of the November 2026 roadmap: central management and deployment. The company sets up signatures once and every employee gets theirs in Gmail, Outlook or by a personal install link. Verified with `tests/e2e/smoke.cjs` (39 checks) on an upgrade from a 1.0.39 database and on a fresh install.

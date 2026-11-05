@@ -219,6 +219,8 @@ final class FrontendPage {
 		header( 'Referrer-Policy: strict-origin-when-cross-origin' );
 		header( 'Content-Security-Policy: ' . self::content_security_policy( $nonce, $connect_origins, $asset_origins ) );
 
+		// Both scripts carry data-cfasync="false": Cloudflare Rocket Loader
+		// would re-create them without the CSP nonce (see ScriptTags).
 		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 		?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -237,8 +239,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 </head>
 <body>
 <div id="<?php echo esc_attr( $mount_id ); ?>"></div>
-<script nonce="<?php echo esc_attr( $nonce ); ?>">window.<?php echo $config_global; ?> = <?php echo wp_json_encode( $config ); ?>;</script>
-<script type="module" src="<?php echo esc_url( $js_url ); ?>"></script>
+<script data-cfasync="false" nonce="<?php echo esc_attr( $nonce ); ?>">window.<?php echo $config_global; ?> = <?php echo wp_json_encode( $config ); ?>;</script>
+<script data-cfasync="false" type="module" src="<?php echo esc_url( $js_url ); ?>"></script>
 </body>
 </html>
 		<?php

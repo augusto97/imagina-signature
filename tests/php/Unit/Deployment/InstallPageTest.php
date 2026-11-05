@@ -201,6 +201,8 @@ final class InstallPageTest extends TestCase {
 		$this->assertStringContainsString( 'install.js?ver=', $body );
 		$this->assertSame( 1, preg_match_all( '/<script\b(?![^>]*application\/json)[^>]*>/', $body, $scripts ) );
 		$this->assertStringContainsString( 'nonce="' . $nonce . '"', $scripts[0][0] );
+		// Cloudflare Rocket Loader would re-create it without the nonce.
+		$this->assertStringContainsString( 'data-cfasync="false"', $scripts[0][0] );
 		$this->assertStringContainsString( 'connect-src \'self\' https://api.example.com', $response['headers']['Content-Security-Policy'] );
 
 		// Names / brand are escaped everywhere.

@@ -4,7 +4,7 @@ Tags: email, signature, signatures, editor, email-signature
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,9 @@ Yes. PHP 7.4+, MySQL 5.7+, no exec() or shell_exec(), no Node on the server.
 Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
+
+= 1.3.1 =
+* Fix: on sites using Cloudflare Rocket Loader the public /signatures/ page stayed blank. The plugin's scripts now opt out of Rocket Loader, so it can stay enabled for the rest of the site.
 
 = 1.3.0 =
 * Central management and deployment release (roadmap Fase 2).

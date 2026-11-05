@@ -11,6 +11,7 @@ namespace ImaginaSignatures\Admin;
 
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Core\I18n;
+use ImaginaSignatures\Core\ScriptTags;
 use ImaginaSignatures\Core\Plugin;
 use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Settings\BrandKit;
@@ -140,7 +141,12 @@ final class EditorAssetEnqueuer {
 		if ( self::HANDLE !== $handle ) {
 			return $tag;
 		}
-		return str_replace( ' src=', ' type="module" src=', $tag );
+		if ( false === strpos( $tag, 'type="module"' ) ) {
+			$tag = str_replace( ' src=', ' type="module" src=', $tag );
+		}
+		// The tag includes the inline `IMGSIG_EDITOR_CONFIG` bootstrap:
+		// keep both away from Rocket Loader so they run, in order.
+		return ScriptTags::opt_out_of_optimizers( $tag );
 	}
 
 	/**

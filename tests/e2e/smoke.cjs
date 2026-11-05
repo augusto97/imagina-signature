@@ -239,6 +239,19 @@ async function waitSaved(page) {
   check("subscriber cannot read the admin's signature", foreign.status === 403 || foreign.status === 404, `status=${foreign.status}`);
   await openEditor(sp, `${BASE}/signatures/editor/`);
   check('subscriber editor loads on the public route', true);
+  // Cloudflare Rocket Loader re-creates scripts without their CSP nonce;
+  // every plugin script must carry its opt-out (data-cfasync="false").
+  const optOut = () =>
+    [...document.scripts]
+      .filter((el) => /imagina-signatures/.test(el.src) || /IMGSIG_(ADMIN|EDITOR)_CONFIG/.test(el.textContent || ''))
+      .map((el) => el.getAttribute('data-cfasync'));
+  const publicTags = await sp.evaluate(optOut);
+  const adminTags = await page.evaluate(optOut);
+  check(
+    'plugin scripts opt out of Cloudflare Rocket Loader (public route and wp-admin)',
+    publicTags.length >= 2 && adminTags.length >= 2 && [...publicTags, ...adminTags].every((v) => v === 'false'),
+    JSON.stringify({ publicTags, adminTags }),
+  );
   const subTemplates = await rest(sp, 'GET', '/templates?per_page=100');
   check('subscriber sees the template library', Array.isArray(subTemplates.json) && subTemplates.json.length >= 40, `count=${Array.isArray(subTemplates.json) ? subTemplates.json.length : subTemplates.status}`);
   await sp.screenshot({ path: path.join(OUT, 'subscriber-editor.png') });

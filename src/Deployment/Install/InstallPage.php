@@ -333,7 +333,8 @@ final class InstallPage {
 
 		$scripts  = '<script type="application/json" id="imgsig-install-data">' . wp_json_encode( $data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>';
 		$script   = add_query_arg( 'ver', defined( 'IMGSIG_VERSION' ) ? IMGSIG_VERSION : '0', plugins_url( self::SCRIPT, IMGSIG_FILE ) );
-		$scripts .= '<script src="' . esc_url( $script ) . '" nonce="' . esc_attr( $nonce ) . '" defer></script>'; // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript -- Standalone page without wp_head().
+		// data-cfasync: Cloudflare Rocket Loader would re-create the script without its CSP nonce.
+		$scripts .= '<script data-cfasync="false" src="' . esc_url( $script ) . '" nonce="' . esc_attr( $nonce ) . '" defer></script>'; // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript -- Standalone page without wp_head().
 
 		return $this->shell( $kit, __( 'Install your email signature', 'imagina-signatures' ), $h, $locale, $scripts );
 	}

@@ -2,7 +2,7 @@
 # This file is distributed under the GPL-2.0-or-later license.
 msgid ""
 msgstr ""
-"Project-Id-Version: Imagina Signatures 1.3.0\n"
+"Project-Id-Version: Imagina Signatures 1.3.1\n"
 "Report-Msgid-Bugs-To: https://github.com/augusto97/imagina-signature/issues\n"
 "Last-Translator: Imagina WP\n"
 "Language-Team: Español\n"
@@ -885,7 +885,7 @@ msgstr ""
 "enlace dentro de un rato: aquí la tendrás lista."
 
 #: src/Deployment/Install/InstallPage.php:276
-#: src/Deployment/Install/InstallPage.php:338
+#: src/Deployment/Install/InstallPage.php:339
 msgid "Install your email signature"
 msgstr "Instala tu firma de correo"
 
@@ -913,8 +913,8 @@ msgid "Your signature"
 msgstr "Tu firma"
 
 #: src/Deployment/Install/InstallPage.php:291
-#: src/Deployment/Install/InstallPage.php:405
-#: src/Deployment/Install/InstallPage.php:453
+#: src/Deployment/Install/InstallPage.php:406
+#: src/Deployment/Install/InstallPage.php:454
 msgid "Copy signature"
 msgstr "Copiar firma"
 
@@ -1020,61 +1020,61 @@ msgstr "Firma: pulsa Cmd + A y luego Cmd + C"
 msgid "Signature"
 msgstr "Firma"
 
-#: src/Deployment/Install/InstallPage.php:348
+#: src/Deployment/Install/InstallPage.php:349
 #: assets/editor/src/editor/modals/ExportModal.tsx:74
 msgid "Gmail / Google Workspace"
 msgstr "Gmail / Google Workspace"
 
-#: src/Deployment/Install/InstallPage.php:349
+#: src/Deployment/Install/InstallPage.php:350
 #: assets/editor/src/editor/modals/ExportModal.tsx:76
 msgid "New Outlook / Outlook on the web"
 msgstr "Nuevo Outlook / Outlook en la Web"
 
-#: src/Deployment/Install/InstallPage.php:350
+#: src/Deployment/Install/InstallPage.php:351
 #: assets/editor/src/editor/modals/ExportModal.tsx:75
 msgid "Outlook for Windows (classic)"
 msgstr "Outlook para Windows (clásico)"
 
-#: src/Deployment/Install/InstallPage.php:351
+#: src/Deployment/Install/InstallPage.php:352
 #: assets/editor/src/editor/modals/ExportModal.tsx:77
 #: assets/editor/src/editor/modals/PreviewModal.tsx:48
 msgid "Apple Mail"
 msgstr "Apple Mail"
 
-#: src/Deployment/Install/InstallPage.php:352
+#: src/Deployment/Install/InstallPage.php:353
 msgid "iPhone / Android"
 msgstr "iPhone / Android"
 
-#: src/Deployment/Install/InstallPage.php:355
+#: src/Deployment/Install/InstallPage.php:356
 #: assets/editor/src/editor/modals/PreviewModal.tsx:141
 msgid "Email client"
 msgstr "Cliente de correo"
 
-#: src/Deployment/Install/InstallPage.php:388
+#: src/Deployment/Install/InstallPage.php:389
 #: assets/editor/src/editor/modals/ExportModal.tsx:700
 msgid "Copy for Gmail"
 msgstr "Copiar para Gmail"
 
 #. translators: %s: email client name.
-#: src/Deployment/Install/InstallPage.php:390
-#: src/Deployment/Install/InstallPage.php:407
+#: src/Deployment/Install/InstallPage.php:391
+#: src/Deployment/Install/InstallPage.php:408
 #: assets/editor/src/editor/modals/ExportModal.tsx:785
 #, php-format
 msgid "Open %s settings"
 msgstr "Abrir los ajustes de %s"
 
-#: src/Deployment/Install/InstallPage.php:390
+#: src/Deployment/Install/InstallPage.php:391
 #: assets/admin/src/pages/TeamPage.tsx:555
 #: assets/editor/src/editor/modals/ExportModal.tsx:703
 #: assets/editor/src/editor/modals/PreviewModal.tsx:44
 msgid "Gmail"
 msgstr "Gmail"
 
-#: src/Deployment/Install/InstallPage.php:394
+#: src/Deployment/Install/InstallPage.php:395
 msgid "Press \"Copy for Gmail\"."
 msgstr "Pulsa \"Copiar para Gmail\"."
 
-#: src/Deployment/Install/InstallPage.php:395
+#: src/Deployment/Install/InstallPage.php:396
 #: assets/editor/src/editor/modals/ExportModal.tsx:709
 msgid ""
 "Open Gmail settings (link above) — or the gear icon → \"See all settings\" → "
@@ -1083,12 +1083,12 @@ msgstr ""
 "Abre los ajustes de Gmail (enlace de arriba), o el icono del engranaje → "
 "\"Ver todos los ajustes\" → pestaña \"General\"."
 
-#: src/Deployment/Install/InstallPage.php:396
+#: src/Deployment/Install/InstallPage.php:397
 #: assets/editor/src/editor/modals/ExportModal.tsx:712
 msgid "Scroll to \"Signature\", click \"Create new\" and give it a name."
 msgstr "Desplázate hasta \"Firma\", haz clic en \"Crear\" y ponle un nombre."
 
-#: src/Deployment/Install/InstallPage.php:397
+#: src/Deployment/Install/InstallPage.php:398
 #: assets/editor/src/editor/modals/ExportModal.tsx:713
 msgid ""
 "Click into the signature box and paste (Cmd/Ctrl + V). Avoid editing it "
@@ -1097,7 +1097,7 @@ msgstr ""
 "Haz clic en el cuadro de la firma y pega (Cmd/Ctrl + V). Evita editarla ahí "
 "después: Gmail podría perder el formato."
 
-#: src/Deployment/Install/InstallPage.php:398
+#: src/Deployment/Install/InstallPage.php:399
 #: assets/editor/src/editor/modals/ExportModal.tsx:716
 msgid ""
 "Under \"Signature defaults\" pick it for new emails and for "
@@ -1107,7 +1107,7 @@ msgstr ""
 "para las respuestas o reenvíos, y haz clic en \"Guardar cambios\" al final "
 "de la página."
 
-#: src/Deployment/Install/InstallPage.php:401
+#: src/Deployment/Install/InstallPage.php:402
 #: assets/editor/src/editor/modals/ExportModal.tsx:722
 msgid ""
 "Google Workspace: if the signature box is missing or locked, your "
@@ -1116,16 +1116,16 @@ msgstr ""
 "Google Workspace: si el cuadro de la firma no aparece o está bloqueado, tu "
 "administrador gestiona las firmas de forma centralizada."
 
-#: src/Deployment/Install/InstallPage.php:407
+#: src/Deployment/Install/InstallPage.php:408
 #: assets/editor/src/editor/modals/ExportModal.tsx:493
 msgid "Outlook on the web"
 msgstr "Outlook en la Web"
 
-#: src/Deployment/Install/InstallPage.php:411
+#: src/Deployment/Install/InstallPage.php:412
 msgid "Press \"Copy signature\" so the signature is in your clipboard."
 msgstr "Pulsa \"Copiar firma\" para tener la firma en el portapapeles."
 
-#: src/Deployment/Install/InstallPage.php:412
+#: src/Deployment/Install/InstallPage.php:413
 #: assets/editor/src/editor/modals/ExportModal.tsx:499
 msgid ""
 "Outlook on the web: Settings (gear) → Account → Signatures. New Outlook for "
@@ -1134,7 +1134,7 @@ msgstr ""
 "Outlook en la Web: Configuración (engranaje) → Cuenta → Firmas. Nuevo "
 "Outlook para Windows: Configuración → Cuentas → Firmas."
 
-#: src/Deployment/Install/InstallPage.php:413
+#: src/Deployment/Install/InstallPage.php:414
 #: assets/editor/src/editor/modals/ExportModal.tsx:502
 msgid ""
 "Click \"+ New signature\", give it a name, click into the editor and paste "
@@ -1143,7 +1143,7 @@ msgstr ""
 "Haz clic en \"+ Nueva firma\", ponle un nombre, haz clic en el editor y pega "
 "(Cmd/Ctrl + V)."
 
-#: src/Deployment/Install/InstallPage.php:414
+#: src/Deployment/Install/InstallPage.php:415
 #: assets/editor/src/editor/modals/ExportModal.tsx:505
 msgid ""
 "Pick it under \"Select default signatures\" for new messages and for "
@@ -1152,22 +1152,22 @@ msgstr ""
 "Elígela en \"Seleccionar firmas predeterminadas\" para los mensajes nuevos y "
 "para las respuestas o reenvíos, y haz clic en \"Guardar\"."
 
-#: src/Deployment/Install/InstallPage.php:420
+#: src/Deployment/Install/InstallPage.php:421
 #: assets/editor/src/editor/modals/ExportModal.tsx:442
 msgid "Download for Outlook (.htm)"
 msgstr "Descargar para Outlook (.htm)"
 
-#: src/Deployment/Install/InstallPage.php:421
+#: src/Deployment/Install/InstallPage.php:422
 #: assets/editor/src/editor/modals/ExportModal.tsx:445
 msgid "Download plain text (.txt)"
 msgstr "Descargar texto sin formato (.txt)"
 
-#: src/Deployment/Install/InstallPage.php:422
+#: src/Deployment/Install/InstallPage.php:423
 #: assets/editor/src/editor/modals/ExportModal.tsx:451
 msgid "Copy folder path"
 msgstr "Copiar la ruta de la carpeta"
 
-#: src/Deployment/Install/InstallPage.php:426
+#: src/Deployment/Install/InstallPage.php:427
 #: assets/editor/src/editor/modals/ExportModal.tsx:459
 msgid ""
 "Download both files above. Keep their names identical — only the extension "
@@ -1176,13 +1176,13 @@ msgstr ""
 "Descarga los dos archivos de arriba. Mantén sus nombres idénticos (solo "
 "cambia la extensión): ese nombre es el que muestra Outlook en la lista."
 
-#: src/Deployment/Install/InstallPage.php:427
+#: src/Deployment/Install/InstallPage.php:428
 #: assets/editor/src/editor/modals/ExportModal.tsx:462
 msgid "Close Outlook completely."
 msgstr "Cierra Outlook por completo."
 
 #. translators: %s: Windows folder path.
-#: src/Deployment/Install/InstallPage.php:429
+#: src/Deployment/Install/InstallPage.php:430
 #, php-format
 msgid ""
 "Press Windows + R, paste %s and press Enter. Create the \"Signatures\" "
@@ -1191,12 +1191,12 @@ msgstr ""
 "Pulsa Windows + R, pega %s y pulsa Enter. Crea la carpeta \"Signatures\" si "
 "no existe."
 
-#: src/Deployment/Install/InstallPage.php:430
+#: src/Deployment/Install/InstallPage.php:431
 #: assets/editor/src/editor/modals/ExportModal.tsx:468
 msgid "Move the two downloaded files into that folder."
 msgstr "Mueve los dos archivos descargados a esa carpeta."
 
-#: src/Deployment/Install/InstallPage.php:431
+#: src/Deployment/Install/InstallPage.php:432
 #: assets/editor/src/editor/modals/ExportModal.tsx:469
 msgid ""
 "Open Outlook → File → Options → Mail → Signatures…, choose the new signature "
@@ -1206,7 +1206,7 @@ msgstr ""
 "en \"Mensajes nuevos\" y \"Respuestas o reenvíos\", y haz clic en "
 "\"Aceptar\"."
 
-#: src/Deployment/Install/InstallPage.php:434
+#: src/Deployment/Install/InstallPage.php:435
 msgid ""
 "If your organisation syncs Microsoft 365 cloud signatures, Outlook may "
 "replace files in that folder. Then press \"Copy signature\" and paste into "
@@ -1217,12 +1217,12 @@ msgstr ""
 "\"Copiar firma\" y pega la firma en Archivo → Opciones → Correo → Firmas… → "
 "Nueva."
 
-#: src/Deployment/Install/InstallPage.php:438
+#: src/Deployment/Install/InstallPage.php:439
 #: assets/editor/src/editor/modals/ExportModal.tsx:517
 msgid "Open signature in a new tab"
 msgstr "Abrir la firma en una pestaña nueva"
 
-#: src/Deployment/Install/InstallPage.php:442
+#: src/Deployment/Install/InstallPage.php:443
 #: assets/editor/src/editor/modals/ExportModal.tsx:522
 msgid ""
 "Press \"Open signature in a new tab\" (Safari works best). The tab shows "
@@ -1231,12 +1231,12 @@ msgstr ""
 "Pulsa \"Abrir la firma en una pestaña nueva\" (funciona mejor en Safari). La "
 "pestaña muestra solo la firma."
 
-#: src/Deployment/Install/InstallPage.php:443
+#: src/Deployment/Install/InstallPage.php:444
 #: assets/editor/src/editor/modals/ExportModal.tsx:525
 msgid "In that tab press Cmd + A, then Cmd + C."
 msgstr "En esa pestaña, pulsa Cmd + A y luego Cmd + C."
 
-#: src/Deployment/Install/InstallPage.php:444
+#: src/Deployment/Install/InstallPage.php:445
 #: assets/editor/src/editor/modals/ExportModal.tsx:526
 msgid ""
 "Open Mail → Settings… → Signatures, pick the account on the left and click "
@@ -1245,7 +1245,7 @@ msgstr ""
 "Abre Mail → Ajustes… → Firmas, elige la cuenta a la izquierda y haz clic en "
 "\"+\" para añadir una firma."
 
-#: src/Deployment/Install/InstallPage.php:445
+#: src/Deployment/Install/InstallPage.php:446
 #: assets/editor/src/editor/modals/ExportModal.tsx:529
 msgid ""
 "Untick \"Always match my default message font\" — otherwise Mail replaces "
@@ -1254,7 +1254,7 @@ msgstr ""
 "Desmarca \"Usar siempre mi tipo de letra predeterminado para los mensajes\"; "
 "si no, Mail reemplaza las fuentes de la firma por tu fuente predeterminada."
 
-#: src/Deployment/Install/InstallPage.php:446
+#: src/Deployment/Install/InstallPage.php:447
 #: assets/editor/src/editor/modals/ExportModal.tsx:532
 msgid ""
 "Click into the signature area on the right, delete the placeholder text and "
@@ -1263,12 +1263,12 @@ msgstr ""
 "Haz clic en el área de la firma de la derecha, borra el texto de ejemplo y "
 "pega (Cmd + V). Cierra la ventana; Mail guarda los cambios automáticamente."
 
-#: src/Deployment/Install/InstallPage.php:449
+#: src/Deployment/Install/InstallPage.php:450
 #: assets/editor/src/editor/modals/ExportModal.tsx:537
 msgid "Send yourself a test message to check the result."
 msgstr "Envíate un mensaje de prueba para comprobar el resultado."
 
-#: src/Deployment/Install/InstallPage.php:452
+#: src/Deployment/Install/InstallPage.php:453
 msgid ""
 "Open this page on your phone — the link in your invitation email works there "
 "too — and press \"Copy signature\"."
@@ -1276,17 +1276,17 @@ msgstr ""
 "Abre esta página en tu teléfono (el enlace del correo de invitación también "
 "funciona allí) y pulsa \"Copiar firma\"."
 
-#: src/Deployment/Install/InstallPage.php:454
+#: src/Deployment/Install/InstallPage.php:455
 #: assets/editor/src/editor/modals/ExportModal.tsx:549
 msgid "iPhone / iPad (Mail)"
 msgstr "iPhone / iPad (Mail)"
 
-#: src/Deployment/Install/InstallPage.php:457
-#: src/Deployment/Install/InstallPage.php:473
+#: src/Deployment/Install/InstallPage.php:458
+#: src/Deployment/Install/InstallPage.php:474
 msgid "Press \"Copy signature\" above."
 msgstr "Pulsa \"Copiar firma\" arriba."
 
-#: src/Deployment/Install/InstallPage.php:458
+#: src/Deployment/Install/InstallPage.php:459
 #: assets/editor/src/editor/modals/ExportModal.tsx:555
 msgid ""
 "Open Settings → Apps → Mail → Signature (older iOS: Settings → Mail → "
@@ -1297,7 +1297,7 @@ msgstr ""
 "→ Mail → Firma), elige \"Todas las cuentas\" o \"Por cuenta\", borra el "
 "campo y pega."
 
-#: src/Deployment/Install/InstallPage.php:459
+#: src/Deployment/Install/InstallPage.php:460
 #: assets/editor/src/editor/modals/ExportModal.tsx:558
 msgid ""
 "iOS removes the formatting right after pasting: immediately shake the iPhone "
@@ -1306,17 +1306,17 @@ msgstr ""
 "iOS elimina el formato justo después de pegar: agita el iPhone de inmediato "
 "y toca \"Deshacer\" para recuperarlo."
 
-#: src/Deployment/Install/InstallPage.php:460
+#: src/Deployment/Install/InstallPage.php:461
 #: assets/editor/src/editor/modals/ExportModal.tsx:561
 msgid "Go back to save."
 msgstr "Vuelve atrás para guardar."
 
-#: src/Deployment/Install/InstallPage.php:463
+#: src/Deployment/Install/InstallPage.php:464
 #: assets/editor/src/editor/modals/ExportModal.tsx:565
 msgid "Gmail app (Android / iPhone)"
 msgstr "App de Gmail (Android / iPhone)"
 
-#: src/Deployment/Install/InstallPage.php:466
+#: src/Deployment/Install/InstallPage.php:467
 #: assets/editor/src/editor/modals/ExportModal.tsx:568
 msgid ""
 "The Gmail app’s own \"Mobile signature\" is plain text only — images, "
@@ -1327,7 +1327,7 @@ msgstr ""
 "formato: no conserva imágenes, colores ni enlaces. Para tener la firma "
 "visual completa, instálala en Gmail desde un equipo (pestaña Gmail)."
 
-#: src/Deployment/Install/InstallPage.php:467
+#: src/Deployment/Install/InstallPage.php:468
 msgid ""
 "To set the text version: in the app open Settings → your account → Mobile "
 "signature and paste the signature (only its text is kept)."
@@ -1335,12 +1335,12 @@ msgstr ""
 "Para configurar la versión de texto: en la app, abre Ajustes → tu cuenta → "
 "Firma para móviles y pega la firma (solo se conserva el texto)."
 
-#: src/Deployment/Install/InstallPage.php:470
+#: src/Deployment/Install/InstallPage.php:471
 #: assets/editor/src/editor/modals/ExportModal.tsx:577
 msgid "Outlook app (Android / iPhone)"
 msgstr "App de Outlook (Android / iPhone)"
 
-#: src/Deployment/Install/InstallPage.php:474
+#: src/Deployment/Install/InstallPage.php:475
 #: assets/editor/src/editor/modals/ExportModal.tsx:583
 msgid ""
 "Open the Outlook app → Settings → Signature (per account when offered) and "
@@ -1349,7 +1349,7 @@ msgstr ""
 "Abre la app de Outlook → Ajustes → Firma (por cuenta, si se ofrece la "
 "opción) y pega."
 
-#: src/Deployment/Install/InstallPage.php:475
+#: src/Deployment/Install/InstallPage.php:476
 #: assets/editor/src/editor/modals/ExportModal.tsx:586
 msgid ""
 "How much formatting survives depends on the app version: send yourself a "
@@ -1571,28 +1571,28 @@ msgstr "Se sincroniza desde “%s”: edítalo donde se gestionan esos datos."
 msgid "Signature Editor"
 msgstr "Editor de firmas"
 
-#: src/Frontend/FrontendPage.php:375
+#: src/Frontend/FrontendPage.php:377
 msgid "Log in to access your signatures"
 msgstr "Inicia sesión para acceder a tus firmas"
 
-#: src/Frontend/FrontendPage.php:387
+#: src/Frontend/FrontendPage.php:389
 msgid "You need to log in"
 msgstr "Necesitas iniciar sesión"
 
-#: src/Frontend/FrontendPage.php:388
+#: src/Frontend/FrontendPage.php:390
 msgid "Sign in to your account to manage your email signatures."
 msgstr "Inicia sesión en tu cuenta para gestionar tus firmas de correo."
 
-#: src/Frontend/FrontendPage.php:389
+#: src/Frontend/FrontendPage.php:391
 msgid "Log in"
 msgstr "Iniciar sesión"
 
-#: src/Frontend/FrontendPage.php:456
-#: src/Frontend/FrontendPage.php:466
+#: src/Frontend/FrontendPage.php:458
+#: src/Frontend/FrontendPage.php:468
 msgid "Access denied"
 msgstr "Acceso denegado"
 
-#: src/Frontend/FrontendPage.php:467
+#: src/Frontend/FrontendPage.php:469
 msgid ""
 "Your account does not have permission to use Imagina Signatures. Ask a site "
 "administrator to grant access."
