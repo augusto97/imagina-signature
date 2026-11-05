@@ -128,7 +128,10 @@ describe('canvas: Show data / Show fields', () => {
       compile: () => '',
     });
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    const fragile = { ...heading('f', '{{company_logo}}'), type: 'test_fragile' } as unknown as Block;
+    const fragile = {
+      ...heading('f', '{{company_logo}}'),
+      type: 'test_fragile',
+    } as unknown as Block;
 
     render(<BlockRenderer block={fragile} />);
 

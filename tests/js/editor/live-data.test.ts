@@ -53,9 +53,9 @@ describe('variables: shared substitution core', () => {
   });
 
   it('resolvedVariables lets the signature override system values', () => {
-    expect(resolvedVariables({ company_name: 'Mine' }, { company_name: 'Acme', wp_url: 'u' })).toEqual(
-      { company_name: 'Mine', wp_url: 'u' },
-    );
+    expect(
+      resolvedVariables({ company_name: 'Mine' }, { company_name: 'Acme', wp_url: 'u' }),
+    ).toEqual({ company_name: 'Mine', wp_url: 'u' });
   });
 });
 
