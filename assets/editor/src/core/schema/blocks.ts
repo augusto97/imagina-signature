@@ -78,9 +78,37 @@ export interface ImageBlock extends BlockBase {
 
 export interface AvatarBlock extends BlockBase {
   type: 'avatar';
+  /**
+   * Image the email references. Once the editor has rendered the
+   * avatar (see `processed`) this is a PNG with the shape mask and the
+   * ring baked in; otherwise it is the user's image as-is.
+   */
   src: string;
   alt: string;
   size: number;
+  /** Absent = `circle` (the only shape before 1.2). */
+  shape?: 'circle' | 'rounded' | 'square';
+  /** Ring (outline) width in px around the photo. Absent / 0 = none. */
+  ring_width?: number;
+  ring_color?: string;
+  /** Horizontal alignment in the available width. Absent = `left`. */
+  align?: 'left' | 'center' | 'right';
+  link?: string;
+  /**
+   * The user's (unmasked) photo the masked `src` is rendered from.
+   * Set when the image was uploaded, picked from the library or
+   * cropped; absent for pasted URLs and pre-1.2 rows (then `src` is
+   * the source and the shape is drawn with CSS only).
+   */
+  source_url?: string;
+  /** What `src` was rendered with — absent when `src` is not a rendered PNG. */
+  processed?: {
+    source_url: string;
+    shape: 'circle' | 'rounded' | 'square';
+    ring_width: number;
+    ring_color: string;
+    size: number;
+  };
 }
 
 export interface DividerBlock extends BlockBase {
