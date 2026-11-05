@@ -18,6 +18,7 @@ use ImaginaSignatures\Api\Controllers\StorageController;
 use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\Middleware\RateLimiter;
+use ImaginaSignatures\Deployment\Gmail\GmailServiceProvider;
 use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\AssetRepository;
 use ImaginaSignatures\Repositories\SignatureRepository;
@@ -215,6 +216,9 @@ final class ServiceProvider {
 				return new FrontendAccessController();
 			}
 		);
+
+		// Google Workspace: Gmail signature push (1.3.0).
+		GmailServiceProvider::register( $container );
 
 		// Privacy tools + user lifecycle.
 		$container->singleton(

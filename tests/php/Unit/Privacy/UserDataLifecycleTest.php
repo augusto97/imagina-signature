@@ -167,6 +167,7 @@ final class UserDataLifecycleTest extends TestCase {
 		);
 		Functions\when( 'wp_roles' )->justReturn( (object) [ 'roles' => [] ] );
 		Functions\when( 'wp_clear_scheduled_hook' )->justReturn( 0 );
+		Functions\when( 'wp_unschedule_hook' )->justReturn( 0 );
 		Functions\when( 'delete_option' )->justReturn( true );
 		Functions\when( 'delete_metadata' )->justReturn( true );
 		Functions\when( 'wp_upload_dir' )->justReturn( [ 'error' => 'none in tests' ] );

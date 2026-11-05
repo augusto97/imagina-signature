@@ -59,6 +59,38 @@ final class Filters {
 	public const STORAGE_ALLOW_PRIVATE_ENDPOINTS = 'imgsig/storage/allow_private_endpoints';
 
 	/**
+	 * Filters the Google Workspace address a user's signature is pushed
+	 * to and impersonated as (default: the WordPress user email).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string   $email Address.
+	 * @param \WP_User $user  User.
+	 */
+	public const GMAIL_USER_EMAIL = 'imgsig/gmail/user_email';
+
+	/**
+	 * Filters the HTML written to a user's Gmail signature.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string                              $html      Compiled signature fragment (`html_cache`).
+	 * @param int                                 $user_id   User.
+	 * @param \ImaginaSignatures\Models\Signature $signature Primary signature.
+	 */
+	public const GMAIL_SIGNATURE_HTML = 'imgsig/gmail/signature_html';
+
+	/**
+	 * Filters the longest signature (characters, HTML included) pushed to
+	 * Gmail; longer ones fail with `too_long` before any API call.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int $max Default 10000 (Gmail's limit). 0 disables the check.
+	 */
+	public const GMAIL_MAX_SIGNATURE_LENGTH = 'imgsig/gmail/max_signature_length';
+
+	/**
 	 * Filters the maximum image upload size in bytes (vCards are fixed
 	 * at 64 KB).
 	 *

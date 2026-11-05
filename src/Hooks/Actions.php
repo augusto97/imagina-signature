@@ -68,6 +68,17 @@ final class Actions {
 	public const PLUGIN_UNINSTALLED = 'imgsig/plugin/uninstalled';
 
 	/**
+	 * Fires after every Gmail push attempt for one user — pushed, skipped
+	 * or failed. {@see \ImaginaSignatures\Deployment\Gmail\GmailScheduler}
+	 * listens to it to retry temporary failures.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param \ImaginaSignatures\Deployment\Gmail\PushResult $result Outcome (`status`, `user_id`, `send_as`, `exception`…).
+	 */
+	public const GMAIL_PUSH_COMPLETED = 'imgsig/gmail/push_completed';
+
+	/**
 	 * Fires from {@see \ImaginaSignatures\Storage\StorageManager::save_config()}
 	 * when the active storage driver ID changes (e.g. switching from
 	 * Media Library to S3).
