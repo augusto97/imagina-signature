@@ -190,9 +190,12 @@ describe('new style fields', () => {
     expect(cell.match(/mso-line-height-rule/g)).toHaveLength(1);
   });
 
-  it('keeps the unitless default when no line height is stored', () => {
+  it('turns the default unitless line height into px for Outlook', () => {
+    // No stored line height → the 1.4 default; the global Outlook pass
+    // converts it to px (1.4 × 14px) and puts the mso rule before it.
     const style = cellOf(compile([text('Default')]).html, 'Default');
-    expect(style['line-height']).toBe('1.4');
+    expect(style['line-height']).toBe('19.6px');
+    expect(style['mso-line-height-rule']).toBe('exactly');
   });
 
   it('gives resized rich-text spans a matching px line height', () => {
@@ -202,7 +205,11 @@ describe('new style fields', () => {
         line_height: 1.5,
       }),
     ]);
-    expect(declarations(html, 'span')).toEqual({ 'font-size': '24px', 'line-height': '36px' });
+    expect(declarations(html, 'span')).toEqual({
+      'font-size': '24px',
+      'mso-line-height-rule': 'exactly',
+      'line-height': '36px',
+    });
   });
 
   it('sanitises hostile style values instead of emitting them', () => {

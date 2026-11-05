@@ -37,7 +37,7 @@ describe('divider markup', () => {
     const { html } = compile([divider]);
     expect(html).not.toMatch(/<div[^>]*border-top/);
     expect(html).toContain(
-      '<td height="1" style="border-top:2px dashed #2563eb;font-size:1px;line-height:1px;',
+      '<td height="1" style="border-top:2px dashed #2563eb;font-size:1px;mso-line-height-rule:exactly;line-height:1px;',
     );
     expect(html).toMatch(/<td height="1"[^>]*>&nbsp;<\/td>/);
   });

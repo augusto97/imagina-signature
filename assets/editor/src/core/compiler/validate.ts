@@ -1,5 +1,8 @@
 import { __ } from '@/i18n/helpers';
-import { report, type CompileIssue } from './issues';
+import { lowContrastMessage, report, type CompileIssue, type IssueSink } from './issues';
+import { findLowContrastText } from './contrast';
+
+export { contrastThreshold, meetsContrast } from './contrast';
 
 /** Gmail refuses to save a signature longer than this many characters. */
 export const GMAIL_SIGNATURE_CHAR_LIMIT = 10_000;
@@ -85,6 +88,28 @@ export function validateEmailOutput(html: string, fragment: string = html): Comp
   }
 
   return sink.issues;
+}
+
+/**
+ * Text-contrast validation (WCAG AA): every visible run of text is
+ * compared with its EFFECTIVE background — the nearest box, container
+ * column, button cell or canvas background in the compiled markup.
+ * Normal text needs 4.5:1; large text (≥ 18 px, or bold ≥ 14 px) 3:1.
+ *
+ * Runs on the document while it still carries the compile-time block
+ * boundary markers, so each warning names (and links to) its block.
+ * One warning per block and colour / background / size combination.
+ */
+export function validateContrast(html: string, sink: IssueSink): void {
+  for (const finding of findLowContrastText(html)) {
+    report(
+      sink,
+      'warning',
+      lowContrastMessage(finding.block, finding.fontSize, finding.ratio),
+      finding.block,
+      'low-contrast',
+    );
+  }
 }
 
 /**

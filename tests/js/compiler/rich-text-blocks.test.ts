@@ -58,7 +58,7 @@ describe('heading migration (plain → rich)', () => {
     expect(block.content).toBe('Jane Doe');
     const { html } = compile([block]);
     expect(html).toContain(
-      '<p style="margin:0">Jane <span style="color:#ec4899;font-size:24px;line-height:29px">Doe</span></p>',
+      '<p style="margin:0">Jane <span style="color:#ec4899;font-size:24px;mso-line-height-rule:exactly;line-height:29px">Doe</span></p>',
     );
   });
 

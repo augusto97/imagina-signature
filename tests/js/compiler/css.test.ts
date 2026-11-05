@@ -139,6 +139,9 @@ const KNOWN_ATTRS = new Set([
   'bgcolor',
   'align',
   'valign',
+  // Language / direction of the shell (html + outer table).
+  'lang',
+  'dir',
 ]);
 
 describe('font stacks never corrupt inline styles', () => {
