@@ -180,4 +180,23 @@ trait DeploymentStubs {
 			]
 		);
 	}
+
+	/**
+	 * A signature row that was never compiled on the server (no HTML).
+	 *
+	 * @param int $user_id Owner.
+	 */
+	protected static function never_compiled( int $user_id ): Signature {
+		return Signature::from_row(
+			[
+				'id'          => 40 + $user_id,
+				'user_id'     => $user_id,
+				'name'        => 'Main',
+				'html_cache'  => null,
+				'compiled_at' => null,
+				'updated_at'  => '2026-11-01 10:00:00',
+				'status'      => 'ready',
+			]
+		);
+	}
 }

@@ -115,8 +115,15 @@ class InstallService {
 	}
 
 	/**
-	 * True when the signature has server-compiled HTML that is up to date
-	 * with its last edit — the only HTML the install link may hand out.
+	 * True when the signature has server-compiled HTML the install link
+	 * can hand out.
+	 *
+	 * Outdated HTML (the design, the owner's profile or a site-wide input
+	 * changed after it was compiled) still counts: the last compiled copy
+	 * keeps being served until a browser recompiles it, so the install
+	 * page never goes blank just because an administrator edited the
+	 * brand kit. Only a signature that was never compiled is "being
+	 * prepared". See {@see is_fresh()} for the strict check.
 	 *
 	 * @since 1.3.0
 	 *
@@ -127,8 +134,21 @@ class InstallService {
 	public static function is_deployable( ?Signature $signature ): bool {
 		return null !== $signature
 			&& null !== $signature->html_cache
-			&& '' !== trim( $signature->html_cache )
-			&& ! $signature->is_html_stale();
+			&& '' !== trim( $signature->html_cache );
+	}
+
+	/**
+	 * True when the signature is deployable AND its HTML describes the
+	 * current design and inputs (not outdated).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param Signature|null $signature Candidate.
+	 *
+	 * @return bool
+	 */
+	public static function is_fresh( ?Signature $signature ): bool {
+		return self::is_deployable( $signature ) && null !== $signature && ! $signature->is_html_stale();
 	}
 
 	/**
@@ -311,6 +331,9 @@ class InstallService {
 		return [
 			'state'        => self::state( $record, null !== $primary ? $primary->html_hash : null ),
 			'ready'        => self::is_deployable( $primary ),
+			// The link serves the last compiled HTML; true while a newer
+			// design / profile / site-wide input awaits a recompile.
+			'outdated'     => self::is_deployable( $primary ) && ! self::is_fresh( $primary ),
 			'signature_id' => null !== $primary ? $primary->id : null,
 			'invited_at'   => $record['invited_at'] ?? null,
 			'reminders'    => (int) ( $record['reminders'] ?? 0 ),

@@ -187,11 +187,23 @@ final class OutlookControllerTest extends TestCase {
 		$this->assertSame( 200, $response->get_status() );
 	}
 
-	public function test_unknown_email_stale_html_and_disabled_all_answer_the_same_404(): void {
+	public function test_unknown_email_never_compiled_html_and_disabled_all_answer_the_same_404(): void {
 		$controller = $this->controller();
 		$this->assert_error( $controller->signature( $this->signature_request( 'nobody@acme.example' ) ), 'imgsig_outlook_not_found', 404 );
 		$this->assert_error( $controller->signature( $this->signature_request( '' ) ), 'imgsig_outlook_not_found', 404 );
 
+		$never = Signature::from_row(
+			[
+				'id'          => 3,
+				'user_id'     => 7,
+				'html_cache'  => null,
+				'compiled_at' => null,
+				'updated_at'  => '2026-01-02 08:00:00',
+			]
+		);
+		$this->assert_error( $this->controller( $never )->signature( $this->signature_request( 'ana@acme.example' ) ), 'imgsig_outlook_not_found', 404 );
+
+		// Outdated HTML is still the best thing to insert.
 		$stale = Signature::from_row(
 			[
 				'id'          => 3,
@@ -202,7 +214,7 @@ final class OutlookControllerTest extends TestCase {
 				'updated_at'  => '2026-01-02 08:00:00',
 			]
 		);
-		$this->assert_error( $this->controller( $stale )->signature( $this->signature_request( 'ana@acme.example' ) ), 'imgsig_outlook_not_found', 404 );
+		$this->assertSame( 200, $this->controller( $stale )->signature( $this->signature_request( 'ana@acme.example' ) )->get_status() );
 
 		OutlookSettings::update( [ 'enabled' => false ] );
 		$this->assert_error( $controller->signature( $this->signature_request( 'ana@acme.example' ) ), 'imgsig_outlook_not_found', 404 );

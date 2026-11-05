@@ -34,9 +34,10 @@ defined( 'ABSPATH' ) || exit;
  *  - `noindex` (meta + `X-Robots-Tag`), `Referrer-Policy: no-referrer`
  *    (the token never leaks through a Referer), `Cache-Control: no-store`;
  *  - the signature HTML is the server copy (`html_cache`), sanitised to
- *    the email-safe subset on save, and is only handed out while it is
- *    fresh — a missing or stale copy shows "your signature is being
- *    prepared" instead;
+ *    the email-safe subset on save. The last compiled copy is served
+ *    even while it is outdated (a newer design or profile awaits a
+ *    recompile); only a signature that was never compiled shows "your
+ *    signature is being prepared" instead;
  *  - every string is escaped for its context; the data the script needs
  *    travels in a JSON block encoded with `JSON_HEX_TAG | JSON_HEX_AMP`.
  *

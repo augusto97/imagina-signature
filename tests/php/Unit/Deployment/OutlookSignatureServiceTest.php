@@ -150,11 +150,16 @@ final class OutlookSignatureServiceTest extends TestCase {
 		$this->assertSame( 7, $resolved['user_id'] ?? null );
 	}
 
-	public function test_missing_stale_empty_or_oversized_html_is_not_served(): void {
-		$this->assertNull( $this->service( null )->resolve( 'ana@acme.example' ), 'No signature.' );
-
+	public function test_outdated_html_keeps_being_served(): void {
 		$stale = $this->fresh_row( [ 'updated_at' => '2026-01-01 11:00:00' ] );
-		$this->assertNull( $this->service( $stale )->resolve( 'ana@acme.example' ), 'Edited after the last compile.' );
+		$this->assertSame( self::HTML, $this->service( $stale )->resolve( 'ana@acme.example' )['html'] ?? null, 'Edited after the last compile.' );
+
+		$marked = $this->fresh_row( [ 'compiled_at' => null ] );
+		$this->assertSame( self::HTML, $this->service( $marked )->resolve( 'ana@acme.example' )['html'] ?? null, 'Inputs changed after the last compile.' );
+	}
+
+	public function test_missing_empty_or_oversized_html_is_not_served(): void {
+		$this->assertNull( $this->service( null )->resolve( 'ana@acme.example' ), 'No signature.' );
 
 		$never = $this->fresh_row(
 			[

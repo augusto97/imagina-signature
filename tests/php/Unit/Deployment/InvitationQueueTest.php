@@ -192,7 +192,7 @@ final class InvitationQueueTest extends TestCase {
 		$this->ready_users( 1, 2 );
 		$this->add_user( 3 );                                        // No primary signature.
 		$this->add_user( 4 );
-		$this->primaries[4] = self::signature( 4, false );           // Stale HTML.
+		$this->primaries[4] = self::never_compiled( 4 );             // No server HTML yet.
 		$this->add_user( 5, [ 'user_email' => 'not-an-email' ] );
 		$this->primaries[5] = self::signature( 5 );
 		$this->add_user( 6, [], [] );                                 // Lost access.
@@ -231,6 +231,18 @@ final class InvitationQueueTest extends TestCase {
 		foreach ( [ 3, 4, 5, 6, 7 ] as $id ) {
 			$this->assertArrayNotHasKey( 'imgsig_deploy_status', $this->meta[ $id ] ?? [] );
 		}
+	}
+
+	public function test_users_with_outdated_html_are_still_invited(): void {
+		$this->add_user( 4 );
+		$this->primaries[4] = self::signature( 4, false );
+
+		$queue = $this->queue();
+		$queue->start( [ 4 ], InvitationMailer::KIND_INVITE );
+		$this->run_scheduled( $queue );
+
+		$this->assertSame( [ 4 ], array_column( $this->sent, 0 ) );
+		$this->assertSame( 1, $queue->progress()['sent'] );
 	}
 
 	public function test_reminders_skip_users_who_installed_meanwhile(): void {
