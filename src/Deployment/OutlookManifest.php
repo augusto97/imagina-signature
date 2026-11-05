@@ -130,10 +130,6 @@ final class OutlookManifest {
 		}
 
 		$home    = home_url( '/' );
-		$scheme  = (string) wp_parse_url( $home, PHP_URL_SCHEME );
-		$host    = (string) wp_parse_url( $home, PHP_URL_HOST );
-		$port    = wp_parse_url( $home, PHP_URL_PORT );
-		$origin  = ( '' !== $scheme ? $scheme : 'https' ) . '://' . $host . ( null !== $port ? ':' . (int) $port : '' );
 		$version = defined( 'IMGSIG_VERSION' ) ? (string) IMGSIG_VERSION : '1.0.0';
 
 		/**
@@ -165,7 +161,7 @@ final class OutlookManifest {
 			'button_label'  => __( 'Insert signature', 'imagina-signatures' ),
 			'button_tip'    => __( 'Insert your company email signature into this message.', 'imagina-signatures' ),
 			'support_url'   => $home,
-			'app_domain'    => $origin,
+			'app_domains'   => OutlookCors::own_origins(),
 			'assets_url'    => trailingslashit( plugins_url( 'assets/outlook', IMGSIG_FILE ) ),
 			'runtime_query' => self::runtime_query(
 				(string) ( $settings['deploy_key'] ?? '' ),
@@ -263,7 +259,16 @@ final class OutlookManifest {
 				self::node( 'IconUrl', [ 'DefaultValue' => $assets . 'icon-64.png' ] ),
 				self::node( 'HighResolutionIconUrl', [ 'DefaultValue' => $assets . 'icon-128.png' ] ),
 				self::node( 'SupportUrl', [ 'DefaultValue' => (string) $c['support_url'] ] ),
-				self::node( 'AppDomains', [], [ self::node( 'AppDomain', [], (string) $c['app_domain'] ) ] ),
+				self::node(
+					'AppDomains',
+					[],
+					array_map(
+						static function ( $domain ): array {
+							return self::node( 'AppDomain', [], (string) $domain );
+						},
+						array_values( (array) $c['app_domains'] )
+					)
+				),
 				self::node( 'Hosts', [], [ self::node( 'Host', [ 'Name' => 'Mailbox' ] ) ] ),
 				self::node(
 					'Requirements',

@@ -312,21 +312,22 @@ final class OutlookControllerTest extends TestCase {
 
 	public function test_cors_policy(): void {
 		$site = 'https://acme.example';
+		$own  = [ $site ];
 
-		$outlook = OutlookCors::headers_for( 'https://outlook.office.com', $site );
+		$outlook = OutlookCors::headers_for( 'https://outlook.office.com', $own );
 		$this->assertSame( 'https://outlook.office.com', $outlook['Access-Control-Allow-Origin'] );
 		$this->assertSame( 'GET, OPTIONS', $outlook['Access-Control-Allow-Methods'] );
 		$this->assertStringContainsString( 'X-Imgsig-Deploy-Key', $outlook['Access-Control-Allow-Headers'] );
 		$this->assertSame( 'Origin', $outlook['Vary'] );
 		$this->assertArrayNotHasKey( 'Access-Control-Allow-Credentials', $outlook );
 
-		$this->assertSame( 'https://outlook.office365.com', OutlookCors::headers_for( 'https://outlook.office365.com', $site )['Access-Control-Allow-Origin'] );
-		$this->assertSame( 'https://outlook.live.com', OutlookCors::headers_for( 'https://outlook.live.com', $site )['Access-Control-Allow-Origin'] );
-		$this->assertSame( $site, OutlookCors::headers_for( $site, $site )['Access-Control-Allow-Origin'] );
-		$this->assertSame( 'null', OutlookCors::headers_for( 'null', $site )['Access-Control-Allow-Origin'], 'Office desktop runtime.' );
-		$this->assertSame( '*', OutlookCors::headers_for( null, $site )['Access-Control-Allow-Origin'], 'No Origin header.' );
-		$this->assertSame( '', OutlookCors::headers_for( 'https://evil.example', $site )['Access-Control-Allow-Origin'] );
-		$this->assertSame( '', OutlookCors::headers_for( 'https://outlook.office.com.evil.example', $site )['Access-Control-Allow-Origin'] );
+		$this->assertSame( 'https://outlook.office365.com', OutlookCors::headers_for( 'https://outlook.office365.com', $own )['Access-Control-Allow-Origin'] );
+		$this->assertSame( 'https://outlook.live.com', OutlookCors::headers_for( 'https://outlook.live.com', $own )['Access-Control-Allow-Origin'] );
+		$this->assertSame( $site, OutlookCors::headers_for( $site, $own )['Access-Control-Allow-Origin'] );
+		$this->assertSame( 'null', OutlookCors::headers_for( 'null', $own )['Access-Control-Allow-Origin'], 'Office desktop runtime.' );
+		$this->assertSame( '*', OutlookCors::headers_for( null, $own )['Access-Control-Allow-Origin'], 'No Origin header.' );
+		$this->assertSame( '', OutlookCors::headers_for( 'https://evil.example', $own )['Access-Control-Allow-Origin'] );
+		$this->assertSame( '', OutlookCors::headers_for( 'https://outlook.office.com.evil.example', $own )['Access-Control-Allow-Origin'] );
 	}
 
 	public function test_preflight_and_responses_of_outlook_routes_get_the_headers(): void {

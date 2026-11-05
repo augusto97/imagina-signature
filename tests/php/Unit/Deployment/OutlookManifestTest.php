@@ -11,6 +11,8 @@ namespace ImaginaSignatures\Tests\Unit\Deployment;
 
 use Brain\Monkey;
 use Brain\Monkey\Filters;
+use Brain\Monkey\Functions;
+use ImaginaSignatures\Deployment\OutlookCors;
 use ImaginaSignatures\Deployment\OutlookManifest;
 use ImaginaSignatures\Deployment\OutlookSettings;
 use PHPUnit\Framework\TestCase;
@@ -153,6 +155,27 @@ final class OutlookManifestTest extends TestCase {
 		foreach ( [ 'Group.Label', 'InsertButton.Label' ] as $id ) {
 			$this->value( $xpath, '/o:OfficeApp/v0:VersionOverrides/v1:VersionOverrides/v1:Resources/bt:ShortStrings/bt:String[@id="' . $id . '"]/@DefaultValue' );
 		}
+	}
+
+	public function test_assets_on_another_origin_are_trusted_by_app_domains_and_cors(): void {
+		Functions\when( 'plugins_url' )->alias(
+			static function ( $path = '' ): string {
+				return 'https://cdn.acme-static.example/wp-content/plugins/imagina-signatures/' . ltrim( (string) $path, '/' );
+			}
+		);
+
+		$xpath   = $this->load( OutlookManifest::for_site( $this->settings() )->to_xml() );
+		$domains = [];
+		foreach ( $xpath->query( '/o:OfficeApp/o:AppDomains/o:AppDomain' ) as $node ) {
+			$domains[] = $node->nodeValue;
+		}
+		$this->assertSame( [ 'https://acme.example', 'https://cdn.acme-static.example' ], $domains );
+
+		$this->assertSame( [ 'https://acme.example', 'https://cdn.acme-static.example' ], OutlookCors::own_origins() );
+		$this->assertSame(
+			'https://cdn.acme-static.example',
+			OutlookCors::headers_for( 'https://cdn.acme-static.example', OutlookCors::own_origins() )['Access-Control-Allow-Origin']
+		);
 	}
 
 	public function test_display_name_falls_back_to_the_site_name(): void {

@@ -94,15 +94,12 @@ final class OutlookCors {
 	 *
 	 * @since 1.3.0
 	 *
-	 * @param string $site_origin This site's origin (`https://example.com`).
+	 * @param string[] $own_origins This site's origins ({@see own_origins()}).
 	 *
 	 * @return string[]
 	 */
-	public static function allowed_origins( string $site_origin = '' ): array {
-		$origins = self::ALLOWED_ORIGINS;
-		if ( '' !== $site_origin ) {
-			$origins[] = $site_origin;
-		}
+	public static function allowed_origins( array $own_origins = [] ): array {
+		$origins = array_merge( self::ALLOWED_ORIGINS, $own_origins );
 
 		/**
 		 * Filters the origins allowed to call the Outlook add-in routes.
@@ -130,11 +127,11 @@ final class OutlookCors {
 	 * @since 1.3.0
 	 *
 	 * @param string|null $origin      `Origin` header (null when absent).
-	 * @param string      $site_origin This site's origin.
+	 * @param string[]    $own_origins This site's origins ({@see own_origins()}).
 	 *
 	 * @return array<string, string>
 	 */
-	public static function headers_for( ?string $origin, string $site_origin = '' ): array {
+	public static function headers_for( ?string $origin, array $own_origins = [] ): array {
 		$headers = [
 			'Access-Control-Allow-Methods' => 'GET, OPTIONS',
 			'Access-Control-Allow-Headers' => self::KEY_HEADER . ', Content-Type, Accept',
@@ -148,7 +145,7 @@ final class OutlookCors {
 			$headers['Access-Control-Allow-Origin'] = '*';
 		} elseif ( 'null' === strtolower( $origin ) ) {
 			$headers['Access-Control-Allow-Origin'] = 'null';
-		} elseif ( in_array( strtolower( rtrim( $origin, '/' ) ), self::allowed_origins( $site_origin ), true ) ) {
+		} elseif ( in_array( strtolower( rtrim( $origin, '/' ) ), self::allowed_origins( $own_origins ), true ) ) {
 			$headers['Access-Control-Allow-Origin'] = $origin;
 		} else {
 			$headers['Access-Control-Allow-Origin'] = '';
@@ -158,21 +155,50 @@ final class OutlookCors {
 	}
 
 	/**
-	 * This site's origin.
+	 * `scheme://host[:port]` of a URL ('' when it has no host).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string $url Absolute URL.
+	 *
+	 * @return string
+	 */
+	public static function origin_of( string $url ): string {
+		$scheme = (string) wp_parse_url( $url, PHP_URL_SCHEME );
+		$host   = (string) wp_parse_url( $url, PHP_URL_HOST );
+		$port   = wp_parse_url( $url, PHP_URL_PORT );
+		if ( '' === $host ) {
+			return '';
+		}
+		return strtolower( ( '' !== $scheme ? $scheme : 'https' ) . '://' . $host . ( null !== $port ? ':' . (int) $port : '' ) );
+	}
+
+	/**
+	 * This site's origin (home URL).
 	 *
 	 * @since 1.3.0
 	 *
 	 * @return string
 	 */
 	public static function site_origin(): string {
-		$home   = home_url( '/' );
-		$scheme = (string) wp_parse_url( $home, PHP_URL_SCHEME );
-		$host   = (string) wp_parse_url( $home, PHP_URL_HOST );
-		$port   = wp_parse_url( $home, PHP_URL_PORT );
-		if ( '' === $host ) {
-			return '';
-		}
-		return strtolower( ( '' !== $scheme ? $scheme : 'https' ) . '://' . $host . ( null !== $port ? ':' . (int) $port : '' ) );
+		return self::origin_of( home_url( '/' ) );
+	}
+
+	/**
+	 * Origins the add-in is served from: the site, plus the plugin's
+	 * asset origin when it differs (plugin URLs rewritten to a CDN) —
+	 * the runtime page then lives there. Also the manifest's AppDomains.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return string[]
+	 */
+	public static function own_origins(): array {
+		$origins = [
+			self::site_origin(),
+			self::origin_of( plugins_url( 'assets/outlook/', IMGSIG_FILE ) ),
+		];
+		return array_values( array_unique( array_filter( $origins ) ) );
 	}
 
 	/**
@@ -212,7 +238,7 @@ final class OutlookCors {
 			return $result;
 		}
 
-		foreach ( self::headers_for( self::request_origin( $request ), self::site_origin() ) as $name => $value ) {
+		foreach ( self::headers_for( self::request_origin( $request ), self::own_origins() ) as $name => $value ) {
 			if ( '' !== $value ) {
 				$result->header( $name, $value );
 			}
@@ -242,12 +268,13 @@ final class OutlookCors {
 		}
 
 		header_remove( 'Access-Control-Allow-Credentials' );
-		foreach ( self::headers_for( self::request_origin( $request ), self::site_origin() ) as $name => $value ) {
+		foreach ( self::headers_for( self::request_origin( $request ), self::own_origins() ) as $name => $value ) {
 			if ( 'Access-Control-Allow-Origin' === $name && '' === $value ) {
 				header_remove( 'Access-Control-Allow-Origin' );
 				continue;
 			}
-			header( $name . ': ' . $value );
+			// Vary adds to (never replaces) what other code already sent.
+			header( $name . ': ' . $value, 'Vary' !== $name );
 		}
 
 		return $served;
