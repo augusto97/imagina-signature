@@ -39,9 +39,31 @@ export interface ImageBlock extends BlockBase {
   src: string;
   alt: string;
   width?: number;
+  /**
+   * Explicit height. Used when `lock_aspect` is off, or when it is on
+   * but the intrinsic size of `src` is unknown (pasted URL, pre-1.2
+   * rows). Scaled with the width when the image is clamped to the
+   * available space.
+   */
   height?: number;
   link?: string;
   border_radius?: number;
+  /** Horizontal alignment in the available width. Absent = `left`. */
+  align?: 'left' | 'center' | 'right';
+  /**
+   * Keep the height proportional to the width. Absent = `true`. With
+   * `natural_*` known the compiled height is derived from the image's
+   * own aspect ratio, otherwise from `width` / `height`.
+   */
+  lock_aspect?: boolean;
+  /**
+   * Intrinsic pixel size of `src`, recorded when the image comes from
+   * an upload, the asset library or a crop. Absent for pasted URLs.
+   */
+  natural_width?: number;
+  natural_height?: number;
+  /** Optional border drawn around the image (absent / width 0 = none). */
+  border?: BorderStyle;
   /**
    * Optional URL of a static image used as a graceful fallback for
    * Outlook 2007–2019 (which freezes animated GIFs on the first
