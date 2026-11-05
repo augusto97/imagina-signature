@@ -310,14 +310,14 @@ export function compileButton(spec: ButtonSpec, block: BlockRef, ctx: CompileCon
     'text-decoration': 'none',
     'line-height': `${spec.lineHeight}px`,
   });
-  const tableWidth = spec.fullWidth ? ' width="100%"' : tableAlignAttr(spec.align);
+  const tableAttrs = spec.fullWidth ? ' width="100%"' : tableAlignAttr(spec.align);
   const tableStyle = inlineStyle({
     'border-collapse': 'separate',
     width: spec.fullWidth ? '100%' : undefined,
     margin: spec.fullWidth ? undefined : alignMargin(spec.align),
   });
   const cellAlign = spec.fullWidth ? ' align="center"' : '';
-  const cellButton = `<!--[if !mso]><!-- --><table role="presentation" cellpadding="0" cellspacing="0" border="0"${tableWidth} style="${tableStyle}"><tr><td${cellAlign}${spec.fill ? bgcolorAttr(spec.fill) : ''} style="${cellStyle}"><a${marker} href="${safeHref}" style="${linkStyle}">${safeLabel}</a></td></tr></table><!--<![endif]-->`;
+  const cellButton = `<!--[if !mso]><!-- --><table role="presentation" cellpadding="0" cellspacing="0" border="0"${tableAttrs} style="${tableStyle}"><tr><td${cellAlign}${spec.fill ? bgcolorAttr(spec.fill) : ''} style="${cellStyle}"><a${marker} href="${safeHref}" style="${linkStyle}">${safeLabel}</a></td></tr></table><!--<![endif]-->`;
 
   return alignedRow(`${vmlButton}${cellButton}`, spec.align, padding);
 }
