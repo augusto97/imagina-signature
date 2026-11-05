@@ -242,3 +242,25 @@ describe('social v1 → v2 normaliser', () => {
     expect(normalizeNetwork(undefined)).toBe('website');
   });
 });
+
+describe('social icons with variable URLs', () => {
+  it('leaves out an icon whose variable is blank and completes a scheme-less value', () => {
+    const schema = createEmptySchema();
+    schema.blocks = [
+      social({
+        items: [
+          { id: 'a', network: 'linkedin', url: '{{li}}' },
+          { id: 'b', network: 'x', url: '{{x}}' },
+        ],
+      }),
+    ];
+    schema.variables = { li: 'linkedin.com/company/acme', x: '' };
+    const result = compileSignature(schema);
+    const doc = new DOMParser().parseFromString(result.fragment, 'text/html');
+    expect(Array.from(doc.querySelectorAll('a')).map((a) => a.getAttribute('href'))).toEqual([
+      'https://linkedin.com/company/acme',
+    ]);
+    expect(result.issues.some((i) => i.code === 'social-missing-url')).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+});
