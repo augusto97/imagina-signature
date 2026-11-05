@@ -44,12 +44,17 @@ describe('cssValue', () => {
 });
 
 describe('safeColor', () => {
-  it.each(['#fff', '#FFFFFF', '#11223344', 'rgb(1, 2, 3)', 'rgba(1,2,3,0.5)', 'white', 'transparent'])(
-    'accepts %s',
-    (c) => {
-      expect(safeColor(c, 'FALLBACK')).not.toBe('FALLBACK');
-    },
-  );
+  it.each([
+    '#fff',
+    '#FFFFFF',
+    '#11223344',
+    'rgb(1, 2, 3)',
+    'rgba(1,2,3,0.5)',
+    'white',
+    'transparent',
+  ])('accepts %s', (c) => {
+    expect(safeColor(c, 'FALLBACK')).not.toBe('FALLBACK');
+  });
 
   it.each(['red;x:y', '#12', 'url(x)', '"><script>', 'expression(1)', '', 'hsl(1,2%,3%)'])(
     'rejects %s',
@@ -97,7 +102,12 @@ function typography(font: string) {
 function blocksFor(font: string): Block[] {
   return [
     { id: 'h', type: 'heading', content: 'Jane Doe', style: typography(font) },
-    { id: 't', type: 'text', content: '<strong>Jane</strong> <em>Doe</em>', style: typography(font) },
+    {
+      id: 't',
+      type: 'text',
+      content: '<strong>Jane</strong> <em>Doe</em>',
+      style: typography(font),
+    },
     { id: 'd', type: 'disclaimer', content: 'Confidential', style: typography(font) },
     {
       id: 'c',
@@ -139,7 +149,9 @@ describe('font stacks never corrupt inline styles', () => {
 
     for (const el of Array.from(doc.querySelectorAll('*'))) {
       for (const a of Array.from(el.attributes)) {
-        expect(KNOWN_ATTRS.has(a.name), `stray attribute "${a.name}" on <${el.tagName}>`).toBe(true);
+        expect(KNOWN_ATTRS.has(a.name), `stray attribute "${a.name}" on <${el.tagName}>`).toBe(
+          true,
+        );
       }
     }
 

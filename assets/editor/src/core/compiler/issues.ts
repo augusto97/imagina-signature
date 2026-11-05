@@ -85,7 +85,12 @@ export function stripMarkers(html: string): string {
 /** Parses a marker value back into a block ref. */
 export function parseMarker(value: string | undefined): BlockRef | null {
   if (!value) return null;
-  const decoded = value.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const decoded = value
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
   const idx = decoded.indexOf(':');
   if (idx <= 0) return null;
   return { type: decoded.slice(0, idx), id: decoded.slice(idx + 1) };
@@ -101,7 +106,10 @@ export function checkAlt(sink: IssueSink, block: BlockRef, alt: string | undefin
     report(
       sink,
       'warning',
-      __('%s block: the image has no alt text, so nothing describes it when images are blocked.', blockLabel(block.type)),
+      __(
+        '%s block: the image has no alt text, so nothing describes it when images are blocked.',
+        blockLabel(block.type),
+      ),
       block,
       'missing-alt',
     );

@@ -5,7 +5,12 @@ import type { Block } from '@/core/schema/blocks';
 import { htmlToPlainText as clipboardPlainText } from '@/utils/clipboard';
 import '@/core/blocks';
 
-const style = { font_family: 'Arial, sans-serif', font_size: 14, font_weight: 400 as const, color: '#111827' };
+const style = {
+  font_family: 'Arial, sans-serif',
+  font_size: 14,
+  font_weight: 400 as const,
+  color: '#111827',
+};
 
 function sample(): Block[] {
   return [
@@ -13,7 +18,8 @@ function sample(): Block[] {
     {
       id: 'role',
       type: 'text',
-      content: '<p><strong>Director</strong> · ACME</p><p>Visit <a href="https://acme.example/jobs">our jobs page</a></p>',
+      content:
+        '<p><strong>Director</strong> · ACME</p><p>Visit <a href="https://acme.example/jobs">our jobs page</a></p>',
       style,
     },
     {
@@ -47,7 +53,12 @@ function sample(): Block[] {
       text_color: '#ffffff',
       border_radius: 4,
     },
-    { id: 'div', type: 'divider', border: { width: 1, color: '#e5e7eb', style: 'solid' }, width_percent: 100 },
+    {
+      id: 'div',
+      type: 'divider',
+      border: { width: 1, color: '#e5e7eb', style: 'solid' },
+      width_percent: 100,
+    },
     { id: 'legal', type: 'disclaimer', content: 'Confidential.\nDo not forward.', style },
   ];
 }
@@ -64,7 +75,9 @@ describe('signature fragment', () => {
     const { fragment, html } = compile(sample());
     expect(fragment.startsWith('<table')).toBe(true);
     expect(fragment.endsWith('</table>')).toBe(true);
-    expect(fragment).not.toMatch(/<!DOCTYPE|<html|<head|<title|<body|PixelsPerInch|OfficeDocumentSettings/i);
+    expect(fragment).not.toMatch(
+      /<!DOCTYPE|<html|<head|<title|<body|PixelsPerInch|OfficeDocumentSettings/i,
+    );
     // It is the exact body content of the full document.
     expect(html).toContain(fragment);
   });
@@ -77,7 +90,9 @@ describe('signature fragment', () => {
   });
 
   it('extractBodyFragment handles a body with attributes', () => {
-    expect(extractBodyFragment('<html><body style="a:b"> <table></table> </body></html>')).toBe('<table></table>');
+    expect(extractBodyFragment('<html><body style="a:b"> <table></table> </body></html>')).toBe(
+      '<table></table>',
+    );
   });
 });
 
@@ -123,7 +138,14 @@ describe('plain text', () => {
 
   it('includes linked images / banners as "alt: url"', () => {
     const { text } = compile([
-      { id: 'b', type: 'banner', src: 'https://cdn.example/b.png', alt: 'Spring sale', link: 'https://shop.example/sale', width: 600 },
+      {
+        id: 'b',
+        type: 'banner',
+        src: 'https://cdn.example/b.png',
+        alt: 'Spring sale',
+        link: 'https://shop.example/sale',
+        width: 600,
+      },
       { id: 'i', type: 'image', src: 'https://cdn.example/logo.png', alt: 'Logo', width: 80 },
     ]);
     expect(text).toBe('Spring sale: https://shop.example/sale');

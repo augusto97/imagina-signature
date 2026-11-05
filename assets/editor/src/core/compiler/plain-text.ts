@@ -112,7 +112,8 @@ function socialLines(block: SocialIconsBlock): string[] {
     .filter((n) => n.url && !/^https?:\/\/?$/.test(n.url.trim()))
     .map((n) => {
       const key = String(n.platform ?? '').toLowerCase();
-      const name = PLATFORM_NAMES[key] ?? (key ? key.charAt(0).toUpperCase() + key.slice(1) : __('Link'));
+      const name =
+        PLATFORM_NAMES[key] ?? (key ? key.charAt(0).toUpperCase() + key.slice(1) : __('Link'));
       return `${name}: ${n.url.trim()}`;
     });
 }
@@ -186,7 +187,10 @@ export function htmlToPlainText(html: string): string {
     ).trim();
   }
   const doc = new DOMParser().parseFromString(`<body>${safe}</body>`, 'text/html');
-  return walkText(doc.body).replace(/\u00a0/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  return walkText(doc.body)
+    .replace(/\u00a0/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function walkText(node: Node): string {

@@ -36,7 +36,10 @@ function assertInert(html: string): void {
 const VECTORS: Array<[string, string]> = [
   ['img onerror', '<img src=x onerror=alert(1)>'],
   ['img inside an unknown wrapper', '<section><img src=x onerror=alert(1)></section>'],
-  ['deeply nested unknown wrappers', '<x-a><x-b><div><img src=x onerror=alert(1)></div></x-b></x-a>'],
+  [
+    'deeply nested unknown wrappers',
+    '<x-a><x-b><div><img src=x onerror=alert(1)></div></x-b></x-a>',
+  ],
   ['script tag', '<script>alert(1)</script>'],
   ['script inside allowed tag', '<strong><script>alert(1)</script>bold</strong>'],
   ['svg onload', '<svg onload=alert(1)><circle r=1 /></svg>'],
@@ -50,17 +53,26 @@ const VECTORS: Array<[string, string]> = [
   ['entity-encoded tab in scheme', '<a href="jav&#x09;ascript:alert(1)">x</a>'],
   ['entity-encoded newline in scheme', '<a href="jav&#x0A;ascript:alert(1)">x</a>'],
   ['entity-encoded colon', '<a href="javascript&colon;alert(1)">x</a>'],
-  ['decimal entities', '<a href="&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;alert(1)">x</a>'],
+  [
+    'decimal entities',
+    '<a href="&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;alert(1)">x</a>',
+  ],
   ['leading whitespace / control', '<a href=" \u0001javascript:alert(1)">x</a>'],
   ['data:text/html', '<a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==">x</a>'],
   ['vbscript', '<a href="vbscript:msgbox(1)">x</a>'],
   ['onclick on allowed tag', '<a href="https://ok.example" onclick="alert(1)">x</a>'],
   ['onmouseover on span', '<span onmouseover="alert(1)">x</span>'],
-  ['attribute breaking quotes', '<a href="https://ok.example" title=\'"><img src=x onerror=alert(1)>\'>x</a>'],
+  [
+    'attribute breaking quotes',
+    '<a href="https://ok.example" title=\'"><img src=x onerror=alert(1)>\'>x</a>',
+  ],
   ['style expression', '<span style="color:red;width:expression(alert(1))">x</span>'],
   ['style url', '<span style="background:url(javascript:alert(1));color:#f00">x</span>'],
   ['style breaking out', '<span style="color:red&quot;onmouseover=alert(1)">x</span>'],
-  ['form controls', '<form action="javascript:alert(1)"><input autofocus onfocus=alert(1)><button>x</button></form>'],
+  [
+    'form controls',
+    '<form action="javascript:alert(1)"><input autofocus onfocus=alert(1)><button>x</button></form>',
+  ],
   ['meta refresh', '<meta http-equiv="refresh" content="0;url=javascript:alert(1)">'],
   ['link stylesheet', '<link rel="stylesheet" href="javascript:alert(1)">'],
   ['base href', '<base href="javascript:alert(1)//">'],
@@ -110,7 +122,9 @@ describe('sanitizeEmailHtml XSS battery', () => {
   });
 
   it('only accepts target=_blank and known rel tokens', () => {
-    const out = sanitizeEmailHtml('<a href="https://x.example" target="top" rel="opener noopener evil">x</a>');
+    const out = sanitizeEmailHtml(
+      '<a href="https://x.example" target="top" rel="opener noopener evil">x</a>',
+    );
     expect(out).toBe('<a href="https://x.example" rel="noopener">x</a>');
   });
 
@@ -148,13 +162,21 @@ describe('sanitizeEmailHtml XSS battery', () => {
 });
 
 describe('isSafeHref', () => {
-  it.each(['https://a.example', 'http://a.example', 'mailto:a@b.c', 'tel:+1', '{{site}}', ' HTTPS://A.example'])(
-    'accepts %s',
-    (href) => expect(isSafeHref(href)).toBe(true),
-  );
+  it.each([
+    'https://a.example',
+    'http://a.example',
+    'mailto:a@b.c',
+    'tel:+1',
+    '{{site}}',
+    ' HTTPS://A.example',
+  ])('accepts %s', (href) => expect(isSafeHref(href)).toBe(true));
 
-  it.each(['javascript:alert(1)', 'jav\tascript:alert(1)', 'data:text/html,x', '//evil.example', 'www.example.com', 'blob:x'])(
-    'rejects %s',
-    (href) => expect(isSafeHref(href)).toBe(false),
-  );
+  it.each([
+    'javascript:alert(1)',
+    'jav\tascript:alert(1)',
+    'data:text/html,x',
+    '//evil.example',
+    'www.example.com',
+    'blob:x',
+  ])('rejects %s', (href) => expect(isSafeHref(href)).toBe(false));
 });

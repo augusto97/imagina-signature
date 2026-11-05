@@ -15,7 +15,8 @@ describe('minifyHtml', () => {
     // Used by the Button block + GIF fallback in 1.0.16+. If the
     // minifier strips the `<!--<![endif]-->` closer the `<a>` ends
     // up inside an unterminated comment.
-    const input = '<td><!--[if !mso]><!--><a href="https://example.com">Book</a><!--<![endif]--></td>';
+    const input =
+      '<td><!--[if !mso]><!--><a href="https://example.com">Book</a><!--<![endif]--></td>';
     expect(minifyHtml(input)).toBe(input);
   });
 
@@ -73,9 +74,11 @@ describe('minifyHtml', () => {
   });
 
   it('removes whitespace between structural tags only', () => {
-    expect(minifyHtml('<td>\n<table> <tr>\n<td><a href="x">a</a> <a href="y">b</a></td></tr></table></td>')).toBe(
-      '<td><table><tr><td><a href="x">a</a> <a href="y">b</a></td></tr></table></td>',
-    );
+    expect(
+      minifyHtml(
+        '<td>\n<table> <tr>\n<td><a href="x">a</a> <a href="y">b</a></td></tr></table></td>',
+      ),
+    ).toBe('<td><table><tr><td><a href="x">a</a> <a href="y">b</a></td></tr></table></td>');
   });
 
   it('keeps a literal non-breaking space', () => {
@@ -83,7 +86,8 @@ describe('minifyHtml', () => {
   });
 
   it('keeps a multi-line conditional byte-identical next to collapsed markup', () => {
-    const cond = '<!--[if mso]>\n<v:roundrect   href="x">\n  <center>Go</center>\n</v:roundrect>\n<![endif]-->';
+    const cond =
+      '<!--[if mso]>\n<v:roundrect   href="x">\n  <center>Go</center>\n</v:roundrect>\n<![endif]-->';
     const revealed = '<!--[if !mso]><!-- --><table><tr><td>Go</td></tr></table><!--<![endif]-->';
     const out = minifyHtml(`<td>\n  ${cond}\n  ${revealed}\n</td>`);
     expect(out).toBe(`<td>${cond} ${revealed}</td>`);

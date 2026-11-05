@@ -50,7 +50,11 @@ export function validateEmailOutput(html: string, fragment: string = html): Comp
   if (/(?:href|src|background|poster)\s*=\s*["']?\s*data:|url\(\s*["']?\s*data:/i.test(html)) {
     report(sink, 'error', __('The HTML still contains an embedded data: URI.'), null, 'data-uri');
   }
-  if (/(?:href|src|background|poster)\s*=\s*["']?\s*(?:java|vb)script:|url\(\s*["']?\s*(?:java|vb)script:/i.test(html)) {
+  if (
+    /(?:href|src|background|poster)\s*=\s*["']?\s*(?:java|vb)script:|url\(\s*["']?\s*(?:java|vb)script:/i.test(
+      html,
+    )
+  ) {
     report(sink, 'error', __('The HTML still contains a script URL.'), null, 'unsafe-url');
   }
   if (/(?:href|src)\s*=\s*["']?\s*blob:/i.test(html)) {
@@ -63,7 +67,13 @@ export function validateEmailOutput(html: string, fragment: string = html): Comp
       report(sink, 'warning', __('An image has no alt attribute.'), null, 'missing-alt');
     }
     if (!/\swidth\s*=\s*["']?\d+/i.test(img) && !/width:\s*\d+/i.test(img)) {
-      report(sink, 'warning', __('An image has no explicit width; Outlook may show it at full size.'), null, 'missing-width');
+      report(
+        sink,
+        'warning',
+        __('An image has no explicit width; Outlook may show it at full size.'),
+        null,
+        'missing-width',
+      );
     }
   }
 

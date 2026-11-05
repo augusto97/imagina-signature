@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { compileSignature } from '@/core/compiler/compile';
-import { classifyUrl, decodeEntities, enforceSafeUrls, isLocalHost, isPlaceholderHost } from '@/core/compiler/urls';
+import {
+  classifyUrl,
+  decodeEntities,
+  enforceSafeUrls,
+  isLocalHost,
+  isPlaceholderHost,
+} from '@/core/compiler/urls';
 import { createEmptySchema } from '@/core/schema/signature';
 import type { Block } from '@/core/schema/blocks';
 import type { CompileIssue } from '@/core/compiler/issues';
@@ -24,7 +30,13 @@ const button = (href: string): Block => ({
   border_radius: 4,
 });
 
-const image = (src: string, alt = 'Logo'): Block => ({ id: 'img1', type: 'image', src, alt, width: 100 });
+const image = (src: string, alt = 'Logo'): Block => ({
+  id: 'img1',
+  type: 'image',
+  src,
+  alt,
+  width: 100,
+});
 
 describe('classifyUrl', () => {
   it.each([
@@ -68,7 +80,11 @@ describe('URL pass after variable substitution', () => {
     const result = compile([button('{{site}}')], { site: 'javascript:alert(1)' });
     expect(result.html).not.toMatch(/javascript:/i);
     expect(result.html).toContain('href="#"');
-    expect(result.issues.some((i) => i.level === 'error' && i.code === 'unsafe-url' && i.blockId === 'btn')).toBe(true);
+    expect(
+      result.issues.some(
+        (i) => i.level === 'error' && i.code === 'unsafe-url' && i.blockId === 'btn',
+      ),
+    ).toBe(true);
   });
 
   it('checks hrefs inside Outlook conditional comments (VML button)', () => {
@@ -117,12 +133,20 @@ describe('URL pass after variable substitution', () => {
   it('keeps http images but warns', () => {
     const result = compile([image('http://cdn.example.com/a.png')]);
     expect(result.html).toContain('src="http://cdn.example.com/a.png"');
-    expect(result.issues.some((i) => i.code === 'insecure-image' && i.level === 'warning')).toBe(true);
+    expect(result.issues.some((i) => i.code === 'insecure-image' && i.level === 'warning')).toBe(
+      true,
+    );
   });
 
   it('warns about local and placeholder image hosts', () => {
-    expect(compile([image('https://localhost/a.png')]).issues.some((i) => i.code === 'local-image')).toBe(true);
-    expect(compile([image('https://placehold.co/120')]).issues.some((i) => i.code === 'placeholder-image')).toBe(true);
+    expect(
+      compile([image('https://localhost/a.png')]).issues.some((i) => i.code === 'local-image'),
+    ).toBe(true);
+    expect(
+      compile([image('https://placehold.co/120')]).issues.some(
+        (i) => i.code === 'placeholder-image',
+      ),
+    ).toBe(true);
   });
 
   it('warns about missing alt text naming the block type', () => {
@@ -134,7 +158,10 @@ describe('URL pass after variable substitution', () => {
   });
 
   it('never leaks compile-time markers', () => {
-    const result = compile([image('https://cdn.example.com/a.png'), button('https://acme.example')]);
+    const result = compile([
+      image('https://cdn.example.com/a.png'),
+      button('https://acme.example'),
+    ]);
     expect(result.html).not.toContain('data-imgsig-src');
   });
 
@@ -151,8 +178,13 @@ describe('URL pass after variable substitution', () => {
 
 describe('validator levels', () => {
   it('flags leftover data: / javascript: as errors', () => {
-    const issues = validateEmailOutput('<div style="background:url(data:image/png;base64,AA)"></div><a href="javascript:x">x</a>');
-    expect(issues.filter((i) => i.level === 'error').map((i) => i.code)).toEqual(['data-uri', 'unsafe-url']);
+    const issues = validateEmailOutput(
+      '<div style="background:url(data:image/png;base64,AA)"></div><a href="javascript:x">x</a>',
+    );
+    expect(issues.filter((i) => i.level === 'error').map((i) => i.code)).toEqual([
+      'data-uri',
+      'unsafe-url',
+    ]);
   });
 
   it('warns when the signature exceeds Gmail’s 10,000-character limit', () => {
@@ -167,7 +199,10 @@ describe('validator levels', () => {
   });
 
   it('keeps `warnings` as plain strings and splits out `errors`', () => {
-    const result = compile([image('data:image/png;base64,AA', ''), image('https://placehold.co/1', 'x')]);
+    const result = compile([
+      image('data:image/png;base64,AA', ''),
+      image('https://placehold.co/1', 'x'),
+    ]);
     expect(result.errors.length).toBe(1);
     expect(result.warnings.every((w) => typeof w === 'string')).toBe(true);
     expect(result.warnings.some((w) => w.includes('placeholder'))).toBe(true);

@@ -132,7 +132,16 @@ describe('container pixel widths', () => {
 
   it('caps a top-level banner to the canvas width', () => {
     const { html } = compile(
-      [{ id: 'ban', type: 'banner', src: 'https://cdn.example.com/b.png', alt: 'Promo', link: '', width: 800 }],
+      [
+        {
+          id: 'ban',
+          type: 'banner',
+          src: 'https://cdn.example.com/b.png',
+          alt: 'Promo',
+          link: '',
+          width: 800,
+        },
+      ],
       500,
     );
     expect(parse(html).querySelector('img')!.getAttribute('width')).toBe('500');

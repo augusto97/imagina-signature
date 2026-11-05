@@ -71,7 +71,9 @@ describe('button markup', () => {
   });
 
   it('resolves variables before measuring the label', () => {
-    const { html } = compile([button('{{cta}}')], { cta: 'Download our brand new product catalogue' });
+    const { html } = compile([button('{{cta}}')], {
+      cta: 'Download our brand new product catalogue',
+    });
     const vml = /<v:roundrect[^>]*>/.exec(html)![0];
     expect(vml).toContain(`width:${vmlButtonWidth('Download our brand new product catalogue')}px`);
   });
@@ -98,7 +100,9 @@ describe('button markup', () => {
   it('keeps both conditional branches intact after minify', () => {
     const { html } = compile([button('Book a call')]);
     expect(html).toMatch(/<!--\[if mso\]>[\s\S]*<v:roundrect[\s\S]*<!\[endif\]-->/);
-    expect(html).toMatch(/<!--\[if !mso\]><!-- -->[\s\S]*<a [^>]*>Book a call<\/a>[\s\S]*<!--<!\[endif\]-->/);
+    expect(html).toMatch(
+      /<!--\[if !mso\]><!-- -->[\s\S]*<a [^>]*>Book a call<\/a>[\s\S]*<!--<!\[endif\]-->/,
+    );
   });
 
   it('warns when the label cannot fit in Outlook', () => {

@@ -4,7 +4,12 @@ import { createEmptySchema } from '@/core/schema/signature';
 import type { Block } from '@/core/schema/blocks';
 import '@/core/blocks';
 
-const style = { font_family: 'Arial, sans-serif', font_size: 14, font_weight: 400 as const, color: '#111827' };
+const style = {
+  font_family: 'Arial, sans-serif',
+  font_size: 14,
+  font_weight: 400 as const,
+  color: '#111827',
+};
 
 function compileBlocks(blocks: Block[], linkColor = '#0d9488'): string {
   const schema = createEmptySchema();
@@ -21,7 +26,12 @@ describe('text output', () => {
 
   it('applies the canvas link colour to text links', () => {
     const html = compileBlocks([
-      { id: 't', type: 'text', content: 'Visit <a href="https://acme.example">our site</a>', style },
+      {
+        id: 't',
+        type: 'text',
+        content: 'Visit <a href="https://acme.example">our site</a>',
+        style,
+      },
     ]);
     expect(html).toContain(
       '<a href="https://acme.example" style="color:#0d9488;text-decoration:underline">our site</a>',
@@ -50,7 +60,12 @@ describe('text output', () => {
 
   it('strips XSS from text content at compile time', () => {
     const html = compileBlocks([
-      { id: 't', type: 'text', content: '<section><img src=x onerror=alert(1)></section>ok', style },
+      {
+        id: 't',
+        type: 'text',
+        content: '<section><img src=x onerror=alert(1)></section>ok',
+        style,
+      },
     ]);
     expect(html).not.toContain('onerror');
     expect(html).not.toContain('<img');

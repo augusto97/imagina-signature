@@ -35,7 +35,8 @@ import {
 const TAG_RE = /<([a-zA-Z][\w:-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
 const ATTR_RE = /([^\s"'<>/=]+)(\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
 
-const LOCAL_HOST = /^(?:localhost|127(?:\.\d{1,3}){3}|0\.0\.0\.0|\[?::1\]?|10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2})$|\.(?:local|localhost|test|internal|lan)$/;
+const LOCAL_HOST =
+  /^(?:localhost|127(?:\.\d{1,3}){3}|0\.0\.0\.0|\[?::1\]?|10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2})$|\.(?:local|localhost|test|internal|lan)$/;
 const PLACEHOLDER_HOSTS = [
   'placehold.co',
   'placehold.it',
@@ -146,7 +147,11 @@ function checkHref(value: string, block: BlockRef | null, sink: IssueSink): stri
         report(
           sink,
           'warning',
-          __('%s: the link "%s" is incomplete (no address after the protocol).', label, truncate(value)),
+          __(
+            '%s: the link "%s" is incomplete (no address after the protocol).',
+            label,
+            truncate(value),
+          ),
           block,
           'incomplete-link',
         );
@@ -191,7 +196,10 @@ function checkImageSrc(value: string, block: BlockRef | null, sink: IssueSink): 
     report(
       sink,
       'warning',
-      __('%s block loads its image over http://. Many clients block or warn about insecure images — use https://.', label),
+      __(
+        '%s block loads its image over http://. Many clients block or warn about insecure images — use https://.',
+        label,
+      ),
       block,
       'insecure-image',
     );
@@ -201,7 +209,11 @@ function checkImageSrc(value: string, block: BlockRef | null, sink: IssueSink): 
     report(
       sink,
       'warning',
-      __('%s block loads its image from %s, which recipients cannot reach. Upload it to a public site.', label, host),
+      __(
+        '%s block loads its image from %s, which recipients cannot reach. Upload it to a public site.',
+        label,
+        host,
+      ),
       block,
       'local-image',
     );
@@ -209,7 +221,11 @@ function checkImageSrc(value: string, block: BlockRef | null, sink: IssueSink): 
     report(
       sink,
       'warning',
-      __('%s block still uses a placeholder image (%s). Replace it with your own picture.', label, host),
+      __(
+        '%s block still uses a placeholder image (%s). Replace it with your own picture.',
+        label,
+        host,
+      ),
       block,
       'placeholder-image',
     );
@@ -223,7 +239,10 @@ function reportUnsafe(sink: IssueSink, block: BlockRef | null, value: string, ki
     report(
       sink,
       'error',
-      __('%s block contains an embedded (data:) file. Gmail and Outlook.com do not show embedded images, and one photo can exceed Gmail\'s 10,000-character limit — it was removed. Upload it instead.', label),
+      __(
+        "%s block contains an embedded (data:) file. Gmail and Outlook.com do not show embedded images, and one photo can exceed Gmail's 10,000-character limit — it was removed. Upload it instead.",
+        label,
+      ),
       block,
       'data-uri',
     );
@@ -236,8 +255,15 @@ function reportUnsafe(sink: IssueSink, block: BlockRef | null, value: string, ki
     scheme === 'javascript' || scheme === 'vbscript'
       ? __('%s block contains a script URL; it was disabled.', label)
       : scheme === 'blob'
-        ? __('%s block points to a temporary blob: URL that only exists in your browser; it was removed.', label)
-        : __('%s block uses an unsupported URL ("%s"). Only https://, http://, mailto: and tel: work in email.', label, truncate(value)),
+        ? __(
+            '%s block points to a temporary blob: URL that only exists in your browser; it was removed.',
+            label,
+          )
+        : __(
+            '%s block uses an unsupported URL ("%s"). Only https://, http://, mailto: and tel: work in email.',
+            label,
+            truncate(value),
+          ),
     block,
     'unsafe-url',
   );
@@ -281,8 +307,13 @@ const NAMED_ENTITIES: Record<string, string> = {
 export function decodeEntities(value: string): string {
   return value.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);?/gi, (whole, ref: string) => {
     if (ref[0] === '#') {
-      const code = ref[1] === 'x' || ref[1] === 'X' ? Number.parseInt(ref.slice(2), 16) : Number.parseInt(ref.slice(1), 10);
-      return Number.isFinite(code) && code >= 0 && code <= 0x10ffff ? String.fromCodePoint(code) : '';
+      const code =
+        ref[1] === 'x' || ref[1] === 'X'
+          ? Number.parseInt(ref.slice(2), 16)
+          : Number.parseInt(ref.slice(1), 10);
+      return Number.isFinite(code) && code >= 0 && code <= 0x10ffff
+        ? String.fromCodePoint(code)
+        : '';
     }
     const named = NAMED_ENTITIES[ref.toLowerCase()];
     return named ?? whole;

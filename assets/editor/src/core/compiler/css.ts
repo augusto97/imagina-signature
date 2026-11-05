@@ -61,7 +61,8 @@ const GENERIC_FAMILIES = new Set([
 const FAMILY_NAME = /^[\p{L}\p{N} _.-]+$/u;
 
 /** Values that must never reach a style attribute, whatever else they contain. */
-const FORBIDDEN_CSS = /expression\s*\(|url\s*\(|javascript\s*:|vbscript\s*:|@import|behavior\s*:|-moz-binding/i;
+const FORBIDDEN_CSS =
+  /expression\s*\(|url\s*\(|javascript\s*:|vbscript\s*:|@import|behavior\s*:|-moz-binding/i;
 
 /**
  * Sanitises a single CSS value so it can sit inside a double-quoted
@@ -140,7 +141,12 @@ export function fontStack(value: unknown, fallback = 'Arial, sans-serif'): strin
   if (typeof value !== 'string') return fallback;
   const families = value
     .split(',')
-    .map((part) => part.trim().replace(/^['"]+|['"]+$/g, '').trim())
+    .map((part) =>
+      part
+        .trim()
+        .replace(/^['"]+|['"]+$/g, '')
+        .trim(),
+    )
     .filter((name) => name.length > 0 && FAMILY_NAME.test(name))
     .map((name) => {
       if (GENERIC_FAMILIES.has(name.toLowerCase())) return name.toLowerCase();
@@ -215,13 +221,17 @@ export function fontWeight(value: unknown, fallback: number | string = 400): str
 
 /** Validated `text-align` value (defaults to left). */
 export function textAlign(value: unknown, fallback = 'left'): string {
-  const v = String(value ?? '').trim().toLowerCase();
+  const v = String(value ?? '')
+    .trim()
+    .toLowerCase();
   return v === 'left' || v === 'center' || v === 'right' || v === 'justify' ? v : fallback;
 }
 
 /** Validated border style keyword. */
 export function borderStyle(value: unknown, fallback = 'solid'): string {
-  const v = String(value ?? '').trim().toLowerCase();
+  const v = String(value ?? '')
+    .trim()
+    .toLowerCase();
   return v === 'solid' || v === 'dashed' || v === 'dotted' || v === 'double' ? v : fallback;
 }
 
