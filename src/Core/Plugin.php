@@ -135,6 +135,9 @@ final class Plugin {
 		// REST API: register every controller's routes on rest_api_init.
 		$this->boot_rest();
 
+		// WP-Cron handlers (daily rate-limit purge).
+		Cron::boot();
+
 		// Public-facing route — runs on EVERY request, admin or not.
 		// The router self-gates on its own settings; when the feature
 		// is disabled (or the URL doesn't match its rewrite) it's a

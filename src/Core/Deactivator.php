@@ -38,16 +38,8 @@ final class Deactivator {
 	 * @return void
 	 */
 	public static function deactivate(): void {
-		// Drop any plugin-scheduled events. Listed explicitly so we don't
-		// have to scan the cron table; future events are added to this list
-		// when their schedulers are introduced.
-		$scheduled_hooks = [
-			// (none yet — placeholder for future cron jobs).
-		];
-
-		foreach ( $scheduled_hooks as $hook ) {
-			wp_clear_scheduled_hook( $hook );
-		}
+		// Drop every plugin-scheduled event.
+		Cron::unschedule();
 
 		// `flush_rewrite_rules()` was removed in 1.0.26 — REST routes
 		// don't use rewrite rules, so the call was dead weight.

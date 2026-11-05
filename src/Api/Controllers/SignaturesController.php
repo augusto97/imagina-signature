@@ -36,17 +36,29 @@ defined( 'ABSPATH' ) || exit;
  * exists and is owned by the current user. Service-layer exceptions
  * are translated to `WP_Error` via {@see exception_to_wp_error()}.
  *
- * Rate limit: creates are throttled at 30/hour (CLAUDE.md §29 SIEMPRE
- * + §7.3 default).
+ * Rate limits (fixed windows, per user, filterable through
+ * `imgsig/rate_limit/max`): create 30/hour, duplicate 30/hour,
+ * update 240/hour, test-send 6/hour per user + 100/hour site-wide.
  *
  * @since 1.0.0
  */
 final class SignaturesController extends BaseController {
 
 	/**
-	 * Rate-limit action name used for throttling create operations.
+	 * Rate-limit action names.
 	 */
-	private const RL_ACTION_CREATE = 'signatures_create';
+	private const RL_ACTION_CREATE    = 'signatures_create';
+	private const RL_ACTION_UPDATE    = 'signatures_update';
+	private const RL_ACTION_DUPLICATE = 'signatures_duplicate';
+	private const RL_ACTION_TEST_SEND = 'signatures_test_send';
+
+	/**
+	 * Per-user hourly limits.
+	 */
+	private const RL_MAX_CREATE    = 30;
+	private const RL_MAX_UPDATE    = 240;
+	private const RL_MAX_DUPLICATE = 30;
+	private const RL_MAX_TEST_SEND = 6;
 
 	/**
 	 * Window over which create rate is measured (seconds).
@@ -230,7 +242,7 @@ final class SignaturesController extends BaseController {
 		$user_id = get_current_user_id();
 
 		try {
-			$this->rate_limiter->check( self::RL_ACTION_CREATE, $user_id, 30, self::RL_WINDOW_SECONDS );
+			$this->rate_limiter->check( self::RL_ACTION_CREATE, $user_id, self::RL_MAX_CREATE, self::RL_WINDOW_SECONDS );
 			$signature = $this->service->create( $user_id, $this->read_payload( $request ) );
 		} catch ( ImaginaSignaturesException $e ) {
 			return $this->exception_to_wp_error( $e );
@@ -304,6 +316,7 @@ final class SignaturesController extends BaseController {
 	 */
 	public function update( \WP_REST_Request $request ) {
 		try {
+			$this->rate_limiter->check( self::RL_ACTION_UPDATE, get_current_user_id(), self::RL_MAX_UPDATE, self::RL_WINDOW_SECONDS );
 			$signature = $this->service->update(
 				(int) $request['id'],
 				get_current_user_id(),
@@ -354,6 +367,7 @@ final class SignaturesController extends BaseController {
 	 */
 	public function duplicate( \WP_REST_Request $request ) {
 		try {
+			$this->rate_limiter->check( self::RL_ACTION_DUPLICATE, get_current_user_id(), self::RL_MAX_DUPLICATE, self::RL_WINDOW_SECONDS );
 			$copy = $this->service->duplicate( (int) $request['id'], get_current_user_id() );
 		} catch ( ImaginaSignaturesException $e ) {
 			return $this->exception_to_wp_error( $e );
@@ -396,7 +410,7 @@ final class SignaturesController extends BaseController {
 		}
 
 		try {
-			$this->rate_limiter->check( 'signatures_test_send', $user_id, 6, HOUR_IN_SECONDS );
+			$this->rate_limiter->check( self::RL_ACTION_TEST_SEND, $user_id, self::RL_MAX_TEST_SEND, self::RL_WINDOW_SECONDS );
 		} catch ( ImaginaSignaturesException $e ) {
 			return $this->exception_to_wp_error( $e );
 		}

@@ -57,5 +57,43 @@ final class RestRouter {
 				}
 			}
 		);
+
+		add_filter( 'rest_post_dispatch', [ self::class, 'add_retry_after_header' ], 10, 3 );
+	}
+
+	/**
+	 * Adds a `Retry-After` header to our 429 responses.
+	 *
+	 * Controllers return `WP_Error( 'imgsig_rate_limited', …, [ 'status' =>
+	 * 429, 'retry_after' => N ] )`; WordPress converts that into a
+	 * response body but has no notion of headers on errors, so the
+	 * header is stamped here, after dispatch.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param mixed            $result  Dispatch result (normally a WP_REST_Response).
+	 * @param mixed            $server  REST server (unused).
+	 * @param \WP_REST_Request $request Request (unused).
+	 *
+	 * @return mixed
+	 */
+	public static function add_retry_after_header( $result, $server = null, $request = null ) {
+		unset( $server, $request );
+
+		if ( ! $result instanceof \WP_REST_Response || 429 !== $result->get_status() ) {
+			return $result;
+		}
+
+		$data = $result->get_data();
+		if ( ! is_array( $data ) || 'imgsig_rate_limited' !== ( $data['code'] ?? '' ) ) {
+			return $result;
+		}
+
+		$retry_after = isset( $data['data']['retry_after'] ) ? (int) $data['data']['retry_after'] : 0;
+		if ( $retry_after > 0 ) {
+			$result->header( 'Retry-After', (string) $retry_after );
+		}
+
+		return $result;
 	}
 }

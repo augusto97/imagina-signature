@@ -44,6 +44,7 @@ final class Uninstaller {
 		'imgsig_signatures',
 		'imgsig_templates',
 		'imgsig_assets',
+		'imgsig_rate_limits',
 	];
 
 	/**
