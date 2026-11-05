@@ -236,6 +236,48 @@ async function waitSaved(page) {
   check('subscriber editor loads on the public route', true);
   await sp.screenshot({ path: path.join(OUT, 'subscriber-editor.png') });
 
+  // ---------- Fase 2: profile, groups, install link, Outlook, Gmail ----------
+  const profile = await rest(page, 'PATCH', '/me/profile', { values: { job_title: 'CTO E2E' } });
+  check('admin saves their own profile', profile.status === 200, `status=${profile.status}`);
+  const group = await rest(page, 'POST', '/admin/groups', { name: 'Ventas E2E', color: '#0d9488' });
+  const groupId = group.json && (group.json.id || group.json.term_id);
+  check('admin creates a group', (group.status === 200 || group.status === 201) && !!groupId, `status=${group.status}`);
+  const groups = await rest(page, 'GET', '/admin/groups');
+  check('the group is listed', JSON.stringify(groups.json || '').includes('Ventas E2E'));
+
+  const link = await rest(page, 'GET', '/me/install-link');
+  const installUrl = link.json && link.json.url;
+  check('install link is issued', link.status === 200 && /\/install\/[0-9a-f]{64}|imgsig_install=[0-9a-f]{64}/.test(installUrl || ''), `url=${installUrl}`);
+  const anon = await browser.newContext();
+  const ip = await anon.newPage();
+  const installResp = await ip.goto(installUrl);
+  const installHtml = await ip.content();
+  check(
+    'install page opens without login and shows the signature',
+    installResp.status() === 200 && /srcdoc=/.test(installHtml) && !/being prepared/i.test(installHtml),
+    `status=${installResp.status()}`,
+  );
+  const badToken = await ip.goto(installUrl.replace(/[0-9a-f]{64}/, '0'.repeat(64)));
+  check('an unknown install token is a 404', badToken.status() === 404, `status=${badToken.status()}`);
+  await anon.close();
+
+  const outlook = await rest(page, 'PATCH', '/admin/outlook', { enabled: true });
+  const manifestUrl = outlook.json && outlook.json.manifest_url;
+  const manifest = manifestUrl ? await page.request.get(manifestUrl) : null;
+  check(
+    'Outlook add-in manifest is served when enabled',
+    !!manifest && manifest.status() === 200 && /<OfficeApp/.test(await manifest.text()),
+    `status=${outlook.status} manifest=${manifest && manifest.status()}`,
+  );
+  const gmail = await rest(page, 'GET', '/admin/deploy/gmail/settings');
+  check('Gmail settings answer (not configured yet)', gmail.status === 200, `status=${gmail.status}`);
+
+  const subGroups = await rest(sp, 'GET', '/admin/groups');
+  const subUsers = await rest(sp, 'GET', '/admin/users');
+  check('subscriber cannot read team data', subGroups.status === 403 && subUsers.status === 403, `groups=${subGroups.status} users=${subUsers.status}`);
+  const subProfile = await rest(sp, 'GET', '/me/profile');
+  check('subscriber reads their own profile', subProfile.status === 200, `status=${subProfile.status}`);
+
   // ---------- Console / server problems ----------
   const problems = [...admin.problems, ...sub.problems];
   check('no page errors, console errors or 5xx responses', problems.length === 0, problems.slice(0, 5).join(' | '));
