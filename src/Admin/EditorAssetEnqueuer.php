@@ -156,6 +156,9 @@ final class EditorAssetEnqueuer {
 			'userId'           => $user_id,
 			'apiBase'          => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),
 			'restNonce'        => wp_create_nonce( 'wp_rest' ),
+			// For refreshing an expired REST nonce via core's
+			// `admin-ajax.php?action=rest-nonce`.
+			'ajaxUrl'          => esc_url_raw( admin_url( 'admin-ajax.php' ) ),
 			'locale'           => get_user_locale( $user_id ),
 			'pluginUrl'        => esc_url_raw( plugins_url( '', IMGSIG_FILE ) ),
 			'signaturesUrl'    => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures' ) ),

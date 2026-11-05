@@ -18,6 +18,7 @@ use ImaginaSignatures\Api\Controllers\StorageController;
 use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\Middleware\RateLimiter;
+use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\AssetRepository;
 use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Repositories\TemplateRepository;
@@ -25,6 +26,7 @@ use ImaginaSignatures\Security\Encryption;
 use ImaginaSignatures\Security\RateLimitStore;
 use ImaginaSignatures\Services\HtmlSanitizer;
 use ImaginaSignatures\Services\JsonSchemaValidator;
+use ImaginaSignatures\Services\SchemaSanitizer;
 use ImaginaSignatures\Services\SignatureService;
 use ImaginaSignatures\Services\TemplateService;
 use ImaginaSignatures\Storage\StorageManager;
@@ -80,6 +82,12 @@ final class ServiceProvider {
 				return new HtmlSanitizer();
 			}
 		);
+		$container->singleton(
+			SchemaSanitizer::class,
+			static function ( Container $c ): SchemaSanitizer {
+				return new SchemaSanitizer( $c->make( HtmlSanitizer::class ) );
+			}
+		);
 
 		// Rate-limit primitives.
 		$container->singleton(
@@ -125,7 +133,8 @@ final class ServiceProvider {
 			static function ( Container $c ): SignatureService {
 				return new SignatureService(
 					$c->make( SignatureRepository::class ),
-					$c->make( JsonSchemaValidator::class )
+					$c->make( JsonSchemaValidator::class ),
+					$c->make( SchemaSanitizer::class )
 				);
 			}
 		);
@@ -134,7 +143,8 @@ final class ServiceProvider {
 			static function ( Container $c ): TemplateService {
 				return new TemplateService(
 					$c->make( TemplateRepository::class ),
-					$c->make( JsonSchemaValidator::class )
+					$c->make( JsonSchemaValidator::class ),
+					$c->make( SchemaSanitizer::class )
 				);
 			}
 		);
@@ -152,7 +162,8 @@ final class ServiceProvider {
 				return new SignaturesController(
 					$c->make( SignatureService::class ),
 					$c->make( SignatureRepository::class ),
-					$c->make( RateLimiter::class )
+					$c->make( RateLimiter::class ),
+					$c->make( HtmlSanitizer::class )
 				);
 			}
 		);
@@ -202,6 +213,18 @@ final class ServiceProvider {
 			FrontendAccessController::class,
 			static function (): FrontendAccessController {
 				return new FrontendAccessController();
+			}
+		);
+
+		// Privacy tools + user lifecycle.
+		$container->singleton(
+			UserDataManager::class,
+			static function ( Container $c ): UserDataManager {
+				return new UserDataManager(
+					$c->make( SignatureRepository::class ),
+					$c->make( AssetRepository::class ),
+					$c->make( StorageManager::class )
+				);
 			}
 		);
 	}

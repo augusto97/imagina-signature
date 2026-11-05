@@ -40,9 +40,11 @@ defined( 'ABSPATH' ) || exit;
  *      surfaces a partial or null shape (returns an empty array on any
  *      failure so callers don't have to handle three states).
  *
+ * Not declared `final` so PHPUnit 9 can produce mock doubles.
+ *
  * @since 1.0.0
  */
-final class StorageManager {
+class StorageManager {
 
 	/**
 	 * Option key for the active driver ID.
@@ -53,6 +55,14 @@ final class StorageManager {
 	 * Option key for the encrypted driver configuration blob.
 	 */
 	public const OPTION_CONFIG = 'imgsig_storage_config';
+
+	/**
+	 * Option set (to the failure timestamp) while the stored config blob
+	 * can't be decrypted — drives the admin notice in
+	 * {@see \ImaginaSignatures\Admin\Notices}. Cleared on the next
+	 * successful decrypt or save.
+	 */
+	public const OPTION_DECRYPT_ERROR = 'imgsig_storage_decrypt_error';
 
 	/**
 	 * Encryption service used for round-tripping the config blob.
@@ -213,7 +223,19 @@ final class StorageManager {
 		try {
 			$plaintext = $this->encryption->decrypt( $encoded );
 		} catch ( \Throwable $e ) {
+			// Usually means the WordPress salts (or IMGSIG_ENCRYPTION_KEY)
+			// changed since the credentials were saved. Don't fail
+			// silently: flag it for the admin notice and the log.
+			if ( false === get_option( self::OPTION_DECRYPT_ERROR, false ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[imagina-signatures] stored storage credentials could not be decrypted: ' . $e->getMessage() );
+				update_option( self::OPTION_DECRYPT_ERROR, time(), true );
+			}
 			return [];
+		}
+
+		if ( false !== get_option( self::OPTION_DECRYPT_ERROR, false ) ) {
+			delete_option( self::OPTION_DECRYPT_ERROR );
 		}
 
 		if ( '' === $plaintext ) {
@@ -263,6 +285,7 @@ final class StorageManager {
 		// permanent options cache for every request.
 		update_option( self::OPTION_CONFIG, $encoded, false );
 		update_option( self::OPTION_DRIVER, $driver_id );
+		delete_option( self::OPTION_DECRYPT_ERROR );
 
 		// Invalidate the cached driver so the next call rebuilds.
 		$this->cached_driver    = null;
@@ -279,6 +302,29 @@ final class StorageManager {
 			 */
 			do_action( Actions::STORAGE_DRIVER_CHANGED, $previous_id, $driver_id );
 		}
+	}
+
+	/**
+	 * Origin the browser uploads to directly (presigned PUT), or '' when
+	 * the active driver uploads through PHP. Never throws.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return string
+	 */
+	public function presigned_upload_origin(): string {
+		if ( S3Driver::ID !== $this->active_driver_id() ) {
+			return '';
+		}
+
+		try {
+			$driver = $this->active_driver();
+		} catch ( \Throwable $e ) {
+			unset( $e );
+			return '';
+		}
+
+		return $driver instanceof S3Driver ? $driver->endpoint_origin() : '';
 	}
 
 	/**

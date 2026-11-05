@@ -74,6 +74,9 @@ final class Installer {
 		// Seed shipped templates (idempotent — skips slugs that already exist).
 		( new DefaultTemplatesSeeder( new TemplateRepository( $wpdb ) ) )->seed();
 
+		// Daily maintenance (rate-limit purge). No-op when scheduled.
+		Cron::schedule();
+
 		// Always overwrite — we want the option to reflect the version that
 		// last ran the installer, not the version that first did.
 		update_option( 'imgsig_version', IMGSIG_VERSION );

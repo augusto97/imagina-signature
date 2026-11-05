@@ -140,4 +140,59 @@ final class EncryptionTest extends TestCase {
 			( new Encryption() )->rotate( '', self::SECRET_A, self::SECRET_B )
 		);
 	}
+
+	public function test_dedicated_key_encrypts_and_still_reads_legacy_blobs(): void {
+		$legacy_blob = ( new Encryption() )->encrypt( 'legacy' );
+
+		$dedicated = new Encryption( 'dedicated-key-material-0123456789abcdef' );
+		$this->assertTrue( $dedicated->uses_dedicated_key() );
+
+		// Old AUTH_KEY-derived blobs remain readable after adding the constant…
+		$this->assertSame( 'legacy', $dedicated->decrypt( $legacy_blob ) );
+
+		// …new blobs are under the dedicated key (legacy-only can't read them).
+		$new_blob = $dedicated->encrypt( 'fresh' );
+		$this->assertSame( 'fresh', $dedicated->decrypt( $new_blob ) );
+		$this->expectException( EncryptionException::class );
+		( new Encryption() )->decrypt( $new_blob );
+	}
+
+	public function test_dedicated_key_blobs_survive_wordpress_salt_rotation(): void {
+		$dedicated = new Encryption( 'dedicated-key-material-0123456789abcdef' );
+		$blob      = $dedicated->encrypt( 's3-credentials' );
+
+		Functions\when( 'wp_salt' )->justReturn( 'rotated-salt' );
+
+		$this->assertSame( 's3-credentials', ( new Encryption( 'dedicated-key-material-0123456789abcdef' ) )->decrypt( $blob ) );
+	}
+
+	public function test_salt_rotation_breaks_legacy_blobs_and_storage_manager_flags_it(): void {
+		$blob = ( new Encryption() )->encrypt( '{"provider":"s3"}' );
+
+		Functions\when( 'wp_salt' )->justReturn( 'rotated-salt' );
+
+		$options = [ 'imgsig_storage_config' => $blob ];
+		Functions\when( 'get_option' )->alias(
+			static function ( $name, $default = false ) use ( &$options ) {
+				return $options[ $name ] ?? $default;
+			}
+		);
+		Functions\when( 'update_option' )->alias(
+			static function ( $name, $value ) use ( &$options ): bool {
+				$options[ $name ] = $value;
+				return true;
+			}
+		);
+		Functions\when( 'delete_option' )->alias(
+			static function ( $name ) use ( &$options ): bool {
+				unset( $options[ $name ] );
+				return true;
+			}
+		);
+
+		$manager = new \ImaginaSignatures\Storage\StorageManager( new Encryption() );
+
+		$this->assertSame( [], $manager->read_active_config() );
+		$this->assertArrayHasKey( 'imgsig_storage_decrypt_error', $options );
+	}
 }

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace ImaginaSignatures\Storage\Drivers;
 
 use ImaginaSignatures\Exceptions\StorageException;
+use ImaginaSignatures\Storage\Contracts\ObjectInspectorInterface;
 use ImaginaSignatures\Storage\Contracts\StorageDriverInterface;
 use ImaginaSignatures\Storage\Dto\PresignedResult;
 use ImaginaSignatures\Storage\Dto\TestResult;
@@ -48,7 +49,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 1.0.0
  */
-final class S3Driver implements StorageDriverInterface {
+final class S3Driver implements StorageDriverInterface, ObjectInspectorInterface {
 
 	/**
 	 * Driver identifier persisted on `imgsig_assets.storage_driver`.
@@ -196,6 +197,30 @@ final class S3Driver implements StorageDriverInterface {
 		$config['region'] = $region;
 
 		return new self( $config, $signer, $client, $presigner );
+	}
+
+	/**
+	 * Origin (`scheme://host[:port]`) browsers PUT presigned uploads to.
+	 *
+	 * Used to scope the public route's CSP `connect-src`.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return string Empty when the endpoint can't be parsed.
+	 */
+	public function endpoint_origin(): string {
+		$parts = wp_parse_url( $this->endpoint );
+		if ( ! is_array( $parts ) || empty( $parts['host'] ) ) {
+			return '';
+		}
+
+		$scheme = isset( $parts['scheme'] ) ? strtolower( (string) $parts['scheme'] ) : 'https';
+		$origin = $scheme . '://' . strtolower( (string) $parts['host'] );
+		if ( isset( $parts['port'] ) ) {
+			$origin .= ':' . (int) $parts['port'];
+		}
+
+		return $origin;
 	}
 
 	/**
@@ -460,5 +485,70 @@ final class S3Driver implements StorageDriverInterface {
 		// isn't actually there. Combined with `redirection => 0` in
 		// `S3Client::execute` (no follow), 3xx is meaningless here.
 		return 200 === $code || 204 === $code;
+	}
+
+	/**
+	 * @inheritDoc
+	 *
+	 * HEADs the object and reports the provider's stored Content-Type
+	 * (parameters stripped, lower-cased) and Content-Length (-1 when
+	 * the provider omits it).
+	 *
+	 * @param string $key Object key.
+	 *
+	 * @return array{content_type: string, content_length: int}|null
+	 */
+	public function describe_object( string $key ): ?array {
+		if ( '' === $key || ! $this->is_configured() ) {
+			return null;
+		}
+
+		try {
+			$response = $this->client->head_object( $key );
+		} catch ( StorageException $e ) {
+			unset( $e );
+			return null;
+		}
+
+		if ( 200 !== (int) $response['code'] ) {
+			return null;
+		}
+
+		$raw_type = (string) ( $response['headers']['content-type'] ?? '' );
+		$type     = strtolower( trim( explode( ';', $raw_type, 2 )[0] ) );
+		$length   = isset( $response['headers']['content-length'] ) ? (int) $response['headers']['content-length'] : -1;
+
+		return [
+			'content_type'   => $type,
+			'content_length' => $length,
+		];
+	}
+
+	/**
+	 * @inheritDoc
+	 *
+	 * @param string $key   Object key.
+	 * @param int    $bytes Bytes to read from the start.
+	 *
+	 * @return string|null
+	 */
+	public function read_object_prefix( string $key, int $bytes ): ?string {
+		if ( '' === $key || $bytes <= 0 || ! $this->is_configured() ) {
+			return null;
+		}
+
+		try {
+			$response = $this->client->get_object_range( $key, $bytes );
+		} catch ( StorageException $e ) {
+			unset( $e );
+			return null;
+		}
+
+		$code = (int) $response['code'];
+		if ( 200 !== $code && 206 !== $code ) {
+			return null;
+		}
+
+		return substr( (string) $response['body'], 0, $bytes );
 	}
 }

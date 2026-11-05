@@ -355,4 +355,27 @@ final class SigV4SignerTest extends TestCase {
 		$this->expectException( StorageException::class );
 		$signer->sign_request( 'GET', '/relative-no-host', [], '', self::TEST_TIMESTAMP );
 	}
+
+	/**
+	 * Presigned upload URLs sign Content-Type, so a URL minted for one
+	 * type produces a different signature than any other type (the
+	 * provider rejects a PUT whose header doesn't match).
+	 */
+	public function test_presign_url_can_sign_content_type(): void {
+		$signer = new SigV4Signer( self::TEST_ACCESS_KEY, self::TEST_SECRET_KEY, 'us-east-1' );
+
+		$png = $signer->presign_url( 'PUT', 'https://s3.example.com/b/u/k.png', 300, [], self::TEST_TIMESTAMP, [ 'Content-Type' => 'image/png' ] );
+		$htm = $signer->presign_url( 'PUT', 'https://s3.example.com/b/u/k.png', 300, [], self::TEST_TIMESTAMP, [ 'Content-Type' => 'text/html' ] );
+		$any = $signer->presign_url( 'PUT', 'https://s3.example.com/b/u/k.png', 300, [], self::TEST_TIMESTAMP );
+
+		$this->assertStringContainsString( 'X-Amz-SignedHeaders=content-type%3Bhost', $png );
+		$this->assertStringContainsString( 'X-Amz-SignedHeaders=host', $any );
+
+		$sig = static function ( string $url ): string {
+			parse_str( (string) parse_url( $url, PHP_URL_QUERY ), $q );
+			return (string) $q['X-Amz-Signature'];
+		};
+		$this->assertNotSame( $sig( $png ), $sig( $htm ) );
+		$this->assertNotSame( $sig( $png ), $sig( $any ) );
+	}
 }

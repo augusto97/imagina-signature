@@ -168,4 +168,175 @@ final class JsonSchemaValidatorTest extends TestCase {
 			$this->assertGreaterThanOrEqual( 4, count( $e->get_errors() ) );
 		}
 	}
+
+	/**
+	 * Builds a chain of containers `$levels` deep (the innermost holds a
+	 * text block, so total depth is `$levels + 1`).
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function nested_container( int $levels ): array {
+		$block = [
+			'id'   => 'leaf',
+			'type' => 'text',
+		];
+		for ( $i = $levels; $i >= 1; $i-- ) {
+			$block = [
+				'id'       => 'c' . $i,
+				'type'     => 'container',
+				'children' => [ $block ],
+			];
+		}
+		return $block;
+	}
+
+	/**
+	 * @return array<int, string>
+	 */
+	private function error_paths( ValidationException $e ): array {
+		return array_column( $e->get_errors(), 'path' );
+	}
+
+	public function test_validates_nested_children_and_right_children(): void {
+		$validator         = new JsonSchemaValidator();
+		$payload           = $this->valid_payload();
+		$payload['blocks'] = [
+			[
+				'id'             => 'row',
+				'type'           => 'container',
+				'children'       => [
+					[ 'type' => 'text' ],
+				],
+				'right_children' => [
+					[
+						'id'   => 'r1',
+						'type' => 'system_command',
+					],
+					'not-a-block',
+				],
+			],
+		];
+
+		try {
+			$validator->validate( $payload );
+			$this->fail( 'Expected ValidationException.' );
+		} catch ( ValidationException $e ) {
+			$paths = $this->error_paths( $e );
+			$this->assertContains( 'blocks[0].children[0].id', $paths );
+			$this->assertContains( 'blocks[0].right_children[0].type', $paths );
+			$this->assertContains( 'blocks[0].right_children[1]', $paths );
+		}
+	}
+
+	public function test_rejects_non_array_children(): void {
+		$validator         = new JsonSchemaValidator();
+		$payload           = $this->valid_payload();
+		$payload['blocks'] = [
+			[
+				'id'       => 'row',
+				'type'     => 'container',
+				'children' => 'nope',
+			],
+		];
+
+		$this->expectException( ValidationException::class );
+		$validator->validate( $payload );
+	}
+
+	public function test_accepts_depth_four(): void {
+		$validator         = new JsonSchemaValidator();
+		$payload           = $this->valid_payload();
+		$payload['blocks'] = [ $this->nested_container( 3 ) ]; // 3 containers + leaf = depth 4.
+
+		$validator->validate( $payload );
+		$this->addToAssertionCount( 1 );
+	}
+
+	public function test_rejects_depth_five_with_clear_message(): void {
+		$validator         = new JsonSchemaValidator();
+		$payload           = $this->valid_payload();
+		$payload['blocks'] = [ $this->nested_container( 4 ) ]; // depth 5.
+
+		try {
+			$validator->validate( $payload );
+			$this->fail( 'Expected ValidationException.' );
+		} catch ( ValidationException $e ) {
+			$this->assertStringContainsString( 'nested too deeply', $e->getMessage() );
+			$this->assertContains( 'blocks[0].children[0].children[0].children[0].children[0]', $this->error_paths( $e ) );
+		}
+	}
+
+	public function test_rejects_more_than_two_hundred_blocks_counted_recursively(): void {
+		$validator = new JsonSchemaValidator();
+		$payload   = $this->valid_payload();
+		$children  = [];
+		for ( $i = 0; $i < 150; $i++ ) {
+			$children[] = [
+				'id'   => 'c' . $i,
+				'type' => 'spacer',
+			];
+		}
+		$top = [];
+		for ( $i = 0; $i < 50; $i++ ) {
+			$top[] = [
+				'id'   => 't' . $i,
+				'type' => 'divider',
+			];
+		}
+		$top[]             = [
+			'id'       => 'row',
+			'type'     => 'container',
+			'children' => $children,
+		];
+		$payload['blocks'] = $top; // 50 + 1 + 150 = 201.
+
+		try {
+			$validator->validate( $payload );
+			$this->fail( 'Expected ValidationException.' );
+		} catch ( ValidationException $e ) {
+			$this->assertStringContainsString( 'maximum is 200', $e->getMessage() );
+			$this->assertContains( 'blocks', $this->error_paths( $e ) );
+		}
+	}
+
+	public function test_rejects_payload_over_256_kb(): void {
+		$validator         = new JsonSchemaValidator();
+		$payload           = $this->valid_payload();
+		$payload['blocks'] = [
+			[
+				'id'      => 'big',
+				'type'    => 'text',
+				'content' => str_repeat( 'a', 262145 ),
+			],
+		];
+
+		try {
+			$validator->validate( $payload );
+			$this->fail( 'Expected ValidationException.' );
+		} catch ( ValidationException $e ) {
+			$this->assertStringContainsString( 'too large', $e->getMessage() );
+			$this->assertSame( [ 'json_content' ], $this->error_paths( $e ) );
+		}
+	}
+
+	public function test_limits_are_filterable(): void {
+		Functions\when( 'apply_filters' )->alias(
+			static function ( string $hook, $value ) {
+				if ( 'imgsig/schema/limits' === $hook ) {
+					$value['max_blocks'] = 2;
+				}
+				return $value;
+			}
+		);
+
+		$validator = new JsonSchemaValidator();
+		$payload   = $this->valid_payload();
+		$payload['blocks'][] = [
+			'id'   => 'b3',
+			'type' => 'spacer',
+		];
+
+		$this->expectException( ValidationException::class );
+		$validator->validate( $payload );
+	}
 }

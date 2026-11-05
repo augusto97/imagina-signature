@@ -45,6 +45,12 @@ final class SiteSettingsController extends BaseController {
 	public const OPT_COMPLIANCE_FOOTER = 'imgsig_compliance_footer';
 	public const OPT_BANNER_CAMPAIGNS  = 'imgsig_banner_campaigns';
 
+	/**
+	 * When true, deleting the plugin also drops its tables, options and
+	 * stored files. Default false (data survives a delete/reinstall).
+	 */
+	public const OPT_DELETE_DATA_ON_UNINSTALL = 'imgsig_delete_data_on_uninstall';
+
 	public const MAX_PALETTE_SIZE   = 12;
 	public const MAX_CAMPAIGNS      = 50;
 	public const MAX_CAMPAIGN_WIDTH = 800;
@@ -91,7 +97,16 @@ final class SiteSettingsController extends BaseController {
 	 * @return \WP_REST_Response
 	 */
 	public function show(): \WP_REST_Response {
-		return rest_ensure_response( self::current_settings() );
+		$settings = self::current_settings();
+
+		// Signature users only need what the compiler will actually
+		// render: currently-active campaigns. Disabled / scheduled /
+		// expired ones (and their internal names) stay admin-only.
+		if ( ! current_user_can( CapabilitiesInstaller::CAP_MANAGE_STORAGE ) ) {
+			$settings['banner_campaigns'] = self::active_banner_campaigns();
+		}
+
+		return rest_ensure_response( $settings );
 	}
 
 	/**
@@ -150,6 +165,15 @@ final class SiteSettingsController extends BaseController {
 			$payload['compliance_footer_sent'] = $footer;
 		}
 
+		if ( null !== $request->get_param( 'delete_data_on_uninstall' ) ) {
+			$delete_data = rest_sanitize_boolean( $request->get_param( 'delete_data_on_uninstall' ) );
+			$ok          = self::force_save_option( self::OPT_DELETE_DATA_ON_UNINSTALL, $delete_data ? 1 : 0 );
+			if ( ! $ok ) {
+				$persist_ok       = false;
+				$persist_errors[] = 'delete_data_on_uninstall';
+			}
+		}
+
 		if ( null !== $request->get_param( 'banner_campaigns' ) ) {
 			$raw       = (array) $request->get_param( 'banner_campaigns' );
 			$campaigns = self::sanitize_campaigns( $raw );
@@ -163,17 +187,20 @@ final class SiteSettingsController extends BaseController {
 
 		if ( ! $persist_ok ) {
 			global $wpdb;
+			// The raw DB error stays in the server log; the response only
+			// names which settings failed.
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( '[imagina-signatures] site settings persist failed (' . implode( ', ', $persist_errors ) . '): ' . $wpdb->last_error );
 			return new \WP_Error(
 				'imgsig_persist_failed',
 				sprintf(
 					/* translators: %s: comma-separated list of option keys that failed to save. */
-					__( 'Failed to persist site settings (%s) at the database layer.', 'imagina-signatures' ),
+					__( 'Failed to persist site settings (%s). Check the server error log.', 'imagina-signatures' ),
 					implode( ', ', $persist_errors )
 				),
 				[
-					'status'   => 500,
-					'last_db_error' => $wpdb->last_error,
-					'failed'   => $persist_errors,
+					'status' => 500,
+					'failed' => $persist_errors,
 				]
 			);
 		}
@@ -184,9 +211,17 @@ final class SiteSettingsController extends BaseController {
 		// this read sees it.
 		$current = [
 			'brand_palette'     => self::read_option_uncached( self::OPT_BRAND_PALETTE, [] ),
-			'compliance_footer' => self::read_option_uncached( self::OPT_COMPLIANCE_FOOTER, [ 'enabled' => false, 'html' => '' ] ),
+			'compliance_footer' => self::read_option_uncached(
+				self::OPT_COMPLIANCE_FOOTER,
+				[
+					'enabled' => false,
+					'html' => '',
+				]
+			),
 			'banner_campaigns'  => self::read_option_uncached( self::OPT_BANNER_CAMPAIGNS, [] ),
 		];
+
+		$current['delete_data_on_uninstall'] = (bool) (int) self::read_option_uncached( self::OPT_DELETE_DATA_ON_UNINSTALL, 0 );
 
 		// Normalise the readback through the same sanitisers we used
 		// going in. This way any difference between what we sent and
@@ -386,9 +421,11 @@ final class SiteSettingsController extends BaseController {
 	 */
 	public static function current_settings(): array {
 		return [
-			'brand_palette'     => self::current_palette(),
-			'compliance_footer' => self::current_compliance_footer(),
-			'banner_campaigns'  => self::current_banner_campaigns(),
+			'brand_palette'            => self::current_palette(),
+			'compliance_footer'        => self::current_compliance_footer(),
+			'banner_campaigns'         => self::current_banner_campaigns(),
+			// 1.0.40: opt-in data purge on plugin deletion (admin-writable).
+			'delete_data_on_uninstall' => (bool) (int) get_option( self::OPT_DELETE_DATA_ON_UNINSTALL, 0 ),
 		];
 	}
 
@@ -601,6 +638,13 @@ final class SiteSettingsController extends BaseController {
 		return $value;
 	}
 
+	/**
+	 * Generates a fresh campaign identifier.
+	 *
+	 * @since 1.0.15
+	 *
+	 * @return string
+	 */
 	private static function generate_campaign_id(): string {
 		return 'camp_' . substr( md5( uniqid( '', true ) ), 0, 12 );
 	}

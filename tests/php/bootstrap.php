@@ -22,3 +22,6 @@ require_once __DIR__ . '/wp-stubs.php';
 // The plugin's own PSR-4 autoloader.
 require_once __DIR__ . '/../../src/Core/Autoloader.php';
 \ImaginaSignatures\Core\Autoloader::register( __DIR__ . '/../../src' );
+
+// Shared test helpers (kses loader, fake $wpdb).
+require_once __DIR__ . '/helpers.php';

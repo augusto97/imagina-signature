@@ -36,6 +36,101 @@ final class Filters {
 	public const STORAGE_AVAILABLE_DRIVERS = 'imgsig/storage/available_drivers';
 
 	/**
+	 * Filters the per-user storage quota in bytes (0 = unlimited).
+	 * Checked at /upload/init, /upload/direct and /upload/finalize.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param int $bytes   Default 104857600 (100 MB).
+	 * @param int $user_id User.
+	 */
+	public const STORAGE_USER_QUOTA_BYTES = 'imgsig/storage/user_quota_bytes';
+
+	/**
+	 * Filters whether S3 endpoints may resolve to private / loopback
+	 * hosts (requests otherwise go through wp_safe_remote_request()).
+	 * Enable for self-hosted MinIO on a private network.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param bool   $allow Default false.
+	 * @param string $url   Request URL.
+	 */
+	public const STORAGE_ALLOW_PRIVATE_ENDPOINTS = 'imgsig/storage/allow_private_endpoints';
+
+	/**
+	 * Filters the maximum image upload size in bytes (vCards are fixed
+	 * at 64 KB).
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $max_size Default 5 MB.
+	 */
+	public const UPLOAD_MAX_SIZE = 'imgsig/upload/max_size';
+
+	/**
+	 * Filters the maximum width (px) of images stored by the Media
+	 * Library driver; wider uploads are downscaled.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param int $width Default 1600.
+	 */
+	public const UPLOAD_MAX_IMAGE_WIDTH = 'imgsig/upload/max_image_width';
+
+	/**
+	 * Filters how many upload calls (init / direct / finalize) a user may
+	 * make per minute.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param int $max     Default 30.
+	 * @param int $user_id User.
+	 */
+	public const UPLOAD_RATE_LIMIT_PER_MINUTE = 'imgsig/upload/rate_limit_per_minute';
+
+	/**
+	 * Filters any rate limit's maximum hits per fixed window (0 disables).
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param int    $max            Default maximum.
+	 * @param string $action         `signatures_create` | `signatures_update` | `signatures_duplicate`
+	 *                               | `signatures_test_send` | `signatures_test_send_site` | `upload`.
+	 * @param int    $user_id        User id, 0 for site-wide buckets.
+	 * @param int    $window_seconds Window length.
+	 */
+	public const RATE_LIMIT_MAX = 'imgsig/rate_limit/max';
+
+	/**
+	 * Filters the site-wide cap on test-send emails per hour.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param int $max Default 100 (0 disables the site-wide cap).
+	 */
+	public const MAIL_TEST_SEND_SITE_MAX = 'imgsig/mail/test_send_site_max';
+
+	/**
+	 * Filters the signature / template schema limits.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param array{max_bytes: int, max_depth: int, max_blocks: int} $limits Defaults 262144, 4, 200.
+	 */
+	public const SCHEMA_LIMITS = 'imgsig/schema/limits';
+
+	/**
+	 * Filters the URL protocols accepted in signature HTML and URL fields
+	 * (script-capable schemes are always refused).
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param string[] $protocols Default `http`, `https`, `mailto`, `tel`.
+	 */
+	public const SANITIZER_ALLOWED_PROTOCOLS = 'imgsig/sanitizer/allowed_protocols';
+
+	/**
 	 * Constructor is private — this class is a static registry.
 	 */
 	private function __construct() {}

@@ -11,6 +11,7 @@ namespace ImaginaSignatures\Core;
 
 use ImaginaSignatures\Admin\AdminAppPage;
 use ImaginaSignatures\Admin\AdminMenu;
+use ImaginaSignatures\Admin\Notices;
 use ImaginaSignatures\Admin\Pages\EditorPage;
 use ImaginaSignatures\Frontend\FrontendRouter;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
@@ -24,6 +25,7 @@ use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\RestRouter;
 use ImaginaSignatures\Hooks\Actions;
+use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\SignatureRepository;
 
 defined( 'ABSPATH' ) || exit;
@@ -115,25 +117,26 @@ final class Plugin {
 		// repositories, services, controllers).
 		ServiceProvider::register( $this->container );
 
-		// Upgrade hook (1.0.32). `register_activation_hook` only fires
-		// when the user clicks Activate — NOT when they overwrite the
-		// plugin via "Upload Plugin → Replace current". So bumping the
-		// plugin from one version to another in place leaves any new
-		// install steps un-executed (new shipped templates never seed,
-		// new schema migrations never run, new capabilities never
-		// register). We compare the stored `imgsig_version` option
-		// against the current `IMGSIG_VERSION` constant on every boot
-		// and re-run `Installer::install()` when they differ. Every
-		// step inside `install()` is idempotent (dbDelta diffs the
-		// schema, role->add_cap is no-op when the cap exists, the
-		// templates seeder skips slugs that already exist, options are
-		// `add_option` which doesn't overwrite). Wrapped in try/catch
-		// so a failed upgrade doesn't crash the site — it logs and
-		// lets the user continue with the previous state.
-		$this->run_upgrade_if_needed();
+		// Upgrade hook (1.0.32, reworked 1.0.40). `register_activation_hook`
+		// only fires when the user clicks Activate — NOT when they
+		// overwrite the plugin via "Upload Plugin → Replace current", and
+		// never on the subsites of a network activation. So we compare
+		// the stored `imgsig_version` against `IMGSIG_VERSION` and re-run
+		// the (idempotent) `Installer::install()` when it's behind.
+		// Only on admin requests and authenticated REST requests (never
+		// for anonymous front-end traffic), under a lock, with a one-hour
+		// back-off after a failure — see maybe_upgrade().
+		add_action( 'admin_init', [ $this, 'maybe_upgrade' ] );
+		add_action( 'rest_api_init', [ $this, 'maybe_upgrade_for_rest' ], 1 );
 
 		// REST API: register every controller's routes on rest_api_init.
 		$this->boot_rest();
+
+		// WP-Cron handlers (daily rate-limit purge).
+		Cron::boot();
+
+		// Personal-data exporter / eraser + delete_user cleanup.
+		$this->container->make( UserDataManager::class )->register();
 
 		// Public-facing route — runs on EVERY request, admin or not.
 		// The router self-gates on its own settings; when the feature
@@ -161,39 +164,86 @@ final class Plugin {
 	}
 
 	/**
-	 * Compare stored `imgsig_version` against the current constant; if
-	 * they differ, run `Installer::install()` so any new install steps
-	 * shipped with the new release land on this site even when the
-	 * upgrade was a "Upload Plugin → Replace current" flow that
-	 * doesn't trigger the activation hook.
+	 * Option used as a mutex while an upgrade install runs.
+	 */
+	private const UPGRADE_LOCK_OPTION = 'imgsig_upgrade_lock';
+
+	/**
+	 * Transient set for an hour after a failed upgrade install.
+	 */
+	private const UPGRADE_BACKOFF_TRANSIENT = 'imgsig_upgrade_backoff';
+
+	/**
+	 * A lock older than this is considered abandoned (seconds).
+	 */
+	private const UPGRADE_LOCK_TTL = 600;
+
+	/**
+	 * `rest_api_init` wrapper: only authenticated REST requests may
+	 * trigger the upgrade.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return void
+	 */
+	public function maybe_upgrade_for_rest(): void {
+		if ( is_user_logged_in() ) {
+			$this->maybe_upgrade();
+		}
+	}
+
+	/**
+	 * Runs `Installer::install()` when the stored `imgsig_version` is
+	 * behind `IMGSIG_VERSION` — including a missing version ('0.0.0'),
+	 * which is what every subsite of a network activation has, since
+	 * the activation hook only ran on the main site.
+	 *
+	 * Guarded so it can't stampede or loop:
+	 *  - a lock (`add_option`, atomic on the unique option_name) lets a
+	 *    single request run the install; a lock older than 10 minutes is
+	 *    treated as abandoned;
+	 *  - after a failure the attempt is retried at most once an hour
+	 *    (transient back-off) instead of on every request.
 	 *
 	 * @since 1.0.32
 	 *
 	 * @return void
 	 */
-	private function run_upgrade_if_needed(): void {
+	public function maybe_upgrade(): void {
 		$current_version = defined( 'IMGSIG_VERSION' ) ? (string) IMGSIG_VERSION : '0.0.0';
 		$stored_version  = (string) get_option( 'imgsig_version', '0.0.0' );
-
-		if ( '0.0.0' === $stored_version ) {
-			// Plugin has never been activated on this site. The
-			// activation hook will run when the user clicks Activate,
-			// or has just run if we're on the post-activate redirect.
-			// Either way, nothing for us to do here.
-			return;
-		}
 
 		if ( version_compare( $stored_version, $current_version, '>=' ) ) {
 			return;
 		}
 
+		if ( false !== get_transient( self::UPGRADE_BACKOFF_TRANSIENT ) ) {
+			return;
+		}
+
+		if ( ! add_option( self::UPGRADE_LOCK_OPTION, time(), '', 'no' ) ) {
+			$locked_at = (int) get_option( self::UPGRADE_LOCK_OPTION, 0 );
+			if ( $locked_at > time() - self::UPGRADE_LOCK_TTL ) {
+				return; // Another request is upgrading right now.
+			}
+			update_option( self::UPGRADE_LOCK_OPTION, time(), false );
+		}
+
 		try {
 			( new Installer() )->install();
+
+			// New / renamed public routes need their rewrite rules
+			// committed (subsites never ran the activation flush).
+			FrontendRouter::register_rewrite_rules();
+			flush_rewrite_rules( false );
 		} catch ( \Throwable $e ) {
+			set_transient( self::UPGRADE_BACKOFF_TRANSIENT, time(), HOUR_IN_SECONDS );
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log(
-				'[imagina-signatures] upgrade install (' . $stored_version . ' → ' . $current_version . ') failed: ' . $e->getMessage()
+				'[imagina-signatures] upgrade install (' . $stored_version . ' → ' . $current_version . ') failed, retrying in 1 hour: ' . $e->getMessage()
 			);
+		} finally {
+			delete_option( self::UPGRADE_LOCK_OPTION );
 		}
 	}
 
@@ -224,6 +274,8 @@ final class Plugin {
 
 		$admin_menu = new AdminMenu( $signatures_page, $templates_page, $settings_page, $editor_page );
 		$admin_menu->boot();
+
+		( new Notices() )->boot();
 	}
 
 	/**

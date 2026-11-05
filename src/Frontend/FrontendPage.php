@@ -11,8 +11,10 @@ namespace ImaginaSignatures\Frontend;
 
 use ImaginaSignatures\Admin\ManifestReader;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
+use ImaginaSignatures\Core\Plugin;
 use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
+use ImaginaSignatures\Storage\StorageManager;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -55,7 +57,7 @@ final class FrontendPage {
 		nocache_headers();
 
 		if ( ! is_user_logged_in() ) {
-			$this->render_login_prompt();
+			$this->render_login_prompt( $view, $signature_id );
 			return;
 		}
 
@@ -130,18 +132,20 @@ final class FrontendPage {
 	 * loads the bundle as a module. No theme, no wp-admin chrome.
 	 *
 	 * Responsible for the security-relevant response headers (CSP,
-	 * X-Frame-Options, Referrer-Policy) because the route bypasses
-	 * WordPress's normal template chain — anything we don't set here
-	 * doesn't get set at all.
+	 * X-Frame-Options, Referrer-Policy, nosniff) because the route
+	 * bypasses WordPress's normal template chain — anything we don't set
+	 * here doesn't get set at all. The only inline script (the bootstrap
+	 * config) carries a per-request CSP nonce, so `script-src` needs no
+	 * `'unsafe-inline'`.
 	 *
 	 * @since 1.0.24
 	 *
-	 * @param string                $title         Page title.
-	 * @param string                $mount_id      DOM id for the React root.
-	 * @param string                $config_global Window-level config variable name.
-	 * @param array<string, mixed>  $config        Bootstrap payload.
-	 * @param string                $manifest_key  Vite manifest entry path.
-	 * @param string                $fallback_file Bundle filename if manifest missing.
+	 * @param string               $title         Page title.
+	 * @param string               $mount_id      DOM id for the React root.
+	 * @param string               $config_global Window-level config variable name.
+	 * @param array<string, mixed> $config        Bootstrap payload.
+	 * @param string               $manifest_key  Vite manifest entry path.
+	 * @param string               $fallback_file Bundle filename if manifest missing.
 	 *
 	 * @return void
 	 */
@@ -159,15 +163,26 @@ final class FrontendPage {
 		$js_url  = plugins_url( 'build/' . $js_file, IMGSIG_FILE );
 		$css_url = '' !== $css_file ? plugins_url( 'build/' . $css_file, IMGSIG_FILE ) : '';
 
-		// CSP mirrors the wp-admin editor page: same-origin scripts +
-		// inline (Vite hashed names + our bootstrap), permissive image
-		// sources for user-uploaded content, REST endpoint on same
-		// origin. `frame-ancestors 'self'` keeps this page un-embeddable
-		// by other origins.
+		$nonce = base64_encode( random_bytes( 16 ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- CSP nonce encoding.
+
+		// Bundles may be served from a different origin (CDN-rewritten
+		// plugin URLs); REST / admin-ajax may live on the WP "site URL"
+		// origin rather than the home origin; S3 presigned PUTs go to the
+		// storage endpoint.
+		$asset_origins   = array_filter( [ self::origin_of( $js_url ) ] );
+		$connect_origins = array_filter(
+			[
+				self::origin_of( rest_url() ),
+				self::origin_of( admin_url( 'admin-ajax.php' ) ),
+				self::presigned_upload_origin(),
+			]
+		);
+
 		header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ) );
 		header( 'X-Frame-Options: SAMEORIGIN' );
+		header( 'X-Content-Type-Options: nosniff' );
 		header( 'Referrer-Policy: strict-origin-when-cross-origin' );
-		header( "Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https:; frame-ancestors 'self';" );
+		header( 'Content-Security-Policy: ' . self::content_security_policy( $nonce, $connect_origins, $asset_origins ) );
 
 		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 		?><!DOCTYPE html>
@@ -177,9 +192,9 @@ final class FrontendPage {
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex,nofollow" />
 <title><?php echo esc_html( $title ); ?></title>
-<?php if ( '' !== $css_url ) : ?>
+		<?php if ( '' !== $css_url ) : ?>
 <link rel="stylesheet" href="<?php echo esc_url( $css_url ); ?>" />
-<?php endif; ?>
+		<?php endif; ?>
 <style>
 html, body { margin: 0; padding: 0; background: #f7f8fa; min-height: 100vh; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -187,7 +202,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 </head>
 <body>
 <div id="<?php echo esc_attr( $mount_id ); ?>"></div>
-<script>window.<?php echo $config_global; ?> = <?php echo wp_json_encode( $config ); ?>;</script>
+<script nonce="<?php echo esc_attr( $nonce ); ?>">window.<?php echo $config_global; ?> = <?php echo wp_json_encode( $config ); ?>;</script>
 <script type="module" src="<?php echo esc_url( $js_url ); ?>"></script>
 </body>
 </html>
@@ -196,24 +211,127 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 	}
 
 	/**
+	 * Builds the public route's Content-Security-Policy.
+	 *
+	 *  - `script-src`: same origin (+ bundle origin) and the per-request
+	 *    nonce of the bootstrap `<script>` — no `'unsafe-inline'`.
+	 *  - `style-src`: keeps `'unsafe-inline'` (React inline styles).
+	 *  - `img-src`: `data:` / `blob:` for local previews, `https:` for
+	 *    user-hosted images.
+	 *  - `connect-src`: same origin, the REST / admin-ajax origins, and
+	 *    the S3 endpoint when presigned uploads are active — nothing else.
+	 *  - `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'self'`.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param string   $nonce           Base64 nonce of the inline bootstrap script.
+	 * @param string[] $connect_origins Extra `connect-src` origins.
+	 * @param string[] $asset_origins   Extra script / style / font origins.
+	 *
+	 * @return string
+	 */
+	public static function content_security_policy( string $nonce, array $connect_origins = [], array $asset_origins = [] ): string {
+		$clean = static function ( array $origins ): string {
+			$out = [];
+			foreach ( $origins as $origin ) {
+				$origin = (string) $origin;
+				// Only well-formed http(s) origins — never a wildcard,
+				// keyword or anything with a path / quote / semicolon.
+				if ( preg_match( '#^https?://[a-z0-9.\-]+(?::\d{1,5})?$#i', $origin ) ) {
+					$out[] = strtolower( $origin );
+				}
+			}
+			$out = array_values( array_unique( $out ) );
+			return empty( $out ) ? '' : ' ' . implode( ' ', $out );
+		};
+
+		$assets  = $clean( $asset_origins );
+		$connect = $clean( $connect_origins );
+
+		$directives = [
+			"default-src 'self'",
+			"script-src 'self'{$assets} 'nonce-{$nonce}'",
+			"style-src 'self'{$assets} 'unsafe-inline'",
+			"font-src 'self'{$assets} data:",
+			"img-src 'self' data: blob: https:",
+			"connect-src 'self'{$connect}",
+			"object-src 'none'",
+			"base-uri 'self'",
+			"frame-ancestors 'self'",
+		];
+
+		return implode( '; ', $directives ) . ';';
+	}
+
+	/**
+	 * `scheme://host[:port]` of a URL ('' when unparsable).
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param string $url URL.
+	 *
+	 * @return string
+	 */
+	private static function origin_of( string $url ): string {
+		$parts = wp_parse_url( $url );
+		if ( ! is_array( $parts ) || empty( $parts['host'] ) ) {
+			return '';
+		}
+
+		$origin = strtolower( (string) ( $parts['scheme'] ?? 'https' ) ) . '://' . strtolower( (string) $parts['host'] );
+		if ( isset( $parts['port'] ) ) {
+			$origin .= ':' . (int) $parts['port'];
+		}
+		return $origin;
+	}
+
+	/**
+	 * Origin of the active presigned-upload endpoint, if any.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return string
+	 */
+	private static function presigned_upload_origin(): string {
+		try {
+			$storage = Plugin::instance()->container()->make( StorageManager::class );
+			return $storage instanceof StorageManager ? $storage->presigned_upload_origin() : '';
+		} catch ( \Throwable $e ) {
+			unset( $e );
+			return '';
+		}
+	}
+
+	/**
 	 * Logged-out fallback. Renders a minimal centered card with the
 	 * site name + a primary "Log in" button that redirects back to
 	 * the URL the user was trying to reach.
 	 *
+	 * The return URL is rebuilt from the router's parsed view + id
+	 * on top of `home_url()` — never from the raw `Host` header or
+	 * `REQUEST_URI`, which an attacker controls (host-header
+	 * injection would otherwise let them mint login links that bounce
+	 * victims to a foreign domain after authentication).
+	 *
 	 * @since 1.0.24
+	 *
+	 * @param string $view         `index` | `editor`.
+	 * @param int    $signature_id Signature id for the editor view (0 = new).
 	 *
 	 * @return void
 	 */
-	private function render_login_prompt(): void {
-		$return_url = ( is_ssl() ? 'https://' : 'http://' ) . ( $_SERVER['HTTP_HOST'] ?? '' ) . ( $_SERVER['REQUEST_URI'] ?? '/' );
+	private function render_login_prompt( string $view = 'index', int $signature_id = 0 ): void {
+		$return_url = self::return_url_for( $view, $signature_id );
 		$login_url  = wp_login_url( $return_url );
 
 		status_header( 401 );
 		header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ) );
+		self::static_page_headers();
 		nocache_headers();
 
 		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
-		?><!DOCTYPE html>
+		?>
+<!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
 <meta charset="<?php bloginfo( 'charset' ); ?>" />
@@ -242,6 +360,44 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 	}
 
 	/**
+	 * Security headers for the script-free login / forbidden pages.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return void
+	 */
+	private static function static_page_headers(): void {
+		header( 'X-Frame-Options: SAMEORIGIN' );
+		header( 'X-Content-Type-Options: nosniff' );
+		header( 'Referrer-Policy: strict-origin-when-cross-origin' );
+		header( "Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'self'; frame-ancestors 'self';" );
+	}
+
+	/**
+	 * Builds the post-login redirect target for a public-route view.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param string $view         `index` | `editor`.
+	 * @param int    $signature_id Signature id for the editor view (0 = new).
+	 *
+	 * @return string Absolute URL on this site's home origin.
+	 */
+	public static function return_url_for( string $view, int $signature_id ): string {
+		if ( 'editor' === $view ) {
+			$url = $signature_id > 0
+				? FrontendAccess::editor_url( $signature_id )
+				: esc_url_raw( home_url( '/' . FrontendAccess::slug() . '/editor/' ) );
+		} else {
+			$url = FrontendAccess::dashboard_url();
+		}
+
+		// Belt and braces: never hand wp_login_url() anything that
+		// isn't on an allowed redirect host.
+		return wp_validate_redirect( $url, home_url( '/' ) );
+	}
+
+	/**
 	 * Forbidden fallback — logged in but missing the cap.
 	 *
 	 * @since 1.0.24
@@ -251,10 +407,12 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 	private function render_forbidden(): void {
 		status_header( 403 );
 		header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ) );
+		self::static_page_headers();
 		nocache_headers();
 
 		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
-		?><!DOCTYPE html>
+		?>
+<!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
 <meta charset="<?php bloginfo( 'charset' ); ?>" />
@@ -306,6 +464,9 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 			],
 			'apiBase'          => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),
 			'restNonce'        => wp_create_nonce( 'wp_rest' ),
+			// For refreshing an expired REST nonce via core's
+			// `admin-ajax.php?action=rest-nonce` (works for any logged-in role).
+			'ajaxUrl'          => esc_url_raw( admin_url( 'admin-ajax.php' ) ),
 			'locale'           => get_user_locale( $user_id ),
 			// Subscribers don't have wp-admin access — the sidebar's
 			// "back" link uses this as its destination, so point it at
@@ -367,6 +528,7 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 			'userId'           => $user_id,
 			'apiBase'          => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),
 			'restNonce'        => wp_create_nonce( 'wp_rest' ),
+			'ajaxUrl'          => esc_url_raw( admin_url( 'admin-ajax.php' ) ),
 			'locale'           => get_user_locale( $user_id ),
 			'pluginUrl'        => esc_url_raw( plugins_url( '', IMGSIG_FILE ) ),
 			'signaturesUrl'    => FrontendAccess::dashboard_url(),

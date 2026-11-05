@@ -25,9 +25,11 @@ defined( 'ABSPATH' ) || exit;
  * same user, the upload controller can return that row instead of
  * writing a duplicate.
  *
+ * Not declared `final` so PHPUnit 9 can produce mock doubles.
+ *
  * @since 1.0.0
  */
-final class AssetRepository extends BaseRepository {
+class AssetRepository extends BaseRepository {
 
 	/**
 	 * @inheritDoc
@@ -132,6 +134,77 @@ final class AssetRepository extends BaseRepository {
 		return (int) $this->wpdb->get_var(
 			$this->wpdb->prepare(
 				"SELECT COUNT(*) FROM {$this->table()} WHERE user_id = %d",
+				$user_id
+			)
+		);
+	}
+
+	/**
+	 * Returns up to `$limit` assets of the user, oldest first (used by
+	 * the privacy exporter / eraser and user-deletion cleanup).
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param int $user_id Owner.
+	 * @param int $limit   Page size.
+	 * @param int $offset  Offset.
+	 *
+	 * @return Asset[]
+	 */
+	public function find_batch_by_user( int $user_id, int $limit, int $offset = 0 ): array {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$rows = $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT * FROM {$this->table()} WHERE user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d",
+				$user_id,
+				max( 1, $limit ),
+				max( 0, $offset )
+			),
+			ARRAY_A
+		);
+
+		$out = [];
+		foreach ( is_array( $rows ) ? $rows : [] as $row ) {
+			$out[] = Asset::from_row( $row );
+		}
+		return $out;
+	}
+
+	/**
+	 * Moves every asset of `$from_user_id` to `$to_user_id`.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param int $from_user_id Current owner.
+	 * @param int $to_user_id   New owner.
+	 *
+	 * @return int Rows updated.
+	 */
+	public function reassign_user( int $from_user_id, int $to_user_id ): int {
+		$rows = $this->wpdb->update(
+			$this->table(),
+			[ 'user_id' => $to_user_id ],
+			[ 'user_id' => $from_user_id ],
+			[ '%d' ],
+			[ '%d' ]
+		);
+		return is_int( $rows ) ? $rows : 0;
+	}
+
+	/**
+	 * Total bytes stored by the user (for the storage quota).
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param int $user_id Owner.
+	 *
+	 * @return int
+	 */
+	public function sum_size_by_user( int $user_id ): int {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		return (int) $this->wpdb->get_var(
+			$this->wpdb->prepare(
+				"SELECT COALESCE(SUM(size_bytes), 0) FROM {$this->table()} WHERE user_id = %d",
 				$user_id
 			)
 		);

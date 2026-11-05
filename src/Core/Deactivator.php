@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Core;
 
+use ImaginaSignatures\Frontend\FrontendRouter;
 use ImaginaSignatures\Hooks\Actions;
 
 defined( 'ABSPATH' ) || exit;
@@ -38,19 +39,14 @@ final class Deactivator {
 	 * @return void
 	 */
 	public static function deactivate(): void {
-		// Drop any plugin-scheduled events. Listed explicitly so we don't
-		// have to scan the cron table; future events are added to this list
-		// when their schedulers are introduced.
-		$scheduled_hooks = [
-			// (none yet — placeholder for future cron jobs).
-		];
+		// Drop every plugin-scheduled event.
+		Cron::unschedule();
 
-		foreach ( $scheduled_hooks as $hook ) {
-			wp_clear_scheduled_hook( $hook );
-		}
-
-		// `flush_rewrite_rules()` was removed in 1.0.26 — REST routes
-		// don't use rewrite rules, so the call was dead weight.
+		// Drop the public `/<slug>/` route from the permalink cache. Our
+		// rules were registered on this request's `init`, so remove them
+		// from the registry first or the flush would persist them again.
+		FrontendRouter::unregister_rewrite_rules();
+		flush_rewrite_rules( false );
 
 		/**
 		 * Fires after the plugin has finished deactivating.

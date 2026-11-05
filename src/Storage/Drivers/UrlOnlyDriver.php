@@ -56,6 +56,10 @@ final class UrlOnlyDriver implements StorageDriverInterface {
 	/**
 	 * @inheritDoc
 	 *
+	 * @param string               $source_path     Unused.
+	 * @param string               $destination_key Unused.
+	 * @param array<string, mixed> $meta            Unused.
+	 *
 	 * @throws StorageException Always.
 	 */
 	public function upload( string $source_path, string $destination_key, array $meta ): UploadResult {
@@ -70,6 +74,11 @@ final class UrlOnlyDriver implements StorageDriverInterface {
 	/**
 	 * @inheritDoc
 	 *
+	 * @param string $key             Unused.
+	 * @param string $content_type    Unused.
+	 * @param int    $max_size        Unused.
+	 * @param int    $expires_seconds Unused.
+	 *
 	 * @throws StorageException Always.
 	 */
 	public function get_presigned_upload_url( string $key, string $content_type, int $max_size, int $expires_seconds ): PresignedResult {
@@ -83,6 +92,8 @@ final class UrlOnlyDriver implements StorageDriverInterface {
 
 	/**
 	 * @inheritDoc
+	 *
+	 * @param string $key Storage key (meaningless in URL-only mode).
 	 */
 	public function get_public_url( string $key ): string {
 		// `$key` is meaningless under URL-only because nothing is
@@ -95,6 +106,8 @@ final class UrlOnlyDriver implements StorageDriverInterface {
 
 	/**
 	 * @inheritDoc
+	 *
+	 * @param string $key Storage key (meaningless in URL-only mode).
 	 */
 	public function delete( string $key ): bool {
 		// Nothing to delete — we never stored anything. Returning
@@ -138,6 +151,8 @@ final class UrlOnlyDriver implements StorageDriverInterface {
 	 * class abstract-by-inference, which fatal-errored on every page
 	 * load (autoloader resolved the class name but PHP refused to
 	 * instantiate it).
+	 *
+	 * @param string $key Storage key (meaningless in URL-only mode).
 	 */
 	public function verify_object_exists( string $key ): bool {
 		return false;

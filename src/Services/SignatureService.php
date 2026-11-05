@@ -49,12 +49,39 @@ class SignatureService {
 	private JsonSchemaValidator $validator;
 
 	/**
-	 * @param SignatureRepository $repo      Signature repository.
-	 * @param JsonSchemaValidator $validator Schema validator.
+	 * @var SchemaSanitizer
 	 */
-	public function __construct( SignatureRepository $repo, JsonSchemaValidator $validator ) {
+	private SchemaSanitizer $sanitizer;
+
+	/**
+	 * Notes produced by the sanitizer during the last create / update.
+	 *
+	 * @var array<int, array{path: string, message: string}>
+	 */
+	private array $last_notes = [];
+
+	/**
+	 * @param SignatureRepository  $repo      Signature repository.
+	 * @param JsonSchemaValidator  $validator Schema validator.
+	 * @param SchemaSanitizer|null $sanitizer Recursive schema sanitizer (defaults to a fresh one).
+	 */
+	public function __construct( SignatureRepository $repo, JsonSchemaValidator $validator, ?SchemaSanitizer $sanitizer = null ) {
 		$this->repo      = $repo;
 		$this->validator = $validator;
+		$this->sanitizer = $sanitizer ?? new SchemaSanitizer( new HtmlSanitizer() );
+	}
+
+	/**
+	 * Returns the sanitisation notes from the last create / update:
+	 * one entry per value the server removed (disallowed URL scheme,
+	 * HTML outside the email-safe allowlist, markup in a text field).
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return array<int, array{path: string, message: string}>
+	 */
+	public function last_sanitization_notes(): array {
+		return $this->last_notes;
 	}
 
 	/**
@@ -160,9 +187,9 @@ class SignatureService {
 	 *
 	 * @since 1.0.26
 	 *
-	 * @param Signature                 $persisted Row freshly read from disk.
-	 * @param array<string, mixed>      $prepared  Field map handed to repo.
-	 * @param string                    $context   `create` or `update`.
+	 * @param Signature            $persisted Row freshly read from disk.
+	 * @param array<string, mixed> $prepared  Field map handed to repo.
+	 * @param string               $context   `create` or `update`.
 	 *
 	 * @throws \RuntimeException When the hashes don't match.
 	 *
@@ -275,6 +302,15 @@ class SignatureService {
 			throw new OwnershipException( 'Signature not found or not owned by the caller.' );
 		}
 
+		// Re-sanitise on the way through: rows saved before server-side
+		// sanitisation existed may still carry unsafe values.
+		$json_content = $source->json_content;
+		$decoded      = json_decode( $json_content, true );
+		if ( is_array( $decoded ) ) {
+			$encoded      = wp_json_encode( $this->sanitizer->sanitize( $decoded ) );
+			$json_content = is_string( $encoded ) ? $encoded : $json_content;
+		}
+
 		$copy = $this->repo->insert(
 			[
 				'user_id'        => $user_id,
@@ -283,7 +319,7 @@ class SignatureService {
 					__( '%s (copy)', 'imagina-signatures' ),
 					$source->name
 				),
-				'json_content'   => $source->json_content,
+				'json_content'   => $json_content,
 				'template_id'    => $source->template_id,
 				'status'         => Signature::STATUS_DRAFT,
 				'schema_version' => $source->schema_version,
@@ -311,7 +347,8 @@ class SignatureService {
 	 * @throws ValidationException When validation fails.
 	 */
 	private function prepare_for_save( array $data, string $context ): array {
-		$prepared = [];
+		$prepared         = [];
+		$this->last_notes = [];
 
 		if ( array_key_exists( 'name', $data ) ) {
 			$prepared['name'] = sanitize_text_field( (string) $data['name'] );
@@ -353,7 +390,11 @@ class SignatureService {
 				);
 			}
 
+			// Structure + limits first (throws a 400), then strip unsafe
+			// values (never throws — records notes instead).
 			$this->validator->validate( $decoded );
+			$decoded          = $this->sanitizer->sanitize( $decoded );
+			$this->last_notes = $this->sanitizer->notes();
 
 			$prepared['json_content']   = (string) wp_json_encode( $decoded );
 			$prepared['schema_version'] = (string) ( $decoded['schema_version'] ?? '1.0' );

@@ -69,8 +69,11 @@ final class PresignedUrl {
 	/**
 	 * Returns a presigned URL for a `PUT` upload.
 	 *
-	 * Browsers are expected to use the URL with a single `Content-Type`
-	 * header matching `$content_type` and the binary body. Extra
+	 * `content-type` is a SIGNED header: the storage provider rejects
+	 * the PUT unless the browser sends exactly `Content-Type:
+	 * {$content_type}`, so a URL minted for `image/png` can't be used to
+	 * store `text/html`. (Size can't be bound by a presigned PUT; the
+	 * finalize step HEADs the object and enforces it.) Extra
 	 * Content-Disposition or cache headers MUST be added to
 	 * `$extra_query` so they participate in the signature.
 	 *
@@ -91,18 +94,11 @@ final class PresignedUrl {
 	): string {
 		$extra_query['x-amz-acl'] = $extra_query['x-amz-acl'] ?? 'private';
 
-		// Some providers (R2, MinIO) require Content-Type to participate in
-		// the signature even for unsigned-payload PUTs. Folding it into the
-		// query string instead of headers keeps the browser request simpler.
-		if ( '' !== $content_type && ! isset( $extra_query['Content-Type'] ) ) {
-			// Note: for browser PUTs the Content-Type header is what matters;
-			// keeping it out of extra_query avoids it being doubly enforced.
-			unset( $extra_query['Content-Type'] );
-		}
+		$signed_headers = '' !== $content_type ? [ 'content-type' => $content_type ] : [];
 
 		$url = $this->build_object_url( $key );
 
-		return $this->signer->presign_url( 'PUT', $url, $expires_seconds, $extra_query );
+		return $this->signer->presign_url( 'PUT', $url, $expires_seconds, $extra_query, null, $signed_headers );
 	}
 
 	/**

@@ -240,3 +240,148 @@ if ( ! class_exists( 'WP_REST_Server' ) ) {
 		public const ALLMETHODS = 'GET, POST, PUT, PATCH, DELETE';
 	}
 }
+
+if ( ! class_exists( 'wpdb' ) ) {
+	/**
+	 * Minimal stand-in for WordPress' `wpdb` so repositories / stores can
+	 * be constructed and doubled in unit tests. Every method is a no-op;
+	 * tests extend it (see `Imgsig_Fake_Wpdb` in tests/php/helpers.php)
+	 * or mock it with PHPUnit.
+	 *
+	 * @phpstan-ignore-next-line
+	 */
+	class wpdb { // phpcs:ignore
+
+		/** @var string */
+		public $prefix = 'wp_';
+
+		/** @var string */
+		public $options = 'wp_options';
+
+		/** @var string */
+		public $usermeta = 'wp_usermeta';
+
+		/** @var string */
+		public $posts = 'wp_posts';
+
+		/** @var string */
+		public $postmeta = 'wp_postmeta';
+
+		/** @var int */
+		public $insert_id = 0;
+
+		/** @var string */
+		public $last_error = '';
+
+		/** @var bool */
+		public $suppress_errors = false;
+
+		/**
+		 * @param string $query   Query with placeholders.
+		 * @param mixed  ...$args Values.
+		 * @return string
+		 */
+		public function prepare( $query, ...$args ) {
+			return (string) $query;
+		}
+
+		/**
+		 * @param string $query SQL.
+		 * @return int|bool
+		 */
+		public function query( $query ) {
+			return 0;
+		}
+
+		/**
+		 * @param string|null $query SQL.
+		 * @return mixed
+		 */
+		public function get_var( $query = null ) {
+			return null;
+		}
+
+		/**
+		 * @param string|null $query  SQL.
+		 * @param string      $output Output type.
+		 * @return mixed
+		 */
+		public function get_row( $query = null, $output = 'OBJECT' ) {
+			return null;
+		}
+
+		/**
+		 * @param string|null $query  SQL.
+		 * @param string      $output Output type.
+		 * @return mixed
+		 */
+		public function get_results( $query = null, $output = 'OBJECT' ) {
+			return [];
+		}
+
+		/**
+		 * @param string|null $query SQL.
+		 * @return array<int, mixed>
+		 */
+		public function get_col( $query = null ) {
+			return [];
+		}
+
+		/**
+		 * @param string              $table  Table.
+		 * @param array<string,mixed> $data   Data.
+		 * @param mixed               $format Formats.
+		 * @return int|false
+		 */
+		public function insert( $table, $data, $format = null ) {
+			return 1;
+		}
+
+		/**
+		 * @param string              $table        Table.
+		 * @param array<string,mixed> $data         Data.
+		 * @param array<string,mixed> $where        Where.
+		 * @param mixed               $format       Formats.
+		 * @param mixed               $where_format Where formats.
+		 * @return int|false
+		 */
+		public function update( $table, $data, $where, $format = null, $where_format = null ) {
+			return 1;
+		}
+
+		/**
+		 * @param string              $table        Table.
+		 * @param array<string,mixed> $where        Where.
+		 * @param mixed               $where_format Where formats.
+		 * @return int|false
+		 */
+		public function delete( $table, $where, $where_format = null ) {
+			return 1;
+		}
+
+		/**
+		 * @param string $text Text.
+		 * @return string
+		 */
+		public function esc_like( $text ) {
+			return addcslashes( (string) $text, '_%\\' );
+		}
+
+		/**
+		 * @param bool $suppress New state.
+		 * @return bool Previous state.
+		 */
+		public function suppress_errors( $suppress = true ) {
+			$previous              = $this->suppress_errors;
+			$this->suppress_errors = (bool) $suppress;
+			return $previous;
+		}
+
+		/**
+		 * @return string
+		 */
+		public function get_charset_collate() {
+			return '';
+		}
+	}
+}

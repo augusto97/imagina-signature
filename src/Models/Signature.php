@@ -122,6 +122,28 @@ final class Signature extends BaseModel {
 	}
 
 	/**
+	 * Summary projection for list responses: every column except the
+	 * heavy `json_content` / `html_cache` blobs.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function to_summary_array(): array {
+		return [
+			'id'             => $this->id,
+			'user_id'        => $this->user_id,
+			'name'           => $this->name,
+			'preview_url'    => $this->preview_url,
+			'template_id'    => $this->template_id,
+			'status'         => $this->status,
+			'schema_version' => $this->schema_version,
+			'created_at'     => $this->created_at,
+			'updated_at'     => $this->updated_at,
+		];
+	}
+
+	/**
 	 * @inheritDoc
 	 *
 	 * `json_content` is decoded so REST clients receive structured JSON

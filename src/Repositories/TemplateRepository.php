@@ -20,9 +20,11 @@ defined( 'ABSPATH' ) || exit;
  * (`is_system = 1`) are seeded by the plugin and protected from
  * deletion by the service layer rather than by the repository.
  *
+ * Not declared `final` so PHPUnit 9 can produce mock doubles.
+ *
  * @since 1.0.0
  */
-final class TemplateRepository extends BaseRepository {
+class TemplateRepository extends BaseRepository {
 
 	/**
 	 * Whitelist of orderable columns.

@@ -43,6 +43,15 @@ defined( 'ABSPATH' ) || exit;
  * / REST endpoint) is deferred — the primitive is here so it can land
  * later without changing the on-disk format again.
  *
+ * Dedicated key (1.0.40): define `IMGSIG_ENCRYPTION_KEY` in
+ * wp-config.php to decouple the credentials from the WordPress salts
+ * (rotating AUTH_KEY / NONCE_SALT — e.g. after a security incident —
+ * otherwise makes stored S3 credentials undecryptable). With the
+ * constant set, new blobs are encrypted under it (with a fixed HKDF
+ * salt, so salt rotation can't affect them) and decryption falls back
+ * to the legacy AUTH_KEY derivation, so existing blobs keep working
+ * until the next save re-encrypts them.
+ *
  * @since 1.0.0
  */
 final class Encryption {
@@ -93,6 +102,27 @@ final class Encryption {
 	private const KEY_INFO_MAC = 'imgsig:mac:v1';
 
 	/**
+	 * Fixed HKDF salt used with `IMGSIG_ENCRYPTION_KEY` (independent of
+	 * the WordPress salts by design).
+	 */
+	private const DEDICATED_KEY_SALT = 'imgsig:dedicated-key:v1';
+
+	/**
+	 * Explicit dedicated key (tests); null = read IMGSIG_ENCRYPTION_KEY.
+	 *
+	 * @var string|null
+	 */
+	private ?string $dedicated_key;
+
+	/**
+	 * @param string|null $dedicated_key Dedicated key material; defaults to
+	 *                                   the `IMGSIG_ENCRYPTION_KEY` constant.
+	 */
+	public function __construct( ?string $dedicated_key = null ) {
+		$this->dedicated_key = $dedicated_key;
+	}
+
+	/**
 	 * Encrypts plaintext under the active master secret.
 	 *
 	 * Empty input returns an empty string so callers can persist the
@@ -110,7 +140,8 @@ final class Encryption {
 		if ( '' === $plaintext ) {
 			return '';
 		}
-		return $this->encrypt_with_secret( $plaintext, $this->resolve_secret() );
+		$candidates = $this->key_candidates();
+		return $this->encrypt_with_secret( $plaintext, $candidates[0]['secret'], $candidates[0]['salt'] );
 	}
 
 	/**
@@ -128,7 +159,29 @@ final class Encryption {
 		if ( '' === $encoded ) {
 			return '';
 		}
-		return $this->decrypt_with_secret( $encoded, $this->resolve_secret() );
+
+		$last_error = null;
+		foreach ( $this->key_candidates() as $candidate ) {
+			try {
+				return $this->decrypt_with_secret( $encoded, $candidate['secret'], $candidate['salt'] );
+			} catch ( EncryptionException $e ) {
+				$last_error = $e;
+			}
+		}
+
+		throw $last_error ?? new EncryptionException( 'No encryption secret is available.' );
+	}
+
+	/**
+	 * True when blobs are encrypted under a dedicated
+	 * `IMGSIG_ENCRYPTION_KEY` rather than the WordPress salts.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return bool
+	 */
+	public function uses_dedicated_key(): bool {
+		return '' !== $this->dedicated_key();
 	}
 
 	/**
@@ -159,8 +212,8 @@ final class Encryption {
 		if ( '' === $old_secret || '' === $new_secret ) {
 			throw new EncryptionException( 'Both old and new secrets are required for rotation.' );
 		}
-		$plaintext = $this->decrypt_with_secret( $encoded, $old_secret );
-		return $this->encrypt_with_secret( $plaintext, $new_secret );
+		$plaintext = $this->decrypt_with_secret( $encoded, $old_secret, $this->derive_salt() );
+		return $this->encrypt_with_secret( $plaintext, $new_secret, $this->derive_salt() );
 	}
 
 	/**
@@ -170,13 +223,14 @@ final class Encryption {
 	 *
 	 * @param string $plaintext Plaintext to encrypt.
 	 * @param string $secret    Master secret to derive keys from.
+	 * @param string $salt      HKDF salt.
 	 *
 	 * @return string Base64-encoded versioned blob.
 	 *
 	 * @throws EncryptionException On OpenSSL failure.
 	 */
-	private function encrypt_with_secret( string $plaintext, string $secret ): string {
-		$keys = $this->derive_keys( $secret );
+	private function encrypt_with_secret( string $plaintext, string $secret, string $salt ): string {
+		$keys = $this->derive_keys( $secret, $salt );
 		$iv   = random_bytes( self::IV_LENGTH );
 
 		$ciphertext = openssl_encrypt(
@@ -204,12 +258,13 @@ final class Encryption {
 	 *
 	 * @param string $encoded Base64-encoded blob.
 	 * @param string $secret  Master secret to derive keys from.
+	 * @param string $salt    HKDF salt.
 	 *
 	 * @return string Plaintext.
 	 *
 	 * @throws EncryptionException On any malformed input or crypto failure.
 	 */
-	private function decrypt_with_secret( string $encoded, string $secret ): string {
+	private function decrypt_with_secret( string $encoded, string $secret, string $salt ): string {
 		$blob = base64_decode( $encoded, true );
 		if ( false === $blob ) {
 			throw new EncryptionException( 'Invalid base64 payload' );
@@ -232,7 +287,7 @@ final class Encryption {
 		$body       = substr( $blob, 0, -self::HMAC_LENGTH );
 		$ciphertext = substr( $blob, 1 + self::IV_LENGTH, -self::HMAC_LENGTH );
 
-		$keys     = $this->derive_keys( $secret );
+		$keys     = $this->derive_keys( $secret, $salt );
 		$expected = hash_hmac( self::HASH_ALGO, $body, $keys['mac'], true );
 
 		if ( ! hash_equals( $expected, $hmac ) ) {
@@ -265,17 +320,16 @@ final class Encryption {
 	 * @since 1.0.0
 	 *
 	 * @param string $secret Master secret.
+	 * @param string $salt   HKDF salt.
 	 *
 	 * @return array{enc: string, mac: string} Two independent 32-byte keys.
 	 *
 	 * @throws EncryptionException When the OpenSSL extension is missing.
 	 */
-	private function derive_keys( string $secret ): array {
+	private function derive_keys( string $secret, string $salt ): array {
 		if ( ! function_exists( 'hash_hkdf' ) ) {
 			throw new EncryptionException( 'hash_hkdf() is unavailable; PHP 7.1.2 or newer is required.' );
 		}
-
-		$salt = $this->derive_salt();
 
 		return [
 			'enc' => hash_hkdf( self::HASH_ALGO, $secret, self::KEY_LENGTH, self::KEY_INFO_ENC, $salt ),
@@ -302,6 +356,56 @@ final class Encryption {
 			}
 		}
 		return '';
+	}
+
+	/**
+	 * Ordered (secret, salt) pairs: the first encrypts, all are tried to
+	 * decrypt. Dedicated key first when configured, then the legacy
+	 * AUTH_KEY / wp_salt derivation.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return array<int, array{secret: string, salt: string}>
+	 *
+	 * @throws EncryptionException When no usable secret can be found.
+	 */
+	private function key_candidates(): array {
+		$candidates = [];
+
+		$dedicated = $this->dedicated_key();
+		if ( '' !== $dedicated ) {
+			$candidates[] = [
+				'secret' => $dedicated,
+				'salt'   => self::DEDICATED_KEY_SALT,
+			];
+		}
+
+		try {
+			$candidates[] = [
+				'secret' => $this->resolve_secret(),
+				'salt'   => $this->derive_salt(),
+			];
+		} catch ( EncryptionException $e ) {
+			if ( empty( $candidates ) ) {
+				throw $e;
+			}
+		}
+
+		return $candidates;
+	}
+
+	/**
+	 * Dedicated key material ('' when not configured).
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return string
+	 */
+	private function dedicated_key(): string {
+		if ( null !== $this->dedicated_key ) {
+			return $this->dedicated_key;
+		}
+		return defined( 'IMGSIG_ENCRYPTION_KEY' ) && is_string( IMGSIG_ENCRYPTION_KEY ) ? IMGSIG_ENCRYPTION_KEY : '';
 	}
 
 	/**

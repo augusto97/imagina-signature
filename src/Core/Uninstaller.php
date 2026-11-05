@@ -9,8 +9,15 @@ declare(strict_types=1);
 
 namespace ImaginaSignatures\Core;
 
+use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Hooks\Actions;
+use ImaginaSignatures\Models\Asset;
+use ImaginaSignatures\Security\Encryption;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
+use ImaginaSignatures\Storage\Drivers\MediaLibraryDriver;
+use ImaginaSignatures\Storage\Drivers\S3Driver;
+use ImaginaSignatures\Storage\StorageManager;
+use ImaginaSignatures\Storage\UploadPolicy;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -22,14 +29,16 @@ defined( 'ABSPATH' ) || exit;
  * is a thin shim that loads the autoloader and calls
  * {@see Uninstaller::uninstall()}.
  *
- * Destructive: drops all `imgsig_*` tables, removes options, removes
- * capabilities from roles, and clears all `imgsig_*` transients
- * (CLAUDE.md §19.7 / §29 SIEMPRE).
+ * Data is KEPT by default (1.0.40): deleting the plugin — often just a
+ * step in a manual reinstall — must not destroy every user's
+ * signatures. Always removed: capabilities, the cron event and
+ * `imgsig_*` transients. Only when the site option
+ * `imgsig_delete_data_on_uninstall` is true (site-settings REST field
+ * `delete_data_on_uninstall`) is everything purged: stored files
+ * (Media Library attachments created by the plugin and objects in the
+ * active S3 bucket), the `imgsig_*` tables, options and user meta.
  *
- * Files uploaded via the Media Library driver are left in place — the WP
- * Media Library owns those records. Files in S3-compatible storage are
- * also untouched: we don't have credentials at uninstall time, and the
- * user may still need them.
+ * On multisite every site is processed with its own setting.
  *
  * @since 1.0.0
  */
@@ -44,6 +53,7 @@ final class Uninstaller {
 		'imgsig_signatures',
 		'imgsig_templates',
 		'imgsig_assets',
+		'imgsig_rate_limits',
 	];
 
 	/**
@@ -62,14 +72,20 @@ final class Uninstaller {
 		'imgsig_schema_version',
 		'imgsig_storage_driver',
 		'imgsig_storage_config',
+		'imgsig_storage_decrypt_error',
 		'imgsig_settings',
-		// Site-settings options added in 1.0.13 / 1.0.15 — these were
-		// silently leaking on uninstall until 1.0.25 because they
-		// weren't on this list (the audit caught the leak).
 		'imgsig_brand_palette',
 		'imgsig_compliance_footer',
 		'imgsig_banner_campaigns',
+		'imgsig_frontend_access',
+		'imgsig_delete_data_on_uninstall',
+		'imgsig_upgrade_lock',
 	];
+
+	/**
+	 * Assets processed per query while deleting stored files.
+	 */
+	private const BATCH = 200;
 
 	/**
 	 * Uninstall handler.
@@ -81,24 +97,164 @@ final class Uninstaller {
 	 * @return void
 	 */
 	public static function uninstall(): void {
-		global $wpdb;
-
-		self::drop_tables( $wpdb );
-		self::delete_options();
-		self::remove_capabilities();
-		self::delete_transients( $wpdb );
+		if ( is_multisite() && function_exists( 'get_sites' ) ) {
+			$purged_any = false;
+			foreach ( get_sites(
+				[
+					'fields' => 'ids',
+					'number' => 0,
+				]
+			) as $site_id ) {
+				switch_to_blog( (int) $site_id );
+				try {
+					$purged_any = self::uninstall_site() || $purged_any;
+				} finally {
+					restore_current_blog();
+				}
+			}
+			if ( $purged_any ) {
+				self::delete_user_meta();
+			}
+		} elseif ( self::uninstall_site() ) {
+			self::delete_user_meta();
+		}
 
 		/**
-		 * Fires at the end of plugin uninstall, after all data has been removed.
+		 * Fires at the end of plugin uninstall.
 		 *
 		 * Note: this fires from `uninstall.php`, so listeners must be in
 		 * code that's already loaded by WordPress core (e.g. mu-plugins).
-		 * Plugins listening for this from their own files won't be loaded
-		 * during uninstall.
 		 *
 		 * @since 1.0.0
 		 */
 		do_action( Actions::PLUGIN_UNINSTALLED );
+	}
+
+	/**
+	 * Uninstalls on the current site.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return bool True when this site's data was purged.
+	 */
+	private static function uninstall_site(): bool {
+		global $wpdb;
+
+		$purge = (bool) (int) get_option( SiteSettingsController::OPT_DELETE_DATA_ON_UNINSTALL, 0 );
+
+		// Always: plugin wiring that is meaningless without the plugin.
+		self::remove_capabilities();
+		wp_clear_scheduled_hook( Cron::DAILY_HOOK );
+		self::delete_transients( $wpdb );
+
+		if ( ! $purge ) {
+			return false;
+		}
+
+		self::delete_stored_files( $wpdb );
+		self::drop_tables( $wpdb );
+		self::delete_options();
+
+		return true;
+	}
+
+	/**
+	 * Deletes every file the plugin stored for this site: Media Library
+	 * attachments (asset rows + any attachment tagged `_imgsig_asset`),
+	 * objects in the active S3 bucket, and the plugin's uploads
+	 * sub-directory.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param \wpdb $wpdb DB.
+	 *
+	 * @return void
+	 */
+	private static function delete_stored_files( \wpdb $wpdb ): void {
+		$table = $wpdb->prefix . 'imgsig_assets';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$has_table = null !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
+
+		$s3 = null;
+		try {
+			$driver = ( new StorageManager( new Encryption() ) )->active_driver();
+			$s3     = S3Driver::ID === $driver->get_id() ? $driver : null;
+		} catch ( \Throwable $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( '[imagina-signatures] uninstall: S3 objects not deleted (driver unavailable): ' . $e->getMessage() );
+		}
+
+		$ml = new MediaLibraryDriver();
+
+		if ( $has_table ) {
+			$last_id = 0;
+			do {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE id > %d ORDER BY id ASC LIMIT %d", $last_id, self::BATCH ), ARRAY_A );
+				$rows       = is_array( $rows ) ? $rows : [];
+				$batch_size = count( $rows );
+
+				foreach ( $rows as $row ) {
+					$asset   = Asset::from_row( $row );
+					$last_id = $asset->id;
+					try {
+						if ( MediaLibraryDriver::ID === $asset->storage_driver ) {
+							$ml->delete( $asset->storage_key );
+						} elseif ( S3Driver::ID === $asset->storage_driver && null !== $s3 ) {
+							$s3->delete( $asset->storage_key );
+						}
+					} catch ( \Throwable $e ) {
+						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+						error_log( '[imagina-signatures] uninstall: could not delete asset ' . $asset->id . ': ' . $e->getMessage() );
+					}
+				}
+			} while ( $batch_size >= self::BATCH );
+		}
+
+		// Attachments tagged by the Media Library driver whose asset row
+		// is already gone.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.SlowDBQuery
+		$orphans = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s", MediaLibraryDriver::ATTACHMENT_META ) );
+		foreach ( (array) $orphans as $attachment_id ) {
+			wp_delete_attachment( (int) $attachment_id, true );
+		}
+
+		self::delete_uploads_directory();
+	}
+
+	/**
+	 * Removes `wp-content/uploads/imagina-signatures/` (whatever is left
+	 * after the attachments were deleted).
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return void
+	 */
+	private static function delete_uploads_directory(): void {
+		$uploads = wp_upload_dir( null, false );
+		if ( ! empty( $uploads['error'] ) || empty( $uploads['basedir'] ) ) {
+			return;
+		}
+
+		$base = realpath( (string) $uploads['basedir'] );
+		$dir  = realpath( trailingslashit( (string) $uploads['basedir'] ) . MediaLibraryDriver::SUBDIR );
+		if ( false === $base || false === $dir || 0 !== strpos( $dir, $base . DIRECTORY_SEPARATOR ) || ! is_dir( $dir ) ) {
+			return;
+		}
+
+		$items = new \RecursiveIteratorIterator(
+			new \RecursiveDirectoryIterator( $dir, \FilesystemIterator::SKIP_DOTS ),
+			\RecursiveIteratorIterator::CHILD_FIRST
+		);
+		foreach ( $items as $item ) {
+			if ( $item->isLink() || $item->isFile() ) {
+				wp_delete_file( $item->getPathname() );
+			} elseif ( $item->isDir() ) {
+				@rmdir( $item->getPathname() ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+			}
+		}
+		@rmdir( $dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
 	}
 
 	/**
@@ -123,11 +279,9 @@ final class Uninstaller {
 	 *
 	 * Two passes:
 	 *  1. Explicit allow-list above so `delete_option()` filters fire
-	 *     correctly per known key, and the site-option variant is
-	 *     called in case the plugin was active under multisite.
+	 *     correctly per known key.
 	 *  2. A safety-net SQL sweep that removes any remaining
-	 *     `imgsig_*` row from `wp_options` — covers any option a
-	 *     future patch writes without adding to {@see OPTIONS}.
+	 *     `imgsig_*` row from `wp_options`.
 	 *
 	 * @since 1.0.0
 	 *
@@ -138,12 +292,8 @@ final class Uninstaller {
 
 		foreach ( self::OPTIONS as $option ) {
 			delete_option( $option );
-			delete_site_option( $option );
 		}
 
-		// Safety net: scrub any straggler `imgsig_*` option that didn't
-		// make it into the allow-list. Covers options that future
-		// patches add without remembering to update this constant.
 		$like = $wpdb->esc_like( 'imgsig_' ) . '%';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->query(
@@ -152,6 +302,17 @@ final class Uninstaller {
 				$like
 			)
 		);
+	}
+
+	/**
+	 * Deletes the plugin's user meta (network-wide table).
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return void
+	 */
+	private static function delete_user_meta(): void {
+		delete_metadata( 'user', 0, UploadPolicy::TOKEN_META_KEY, '', true );
 	}
 
 	/**
@@ -168,7 +329,8 @@ final class Uninstaller {
 	/**
 	 * Deletes every transient whose key starts with `imgsig_`.
 	 *
-	 * Covers rate-limit counters and any caching the plugin might write.
+	 * Covers rate-limit fallback counters, pending uploads and back-off
+	 * markers.
 	 *
 	 * @since 1.0.0
 	 *
