@@ -62,6 +62,15 @@ export function substituteVariables(
   return { html: text, missing };
 }
 
+/** Names of the `{{name}}` tokens in `text`, in order of first appearance. */
+export function variableTokenNames(text: string): string[] {
+  const names = new Set<string>();
+  for (const match of text.matchAll(new RegExp(VARIABLE_REGEX.source, 'g'))) {
+    if (match[1]) names.add(match[1]);
+  }
+  return Array.from(names);
+}
+
 /** Whether `text` contains at least one `{{name}}` token. */
 export function hasVariableTokens(text: string): boolean {
   // Fresh non-global copy: a shared /g regex keeps `lastIndex` state.

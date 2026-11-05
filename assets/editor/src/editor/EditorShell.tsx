@@ -15,7 +15,10 @@ import { ExportModal } from './modals/ExportModal';
 import { PreviewModal } from './modals/PreviewModal';
 import { SaveAsTemplateModal } from './modals/SaveAsTemplateModal';
 import { BackgroundAssetSync } from './BackgroundAssetSync';
+import { FieldsOnlyView } from './FieldsOnlyView';
+import { LinkBanner } from './LinkBanner';
 import { useEditorStore } from '@/stores/editorStore';
+import { useEditPolicy } from '@/stores/linkStore';
 
 /**
  * Top-level editor layout — owns the DndContext that the library
@@ -23,6 +26,10 @@ import { useEditorStore } from '@/stores/editorStore';
  *
  * Keyboard shortcuts are also installed here so they're listening
  * for the lifetime of the app.
+ *
+ * A signature built from a company template shows the {@link LinkBanner};
+ * in the template's `fields_only` mode the sidebars and canvas give way
+ * to the "Your details" form + preview ({@link FieldsOnlyView}).
  */
 export const EditorShell: FC = () => {
   const dnd = useDragAndDrop();
@@ -30,7 +37,7 @@ export const EditorShell: FC = () => {
   // a preview. Returns the (immer-shared) block, so this only
   // re-renders the shell when the dragged block itself changes.
   const previewBlock = useSchemaStore((s) =>
-    dnd.draggingId !== null ? findBlockByIdDeep(s.schema.blocks, dnd.draggingId) ?? null : null,
+    dnd.draggingId !== null ? (findBlockByIdDeep(s.schema.blocks, dnd.draggingId) ?? null) : null,
   );
   const libraryDefinition = dnd.draggingLibraryType
     ? getBlockDefinition(dnd.draggingLibraryType)
@@ -38,42 +45,48 @@ export const EditorShell: FC = () => {
   const LibraryIcon = libraryDefinition?.icon;
 
   useKeyboardShortcuts();
+  const policy = useEditPolicy();
 
   return (
     <div className="flex h-full w-full flex-col">
       <Topbar />
-      <DndContext
-        sensors={dnd.sensors}
-        collisionDetection={dnd.collisionDetection}
-        onDragStart={dnd.handleDragStart}
-        onDragMove={dnd.handleDragMove}
-        onDragEnd={dnd.handleDragEnd}
-        onDragCancel={dnd.handleDragCancel}
-      >
-        <div className="flex flex-1 overflow-hidden">
-          <LeftSidebar />
-          <Canvas />
-          <RightSidebar />
-        </div>
-        {/* No drop animation: the store re-renders the block at its new
+      <LinkBanner />
+      {policy.fieldsOnly ? (
+        <FieldsOnlyView />
+      ) : (
+        <DndContext
+          sensors={dnd.sensors}
+          collisionDetection={dnd.collisionDetection}
+          onDragStart={dnd.handleDragStart}
+          onDragMove={dnd.handleDragMove}
+          onDragEnd={dnd.handleDragEnd}
+          onDragCancel={dnd.handleDragCancel}
+        >
+          <div className="flex flex-1 overflow-hidden">
+            <LeftSidebar />
+            <Canvas />
+            <RightSidebar />
+          </div>
+          {/* No drop animation: the store re-renders the block at its new
             position immediately, and the default animation would fly
             the overlay back to the OLD position first. */}
-        <DragOverlay dropAnimation={null}>
-          {previewBlock ? (
-            <div className="pointer-events-none max-w-[600px] rounded-md border border-[var(--border-selected)] bg-[var(--bg-panel)] p-2 opacity-80 shadow-lg">
-              <BlockRenderer block={previewBlock} isPreview />
-            </div>
-          ) : dnd.draggingLibraryType ? (
-            <div className="pointer-events-none inline-flex items-center gap-2 rounded-md border border-[var(--border-selected)] bg-[var(--bg-panel)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] shadow-lg">
-              {LibraryIcon && <LibraryIcon size={14} className="text-[var(--accent)]" />}
-              <span>
-                {/* i18n-dynamic: registry labels are listed in i18n/dynamic-strings.ts. */}
-                {libraryDefinition ? __(libraryDefinition.label) : __('Block')}
-              </span>
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+          <DragOverlay dropAnimation={null}>
+            {previewBlock ? (
+              <div className="pointer-events-none max-w-[600px] rounded-md border border-[var(--border-selected)] bg-[var(--bg-panel)] p-2 opacity-80 shadow-lg">
+                <BlockRenderer block={previewBlock} isPreview />
+              </div>
+            ) : dnd.draggingLibraryType ? (
+              <div className="pointer-events-none inline-flex items-center gap-2 rounded-md border border-[var(--border-selected)] bg-[var(--bg-panel)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] shadow-lg">
+                {LibraryIcon && <LibraryIcon size={14} className="text-[var(--accent)]" />}
+                <span>
+                  {/* i18n-dynamic: registry labels are listed in i18n/dynamic-strings.ts. */}
+                  {libraryDefinition ? __(libraryDefinition.label) : __('Block')}
+                </span>
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      )}
       <BackgroundAssetSync />
       <TemplatePicker />
       <ExportModal />
@@ -86,7 +99,5 @@ export const EditorShell: FC = () => {
 const SaveAsTemplateModalHost: FC = () => {
   const modal = useEditorStore((s) => s.modal);
   const closeModal = useEditorStore((s) => s.closeModal);
-  return (
-    <SaveAsTemplateModal open={modal === 'save-as-template'} onClose={closeModal} />
-  );
+  return <SaveAsTemplateModal open={modal === 'save-as-template'} onClose={closeModal} />;
 };

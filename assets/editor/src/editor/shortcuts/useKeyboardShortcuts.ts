@@ -6,6 +6,8 @@ import { useClipboardStore } from '@/stores/clipboardStore';
 import { useToastStore } from '@/stores/toastStore';
 import { findParentAndIndex } from '@/stores/schemaUtils';
 import { getBlockDefinition } from '@/core/blocks/registry';
+import { migrateBlock } from '@/core/schema/migrate';
+import { canPlaceAtDepth, locateBlock } from '@/core/schema/tree';
 import { persistence } from '@/services/persistence';
 import { __ } from '@/i18n/helpers';
 
@@ -172,13 +174,18 @@ export function useKeyboardShortcuts(): void {
         }
         const after =
           selectedId && findParentAndIndex(schema.schema.blocks, selectedId) ? selectedId : null;
+        const anchor = after ? locateBlock(schema.schema.blocks, after) : null;
+        const tooDeep = !canPlaceAtDepth(migrateBlock(copied), anchor ? anchor.depth : 0);
         const pastedId = schema.pasteBlock(copied, after);
         if (!pastedId) {
           // Pasting a container next to a block nested in another
-          // container would nest containers two levels deep.
-          useToastStore
-            .getState()
-            .show(__('Containers can only be nested one level deep.'), 'error');
+          // container would nest containers two levels deep. (A paste
+          // refused by a template lock already explained itself.)
+          if (tooDeep) {
+            useToastStore
+              .getState()
+              .show(__('Containers can only be nested one level deep.'), 'error');
+          }
           return;
         }
         selection.select(pastedId);
@@ -191,8 +198,7 @@ export function useKeyboardShortcuts(): void {
       // Delete.
       if ((key === 'Backspace' || key === 'Delete') && selectedId) {
         event.preventDefault();
-        schema.deleteBlock(selectedId);
-        selection.clearSelection();
+        if (schema.deleteBlock(selectedId)) selection.clearSelection();
         return;
       }
 

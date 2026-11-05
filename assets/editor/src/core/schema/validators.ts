@@ -1,5 +1,10 @@
 import { MAX_CONTAINER_COLUMNS } from './blocks';
-import { CURRENT_SCHEMA_VERSION, type SchemaVersion, type SignatureSchema } from './signature';
+import {
+  CURRENT_SCHEMA_VERSION,
+  EMPLOYEE_MODES,
+  type SchemaVersion,
+  type SignatureSchema,
+} from './signature';
 
 /**
  * Coarse-grained shape validator — equivalent to the PHP
@@ -9,7 +14,8 @@ import { CURRENT_SCHEMA_VERSION, type SchemaVersion, type SignatureSchema } from
  * so the editor and the REST layer never disagree on what's valid:
  * supported version, top-level keys, and an id + type on every block
  * at any depth — v2 `columns[].children` and the 1.0 `children` /
- * `right_children` lists alike.
+ * `right_children` lists alike — plus (1.3.0) a boolean `locked`, a
+ * known `settings.employee_mode` and an object `overrides` map.
  *
  * Returns the errors array (empty on success) — callers throw or
  * surface as they see fit.
@@ -61,6 +67,34 @@ export function validateSchema(value: unknown): ValidationError[] {
     errors.push({ path: 'variables', message: 'variables must be an object.' });
   }
 
+  // 1.3.0: template employee mode + per-block text overrides.
+  if (data.settings !== undefined) {
+    if (!isPlainObject(data.settings)) {
+      errors.push({ path: 'settings', message: 'settings must be an object.' });
+    } else if (
+      'employee_mode' in data.settings &&
+      !(EMPLOYEE_MODES as readonly unknown[]).includes(data.settings.employee_mode)
+    ) {
+      errors.push({
+        path: 'settings.employee_mode',
+        message: `employee_mode must be one of "${EMPLOYEE_MODES.join('", "')}".`,
+      });
+    }
+  }
+
+  // PHP turns an empty `{}` into `[]`: accept both for an empty map.
+  if (data.overrides !== undefined && !isEmptyArray(data.overrides)) {
+    if (!isPlainObject(data.overrides)) {
+      errors.push({ path: 'overrides', message: 'overrides must be an object.' });
+    } else {
+      for (const [blockId, fields] of Object.entries(data.overrides)) {
+        if (!isPlainObject(fields)) {
+          errors.push({ path: `overrides.${blockId}`, message: 'An override must be an object.' });
+        }
+      }
+    }
+  }
+
   if (data.blocks !== undefined) {
     if (!Array.isArray(data.blocks)) {
       errors.push({ path: 'blocks', message: 'blocks must be an array.' });
@@ -86,6 +120,9 @@ function validateBlock(block: unknown, path: string, errors: ValidationError[]):
   }
   if (typeof block.type !== 'string' || block.type.length === 0) {
     errors.push({ path: `${path}.type`, message: 'Block must carry a non-empty string type.' });
+  }
+  if ('locked' in block && typeof block.locked !== 'boolean') {
+    errors.push({ path: `${path}.locked`, message: 'locked must be a boolean.' });
   }
 
   if (Array.isArray(block.columns)) {
@@ -130,4 +167,8 @@ export function isValidSchema(value: unknown): value is SignatureSchema {
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isEmptyArray(value: unknown): boolean {
+  return Array.isArray(value) && value.length === 0;
 }

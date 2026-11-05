@@ -78,7 +78,7 @@ function isEmptyContainer(value: unknown): boolean {
 }
 
 /** Fragment + plain text for the server copy, or null if compiling threw. */
-function compileForServer(schema: SignatureSchema): { html: string; text: string } | null {
+export function compileForServer(schema: SignatureSchema): { html: string; text: string } | null {
   try {
     const result = compileSignature(schema);
     return { html: result.fragment, text: result.text };
@@ -95,6 +95,12 @@ class Persistence {
   private autosaveTimer: ReturnType<typeof setTimeout> | null = null;
   /** Epoch ms until which autosave is paused after a 429. */
   private pausedUntil = 0;
+
+  /** Id of the row being edited (0 until the first save of a new signature). */
+  currentId(): number {
+    this.initialize();
+    return this.signatureId;
+  }
 
   /** Bind to the bootstrap config. Idempotent. */
   initialize(): void {

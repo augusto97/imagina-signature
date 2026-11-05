@@ -31,6 +31,13 @@ export interface BlockBase {
    * know about it.
    */
   box?: BoxStyle;
+  /**
+   * Locked by an administrator (1.3.0). On a signature that follows a
+   * company template, employees can't edit, move, duplicate or delete
+   * it; a locked container locks everything inside it. See
+   * `core/schema/locks.ts`.
+   */
+  locked?: boolean;
 }
 
 // ---------------------------------------------------------------------------

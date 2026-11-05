@@ -18,6 +18,7 @@ import { useHistoryStore } from '@/stores/historyStore';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { usePersistenceStore } from '@/stores/persistenceStore';
 import { useToastStore } from '@/stores/toastStore';
+import { useEditPolicy } from '@/stores/linkStore';
 import { getConfig } from '@/bridge/apiClient';
 import { persistence } from '@/services/persistence';
 import { __ } from '@/i18n/helpers';
@@ -56,6 +57,8 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
   const replaceSchemaForHistory = useSchemaStore((s) => s.replaceSchemaForHistory);
   const showToast = useToastStore((s) => s.show);
   const [manualSaving, setManualSaving] = useState(false);
+  // A signature that follows a company template can't swap its design (1.3.0).
+  const designLocked = useEditPolicy().enforced;
 
   const onManualSave = async (): Promise<void> => {
     if (manualSaving) return;
@@ -138,7 +141,12 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
           </IconButton>
         </div>
         <IconButton
-          title={__('Pick a template')}
+          title={
+            designLocked
+              ? __('This signature follows a company template')
+              : __('Pick a template')
+          }
+          disabled={designLocked}
           onClick={() => openModal('template-picker')}
         >
           <LayoutTemplate size={16} />

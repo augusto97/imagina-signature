@@ -99,6 +99,31 @@ export interface AppConfig {
    * window). Empty array = no campaign banner is injected.
    */
   bannerCampaigns?: BannerCampaign[];
+  /**
+   * Whether the signature follows a company template (1.3.0) and what
+   * the template's employee mode lets this user change. Missing =
+   * a detached signature in `free` mode (pre-1.3 bootstrap).
+   */
+  signatureLink?: SignatureLinkConfig;
+  /**
+   * True for template / team managers: they ignore block locks and
+   * employee modes (1.3.0). Missing = false.
+   */
+  canBypassLocks?: boolean;
+  /**
+   * Where the user edits their profile (the read-only values shown in
+   * the "Your details" form). Optional.
+   */
+  profileUrl?: string;
+}
+
+/** `IMGSIG_EDITOR_CONFIG.signatureLink` (1.3.0). */
+export interface SignatureLinkConfig {
+  mode: 'linked' | 'detached';
+  templateId: number | null;
+  employeeMode: 'free' | 'locked_design' | 'fields_only';
+  /** Display name of the template ('' when unknown). */
+  templateName?: string;
 }
 
 export interface BannerCampaign {
