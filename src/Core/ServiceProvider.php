@@ -12,6 +12,7 @@ namespace ImaginaSignatures\Core;
 use ImaginaSignatures\Api\Controllers\AssetsController;
 use ImaginaSignatures\Api\Controllers\FrontendAccessController;
 use ImaginaSignatures\Api\Controllers\MeController;
+use ImaginaSignatures\Api\Controllers\OutlookController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Api\Controllers\StorageController;
@@ -19,6 +20,7 @@ use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\Middleware\RateLimiter;
 use ImaginaSignatures\Deployment\Gmail\GmailServiceProvider;
+use ImaginaSignatures\Deployment\OutlookSignatureService;
 use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\AssetRepository;
 use ImaginaSignatures\Repositories\SignatureRepository;
@@ -219,6 +221,22 @@ final class ServiceProvider {
 
 		// Google Workspace: Gmail signature push (1.3.0).
 		GmailServiceProvider::register( $container );
+		// Outlook add-in deployment (1.3.0).
+		$container->singleton(
+			OutlookSignatureService::class,
+			static function ( Container $c ): OutlookSignatureService {
+				return new OutlookSignatureService( $c->make( SignatureService::class ) );
+			}
+		);
+		$container->singleton(
+			OutlookController::class,
+			static function ( Container $c ): OutlookController {
+				return new OutlookController(
+					$c->make( OutlookSignatureService::class ),
+					$c->make( RateLimiter::class )
+				);
+			}
+		);
 
 		// Privacy tools + user lifecycle.
 		$container->singleton(

@@ -156,6 +156,7 @@ final class AdminAssetEnqueuer {
 				'use'              => current_user_can( CapabilitiesInstaller::CAP_USE ),
 				'manage_templates' => current_user_can( CapabilitiesInstaller::CAP_MANAGE_TEMPLATES ),
 				'manage_storage'   => current_user_can( CapabilitiesInstaller::CAP_MANAGE_STORAGE ),
+				'manage_team'      => current_user_can( CapabilitiesInstaller::CAP_MANAGE_TEAM ),
 			],
 			'apiBase'          => esc_url_raw( rest_url( 'imagina-signatures/v1' ) ),
 			'restNonce'        => wp_create_nonce( 'wp_rest' ),

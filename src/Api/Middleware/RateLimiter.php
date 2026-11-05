@@ -24,7 +24,9 @@ defined( 'ABSPATH' ) || exit;
  * into a `Retry-After` header.
  *
  * Buckets are per (action, user); {@see check_site()} adds site-wide
- * caps (e.g. total test emails per hour) on top.
+ * caps (e.g. total test emails per hour) on top, and
+ * {@see check_subject()} counts per arbitrary subject (IP, API key) for
+ * public endpoints.
  *
  * Every limit is filterable through `imgsig/rate_limit/max`
  * (return 0 to disable a limit).
@@ -87,6 +89,27 @@ class RateLimiter {
 	 */
 	public function check_site( string $action, int $max, int $window_seconds ): void {
 		$this->enforce( $this->store->site_key( $action ), $action . '_site', 0, $max, $window_seconds );
+	}
+
+	/**
+	 * Records a hit for an arbitrary subject — an IP address, a
+	 * deployment key — for public endpoints with no WordPress user
+	 * (the Outlook add-in). The subject is hashed into the bucket key
+	 * ({@see RateLimitStore::subject_key()}).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string $action         Logical action name (also passed to the filter).
+	 * @param string $subject        What the window is counted for.
+	 * @param int    $max            Maximum allowed calls within the window.
+	 * @param int    $window_seconds Window size in seconds.
+	 *
+	 * @return void
+	 *
+	 * @throws RateLimitException When the limit is exceeded.
+	 */
+	public function check_subject( string $action, string $subject, int $max, int $window_seconds ): void {
+		$this->enforce( $this->store->subject_key( $action, $subject ), $action, 0, $max, $window_seconds );
 	}
 
 	/**

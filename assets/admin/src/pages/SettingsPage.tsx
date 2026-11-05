@@ -9,8 +9,16 @@ import { ComplianceTab } from './settings/ComplianceTab';
 import { CampaignsTab } from './settings/CampaignsTab';
 import { FrontendTab } from './settings/FrontendTab';
 import { GoogleWorkspaceTab } from './settings/GoogleWorkspaceTab';
+import { Microsoft365Tab } from './settings/Microsoft365Tab';
 
-type Tab = 'storage' | 'branding' | 'compliance' | 'campaigns' | 'frontend' | 'google';
+type Tab =
+  | 'storage'
+  | 'branding'
+  | 'compliance'
+  | 'campaigns'
+  | 'frontend'
+  | 'google'
+  | 'microsoft365';
 
 /** Labels / descriptions are lazy so they translate at render time. */
 const TABS: Array<{ id: Tab; label: () => string; icon: typeof Cloud; description: () => string }> = [
@@ -57,6 +65,11 @@ const TABS: Array<{ id: Tab; label: () => string; icon: typeof Cloud; descriptio
     icon: Mail,
     description: () =>
       __('Deploy every employee’s signature to Gmail with one click, through a service account with domain-wide delegation.'),
+    id: 'microsoft365',
+    label: () => __('Microsoft 365'),
+    icon: Mail,
+    description: () =>
+      __("Deploy every employee's signature to Outlook with an add-in, or generate an Exchange Online mail flow rule."),
   },
 ];
 
@@ -104,6 +117,7 @@ export const SettingsPage: FC = () => {
           {tab === 'campaigns' && <CampaignsTab />}
           {tab === 'frontend' && <FrontendTab />}
           {tab === 'google' && <GoogleWorkspaceTab />}
+          {tab === 'microsoft365' && <Microsoft365Tab />}
         </div>
       </div>
     </div>

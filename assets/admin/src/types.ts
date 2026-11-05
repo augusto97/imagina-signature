@@ -15,6 +15,8 @@ export interface AdminConfig {
     use: boolean;
     manage_templates: boolean;
     manage_storage: boolean;
+    /** `imgsig_manage_team` (1.3.0; missing on older bootstraps). */
+    manage_team?: boolean;
   };
   /** REST API base, e.g. `https://example.com/wp-json/imagina-signatures/v1`. */
   apiBase: string;
