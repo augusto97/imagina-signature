@@ -99,6 +99,11 @@ final class InstallPage {
 	 * @return void
 	 */
 	public static function emit( array $response ): void {
+		// Page-cache plugins (WP Rocket, W3TC, Super Cache, LiteSpeed…)
+		// must never store a per-person page or replay its CSP nonce.
+		if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+			define( 'DONOTCACHEPAGE', true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Cache-plugin convention.
+		}
 		status_header( $response['status'] );
 		nocache_headers();
 		foreach ( $response['headers'] as $name => $value ) {
