@@ -44,3 +44,6 @@ stats.html
 
 # TypeScript
 *.tsbuildinfo
+
+# Local Claude Code session data (agent worktrees, settings)
+.claude/

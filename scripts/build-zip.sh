@@ -43,6 +43,7 @@ rsync -a \
   --exclude='vendor' \
   --exclude='.github' \
   --exclude='.git' \
+  --exclude='.claude' \
   --exclude='.gitignore' \
   --exclude='.gitattributes' \
   --exclude='.editorconfig' \
