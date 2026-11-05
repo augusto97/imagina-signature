@@ -13,12 +13,10 @@ use ImaginaSignatures\Admin\ManifestReader;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Core\I18n;
 use ImaginaSignatures\Core\Plugin;
-use ImaginaSignatures\Directory\Groups;
-use ImaginaSignatures\Directory\ProfileFields;
 use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Settings\BrandKit;
+use ImaginaSignatures\Services\RenderInputs;
 use ImaginaSignatures\Services\SignatureLinkConfig;
-use ImaginaSignatures\Settings\SystemVariables;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 use ImaginaSignatures\Storage\StorageManager;
 
@@ -559,6 +557,8 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 		$user_id   = get_current_user_id();
 		$user      = wp_get_current_user();
 		$site_opts = SiteSettingsController::current_settings();
+		// Same compile inputs as the wp-admin editor (RenderInputs).
+		$inputs = RenderInputs::for_user( $user, $site_opts );
 
 		// Mirrors EditorAssetEnqueuer: when the active storage driver
 		// is `url_only` we hide the upload UI in image / avatar / banner
@@ -585,15 +585,19 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 			],
 			'uploadEnabled'    => $upload_enabled,
 			// Same builder as the wp-admin editor (wp_* + company_*).
-			'systemVariables'  => SystemVariables::for_user( $user, $site_opts['brand_kit'] ),
+			'systemVariables'  => $inputs['systemVariables'],
 			'brandKit'         => BrandKit::public_payload( $site_opts['brand_kit'] ),
 			'frontendContext'  => 'public',
 			'brandPalette'     => $site_opts['brand_palette'],
 			// 1.3.0: the user's first group with a footer override wins.
-			'complianceFooter' => Groups::effective_compliance_footer( $user_id, $site_opts['compliance_footer'] ),
-			'profileFields'    => ProfileFields::public_definitions(),
+			'complianceFooter' => $inputs['complianceFooter'],
+			'profileFields'    => $inputs['profileFields'],
 			'profileUrl'       => self::profile_url(),
-			'bannerCampaigns'  => SiteSettingsController::active_banner_campaigns(),
+			'bannerCampaigns'  => $inputs['bannerCampaigns'],
+			'signatureLocale'  => $inputs['locale'],
+			// 1.3.0: sent back with each save; HTML compiled from inputs
+			// that changed since this page loaded is stored as outdated.
+			'inputsHash'       => RenderInputs::fingerprint( $inputs ),
 			// 1.3.0: whether the signature follows a template and what its
 			// employee mode lets this user change (see SignatureLinkConfig).
 			'signatureLink'    => SignatureLinkConfig::for_signature( $signature_id, $user_id ),

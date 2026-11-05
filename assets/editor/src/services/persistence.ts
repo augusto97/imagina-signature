@@ -193,11 +193,21 @@ class Persistence {
     // own (Gmail, Outlook add-in, install links). A compile failure must
     // never block saving the design itself.
     const compiled = compileForServer(schema);
+    // 1.3.0: the fingerprint of the inputs this page compiled with — when
+    // the owner's details or the company settings changed since the page
+    // loaded, the server stores this HTML as outdated instead of fresh.
+    const inputsHash = getConfig().inputsHash;
     const body = {
       name: rowName,
       status: rowStatus,
       json_content: schema,
-      ...(compiled ? { html: compiled.html, text: compiled.text } : {}),
+      ...(compiled
+        ? {
+            html: compiled.html,
+            text: compiled.text,
+            ...(typeof inputsHash === 'string' && inputsHash !== '' ? { inputs_hash: inputsHash } : {}),
+          }
+        : {}),
     };
 
     try {

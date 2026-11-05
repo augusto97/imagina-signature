@@ -697,6 +697,10 @@ final class SignaturesController extends BaseController {
 			if ( is_string( $request->get_param( 'text' ) ) ) {
 				$payload['text'] = (string) $request->get_param( 'text' );
 			}
+			// 1.3.0: fingerprint of the bootstrap inputs the HTML was compiled with.
+			if ( is_string( $request->get_param( 'inputs_hash' ) ) ) {
+				$payload['inputs_hash'] = (string) $request->get_param( 'inputs_hash' );
+			}
 		}
 
 		return $payload;
@@ -785,6 +789,11 @@ final class SignaturesController extends BaseController {
 			],
 			'text'         => [
 				'type' => 'string',
+			],
+			// 1.3.0: `IMGSIG_EDITOR_CONFIG.inputsHash` of the page that compiled `html`.
+			'inputs_hash'  => [
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			],
 		];
 	}

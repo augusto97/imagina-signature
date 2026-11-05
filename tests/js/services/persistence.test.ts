@@ -182,4 +182,36 @@ describe('persistence.saveNow (1.0.26 explicit-save model)', () => {
     const ids = await Promise.all([a, b, c]);
     expect(ids).toEqual([99, 99, 99]);
   });
+
+  it('sends the fingerprint of the inputs the HTML was compiled with', async () => {
+    const config = (globalThis as unknown as { IMGSIG_EDITOR_CONFIG: Record<string, unknown> })
+      .IMGSIG_EDITOR_CONFIG;
+    const previous = config.inputsHash;
+    config.inputsHash = 'inputs-abc';
+    try {
+      fetchMock.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: 42,
+            name: 'Untitled',
+            status: 'draft',
+            json_content: { ...createEmptySchema(), blocks: [textBlock] },
+          }),
+          { status: 201, headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+      useSchemaStore.setState((s) => ({
+        schema: { ...s.schema, blocks: [textBlock] },
+        hasUserEdited: true,
+      }));
+
+      await persistence.saveNow();
+
+      const sent = JSON.parse(String((fetchMock.mock.calls[0]![1] as RequestInit).body));
+      expect(typeof sent.html).toBe('string');
+      expect(sent.inputs_hash).toBe('inputs-abc');
+    } finally {
+      config.inputsHash = previous;
+    }
+  });
 });

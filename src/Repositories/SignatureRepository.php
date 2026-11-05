@@ -641,8 +641,10 @@ class SignatureRepository extends BaseRepository {
 			'html_text'      => $data['html_text'] ?? null,
 			'html_hash'      => $data['html_hash'] ?? null,
 			// A compile sent with the create belongs to this exact row
-			// state, so it is stamped with the same instant as updated_at.
-			'compiled_at'    => isset( $data['html_cache'] ) ? $now : null,
+			// state, so it is stamped with the same instant as updated_at —
+			// unless it was compiled from inputs that changed since
+			// (`html_outdated`, 1.3.0): then it stays outdated.
+			'compiled_at'    => isset( $data['html_cache'] ) && empty( $data['html_outdated'] ) ? $now : null,
 			// 1.3.0: only a row with a template can follow it.
 			'link_mode'      => Signature::LINK_LINKED === ( $data['link_mode'] ?? '' ) && isset( $data['template_id'] )
 				? Signature::LINK_LINKED
@@ -732,8 +734,10 @@ class SignatureRepository extends BaseRepository {
 
 		// HTML compiled alongside this write describes exactly this row
 		// state: stamp it with the same instant so it isn't seen as stale.
+		// HTML compiled from inputs that changed since (`html_outdated`,
+		// 1.3.0) is stored but stays outdated.
 		if ( array_key_exists( 'html_cache', $data ) ) {
-			$update['compiled_at'] = $update['updated_at'];
+			$update['compiled_at'] = empty( $data['html_outdated'] ) ? $update['updated_at'] : null;
 			$formats[]             = '%s';
 		}
 

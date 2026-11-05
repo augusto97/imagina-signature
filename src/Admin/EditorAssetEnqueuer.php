@@ -261,6 +261,9 @@ final class EditorAssetEnqueuer {
 				: DirectoryPages::profile_url(),
 			// Language of the compiled output (`lang` / `dir`): the subject's.
 			'signatureLocale'  => $inputs['locale'],
+			// Sent back with each save: HTML compiled from inputs that changed
+			// since this page loaded is stored as outdated (1.3.0).
+			'inputsHash'       => RenderInputs::fingerprint( $inputs ),
 			// 1.3.0: whether the signature follows a template and what its
 			// employee mode lets the subject change (see SignatureLinkConfig).
 			'signatureLink'    => SignatureLinkConfig::for_signature( $signature_id, (int) $subject->ID ),

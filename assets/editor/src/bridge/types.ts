@@ -55,6 +55,12 @@ export interface AppConfig {
    */
   onBehalfOf?: OnBehalfOf | null;
   /**
+   * Fingerprint of the compile inputs above (system variables, footer,
+   * campaigns, profile keys, locale), sent back as `inputs_hash` with
+   * every save that carries HTML (1.3.0). Missing = not sent.
+   */
+  inputsHash?: string;
+  /**
    * `{ msgid: msgstr }` for the user's locale (empty for English).
    * Read by `__()` — see `assets/shared/i18n.ts`.
    */
