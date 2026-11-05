@@ -1,30 +1,30 @@
 {
-  "_brandKit-hRDqOUvV.js": {
-    "file": "brandKit-hRDqOUvV.js",
+  "_brandKit-CLPgTarO.js": {
+    "file": "brandKit-CLPgTarO.js",
     "name": "brandKit"
   },
   "assets/admin/src/main.tsx": {
-    "file": "admin.Bcpn41T6.js",
+    "file": "admin.Cph7oD7-.js",
     "name": "admin",
     "src": "assets/admin/src/main.tsx",
     "isEntry": true,
     "imports": [
-      "_brandKit-hRDqOUvV.js"
+      "_brandKit-CLPgTarO.js"
     ],
     "css": [
-      "admin.BXWN-oVN.css"
+      "admin.DZITwW1V.css"
     ]
   },
   "assets/editor/src/main.tsx": {
-    "file": "editor.cF5M3wA6.js",
+    "file": "editor.Elv8Gz9E.js",
     "name": "editor",
     "src": "assets/editor/src/main.tsx",
     "isEntry": true,
     "imports": [
-      "_brandKit-hRDqOUvV.js"
+      "_brandKit-CLPgTarO.js"
     ],
     "css": [
-      "editor.DuBYWj70.css"
+      "editor.CC1J4xSC.css"
     ]
   }
 }
