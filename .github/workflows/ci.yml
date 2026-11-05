@@ -110,5 +110,10 @@ jobs:
       - name: Test (Vitest)
         run: npm test
 
+      # Every msgid must be translated before a release (Spanish is the
+      # primary audience). Refresh with: npm run i18n:pot && npm run i18n:update.
+      - name: Translations complete
+        run: npm run i18n:check
+
       - name: Build (Vite)
         run: npm run build

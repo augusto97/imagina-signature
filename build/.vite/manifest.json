@@ -1,27 +1,27 @@
 {
-  "_bundle-mjs-hhIRjs-x.js": {
-    "file": "bundle-mjs-hhIRjs-x.js",
-    "name": "bundle-mjs"
+  "_templateCategories-DxHZNAsL.js": {
+    "file": "templateCategories-DxHZNAsL.js",
+    "name": "templateCategories"
   },
   "assets/admin/src/main.tsx": {
-    "file": "admin.CiLk9FJ_.js",
+    "file": "admin.CBYutaei.js",
     "name": "admin",
     "src": "assets/admin/src/main.tsx",
     "isEntry": true,
     "imports": [
-      "_bundle-mjs-hhIRjs-x.js"
+      "_templateCategories-DxHZNAsL.js"
     ],
     "css": [
       "admin.COyDYp2O.css"
     ]
   },
   "assets/editor/src/main.tsx": {
-    "file": "editor.DsdJsqST.js",
+    "file": "editor.BmObw7Gq.js",
     "name": "editor",
     "src": "assets/editor/src/main.tsx",
     "isEntry": true,
     "imports": [
-      "_bundle-mjs-hhIRjs-x.js"
+      "_templateCategories-DxHZNAsL.js"
     ],
     "css": [
       "editor.pSAzxR8X.css"
