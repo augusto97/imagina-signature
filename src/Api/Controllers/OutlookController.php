@@ -342,6 +342,7 @@ final class OutlookController extends BaseController {
 			'https'                    => self::all_https( [ home_url( '/' ), $endpoint, (string) $context['assets_url'] ] ),
 			'well_known_url'           => OutlookWellKnown::url(),
 			'well_known_served'        => OutlookWellKnown::at_origin_root(),
+			'well_known_payload'       => OutlookWellKnown::payload(),
 		];
 	}
 

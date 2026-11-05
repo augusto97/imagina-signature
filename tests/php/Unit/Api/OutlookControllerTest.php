@@ -399,6 +399,11 @@ final class OutlookControllerTest extends TestCase {
 		$this->assertStringContainsString( 'download=1', $state['manifest_download_url'] );
 		$this->assertSame( 'https://acme.example/.well-known/microsoft-officeaddins-allowed.json', $state['well_known_url'] );
 		$this->assertTrue( $state['well_known_served'] );
+		$this->assertSame(
+			[ 'allowed' => [ 'https://acme.example/wp-content/plugins/imagina-signatures/assets/outlook/launchevent.js' ] ],
+			$state['well_known_payload'],
+			'The public allow-list never carries the key.'
+		);
 
 		$regenerated = $controller->regenerate_key()->get_data();
 		$this->assertStringNotContainsString( self::KEY, $regenerated['manifest_url'] );
