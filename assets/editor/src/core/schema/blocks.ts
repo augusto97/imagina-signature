@@ -72,17 +72,43 @@ export interface SpacerBlock extends BlockBase {
   height: number;
 }
 
+/** v1 social entry (letter circles). Read only to migrate old blocks. */
 export interface SocialNetwork {
   platform: string;
   url: string;
 }
 
+/**
+ * Row of hosted PNG social icons.
+ *
+ * v2 (1.2.0) fields are all optional so v1 rows keep loading; the
+ * block's own normaliser (`core/blocks/social-icons/normalize.ts`)
+ * turns a v1 row (`networks` / `icon_size` / `gap` / `color`) into the
+ * v2 shape on render / compile, and the properties panel writes v2 on
+ * the first edit (clearing the v1 keys).
+ */
 export interface SocialIconsBlock extends BlockBase {
   type: 'social_icons';
-  networks: SocialNetwork[];
-  icon_size: number;
-  gap: number;
-  color: string;
+  /** One entry per icon, in display order. `network` is an icon name from `assets/icons/manifest.json`. */
+  items?: Array<{ id: string; network: string; url: string }>;
+  /** Icon background. Default `circle`. */
+  shape?: 'circle' | 'rounded' | 'plain';
+  /** Colour treatment. Default `brand`; `light` is for dark backgrounds. */
+  tone?: 'brand' | 'dark' | 'gray' | 'light';
+  /** Displayed icon edge in px (16–40). Default 24. */
+  size?: number;
+  /** Gap between icons in px (0–24). Default 8. */
+  spacing?: number;
+  /** Row alignment inside the block. Default `left`. */
+  align?: 'left' | 'center' | 'right';
+  /** @deprecated v1 — use `items`. */
+  networks?: SocialNetwork[];
+  /** @deprecated v1 — use `size`. */
+  icon_size?: number;
+  /** @deprecated v1 — use `spacing`. */
+  gap?: number;
+  /** @deprecated v1 — letter-circle colour; mapped to a `tone`. */
+  color?: string;
 }
 
 export interface ContactRowBlock extends BlockBase {
