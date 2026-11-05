@@ -581,7 +581,11 @@ function hasTransparency(ctx: CanvasRenderingContext2D, w: number, h: number): b
   return false;
 }
 
-function canvasToBlob(canvas: HTMLCanvasElement, mime: string, quality?: number): Promise<Blob> {
+export function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  mime: string,
+  quality?: number,
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
     try {
       canvas.toBlob(

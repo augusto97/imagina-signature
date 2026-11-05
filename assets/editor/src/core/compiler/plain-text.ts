@@ -129,9 +129,9 @@ function qrLines(block: QrCodeBlock): string[] {
   return [labelled(block.caption || __('QR code'), data)];
 }
 
-function vcardLines(_block: VCardBlock): string[] {
-  // The vCard link is an embedded data: URI, which plain text can't carry.
-  return [];
+function vcardLines(block: VCardBlock): string[] {
+  if (!block.vcf_url) return [];
+  return [labelled(block.label || __('Save my contact'), block.vcf_url)];
 }
 
 function containerLines(block: ContainerBlock): string[] {
