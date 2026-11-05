@@ -81,6 +81,7 @@ final class Uninstaller {
 		'imgsig_frontend_access',
 		'imgsig_delete_data_on_uninstall',
 		'imgsig_upgrade_lock',
+		'imgsig_template_hashes',
 	];
 
 	/**
