@@ -1,3 +1,4 @@
+import { createRestNonceManager } from '@shared/restNonce';
 import type { AdminConfig } from './types';
 
 export class ApiError extends Error {
@@ -27,6 +28,22 @@ interface ApiCallOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
 }
 
+/**
+ * REST nonce lifecycle (see `assets/shared/restNonce.ts`): refreshes
+ * `IMGSIG_ADMIN_CONFIG.restNonce` in place on a nonce failure and
+ * every 10 h, so a listing left open overnight keeps working.
+ */
+const nonceManager = createRestNonceManager(getConfig);
+
+/** Fetch a fresh REST nonce now. Resolves null when WordPress refused. */
+export function refreshRestNonce(): Promise<string | null> {
+  return nonceManager.refresh();
+}
+
+/**
+ * REST call against the plugin namespace. A `401/403` nonce failure
+ * refreshes the nonce and retries the request once.
+ */
 export async function apiCall<T = unknown>(
   path: string,
   options: ApiCallOptions = {},
@@ -35,22 +52,24 @@ export async function apiCall<T = unknown>(
   const url = `${config.apiBase}${path.startsWith('/') ? path : `/${path}`}`;
   const { body, headers, ...rest } = options;
 
-  const init: RequestInit = {
-    ...rest,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-WP-Nonce': config.restNonce,
-      Accept: 'application/json',
-      ...(headers ?? {}),
-    },
+  const buildInit = (nonce: string): RequestInit => {
+    const init: RequestInit = {
+      ...rest,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-WP-Nonce': nonce,
+        Accept: 'application/json',
+        ...(headers ?? {}),
+      },
+    };
+    if (body !== undefined && body !== null) {
+      init.body = JSON.stringify(body);
+    }
+    return init;
   };
 
-  if (body !== undefined && body !== null) {
-    init.body = JSON.stringify(body);
-  }
-
-  const response = await fetch(url, init);
+  const response = await nonceManager.fetchWithNonce(url, buildInit);
 
   if (!response.ok) {
     let payload: { code?: string; message?: string; data?: unknown } = {};
