@@ -6,6 +6,7 @@ import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
+import { attr, escapeHtml, intPx, paddingCss } from '@/core/compiler/css';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 /**
@@ -168,10 +169,7 @@ function generateQrDataURL(block: QrCodeBlock): string {
 }
 
 function compile(block: QrCodeBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p
-    ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px`
-    : '0';
+  const padding = paddingCss(block.padding);
 
   const dataUrl = generateQrDataURL(block);
   if (!dataUrl) return '';
@@ -180,15 +178,9 @@ function compile(block: QrCodeBlock, _ctx: CompileContext): string {
     ? `<div style="margin-top:4px;font-size:11px;color:#475569">${escapeHtml(block.caption)}</div>`
     : '';
 
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding};text-align:center"><img src="${dataUrl}" alt="${escapeAttr(block.caption || 'QR code')}" width="${block.size}" height="${block.size}" style="display:block;border:0;margin:0 auto" />${captionHtml}</td></tr></table>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding};text-align:center"><img src="${attr(dataUrl)}" alt="${attr(block.caption || 'QR code')}" width="${intPx(block.size, 16, 1000, 120)}" height="${intPx(block.size, 16, 1000, 120)}" style="display:block;border:0;margin:0 auto" />${captionHtml}</td></tr></table>`;
 }
 
-function escapeHtml(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-function escapeAttr(value: string): string {
-  return value.replace(/"/g, '&quot;');
-}
 
 const definition: BlockDefinition<QrCodeBlock> = {
   type: 'qr_code',

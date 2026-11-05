@@ -6,6 +6,15 @@ import { __ } from '@/i18n/helpers';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
+import {
+  escapeHtml,
+  fontStack,
+  inlineStyle,
+  num,
+  paddingCss,
+  px,
+  safeColor,
+} from '@/core/compiler/css';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: DisclaimerBlock }> = ({ block }) => {
@@ -60,18 +69,14 @@ const Properties: FC<{ block: DisclaimerBlock; onChange: (u: Partial<DisclaimerB
 );
 
 function compile(block: DisclaimerBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px` : '0';
-  const safe = String(block.content).replace(/[<>&]/g, (c) =>
-    c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&amp;',
-  );
-  const style = [
-    `font-family:${block.style.font_family}`,
-    `font-size:${block.style.font_size}px`,
-    `color:${block.style.color}`,
-    `line-height:${block.style.line_height ?? 1.4}`,
-    `padding:${padding}`,
-  ].join(';');
+  const safe = escapeHtml(block.content);
+  const style = inlineStyle({
+    'font-family': fontStack(block.style.font_family),
+    'font-size': `${px(block.style.font_size, 6, 48, 10)}px`,
+    color: safeColor(block.style.color, '#6b7280'),
+    'line-height': num(block.style.line_height ?? 1.4, 0.5, 4, 1.4),
+    padding: paddingCss(block.padding),
+  });
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="${style}">${safe}</td></tr></table>`;
 }
 

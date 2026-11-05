@@ -5,7 +5,7 @@ import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
-import { escapeAttr } from '@/core/compiler/compile';
+import { attr, escapeHtml, paddingCss, px, safeColor } from '@/core/compiler/css';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 /**
@@ -187,8 +187,7 @@ function escapeVCard(value: string): string {
 }
 
 function compile(block: VCardBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px` : '0';
+  const padding = paddingCss(block.padding);
 
   const vcardBase64 = btoa(unescape(encodeURIComponent(buildVCardString(block))));
   const href = `data:text/vcard;charset=utf-8;base64,${vcardBase64}`;
@@ -198,22 +197,17 @@ function compile(block: VCardBlock, _ctx: CompileContext): string {
   const styles = [
     'display:inline-block',
     'padding:8px 14px',
-    // Colour values are interpolated into a CSS string. Strict
-    // attribute-context escaping defends against a corrupted JSON
-    // row containing `"` or `;` injection.
-    `background:${escapeAttr(block.background_color)}`,
-    `color:${escapeAttr(block.text_color)}`,
-    `border-radius:${block.border_radius}px`,
+    // Colour values are free-form schema strings — validate them
+    // through the central serializer instead of escaping.
+    `background:${safeColor(block.background_color, '#2563eb')}`,
+    `color:${safeColor(block.text_color, '#ffffff')}`,
+    `border-radius:${px(block.border_radius, 0, 999)}px`,
     'text-decoration:none',
     'font-size:13px',
     'font-weight:500',
   ].join(';');
 
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><a href="${href}" download="${escapeAttr(filename)}" style="${styles}">${label}</a></td></tr></table>`;
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><a href="${href}" download="${attr(filename)}" style="${styles}">${label}</a></td></tr></table>`;
 }
 
 const definition: BlockDefinition<VCardBlock> = {

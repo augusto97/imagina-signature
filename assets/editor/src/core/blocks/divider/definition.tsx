@@ -3,6 +3,7 @@ import { Minus } from 'lucide-react';
 import type { DividerBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
+import { borderStyle, intPx, paddingCss, px, safeColor } from '@/core/compiler/css';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: DividerBlock }> = ({ block }) => {
@@ -79,11 +80,10 @@ const Properties: FC<{
 );
 
 function compile(block: DividerBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p
-    ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px`
-    : '0';
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:${block.width_percent}%"><tr><td style="padding:${padding}"><div style="height:0;border-top:${block.border.width}px ${block.border.style} ${block.border.color}"></div></td></tr></table>`;
+  const padding = paddingCss(block.padding);
+  const widthPct = intPx(block.width_percent, 1, 100, 100);
+  const border = `${px(block.border?.width, 0, 20, 1)}px ${borderStyle(block.border?.style)} ${safeColor(block.border?.color, '#e5e7eb')}`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:${widthPct}%"><tr><td style="padding:${padding}"><div style="height:0;border-top:${border}"></div></td></tr></table>`;
 }
 
 const definition: BlockDefinition<DividerBlock> = {

@@ -1,6 +1,16 @@
 import type { TextBlock } from '@/core/schema/blocks';
 import type { CompileContext } from '@/core/blocks/registry';
 import { sanitizeEmailHtml } from '@/core/compiler/sanitize';
+import {
+  fontStack,
+  fontWeight,
+  inlineStyle,
+  num,
+  paddingCss,
+  px,
+  safeColor,
+  textAlign,
+} from '@/core/compiler/css';
 
 /**
  * JSON → email-safe HTML for a Text block.
@@ -10,23 +20,20 @@ import { sanitizeEmailHtml } from '@/core/compiler/sanitize';
  * `javascript:` URLs even if a hostile schema (corrupted DB row,
  * tampered template, future Tiptap regression) gets through. Defence
  * in depth — the editor also sanitises before rendering on the canvas.
+ *
+ * Every style value goes through the central serializer so font
+ * stacks with double quotes no longer break the `style` attribute.
  */
 export function compileText(block: TextBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p
-    ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px`
-    : '0';
-
-  const styles: Array<[string, string | number]> = [
-    ['font-family', block.style.font_family],
-    ['font-size', `${block.style.font_size}px`],
-    ['font-weight', block.style.font_weight],
-    ['color', block.style.color],
-    ['line-height', block.style.line_height ?? 1.4],
-    ['text-align', block.style.text_align ?? 'left'],
-    ['padding', padding],
-  ];
-  const style = styles.map(([k, v]) => `${k}:${v}`).join(';');
+  const style = inlineStyle({
+    'font-family': fontStack(block.style.font_family),
+    'font-size': `${px(block.style.font_size, 6, 96, 14)}px`,
+    'font-weight': fontWeight(block.style.font_weight),
+    color: safeColor(block.style.color, '#111827'),
+    'line-height': num(block.style.line_height ?? 1.4, 0.5, 4, 1.4),
+    'text-align': textAlign(block.style.text_align),
+    padding: paddingCss(block.padding),
+  });
 
   const safeContent = sanitizeEmailHtml(block.content);
 

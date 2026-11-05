@@ -7,6 +7,7 @@ import { validateEmailHtml } from './validate';
 import { substituteVariables } from './variables';
 import { getConfig } from '@/bridge/apiClient';
 import type { AppConfig } from '@/bridge/types';
+import { attr, intPx } from './css';
 
 export interface CompileResult {
   html: string;
@@ -164,7 +165,7 @@ function appendBannerCampaign(html: string, canvasWidth: number): string {
   const idx = html.lastIndexOf(marker);
   if (idx === -1) return html;
 
-  const width = Math.max(100, Math.min(canvasWidth, pick.width || canvasWidth));
+  const width = intPx(pick.width || canvasWidth, 100, intPx(canvasWidth, 200, 1200, 600), canvasWidth);
   // Escape EVERY interpolated attribute. Banner image_url / link_url
   // / alt come from admin input that's only loosely sanitised on the
   // server. A `"` in any field would break out of the attribute and
@@ -195,18 +196,11 @@ function stablePickIndex(length: number): number {
 }
 
 /**
- * Strict HTML attribute-context escaper. Handles the four characters
- * that can break out of a double-quoted attribute (`&`, `<`, `>`,
- * `"`). Used by every block compile function that interpolates
- * user-controlled strings (URLs, alt text, names, hrefs).
+ * Strict HTML attribute-context escaper (`&`, `<`, `>`, `"`, `'`).
  *
- * Exported for re-use across block compilers — see image, banner,
- * social-icons, contact-row, button-cta, vcard, avatar definitions.
+ * Kept as a re-export for back-compat — new code should import
+ * {@link attr} from `./css` (the central serializer) directly.
  */
 export function escapeAttr(value: string): string {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return attr(value);
 }

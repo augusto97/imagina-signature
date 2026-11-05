@@ -4,7 +4,7 @@ import type { ContactRowBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
-import { escapeAttr } from '@/core/compiler/compile';
+import { attr, escapeHtml, fontStack, inlineStyle, paddingCss, px, safeColor } from '@/core/compiler/css';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 type RowIcon = 'email' | 'phone' | 'web';
@@ -122,24 +122,22 @@ const ICON_SVG: Record<RowIcon, string> = {
 };
 
 function compile(block: ContactRowBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px` : '0';
-  const baseStyle = [
-    `font-family:${block.style.font_family}`,
-    `font-size:${block.style.font_size}px`,
-    `color:${block.style.color}`,
-    `padding:${padding}`,
-  ].join(';');
+  const color = safeColor(block.style.color, '#374151');
+  const baseStyle = inlineStyle({
+    'font-family': fontStack(block.style.font_family),
+    'font-size': `${px(block.style.font_size, 6, 48, 14)}px`,
+    color,
+    padding: paddingCss(block.padding),
+  });
 
-  const safeColor = escapeAttr(block.style.color);
-  const rows = block.rows.map((row) => {
-    // Strict escapers — label was missing `"` and href was completely
-    // unescaped, so user-controlled `mailto:` / `tel:` strings could
-    // break out of the attribute and inject HTML in the recipient's
-    // inbox.
-    const safeLabel = escapeAttr(row.label);
-    const safeHref = escapeAttr(row.href);
-    return `<tr><td style="${baseStyle}"><span style="margin-right:6px">${ICON_SVG[row.icon]}</span><a href="${safeHref}" style="color:${safeColor};text-decoration:none">${safeLabel}</a></td></tr>`;
+  const rows = (block.rows ?? []).map((row) => {
+    // Every interpolated value goes through the central serializer —
+    // label / href are user-controlled and the colour is a free-form
+    // schema string.
+    const safeLabel = escapeHtml(row.label);
+    const safeHref = attr(row.href);
+    const glyph = ICON_SVG[row.icon] ?? '';
+    return `<tr><td style="${baseStyle}"><span style="margin-right:6px">${glyph}</span><a href="${safeHref}" style="color:${color};text-decoration:none">${safeLabel}</a></td></tr>`;
   });
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%">${rows.join('')}</table>`;

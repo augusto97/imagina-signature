@@ -4,6 +4,7 @@ import type { BannerBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
+import { intPx, paddingCss, px } from '@/core/compiler/css';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 import { isAnimatedGif, withOutlookFallback } from '../image/definition';
 
@@ -128,10 +129,9 @@ const Properties: FC<{
 );
 
 function compile(block: BannerBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px` : '0';
-  const widthAttr = block.width ? ` width="${block.width}"` : '';
-  const radius = block.border_radius ? `;border-radius:${block.border_radius}px` : '';
+  const padding = paddingCss(block.padding);
+  const widthAttr = block.width ? ` width="${intPx(block.width, 1, 4000, 600)}"` : '';
+  const radius = block.border_radius ? `;border-radius:${px(block.border_radius, 0, 999)}px` : '';
   const baseStyle = `display:block;max-width:100%;height:auto;border:0;margin:0 auto${radius}`;
 
   const inner = withOutlookFallback(

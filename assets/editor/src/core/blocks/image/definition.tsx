@@ -4,7 +4,7 @@ import type { ImageBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
-import { escapeAttr } from '@/core/compiler/compile';
+import { attr, intPx, paddingCss, px } from '@/core/compiler/css';
 import { isUploadEnabled } from '@/bridge/apiClient';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
@@ -155,13 +155,10 @@ const Properties: FC<{ block: ImageBlock; onChange: (updates: Partial<ImageBlock
 };
 
 function compile(block: ImageBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p
-    ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px`
-    : '0';
-  const widthAttr = block.width ? ` width="${block.width}"` : '';
-  const heightAttr = block.height ? ` height="${block.height}"` : '';
-  const radius = block.border_radius ? `;border-radius:${block.border_radius}px` : '';
+  const padding = paddingCss(block.padding);
+  const widthAttr = block.width ? ` width="${intPx(block.width, 1, 4000, 1)}"` : '';
+  const heightAttr = block.height ? ` height="${intPx(block.height, 1, 4000, 1)}"` : '';
+  const radius = block.border_radius ? `;border-radius:${px(block.border_radius, 0, 999)}px` : '';
   const baseStyle = `display:block;max-width:100%;height:auto;border:0${radius}`;
 
   const inner = withOutlookFallback(
@@ -208,13 +205,12 @@ export function withOutlookFallback(
   styles: string,
   link: string | undefined,
 ): string {
-  // Use the strict attribute-context escaper from compile.ts. The
-  // local helper that lived here only escaped `"` — leaving `&`,
-  // `<`, `>` raw, which let user-controlled URLs / alt text break out
+  // Strict attribute-context escaping via the central serializer
+  // (`css.ts`) — user-controlled URLs / alt text must never break out
   // of the attribute and inject HTML.
-  const safeSrc = escapeAttr(src);
-  const safeAlt = escapeAttr(alt);
-  const safeLink = link ? escapeAttr(link) : '';
+  const safeSrc = attr(src);
+  const safeAlt = attr(alt);
+  const safeLink = link ? attr(link) : '';
   const wrap = (img: string): string => (link ? `<a href="${safeLink}">${img}</a>` : img);
 
   if (!fallback) {
@@ -222,7 +218,7 @@ export function withOutlookFallback(
     return wrap(img);
   }
 
-  const safeFallback = escapeAttr(fallback);
+  const safeFallback = attr(fallback);
   const animated = `<img src="${safeSrc}" alt="${safeAlt}"${dimAttrs} style="${styles}" />`;
   const staticImg = `<img src="${safeFallback}" alt="${safeAlt}"${dimAttrs} style="${styles}" />`;
   return (

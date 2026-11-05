@@ -9,6 +9,7 @@ import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
+import { px } from '@/core/compiler/css';
 import {
   registerBlock,
   rendererForBlock,
@@ -520,8 +521,9 @@ function compile(block: ContainerBlock, ctx: CompileContext): string {
   const rightHtml = visibleRight.map(compileChild).join('\n') || '&nbsp;';
   const leftPct = leftWidth(block);
   const rightPct = 100 - leftPct;
-  const padRight = `padding-right:${block.gap / 2}px`;
-  const padLeft = `padding-left:${block.gap / 2}px`;
+  const halfGap = px(block.gap, 0, 200, 0) / 2;
+  const padRight = `padding-right:${halfGap}px`;
+  const padLeft = `padding-left:${halfGap}px`;
 
   // `table-layout:fixed` is the key bit: without it the email
   // client uses auto layout, which allocates cell widths based on

@@ -6,7 +6,7 @@ import { __ } from '@/i18n/helpers';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
-import { escapeAttr } from '@/core/compiler/compile';
+import { attr, escapeHtml, paddingCss, px, safeColor } from '@/core/compiler/css';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: ButtonCtaBlock }> = ({ block }) => {
@@ -74,15 +74,14 @@ const Properties: FC<{ block: ButtonCtaBlock; onChange: (u: Partial<ButtonCtaBlo
 );
 
 function compile(block: ButtonCtaBlock, _ctx: CompileContext): string {
-  const p = block.padding;
-  const padding = p ? `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px` : '0';
-  // Strict escapers — label was missing `"` and href was missing
-  // `&`/`<`/`>`. Both are interpolated into attributes / text where
-  // a malicious input could break out.
-  const safeLabel = escapeAttr(block.label);
-  const safeHref = escapeAttr(block.href);
-  const safeBg = escapeAttr(block.background_color);
-  const safeText = escapeAttr(block.text_color);
+  const padding = paddingCss(block.padding);
+  // Central serializer for every interpolated value — label / href
+  // are user-controlled, colours are free-form schema strings.
+  const safeLabel = escapeHtml(block.label);
+  const safeHref = attr(block.href);
+  const safeBg = safeColor(block.background_color, '#1d4ed8');
+  const safeText = safeColor(block.text_color, '#ffffff');
+  const radius = px(block.border_radius, 0, 999, 0);
 
   // Bullet-proof button: Outlook desktop (uses Microsoft Word's render
   // engine, no border-radius / no padding on <a>) sees a VML <v:roundrect>
@@ -91,13 +90,13 @@ function compile(block: ButtonCtaBlock, _ctx: CompileContext): string {
   // Reference: https://www.caniemail.com (round buttons in Outlook).
   const vmlButton =
     `<!--[if mso]>
-<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${safeHref}" style="height:40px;v-text-anchor:middle;width:200px;" arcsize="${Math.round((block.border_radius / 40) * 100)}%" stroke="f" fillcolor="${safeBg}">
+<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${safeHref}" style="height:40px;v-text-anchor:middle;width:200px;" arcsize="${Math.min(50, Math.round((radius / 40) * 100))}%" stroke="f" fillcolor="${safeBg}">
 <w:anchorlock/>
 <center style="color:${safeText};font-family:Arial,sans-serif;font-size:14px;font-weight:600;">${safeLabel}</center>
 </v:roundrect>
 <![endif]-->`;
 
-  const cssButton = `<!--[if !mso]><!-- --><a href="${safeHref}" style="display:inline-block;padding:12px 24px;background:${safeBg};color:${safeText};text-decoration:none;border-radius:${block.border_radius}px;font-family:Arial,sans-serif;font-weight:600;font-size:14px">${safeLabel}</a><!--<![endif]-->`;
+  const cssButton = `<!--[if !mso]><!-- --><a href="${safeHref}" style="display:inline-block;padding:12px 24px;background:${safeBg};color:${safeText};text-decoration:none;border-radius:${radius}px;font-family:Arial,sans-serif;font-weight:600;font-size:14px">${safeLabel}</a><!--<![endif]-->`;
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}">${vmlButton}${cssButton}</td></tr></table>`;
 }
