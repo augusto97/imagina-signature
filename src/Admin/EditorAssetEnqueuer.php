@@ -11,6 +11,8 @@ namespace ImaginaSignatures\Admin;
 
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Core\I18n;
+use ImaginaSignatures\Settings\BrandKit;
+use ImaginaSignatures\Settings\SystemVariables;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 
 defined( 'ABSPATH' ) || exit;
@@ -175,7 +177,11 @@ final class EditorAssetEnqueuer {
 			// only URL inputs in the Image / Avatar / Banner property
 			// panels.
 			'uploadEnabled'    => $upload_enabled,
-			'systemVariables'  => self::system_variables_for( $user ),
+			// `wp_*` user fields + `company_*` brand-kit fields, filtered
+			// through `imgsig/editor/system_variables`.
+			'systemVariables'  => SystemVariables::for_user( $user, $site_opts['brand_kit'] ),
+			// Public brand kit: new signatures start from its typography.
+			'brandKit'         => BrandKit::public_payload( $site_opts['brand_kit'] ),
 			'brandPalette'     => $site_opts['brand_palette'],
 			'complianceFooter' => $site_opts['compliance_footer'],
 			// Editor only sees CURRENTLY-ACTIVE campaigns (filtered by
@@ -184,47 +190,5 @@ final class EditorAssetEnqueuer {
 			// list via /admin/site-settings.
 			'bannerCampaigns'  => SiteSettingsController::active_banner_campaigns(),
 		];
-	}
-
-	/**
-	 * Build the read-only `wp_*` variables that auto-populate from
-	 * the WordPress user record. Plus a filterable extension hook so
-	 * an admin (or another plugin) can expose custom user_meta keys.
-	 *
-	 * @since 1.0.13
-	 *
-	 * @param \WP_User $user The current user.
-	 *
-	 * @return array<string, string>
-	 */
-	private static function system_variables_for( \WP_User $user ): array {
-		$base = [
-			'wp_display_name' => (string) $user->display_name,
-			'wp_email'        => (string) $user->user_email,
-			'wp_first_name'   => (string) $user->first_name,
-			'wp_last_name'    => (string) $user->last_name,
-			'wp_url'          => (string) $user->user_url,
-		];
-
-		/**
-		 * Filters the read-only system variables surfaced to the
-		 * editor. Add `wp_user_meta` keys here, or expose org-wide
-		 * defaults pulled from a directory sync.
-		 *
-		 * @since 1.0.13
-		 *
-		 * @param array<string, string> $base    Default `wp_*` variables.
-		 * @param int                   $user_id The user the editor is bound to.
-		 */
-		$filtered = apply_filters( 'imgsig/editor/system_variables', $base, $user->ID );
-
-		// Make sure the filter can't smuggle non-strings into the bag.
-		$out = [];
-		foreach ( (array) $filtered as $key => $value ) {
-			if ( is_string( $key ) && ( is_string( $value ) || is_numeric( $value ) ) ) {
-				$out[ $key ] = (string) $value;
-			}
-		}
-		return $out;
 	}
 }
