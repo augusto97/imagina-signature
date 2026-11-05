@@ -41,6 +41,12 @@ Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
 
+= 1.1.0 =
+* Stabilisation release (roadmap Fase 0). Signatures now render correctly in Gmail, Outlook and Apple Mail: escaped fonts, hosted QR/crop/vCard files instead of data: URIs, correct paragraph spacing, link colour and background exported, column widths in pixels.
+* Security hardening: recursive sanitiser plus server-side sanitisation of the whole signature, safe URLs, signed S3 uploads with type/size checks, per-user quota, atomic rate limits, CSP on the public route, privacy exporter/eraser.
+* Editor reliability: undo for every edit, no stale text between blocks, undoable template apply, self-refreshing REST nonce, variables no longer lost on save, quiet autosave, better drag and drop and shortcuts.
+* Full Spanish translation.
+
 = 1.0.39 =
 * **Multi-column container layout: cells now respect their configured width ratio in the exported HTML.** Default email-client table layout is `auto`, which allocates cell widths from content min/max — a wide QR-code child on the left would push the left cell wide and squeeze the right cell into a strip that wrapped "Senior Product Designer" across three lines. The 2-column compile now emits `table-layout:fixed` plus the `width="N%"` HTML attribute on each `<td>` (Outlook on Windows leans on the attribute when its CSS engine skips inline `width`). The editor canvas renderer matches, so what you see in the editor is what the email client shows. `mso-table-lspace/rspace` also zeroed to kill Outlook's invisible default table padding around the container.
 

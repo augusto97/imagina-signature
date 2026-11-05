@@ -18,17 +18,35 @@
 - **Autor:** Imagina WP
 - **Licencia del código:** GPL v2 or later
 
-**Qué es:** Plugin WordPress que añade un editor visual moderno de firmas de correo dentro de wp-admin. Cada usuario WordPress ve solo sus propias firmas. Soporta storage en Media Library nativa o S3-compatible externo. El editor corre en un iframe aislado con React 18, dnd-kit y Tiptap, simulando la UX de Framer/Webflow.
+**Qué es:** Plugin WordPress que añade un editor visual moderno de firmas de correo dentro de wp-admin y en una ruta pública (`/signatures/`) para usuarios sin acceso a wp-admin. Cada usuario WordPress ve solo sus propias firmas. Soporta storage en Media Library nativa, S3-compatible externo o "solo URLs". El editor es una app React 18 con dnd-kit y Tiptap, con UX tipo Framer/Webflow.
 
-**Qué NO incluye este MVP** (importante para Claude Code, no implementar nada de esto sin confirmación explícita del usuario):
-- Sistema de planes / cuotas / límites
-- Sistema de licencias / verificación con servidores externos
-- Setup wizard de modos (single/multi)
-- Integraciones con plugins de membresía (PMP, WooCommerce Memberships)
-- Animaciones / generación de GIFs
-- OAuth con Gmail/Outlook
-- Analytics de clicks
-- API pública para terceros
+### 0.1. Estado real de la arquitectura (1.1.0) — prevalece sobre secciones antiguas
+
+Varias secciones de este documento describen el diseño original del MVP. Donde choquen con esta lista, **manda esta lista**:
+
+- **No hay iframe.** El editor se monta directamente en una página oculta de wp-admin (`src/Admin/Pages/EditorPage.php` + `src/Admin/EditorAssetEnqueuer.php`, que oculta el chrome de wp-admin) y en la ruta pública (`src/Frontend/FrontendRouter.php` + `FrontendPage.php`, HTML propio sin tema, CSP con nonce). Las secciones 3.3 y 14.1–14.3 quedan como histórico.
+- **Bundles con hash.** Vite emite `editor.[hash].js` / `admin.[hash].js` y `build/.vite/manifest.json`; `src/Admin/ManifestReader.php` resuelve los nombres. `__BUNDLE_VERSION__` se compara con `IMGSIG_VERSION` en el topbar.
+- **Compilación en el navegador** (`assets/editor/src/core/compiler/`). Todo valor que entra al HTML pasa por `core/compiler/css.ts` (escape/validación). `CompileContext.availableWidth` propaga el ancho disponible a cada bloque. Los avisos son `issues` con nivel `error` / `warning`.
+- **Assets alojados, nunca `data:`.** QR, recortes y vCard se suben por `/upload/*` (`assets/editor/src/services/uploads.ts`); `editor/BackgroundAssetSync.tsx` sube los de bloques no seleccionados.
+- **Saneado en servidor.** `src/Services/SchemaSanitizer.php` recorre todo el árbol en cada guardado (kses email-safe, protocolos permitidos, límites 256 KB / profundidad 4 / 200 bloques). `SchemaShape::restore_objects()` evita que `{}` vuelva como `[]`.
+- **Límites atómicos.** Tabla `imgsig_rate_limits` (ventanas fijas, `Retry-After`). El autoguardado se pausa ante un 429.
+- **i18n real.** Pipeline `npm run i18n:pot` / `i18n:build` / `i18n:check`; PHP carga el text domain con fallback de cualquier `es_*` a `es_ES`; los bootstraps JS inyectan `translations`.
+- **Pruebas.** Vitest (compilador, sanitizador, stores), PHPUnit con kses real de WordPress, y `tests/e2e/smoke.cjs` (Playwright contra un WordPress vivo).
+
+### 0.2. Alcance (actualizado con la hoja de ruta de noviembre 2026)
+
+La auditoría de noviembre 2026 definió cinco fases. **En curso: Fases 0, 1 y 2.**
+- Fase 0 — Estabilizar (1.1.0): salida de email sin fallos, seguridad, CI, traducciones.
+- Fase 1 — Diseño premium (1.2.0): esquema 1.1 con estilos de caja y contenedor de 1–4 columnas, iconos reales, imágenes subidas, tipografía completa, kit de marca, 30+ plantillas, bienvenida guiada.
+- Fase 2 — Gestión y despliegue (1.3.0): HTML compilado en servidor, plantillas vinculadas, modo empleado, consola de equipo, grupos, campos de perfil, enlace de instalación, despliegue a Gmail (cuenta de servicio con delegación de dominio) y complemento de Outlook.
+
+Permitido desde la Fase 2: integraciones con Google Workspace y Microsoft 365 **autorizadas una sola vez por el administrador de la empresa** (cuenta de servicio / permisos de aplicación), nunca OAuth por usuario.
+
+Sigue fuera de alcance salvo confirmación explícita del usuario:
+- Sistema de planes, licencias o verificación con servidores del autor (Fase 4).
+- Analytics de clics y A/B (Fase 3).
+- Integraciones con plugins de membresía (PMP, WooCommerce Memberships).
+- API pública con claves para terceros (Fase 4).
 
 ---
 
@@ -36,9 +54,9 @@
 
 Estos principios guían toda decisión técnica:
 
-1. **Aislamiento del editor.** El editor visual vive dentro de un iframe controlado, sirviendo HTML propio desde nuestro backend. Cero contaminación con CSS/JS de wp-admin.
+1. **Aislamiento del editor.** El editor monta su propia app React en un contenedor a pantalla completa con estilos acotados (Tailwind sin preflight global sobre wp-admin) y nada de jQuery. Ver §0.1: ya no usa iframe.
 2. **Compatibilidad con hosting compartido.** PHP 7.4+, MySQL 5.7+, sin `exec`, sin Node en servidor, sin extensiones exóticas.
-3. **Cero peticiones externas en runtime.** Una vez instalado el plugin, no hay llamadas a servidores del autor. Solo al storage configurado por el usuario (Media Library local o S3).
+3. **Sin servidores del autor.** Una vez instalado el plugin, no hay llamadas a servidores del autor. Solo a servicios que el administrador configure: el storage (Media Library o S3) y, desde la Fase 2, Google Workspace / Microsoft 365.
 4. **Cero dependencias en CDNs externos.** Todo el JS/CSS va empaquetado en el plugin. Sin Google Fonts, sin jsDelivr, sin unpkg.
 5. **WYSIWYG real.** El canvas del editor renderiza HTML email-safe (tablas + inline CSS) idéntico al output. Lo que ves es lo que se envía.
 6. **Edición fuera del canvas.** El texto se edita en el sidebar derecho con Tiptap, no en contenteditable directo. Esto elimina los bugs de cursor/selección típicos de editores email.
@@ -157,6 +175,8 @@ Clipboard API
 ```
 
 ### 3.3. Por qué iframe para el editor
+
+> **Histórico (pre-1.0.6):** el editor ya no usa iframe. Ver §0.1 para la arquitectura actual.
 
 WordPress admin tiene jQuery cargado, scripts antiguos, CSS global con selectors agresivos, y reset CSS que afecta a todo. Un iframe es la única forma garantizada de aislar el editor moderno (React 18 + Tailwind) de eso.
 
@@ -1650,6 +1670,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
 ## 14. Integración con WordPress
 
+> **Histórico (pre-1.0.6):** el editor ya no usa iframe. Ver §0.1 para la arquitectura actual.
+
 ### 14.1. La página del editor en wp-admin
 
 ```php
@@ -2773,7 +2795,9 @@ Cuando trabajes en este proyecto:
     - Cachear queries pesadas
     - Liberar transients en uninstall
     - Componer el editor con React 18, dnd-kit, Tiptap, shadcn/ui exclusivamente
-    - Mantener el iframe aislado de wp-admin
+    - Mantener el editor aislado de wp-admin (sin jQuery, estilos acotados, chrome de wp-admin oculto)
+    - Probar cada fase en un WordPress real con `tests/e2e/smoke.cjs` antes de publicar
+    - Mantener las traducciones completas (`npm run i18n:check`) en cada versión
 
 ---
 

@@ -2,6 +2,51 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-11-05
+
+Fase 0 of the November 2026 roadmap: stabilise before adding features. Everything below was verified against a live WordPress (SQLite) with `tests/e2e/smoke.cjs`, upgrading from a 1.0.39 database.
+
+### Fixed — signatures that broke in real email clients
+- Fonts with spaces (Trebuchet MS, Times New Roman, Courier New) inserted unescaped double quotes into `style="…"`, cutting the attribute and dropping size, colour and spacing. Every value now goes through one serializer (`core/compiler/css.ts`).
+- QR codes, cropped photos and vCards were embedded as `data:` URIs, which Gmail and Outlook.com don't display and which pushed signatures past Gmail's 10,000-character limit. They are now uploaded and referenced by URL. Existing signatures get a one-click "Fix embedded images" button in Export.
+- The minifier joined words ("Jane Doe" → "JaneDoe") and glued disclaimer lines together.
+- Paragraphs had 0 margin in the editor but ~14px in Gmail and Apple Mail; they now export with `margin:0`.
+- Link colour and canvas background now reach the recipient.
+- Images wider than their column overflowed into the next column; widths are now computed in pixels per cell and images are clamped.
+- Dividers render as a 1px table cell (Outlook showed a tall empty paragraph); buttons size their Outlook VML from the label and fall back to a table-cell button.
+- "Copy visual" copies only the signature table plus clean plain text (no `<head>`, no "96Email Signature").
+
+### Security
+- The rich-text sanitizer could be bypassed by nesting (`<section><img onerror>`); it is now recursive and allowlist-based, with a 39-vector XSS test battery. The server also sanitises every text field and URL of the whole block tree on save (kses), with limits of 256 KB, depth 4 and 200 blocks.
+- `javascript:` and other unsafe URLs are rejected after variable substitution.
+- S3 presigned uploads now sign the content type, check type and size on finalize and enforce a strict key pattern; per-user quota of 100 MB.
+- "Send to my email" sanitises the HTML, adds a plain-text part and a site-wide cap.
+- Atomic rate limiter with fixed windows and `Retry-After` (new table `imgsig_rate_limits`).
+- Public route: CSP with a nonce, restricted `connect-src`, `object-src 'none'`, `nosniff`; login return URL built from `home_url`.
+- Privacy: WordPress personal-data exporter and eraser, cleanup on user deletion, uninstall keeps data unless "delete data on uninstall" is enabled, upload URLs no longer expose user ids or original filenames, EXIF/GPS stripped.
+- Minor leaks closed: template visibility by role, inactive campaigns, raw database errors.
+
+### Fixed — editor reliability
+- Undo now covers property edits (colours, text, sizes), grouped into sensible steps.
+- Switching between two text blocks could show or write stale text.
+- Duplicating a 2-column container shared ids with the original's right column.
+- Applying a template asks for confirmation, can be undone and keeps your variables; template cards show live previews.
+- The REST nonce refreshes itself, so long sessions no longer fail to save after 12–24 h.
+- Empty `variables` came back from PHP as `[]`, so variables added later were silently dropped on save.
+- Autosave is silent, compares structurally, adopts the server copy when content was sanitised, and pauses on 429 instead of erroring.
+- QR and vCard files upload even when the block isn't selected (blocks added by click or by a template).
+- Drag and drop: drops onto the empty canvas work, blocks land before or after depending on the pointer, a drop line shows the target, nested blocks get the full toolbar, move up/down buttons.
+- Shortcuts: Ctrl/Cmd+Y redo, arrow navigation, copy/paste blocks across signatures, Escape to deselect.
+
+### Added
+- Spanish translation of the whole plugin (es_ES, used for every es_* locale) with an extraction/build/check pipeline.
+- `tests/e2e/smoke.cjs`, an end-to-end suite against a live WordPress.
+
+### Engineering
+- CI runs again (composer platform pinned to PHP 7.4, `npm ci`, PHPCS errors block). PHPCS errors: 35 → 0. PHPUnit: 54 → 217 tests. Vitest: 41 → 371 tests.
+- Background work: upgrade routine only on admin/authenticated requests with a lock; list endpoints no longer return full JSON; no intermediate image sizes for plugin uploads.
+- CLAUDE.md updated to the real architecture (no iframe) and the roadmap scope.
+
 ## [1.0.39] — 2026-05-22
 
 ### Fixed — 2-column container collapsed under content pressure in exported HTML
