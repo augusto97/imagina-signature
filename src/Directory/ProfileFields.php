@@ -198,17 +198,21 @@ final class ProfileFields {
 	 * @return array{mapping: array<string, array{source: string, meta_key: string}>, custom: array<int, array{key: string, label: string, type: string}>}
 	 */
 	public static function save_config( $raw ): array {
-		$config = self::sanitize_config( $raw );
+		$previous = self::config();
+		$config   = self::sanitize_config( $raw );
 		update_option( self::OPTION, $config, true );
 
-		/**
-		 * Fires after the profile field mapping / custom fields change.
-		 *
-		 * @since 1.3.0
-		 *
-		 * @param array<string, mixed> $config Sanitised config.
-		 */
-		do_action( 'imgsig/profile/fields_changed', $config );
+		if ( $previous !== $config ) {
+			/**
+			 * Fires after the profile field mapping / custom fields change
+			 * (not on a save that changed nothing).
+			 *
+			 * @since 1.3.0
+			 *
+			 * @param array<string, mixed> $config Sanitised config.
+			 */
+			do_action( 'imgsig/profile/fields_changed', $config );
+		}
 
 		return $config;
 	}

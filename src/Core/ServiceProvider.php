@@ -42,6 +42,7 @@ use ImaginaSignatures\Services\HtmlSanitizer;
 use ImaginaSignatures\Services\JsonSchemaValidator;
 use ImaginaSignatures\Services\SchemaSanitizer;
 use ImaginaSignatures\Services\SignatureService;
+use ImaginaSignatures\Services\StaleHtmlMarker;
 use ImaginaSignatures\Services\TemplateAssignmentService;
 use ImaginaSignatures\Services\TemplatePropagator;
 use ImaginaSignatures\Services\TemplateService;
@@ -172,6 +173,13 @@ final class ServiceProvider {
 					$c->make( SignatureService::class ),
 					$c->make( SignatureRepository::class )
 				);
+			}
+		);
+		// Stored HTML goes stale when profiles / groups / site inputs change (1.3.0).
+		$container->singleton(
+			StaleHtmlMarker::class,
+			static function ( Container $c ): StaleHtmlMarker {
+				return new StaleHtmlMarker( $c->make( SignatureRepository::class ) );
 			}
 		);
 		$container->singleton(
