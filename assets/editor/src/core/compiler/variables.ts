@@ -1,4 +1,5 @@
 import { getConfig } from '@/bridge/apiClient';
+import { PROFILE_KEYS } from '@shared/profileFields';
 
 /**
  * Variable substitution.
@@ -84,15 +85,56 @@ export function systemVariables(): Record<string, string> {
 }
 
 /**
+ * Keys whose system value comes from the user's profile: the canonical
+ * {@link PROFILE_KEYS} plus the admin's custom profile fields
+ * (`IMGSIG_EDITOR_CONFIG.profileFields`).
+ */
+export function profileVariableKeys(): string[] {
+  const keys: string[] = [...PROFILE_KEYS];
+  try {
+    for (const field of getConfig().profileFields ?? []) {
+      if (field && typeof field.key === 'string' && !keys.includes(field.key)) keys.push(field.key);
+    }
+  } catch {
+    // No bootstrap (tests / standalone): canonical keys only.
+  }
+  return keys;
+}
+
+/**
  * The map every substitution uses: system variables overlaid with the
- * signature's own. User-defined variables win on key conflict so the
- * user can override any auto-merged value.
+ * signature's own.
+ *
+ *  - Profile keys ({@link profileVariableKeys}): a NON-EMPTY profile
+ *    value wins — templates ship example values (`job_title: 'Directora
+ *    comercial'`) that must give way to the employee's real data — and
+ *    the signature's value is only the fallback for an empty profile.
+ *  - Every other key: the signature's own variable wins, so the user
+ *    can override any auto-merged value (`wp_*`, `company_*`).
  */
 export function resolvedVariables(
   userDefined: Record<string, string>,
   system: Record<string, string> = systemVariables(),
+  profileKeys: readonly string[] = profileVariableKeys(),
 ): Record<string, string> {
-  return { ...system, ...userDefined };
+  const merged = { ...system, ...userDefined };
+  for (const key of profileKeys) {
+    const value = system[key];
+    if (typeof value === 'string' && value !== '') merged[key] = value;
+  }
+  return merged;
+}
+
+/**
+ * Whether the signature's own variable `key` is shadowed by a non-empty
+ * profile value (so editing it has no effect on the output).
+ */
+export function isShadowedByProfile(
+  key: string,
+  system: Record<string, string> = systemVariables(),
+  profileKeys: readonly string[] = profileVariableKeys(),
+): boolean {
+  return profileKeys.includes(key) && typeof system[key] === 'string' && system[key] !== '';
 }
 
 /** HTML text / attribute escaper applied to substituted values. */

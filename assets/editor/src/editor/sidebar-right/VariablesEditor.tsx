@@ -1,8 +1,9 @@
 import { useState, type FC } from 'react';
-import { Plus, Trash2, Lock } from 'lucide-react';
+import { Plus, Trash2, Lock, ExternalLink } from 'lucide-react';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { useToastStore } from '@/stores/toastStore';
 import { getConfig } from '@/bridge/apiClient';
+import { isShadowedByProfile, profileVariableKeys } from '@/core/compiler/variables';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 
@@ -32,9 +33,19 @@ export const VariablesEditor: FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const entries = Object.entries(variables);
+  const config = getConfig();
+  const system = config.systemVariables ?? {};
+  const profileKeys = profileVariableKeys();
+  const labels = new Map((config.profileFields ?? []).map((f) => [f.key, f.label]));
   const { profile: profileEntries, company: companyEntries } = groupSystemVariables(
-    getConfig().systemVariables ?? {},
+    system,
+    profileKeys,
   );
+  // A signature variable overrides a system value of the same name —
+  // except a non-empty profile value, which always ships.
+  const isOverridden = (key: string): boolean =>
+    Object.prototype.hasOwnProperty.call(variables, key) &&
+    !isShadowedByProfile(key, system, profileKeys);
 
   const addVariable = (): void => {
     const key = draftKey.trim();
@@ -81,14 +92,33 @@ export const VariablesEditor: FC = () => {
       </p>
 
       {profileEntries.length > 0 && (
-        <SystemVariableGroup title={__('Your profile')}>
+        <SystemVariableGroup
+          title={__('Your profile')}
+          hint={__(
+            'Filled from your profile. A value set there replaces the example in this signature.',
+          )}
+          action={
+            config.profileUrl ? (
+              <a
+                href={config.profileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10.5px] font-medium normal-case tracking-normal text-[var(--accent)] hover:underline"
+              >
+                {__('Edit profile')}
+                <ExternalLink size={10} />
+              </a>
+            ) : undefined
+          }
+        >
           {profileEntries.map(([key, value]) => (
             <SystemVariableRow
               key={key}
               name={key}
+              label={labels.get(key)}
               value={value}
               emptyLabel={__('(empty in profile)')}
-              overridden={Object.prototype.hasOwnProperty.call(variables, key)}
+              overridden={isOverridden(key)}
               onCopy={() => void copyToken(key)}
             />
           ))}
@@ -106,7 +136,7 @@ export const VariablesEditor: FC = () => {
               name={key}
               value={value}
               emptyLabel={__('(not set in brand kit)')}
-              overridden={Object.prototype.hasOwnProperty.call(variables, key)}
+              overridden={isOverridden(key)}
               onCopy={() => void copyToken(key)}
             />
           ))}
@@ -128,6 +158,7 @@ export const VariablesEditor: FC = () => {
               onChangeValue={(next) => setVariable(key, next)}
               onRemove={() => removeVariable(key)}
               onCopy={() => void copyToken(key)}
+              shadowed={isShadowedByProfile(key, system, profileKeys)}
             />
           ))}
         </ul>
@@ -187,9 +218,19 @@ interface RowProps {
   onChangeValue: (next: string) => void;
   onRemove: () => void;
   onCopy: () => void;
+  /** A non-empty profile value of the same name ships instead. */
+  shadowed?: boolean;
 }
 
-const VariableRow: FC<RowProps> = ({ name, value, onRename, onChangeValue, onRemove, onCopy }) => {
+const VariableRow: FC<RowProps> = ({
+  name,
+  value,
+  onRename,
+  onChangeValue,
+  onRemove,
+  onCopy,
+  shadowed,
+}) => {
   const [draftName, setDraftName] = useState(name);
   const [renameError, setRenameError] = useState<string | null>(null);
 
@@ -252,6 +293,12 @@ const VariableRow: FC<RowProps> = ({ name, value, onRename, onChangeValue, onRem
       {renameError && (
         <span className="text-[10.5px] text-[var(--danger)]">{renameError}</span>
       )}
+      {shadowed && (
+        <span className="flex items-center gap-1 text-[10.5px] text-[var(--text-muted)]">
+          <Lock size={10} className="shrink-0" />
+          {__('Your profile value is used instead of this one.')}
+        </span>
+      )}
     </li>
   );
 };
@@ -261,16 +308,23 @@ const COMPANY_PREFIX = 'company_';
 
 /**
  * Splits the read-only system variables into the user's own profile
- * fields (`wp_*` and filter-added extras) and the company brand kit
- * (`company_*`), keeping their order.
+ * (profile fields first, in `profileKeys` order, then `wp_*` and
+ * filter-added extras) and the company brand kit (`company_*`).
  */
-function groupSystemVariables(system: Record<string, string>): {
+function groupSystemVariables(
+  system: Record<string, string>,
+  profileKeys: readonly string[],
+): {
   profile: Array<[string, string]>;
   company: Array<[string, string]>;
 } {
   const profile: Array<[string, string]> = [];
   const company: Array<[string, string]> = [];
+  for (const key of profileKeys) {
+    if (Object.prototype.hasOwnProperty.call(system, key)) profile.push([key, system[key] ?? '']);
+  }
   for (const entry of Object.entries(system)) {
+    if (profileKeys.includes(entry[0])) continue;
     (entry[0].startsWith(COMPANY_PREFIX) ? company : profile).push(entry);
   }
   return { profile, company };
@@ -279,12 +333,14 @@ function groupSystemVariables(system: Record<string, string>): {
 const SystemVariableGroup: FC<{
   title: string;
   hint?: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
-}> = ({ title, hint, children }) => (
+}> = ({ title, hint, action, children }) => (
   <div className="flex flex-col gap-1">
     <span className="flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
       <Lock size={10} className="shrink-0" />
-      {title}
+      <span className="flex-1">{title}</span>
+      {action}
     </span>
     {hint && <span className="text-[10.5px] text-[var(--text-muted)]">{hint}</span>}
     <ul className="flex flex-col gap-1">{children}</ul>
@@ -293,16 +349,18 @@ const SystemVariableGroup: FC<{
 
 const SystemVariableRow: FC<{
   name: string;
+  /** Human label (profile fields), shown as the tooltip. */
+  label?: string;
   value: string;
   emptyLabel: string;
   /** A signature variable with the same name wins at export. */
   overridden?: boolean;
   onCopy: () => void;
-}> = ({ name, value, emptyLabel, overridden, onCopy }) => (
+}> = ({ name, label, value, emptyLabel, overridden, onCopy }) => (
   <li
     className="flex items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel-soft)] p-2 text-[11.5px]"
     title={
-      overridden ? __("Overridden by this signature's own variable of the same name.") : undefined
+      overridden ? __("Overridden by this signature's own variable of the same name.") : label
     }
   >
     <Lock size={11} className="shrink-0 text-[var(--text-muted)]" />
