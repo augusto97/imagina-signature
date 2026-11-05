@@ -8,6 +8,7 @@ import { validateEmailOutput } from './validate';
 import { substituteVariables } from './variables';
 import { enforceSafeUrls } from './urls';
 import { report, type CompileIssue } from './issues';
+import { htmlToPlainText, schemaToPlainText } from './plain-text';
 import { getConfig } from '@/bridge/apiClient';
 import type { AppConfig } from '@/bridge/types';
 import { attr, intPx } from './css';
@@ -17,6 +18,13 @@ export type { CompileIssue, CompileIssueLevel } from './issues';
 export interface CompileResult {
   /** Complete HTML document (doctype, head, body). Copy HTML / Download / test-send. */
   html: string;
+  /**
+   * The signature fragment — the outer shell table only (no doctype /
+   * head / body). What "Copy visual" puts on the clipboard.
+   */
+  fragment: string;
+  /** Clean plain-text version generated from the schema (text/plain clipboard part). */
+  text: string;
   /** Warning-level messages (back-compat: existing callers keep working). */
   warnings: string[];
   /** Error-level messages: the export is broken for recipients until fixed. */
@@ -107,20 +115,59 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
 
   const urlSafe = enforceSafeUrls(substituted, ctx);
   const minified = minifyHtml(urlSafe);
+  const fragment = extractBodyFragment(minified);
 
   const issues: CompileIssue[] = [
     ...ctx.warnings.map((message): CompileIssue => ({ level: 'warning', message })),
     ...ctx.issues,
-    ...validateEmailOutput(minified),
+    ...validateEmailOutput(minified, fragment),
   ];
 
   return {
     html: minified,
+    fragment,
+    text: schemaToPlainText(schema, merged, plainTextExtras()),
     warnings: issues.filter((i) => i.level === 'warning').map((i) => i.message),
     errors: issues.filter((i) => i.level === 'error').map((i) => i.message),
     issues,
     size: new Blob([minified]).size,
   };
+}
+
+/**
+ * The pasteable signature: the outer shell table only — no doctype,
+ * <head>, <title> or mso document settings. Everything between the
+ * `<body …>` open tag and `</body>`.
+ */
+export function extractBodyFragment(html: string): string {
+  const bodyOpen = html.search(/<body[\s>]/i);
+  const bodyClose = html.lastIndexOf('</body>');
+  if (bodyOpen === -1 || bodyClose === -1) return html;
+  const contentStart = html.indexOf('>', bodyOpen) + 1;
+  return html.slice(contentStart, bodyClose).trim();
+}
+
+/** Plain-text lines for the campaign banner and compliance footer. */
+function plainTextExtras(): string[] {
+  const lines: string[] = [];
+  let config: AppConfig | null = null;
+  try {
+    config = getConfig();
+  } catch {
+    return lines;
+  }
+  const campaigns = config.bannerCampaigns;
+  if (campaigns && campaigns.length > 0) {
+    const pick = campaigns[stablePickIndex(campaigns.length)];
+    if (pick?.image_url && pick.link_url) {
+      lines.push('', `${pick.alt || pick.name || __('Link')}: ${pick.link_url}`);
+    }
+  }
+  const footer = config.complianceFooter;
+  if (footer?.enabled && footer.html) {
+    lines.push('', htmlToPlainText(footer.html));
+  }
+  return lines;
 }
 
 function mergedVariables(userDefined: Record<string, string>): Record<string, string> {

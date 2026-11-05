@@ -9,11 +9,15 @@
  *                               into an HTML-mode signature box
  *                               (Gmail's "<>" view, raw `.html`
  *                               edit, etc.).
- *  - `copyRichHtml(html)`    — `text/html` MIME type so receiving
- *                               apps render it visually. Used for
- *                               webmails / composers that only
- *                               accept rich text and refuse a raw
- *                               HTML paste.
+ *  - `copyRichHtml(html, text)` — `text/html` MIME type so receiving
+ *                               apps render it visually, plus a
+ *                               `text/plain` part. Used for webmails /
+ *                               composers that only accept rich text
+ *                               and refuse a raw HTML paste. Callers
+ *                               pass the signature FRAGMENT (the
+ *                               shell table, no <head>/<title>) and
+ *                               the schema-generated plain text from
+ *                               `compileSignature()`.
  *
  * Both fall back gracefully when the modern Clipboard API isn't
  * available (old Safari, restricted iframe contexts).
@@ -42,12 +46,13 @@ export async function copyText(text: string): Promise<boolean> {
  * types because the OS clipboard captures whatever's selected,
  * and a contenteditable selection naturally carries both.
  */
-export async function copyRichHtml(html: string): Promise<boolean> {
+export async function copyRichHtml(html: string, plainText?: string): Promise<boolean> {
+  const text = plainText ?? htmlToPlainText(html);
   // Modern path.
   try {
     if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
       const htmlBlob = new Blob([html], { type: 'text/html' });
-      const textBlob = new Blob([htmlToPlainText(html)], { type: 'text/plain' });
+      const textBlob = new Blob([text], { type: 'text/plain' });
       await navigator.clipboard.write([
         new ClipboardItem({
           'text/html': htmlBlob,
@@ -122,15 +127,16 @@ function legacyRichCopy(html: string): boolean {
 }
 
 /**
- * Best-effort plain-text fallback derived from the HTML — used as
- * the `text/plain` arm of the rich copy so a recipient who pastes
- * into a plain-text field gets readable content, not the raw markup.
- *
- * Strips tags, collapses whitespace, decodes the handful of named
- * entities the compiler emits.
+ * Best-effort plain-text fallback derived from the HTML — only used
+ * when the caller does not pass the schema-generated text. Drops the
+ * document <head> (title, mso settings) and every comment (Outlook
+ * conditionals included) so no "96Email Signature" noise leaks in.
  */
-function htmlToPlainText(html: string): string {
+export function htmlToPlainText(html: string): string {
   return html
+    .replace(/<head[\s>][\s\S]*?<\/head>/gi, '')
+    .replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<br\s*\/?>/gi, '\n')

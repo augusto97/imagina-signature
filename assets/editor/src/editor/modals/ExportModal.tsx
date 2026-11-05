@@ -6,10 +6,11 @@ import {
   Mail,
   ExternalLink,
   AlertTriangle,
+  AlertOctagon,
   ChevronRight,
   Eye,
 } from 'lucide-react';
-import { compileSignature } from '@/core/compiler/compile';
+import { compileSignature, type CompileIssue } from '@/core/compiler/compile';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { apiCall, ApiError } from '@/bridge/apiClient';
@@ -144,7 +145,10 @@ export const ExportModal: FC = () => {
 
   const copyVisual = async (): Promise<void> => {
     if (!result) return;
-    const ok = await copyRichHtml(result.html);
+    // Paste-into-composer path: only the signature fragment (the shell
+    // table — no doctype / <head> / <title> / mso settings) plus the
+    // schema-generated plain text, so a plain-text paste reads cleanly.
+    const ok = await copyRichHtml(result.fragment, result.text);
     if (ok) {
       setCopied('visual');
       window.setTimeout(() => setCopied(null), 2000);
@@ -267,19 +271,7 @@ export const ExportModal: FC = () => {
             </span>
           </div>
 
-          {result.warnings.length > 0 && (
-            <details className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800">
-              <summary className="flex cursor-pointer items-center gap-1.5 font-medium">
-                <AlertTriangle size={12} />
-                {__('%s compile warning(s)', String(result.warnings.length))}
-              </summary>
-              <ul className="mt-2 list-disc pl-4">
-                {result.warnings.map((w, i) => (
-                  <li key={i}>{w}</li>
-                ))}
-              </ul>
-            </details>
-          )}
+          <CompileIssues issues={result.issues} />
 
           {/* Install guides */}
           <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-panel)]">
@@ -352,6 +344,53 @@ export const ExportModal: FC = () => {
         </div>
       )}
     </Modal>
+  );
+};
+
+/**
+ * Leveled compile diagnostics: errors (the export is broken for
+ * recipients) are always expanded in red; warnings sit in a collapsed
+ * amber list. Shared with the Preview modal.
+ */
+export const CompileIssues: FC<{ issues: CompileIssue[] }> = ({ issues }) => {
+  const errors = issues.filter((i) => i.level === 'error');
+  const warnings = issues.filter((i) => i.level === 'warning');
+  if (errors.length === 0 && warnings.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {errors.length > 0 && (
+        <div
+          role="alert"
+          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[11.5px] text-red-800"
+        >
+          <div className="flex items-center gap-1.5 font-semibold">
+            <AlertOctagon size={13} />
+            {errors.length === 1
+              ? __('1 problem will break this signature for recipients')
+              : __('%s problems will break this signature for recipients', String(errors.length))}
+          </div>
+          <ul className="mt-1.5 list-disc pl-4">
+            {errors.map((issue, i) => (
+              <li key={`${issue.blockId ?? 'doc'}-${i}`}>{issue.message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {warnings.length > 0 && (
+        <details className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800">
+          <summary className="flex cursor-pointer items-center gap-1.5 font-medium">
+            <AlertTriangle size={12} />
+            {__('%s compile warning(s)', String(warnings.length))}
+          </summary>
+          <ul className="mt-2 list-disc pl-4">
+            {warnings.map((issue, i) => (
+              <li key={`${issue.blockId ?? 'doc'}-${i}`}>{issue.message}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
   );
 };
 
