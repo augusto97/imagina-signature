@@ -95,6 +95,11 @@ async function waitSaved(page) {
   const admin = await login(browser, 'admin', 'admin');
   const { page } = admin;
   await openEditor(page, `${BASE}/wp-admin/admin.php?page=imagina-signatures-editor`);
+  // A new, empty signature opens the guided "Create your signature".
+  const onboarding = page.locator('[role="dialog"]', { hasText: 'Create your signature' });
+  await onboarding.waitFor({ timeout: 10000 }).catch(() => {});
+  check('new signature opens the guided onboarding', await onboarding.isVisible().catch(() => false));
+  await onboarding.locator('button', { hasText: 'Start blank' }).click();
   await addBlock(page, 'Text');
   await page.locator('.is-canvas-root [data-imgsig-block-id]').first().click();
   const editor = page.locator('.ProseMirror').first();
@@ -145,6 +150,33 @@ async function waitSaved(page) {
   check('Ctrl+Z restores the signature replaced by the template', afterUndo.includes('Hola mundo') || afterUndo.includes('x'));
   await page.keyboard.press('Control+y');
   await page.waitForTimeout(2500);
+
+  // ---------- Onboarding with a template + server-held HTML ----------
+  const templates = await rest(page, 'GET', '/templates?per_page=100');
+  const templateCount = Array.isArray(templates.json) ? templates.json.length : (templates.json && templates.json.items || []).length;
+  check('the template library is seeded (40+)', templateCount >= 40, `count=${templateCount}`);
+  const onb = await admin.context.newPage();
+  await openEditor(onb, `${BASE}/wp-admin/admin.php?page=imagina-signatures-editor`);
+  const onbDialog = onb.locator('[role="dialog"]', { hasText: 'Create your signature' });
+  await onbDialog.waitFor({ timeout: 10000 });
+  await onbDialog.locator('button', { hasText: 'Corporate Classic' }).first().click();
+  await onbDialog.locator('button', { hasText: 'Create signature' }).waitFor({ timeout: 10000 });
+  check('picking a template asks for your details', await onbDialog.locator('text=Your details').first().isVisible());
+  await onbDialog.locator('button', { hasText: 'Create signature' }).click();
+  await onb.waitForTimeout(500);
+  const onbCanvas = await onb.locator('.is-canvas-root').innerText();
+  check('onboarding fills the canvas from the template', onbCanvas.trim().length > 20);
+  await onb.waitForFunction(() => /[?&]id=\d+/.test(location.search), null, { timeout: 15000 }).catch(() => {});
+  await onb.waitForTimeout(2500);
+  const onbId = Number(new URL(onb.url()).searchParams.get('id') || 0);
+  const held = await rest(page, 'GET', `/signatures/${onbId}`);
+  const heldSig = held.json || {};
+  check(
+    'the server holds fresh compiled HTML for the saved signature',
+    onbId > 0 && !!heldSig.compiled_at && heldSig.html_stale === false && typeof heldSig.html_text === 'string' && heldSig.html_text.length > 0,
+    `id=${onbId} compiled_at=${heldSig.compiled_at} stale=${heldSig.html_stale}`,
+  );
+  await onb.close();
 
   // ---------- Export modal: no data: URIs, fragment copy ----------
   await page.click('header button:has-text("Export")');

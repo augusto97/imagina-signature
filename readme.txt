@@ -41,6 +41,14 @@ Yes. Pick "Custom S3-compatible" under Settings and supply your endpoint URL.
 
 == Changelog ==
 
+= 1.2.0 =
+* Premium design release (roadmap Fase 1): box styling for every block, containers with 1 to 4 columns, full typography inherited from the canvas, rich headings and disclaimers, and new versions of the image, avatar, button, divider, banner, QR and vCard blocks.
+* Real hosted icons for social and contact blocks.
+* Company brand kit with `{{company_*}}` variables, live data on the canvas and an asset library with in-browser image optimisation.
+* 48 templates with a searchable gallery and a guided "Create your signature".
+* Per-client export and install steps, realistic previews with dark mode, contrast and dark-logo checks.
+* The server now keeps each signature's compiled HTML, and every user has a primary signature (groundwork for central deployment).
+
 = 1.1.0 =
 * Stabilisation release (roadmap Fase 0). Signatures now render correctly in Gmail, Outlook and Apple Mail: escaped fonts, hosted QR/crop/vCard files instead of data: URIs, correct paragraph spacing, link colour and background exported, column widths in pixels.
 * Security hardening: recursive sanitiser plus server-side sanitisation of the whole signature, safe URLs, signed S3 uploads with type/size checks, per-user quota, atomic rate limits, CSP on the public route, privacy exporter/eraser.

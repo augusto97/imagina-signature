@@ -398,6 +398,7 @@ const ColumnChildren: FC<ColumnChildrenProps> = ({
               className="flex items-center gap-1.5 rounded p-1.5 text-left text-[11px] transition-colors hover:bg-[var(--bg-hover)]"
             >
               <Icon size={13} className="text-[var(--text-muted)]" />
+              {/* i18n-dynamic: registry labels are listed in i18n/dynamic-strings.ts. */}
               <span className="truncate">{__(def.label)}</span>
             </button>
           );
@@ -426,6 +427,7 @@ const ColumnChildren: FC<ColumnChildrenProps> = ({
               >
                 {Icon && <Icon size={12} className="text-[var(--text-muted)]" />}
                 <span className="truncate font-medium text-[var(--text-primary)]">
+                  {/* i18n-dynamic: registry labels are listed in i18n/dynamic-strings.ts. */}
                   {__(def?.label ?? child.type)}
                 </span>
               </button>

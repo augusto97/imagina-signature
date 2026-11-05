@@ -2,6 +2,36 @@
 
 All notable changes to Imagina Signatures are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] — 2026-11-05
+
+Fase 1 of the November 2026 roadmap: premium design. Verified with `tests/e2e/smoke.cjs` (21 checks) on an upgrade from a 1.0.39 database.
+
+### Added — layout and styling
+- Signature schema 1.1 (older signatures migrate on load): every block gets box styling (background, border per side, radius, padding) and the container now holds 1–4 columns with their own widths, vertical alignment, gaps, backgrounds and stacking on mobile.
+- Typography: text, heading and disclaimer inherit family, size and colour from the canvas; letter spacing, case, italic, alignment; heading and disclaimer are rich text; line heights are written in px with `mso-line-height-rule` so Outlook keeps the spacing.
+- Rich-text toolbar: colour, font size, an "Insert field" menu and variable chips.
+- Blocks v2: image (asset library, alignment, aspect lock, border), avatar (real shapes and a ring Outlook shows), button (presets, padding, typography, border, full width), divider (style, length in % or px), banner (full or fixed width), QR and vCard (alignment, vCard as button or link).
+- Social and contact blocks use real hosted PNG icons (360 icons: circle, rounded or plain, in brand, dark, grey or light tones) instead of text glyphs; contact items are typed (email, phone, mobile, website, address, WhatsApp…), hide themselves when their value is empty and carry an accessible label.
+
+### Added — brand and content
+- Company brand kit (Settings → Brand kit): logo, company data, social profiles, font and colours, with the company data available as `{{company_*}}` variables in every signature; new signatures start from the brand typography.
+- The canvas shows live data instead of raw `{{tokens}}`.
+- Asset library with the user's uploaded images; every upload is resized and optimised in the browser.
+- 48 templates with a searchable, filterable gallery, and a guided "Create your signature" (choose a template, fill in your details) when a new signature is opened. "Your details" is also in the top bar.
+
+### Added — output quality
+- Per-client export: Gmail pre-flight (size, clipping, images), Outlook and Apple Mail documents, and step-by-step install instructions for each client.
+- Realistic client previews with a dark-mode simulation and an issues panel; logos that would disappear in dark mode are detected with a one-click fix.
+- Text contrast is checked against the background it really sits on; every image has alt text; `lang`/`dir` are set.
+
+### Added — groundwork for central deployment
+- The server keeps each signature's compiled HTML and plain text (new columns `html_text`, `html_hash`, `compiled_at`), sanitised on save, and every user has a primary signature (badge and "Make primary" in My Signatures).
+- New capability `imgsig_manage_team`, deployment status per user and the `imgsig/deploy/primary_html_changed` action.
+
+### Fixed
+- Uploaded QR / vCard URLs no longer create undo steps.
+- Social and contact links built from variables resolve before the link is created.
+
 ## [1.1.0] — 2026-11-05
 
 Fase 0 of the November 2026 roadmap: stabilise before adding features. Everything below was verified against a live WordPress (SQLite) with `tests/e2e/smoke.cjs`, upgrading from a 1.0.39 database.
