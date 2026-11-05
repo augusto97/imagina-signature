@@ -3138,7 +3138,7 @@ msgid "Variable \"{{%s}}\" referenced but not defined; left as literal text."
 msgstr ""
 
 #: assets/editor/src/core/compiler/issues.ts:64
-#: assets/editor/src/editor/modals/ExportModal.tsx:162
+#: assets/editor/src/editor/modals/ExportModal.tsx:170
 msgid "Signature"
 msgstr ""
 
@@ -3525,117 +3525,121 @@ msgstr ""
 msgid "Thunderbird"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:131
+#: assets/editor/src/editor/modals/ExportModal.tsx:91
+msgid "Signatures"
+msgstr ""
+
+#: assets/editor/src/editor/modals/ExportModal.tsx:139
 msgid "Could not copy — try selecting the HTML below manually."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:145
+#: assets/editor/src/editor/modals/ExportModal.tsx:153
 msgid ""
 "Could not copy — your browser blocked rich-clipboard access. Try the \"Copy "
 "HTML\" button instead."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:188
+#: assets/editor/src/editor/modals/ExportModal.tsx:196
 msgid "Signature — press Cmd + A, then Cmd + C"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:209
+#: assets/editor/src/editor/modals/ExportModal.tsx:217
 #, javascript-format
 msgid "Sent to %s"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:212
+#: assets/editor/src/editor/modals/ExportModal.tsx:220
 #, javascript-format
 msgid "Could not send: %s"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:233
+#: assets/editor/src/editor/modals/ExportModal.tsx:241
 msgid "All embedded images are now hosted."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:236
+#: assets/editor/src/editor/modals/ExportModal.tsx:244
 #, javascript-format
 msgid "%s item(s) could not be uploaded: %s"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:257
+#: assets/editor/src/editor/modals/ExportModal.tsx:265
 msgid ""
 "Sends the compiled HTML to your WP account email so you can copy it from "
 "your real client."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:262
+#: assets/editor/src/editor/modals/ExportModal.tsx:270
 msgid "Sending…"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:262
+#: assets/editor/src/editor/modals/ExportModal.tsx:270
 msgid "Sent!"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:262
+#: assets/editor/src/editor/modals/ExportModal.tsx:270
 msgid "Send to my email"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:267
+#: assets/editor/src/editor/modals/ExportModal.tsx:275
 msgid "Export & install"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:281
+#: assets/editor/src/editor/modals/ExportModal.tsx:289
 msgid ""
 "Copies the rendered signature so it pastes visually into rich-text composers "
 "(Gmail compose, Outlook signature box, Word, etc.). Use this when the "
 "signature settings only accept rich text, not HTML source."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:286
-#: assets/editor/src/editor/modals/ExportModal.tsx:303
-#: assets/editor/src/editor/modals/ExportModal.tsx:435
-#: assets/editor/src/editor/modals/ExportModal.tsx:472
-#: assets/editor/src/editor/modals/ExportModal.tsx:679
-#: assets/editor/src/editor/modals/ExportModal.tsx:683
+#: assets/editor/src/editor/modals/ExportModal.tsx:294
+#: assets/editor/src/editor/modals/ExportModal.tsx:311
+#: assets/editor/src/editor/modals/ExportModal.tsx:443
+#: assets/editor/src/editor/modals/ExportModal.tsx:481
+#: assets/editor/src/editor/modals/ExportModal.tsx:688
+#: assets/editor/src/editor/modals/ExportModal.tsx:692
 msgid "Copied!"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:286
-#: assets/editor/src/editor/modals/ExportModal.tsx:472
+#: assets/editor/src/editor/modals/ExportModal.tsx:294
+#: assets/editor/src/editor/modals/ExportModal.tsx:481
 msgid "Copy visual"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:298
+#: assets/editor/src/editor/modals/ExportModal.tsx:306
 msgid ""
 "Copies the raw HTML source. Use this when the signature settings expose an "
 "HTML / source-code mode (Gmail with Labs HTML, raw .html file editing)."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:303
+#: assets/editor/src/editor/modals/ExportModal.tsx:311
 msgid "Copy HTML"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:314
-#: assets/editor/src/editor/modals/ExportModal.tsx:582
+#: assets/editor/src/editor/modals/ExportModal.tsx:322
+#: assets/editor/src/editor/modals/ExportModal.tsx:591
 msgid "Download .html"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:327
+#: assets/editor/src/editor/modals/ExportModal.tsx:335
 msgid "Gmail clips messages over 102 KB. Trim images / banners."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:328
+#: assets/editor/src/editor/modals/ExportModal.tsx:336
 msgid "Compiled HTML payload size."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:331
+#: assets/editor/src/editor/modals/ExportModal.tsx:339
 #: assets/editor/src/editor/modals/PreviewModal.tsx:211
 #, javascript-format
 msgid "%s KB"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:343
+#: assets/editor/src/editor/modals/ExportModal.tsx:351
 #, javascript-format
 msgid "%s embedded image(s) or file(s) will not show in Gmail or Outlook.com"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:349
+#: assets/editor/src/editor/modals/ExportModal.tsx:357
 msgid ""
 "This signature embeds images or files directly (data: URIs). Most webmail "
 "clients refuse to display them, and a single embedded photo can push the "
@@ -3643,333 +3647,333 @@ msgid ""
 "the signature links to hosted copies instead."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:361
+#: assets/editor/src/editor/modals/ExportModal.tsx:369
 #, javascript-format
 msgid "Uploading %s of %s…"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:362
+#: assets/editor/src/editor/modals/ExportModal.tsx:370
 msgid "Fix embedded images"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:366
+#: assets/editor/src/editor/modals/ExportModal.tsx:374
 msgid ""
 "Uploads are disabled on this site — replace these images with links to "
 "hosted images (https://…)."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:381
+#: assets/editor/src/editor/modals/ExportModal.tsx:389
 msgid "Install in your email client"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:384
+#: assets/editor/src/editor/modals/ExportModal.tsx:392
 msgid ""
 "Pick your email client: each tab has the export it needs and the exact steps."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:426
+#: assets/editor/src/editor/modals/ExportModal.tsx:434
 msgid "Download for Outlook (.htm)"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:429
+#: assets/editor/src/editor/modals/ExportModal.tsx:437
 msgid "Download plain text (.txt)"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:435
+#: assets/editor/src/editor/modals/ExportModal.tsx:443
 msgid "Copy folder path"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:439
+#: assets/editor/src/editor/modals/ExportModal.tsx:447
 #, javascript-format
 msgid "Files: %s"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:443
+#: assets/editor/src/editor/modals/ExportModal.tsx:451
 msgid ""
 "Download both files above. Keep their names identical — only the extension "
 "differs; the name is what Outlook lists."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:446
+#: assets/editor/src/editor/modals/ExportModal.tsx:454
 msgid "Close Outlook completely."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:447
+#: assets/editor/src/editor/modals/ExportModal.tsx:455
 #, javascript-format
 msgid ""
-"Press Windows + R, paste %s and press Enter. Create the \"Signatures\" "
-"folder if it does not exist."
+"Press Windows + R, paste %1$s and press Enter. Create the \"%2$s\" folder if "
+"it does not exist."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:451
+#: assets/editor/src/editor/modals/ExportModal.tsx:460
 msgid "Move the two downloaded files into that folder."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:452
+#: assets/editor/src/editor/modals/ExportModal.tsx:461
 msgid ""
 "Open Outlook → File → Options → Mail → Signatures…, choose the new signature "
 "for \"New messages\" and \"Replies/forwards\", then click \"OK\"."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:458
+#: assets/editor/src/editor/modals/ExportModal.tsx:467
 msgid ""
 "If your organisation syncs Microsoft 365 cloud signatures, Outlook may "
 "replace files in that folder. Then press \"Copy visual\" and paste into File "
 "→ Options → Mail → Signatures… → New instead."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:476
+#: assets/editor/src/editor/modals/ExportModal.tsx:485
 msgid "Outlook on the web"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:481
+#: assets/editor/src/editor/modals/ExportModal.tsx:490
 msgid "Press \"Copy visual\" so the rendered signature is in your clipboard."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:482
+#: assets/editor/src/editor/modals/ExportModal.tsx:491
 msgid ""
 "Outlook on the web: Settings (gear) → Account → Signatures. New Outlook for "
 "Windows: Settings → Accounts → Signatures."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:485
+#: assets/editor/src/editor/modals/ExportModal.tsx:494
 msgid ""
 "Click \"+ New signature\", give it a name, click into the editor and paste "
 "(Cmd/Ctrl + V)."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:488
+#: assets/editor/src/editor/modals/ExportModal.tsx:497
 msgid ""
 "Pick it under \"Select default signatures\" for new messages and for "
 "replies/forwards, then click \"Save\"."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:500
+#: assets/editor/src/editor/modals/ExportModal.tsx:509
 msgid "Open signature in a new tab"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:505
+#: assets/editor/src/editor/modals/ExportModal.tsx:514
 msgid ""
 "Press \"Open signature in a new tab\" (Safari works best). The tab shows "
 "only the signature."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:508
+#: assets/editor/src/editor/modals/ExportModal.tsx:517
 msgid "In that tab press Cmd + A, then Cmd + C."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:509
+#: assets/editor/src/editor/modals/ExportModal.tsx:518
 msgid ""
 "Open Mail → Settings… → Signatures, pick the account on the left and click "
 "\"+\" to add a signature."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:512
+#: assets/editor/src/editor/modals/ExportModal.tsx:521
 msgid ""
 "Untick \"Always match my default message font\" — otherwise Mail replaces "
 "the signature’s fonts with your default font."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:515
+#: assets/editor/src/editor/modals/ExportModal.tsx:524
 msgid ""
 "Click into the signature area on the right, delete the placeholder text and "
 "paste (Cmd + V). Close the window; Mail saves automatically."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:520
+#: assets/editor/src/editor/modals/ExportModal.tsx:529
 msgid "Send yourself a test message to check the result."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:527
+#: assets/editor/src/editor/modals/ExportModal.tsx:536
 msgid ""
 "Phones cannot paste from this editor directly: send the signature to "
 "yourself, then copy it from the received email on the phone."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:532
+#: assets/editor/src/editor/modals/ExportModal.tsx:541
 msgid "iPhone / iPad (Mail)"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:535
+#: assets/editor/src/editor/modals/ExportModal.tsx:544
 msgid ""
 "Open the test email in the Mail app, touch and hold the signature and drag "
 "the selection handles over all of it, then tap \"Copy\"."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:538
+#: assets/editor/src/editor/modals/ExportModal.tsx:547
 msgid ""
 "Open Settings → Apps → Mail → Signature (older iOS: Settings → Mail → "
 "Signature), choose \"All Accounts\" or \"Per Account\", clear the field and "
 "paste."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:541
+#: assets/editor/src/editor/modals/ExportModal.tsx:550
 msgid ""
 "iOS removes the formatting right after pasting: immediately shake the iPhone "
 "and tap \"Undo\" to bring the formatting back."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:544
+#: assets/editor/src/editor/modals/ExportModal.tsx:553
 msgid "Go back to save."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:548
+#: assets/editor/src/editor/modals/ExportModal.tsx:557
 msgid "Gmail app (Android / iPhone)"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:551
+#: assets/editor/src/editor/modals/ExportModal.tsx:560
 msgid ""
 "The Gmail app’s own \"Mobile signature\" is plain text only — images, "
 "colours and links are not kept. For the full visual signature, install it in "
 "Gmail on a computer (Gmail tab)."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:554
+#: assets/editor/src/editor/modals/ExportModal.tsx:563
 msgid ""
 "To set the text version: in the app open Settings → your account → Mobile "
 "signature and paste the text copied from the received email."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:560
+#: assets/editor/src/editor/modals/ExportModal.tsx:569
 msgid "Outlook app (Android / iPhone)"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:563
+#: assets/editor/src/editor/modals/ExportModal.tsx:572
 msgid ""
 "Copy the signature from the received email (touch and hold, select all of "
 "it, Copy)."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:566
+#: assets/editor/src/editor/modals/ExportModal.tsx:575
 msgid ""
 "Open the Outlook app → Settings → Signature (per account when offered) and "
 "paste."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:569
+#: assets/editor/src/editor/modals/ExportModal.tsx:578
 msgid ""
 "How much formatting survives depends on the app version: send yourself a "
 "message to check, and keep the mobile signature simple if images are dropped."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:587
+#: assets/editor/src/editor/modals/ExportModal.tsx:596
 msgid "Press \"Download .html\" above to save the signature to disk."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:588
+#: assets/editor/src/editor/modals/ExportModal.tsx:597
 msgid "Open Thunderbird → Account Settings → pick your account on the left."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:589
+#: assets/editor/src/editor/modals/ExportModal.tsx:598
 msgid "Tick \"Use HTML (e.g. <b>bold</b>)\" under the Signature text area."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:590
+#: assets/editor/src/editor/modals/ExportModal.tsx:599
 msgid ""
 "Tick \"Attach the signature from a file instead\" and choose the .html you "
 "just saved."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:593
+#: assets/editor/src/editor/modals/ExportModal.tsx:602
 msgid ""
 "Click \"OK\". Thunderbird re-reads the file each send so editing the file "
 "updates every future email."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:606
+#: assets/editor/src/editor/modals/ExportModal.tsx:615
 msgid "Show raw HTML"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:633
+#: assets/editor/src/editor/modals/ExportModal.tsx:642
 msgid "Before you copy"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:656
+#: assets/editor/src/editor/modals/ExportModal.tsx:665
 msgid "Copying is on hold: Gmail would save a broken signature."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:659
+#: assets/editor/src/editor/modals/ExportModal.tsx:668
 msgid ""
 "Fix the items marked in red (and the problems listed above), then copy. You "
 "can still copy anyway."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:679
+#: assets/editor/src/editor/modals/ExportModal.tsx:688
 msgid "Copy anyway"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:683
+#: assets/editor/src/editor/modals/ExportModal.tsx:692
 msgid "Copy for Gmail"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:686
+#: assets/editor/src/editor/modals/ExportModal.tsx:695
 #: assets/editor/src/editor/modals/PreviewModal.tsx:44
 msgid "Gmail"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:691
+#: assets/editor/src/editor/modals/ExportModal.tsx:700
 msgid "Check the list above, then press \"Copy for Gmail\"."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:692
+#: assets/editor/src/editor/modals/ExportModal.tsx:701
 msgid ""
 "Open Gmail settings (link above) — or the gear icon → \"See all settings\" → "
 "\"General\" tab."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:695
+#: assets/editor/src/editor/modals/ExportModal.tsx:704
 msgid "Scroll to \"Signature\", click \"Create new\" and give it a name."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:696
+#: assets/editor/src/editor/modals/ExportModal.tsx:705
 msgid ""
 "Click into the signature box and paste (Cmd/Ctrl + V). Avoid editing it "
 "there afterwards — Gmail may drop formatting."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:699
+#: assets/editor/src/editor/modals/ExportModal.tsx:708
 msgid ""
 "Under \"Signature defaults\" pick it for new emails and for "
 "replies/forwards, then click \"Save changes\" at the bottom of the page."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:705
+#: assets/editor/src/editor/modals/ExportModal.tsx:714
 msgid ""
 "Google Workspace: if the signature box is missing or locked, your "
 "administrator manages signatures centrally."
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:716
+#: assets/editor/src/editor/modals/ExportModal.tsx:725
 msgid "OK"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:724
+#: assets/editor/src/editor/modals/ExportModal.tsx:733
 msgid "Warning"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:728
+#: assets/editor/src/editor/modals/ExportModal.tsx:737
 msgid "Problem"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:768
+#: assets/editor/src/editor/modals/ExportModal.tsx:777
 #, javascript-format
 msgid "Open %s settings"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:947
+#: assets/editor/src/editor/modals/ExportModal.tsx:956
 msgid "Select this block in the editor"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:967
+#: assets/editor/src/editor/modals/ExportModal.tsx:976
 msgid "1 problem will break this signature for recipients"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:968
+#: assets/editor/src/editor/modals/ExportModal.tsx:977
 #, javascript-format
 msgid "%s problems will break this signature for recipients"
 msgstr ""
 
-#: assets/editor/src/editor/modals/ExportModal.tsx:980
+#: assets/editor/src/editor/modals/ExportModal.tsx:989
 #, javascript-format
 msgid "%s compile warning(s)"
 msgstr ""
