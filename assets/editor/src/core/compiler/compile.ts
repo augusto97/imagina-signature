@@ -7,10 +7,10 @@ import { canvasWidth, wrapInEmailShell } from './table-builder';
 import { compileBlocks } from './compile-block';
 import { applyOutlookFixes } from './outlook-fixes';
 import { minifyHtml } from './minify';
-import { validateEmailOutput } from './validate';
+import { validateContrast, validateEmailOutput } from './validate';
 import { substituteVariables } from './variables';
 import { enforceSafeUrls } from './urls';
-import { report, type CompileIssue } from './issues';
+import { report, stripBlockMarkers, type CompileIssue } from './issues';
 import { htmlToPlainText, schemaToPlainText } from './plain-text';
 import { getConfig } from '@/bridge/apiClient';
 import type { AppConfig } from '@/bridge/types';
@@ -76,6 +76,7 @@ export function compileSignature(input: SignatureSchema): CompileResult {
     issues: [],
     canvas: schema.canvas,
     availableWidth: canvasWidth(schema.canvas),
+    markBlocks: true,
   };
 
   // Every block — top-level and nested — goes through compileBlock():
@@ -104,7 +105,10 @@ export function compileSignature(input: SignatureSchema): CompileResult {
     );
   }
 
-  const urlSafe = enforceSafeUrls(substituted, ctx);
+  // Contrast needs the block boundary markers; strip them afterwards.
+  validateContrast(substituted, ctx);
+
+  const urlSafe = enforceSafeUrls(stripBlockMarkers(substituted), ctx);
   const minified = minifyHtml(urlSafe);
   const fragment = extractBodyFragment(minified);
 

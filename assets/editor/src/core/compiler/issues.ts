@@ -98,6 +98,43 @@ export function parseMarker(value: string | undefined): BlockRef | null {
 }
 
 // ---------------------------------------------------------------------------
+// Block boundary markers
+// ---------------------------------------------------------------------------
+
+/**
+ * Comments that delimit the markup of ONE block while the document is
+ * being compiled (`compileBlock()` emits them when
+ * `CompileContext.markBlocks` is set). Document-level passes that only
+ * see HTML — contrast analysis, alt enforcement, image collection — use
+ * them to attribute what they find to the innermost block. Always
+ * stripped ({@link stripBlockMarkers}) before the HTML leaves the
+ * compiler; `attr()` escapes `>` so an id can never close the comment.
+ */
+const BLOCK_MARKER_OPEN = '<!--imgsig-block:';
+export const BLOCK_END_MARKER = '<!--/imgsig-block-->';
+
+export function blockStartMarker(block: BlockRef): string {
+  return `${BLOCK_MARKER_OPEN}${attr(block.type)}:${attr(block.id)}-->`;
+}
+
+/** Wraps one block's compiled markup in its boundary markers. */
+export function wrapWithBlockMarkers(html: string, block: BlockRef): string {
+  return `${blockStartMarker(block)}${html}${BLOCK_END_MARKER}`;
+}
+
+/** `'end'` for a closing marker, the block for an opening one, else null. */
+export function parseBlockMarkerComment(raw: string): BlockRef | 'end' | null {
+  if (raw === BLOCK_END_MARKER) return 'end';
+  if (!raw.startsWith(BLOCK_MARKER_OPEN) || !raw.endsWith('-->')) return null;
+  return parseMarker(raw.slice(BLOCK_MARKER_OPEN.length, -3));
+}
+
+/** Removes every block boundary marker. */
+export function stripBlockMarkers(html: string): string {
+  return html.replace(/<!--(?:imgsig-block:[^>]*|\/imgsig-block)-->/g, '');
+}
+
+// ---------------------------------------------------------------------------
 // Shared block-level checks
 // ---------------------------------------------------------------------------
 
@@ -147,50 +184,38 @@ export function clampToAvailable(
 }
 
 /**
- * Warns about small text whose colour barely contrasts with the canvas
- * background (WCAG AA 4.5:1). Only hex colours are evaluated.
+ * Former block-level contrast check (small text vs the CANVAS colour
+ * only). Contrast is now evaluated once on the compiled document by
+ * `validateContrast()` (validate.ts), which knows each text run's
+ * effective background (box / column / button cell / canvas), its
+ * inherited size and weight, and applies the WCAG AA large-text rule —
+ * so this no longer reports anything, to avoid duplicate warnings.
+ * Kept so existing block compile functions keep compiling.
+ *
+ * @deprecated Rely on the document-level contrast pass.
  */
 export function checkContrast(
-  sink: IssueSink,
-  block: BlockRef,
-  color: string,
-  background: string,
-  fontSize: number,
+  _sink: IssueSink,
+  _block: BlockRef,
+  _color: string,
+  _background: string,
+  _fontSize: number,
 ): void {
-  if (fontSize > 12) return;
-  const ratio = contrastRatio(color, background);
-  if (ratio !== null && ratio < 4.5) {
-    report(
-      sink,
-      'warning',
-      __(
-        '%s block: %spx text has low contrast against the background (%s:1); it may be hard to read.',
-        blockLabel(block.type),
-        String(fontSize),
-        ratio.toFixed(1),
-      ),
-      block,
-      'low-contrast',
-    );
-  }
+  // Intentionally empty — see the docblock.
 }
 
-function contrastRatio(a: string, b: string): number | null {
-  const la = luminance(a);
-  const lb = luminance(b);
-  if (la === null || lb === null) return null;
-  const [hi, lo] = la > lb ? [la, lb] : [lb, la];
-  return (hi + 0.05) / (lo + 0.05);
-}
-
-function luminance(hex: string): number | null {
-  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})(?:[0-9a-f]{2})?$/i.exec(hex.trim());
-  if (!m) return null;
-  let h = m[1]!;
-  if (h.length === 3) h = h.replace(/./g, (c) => c + c);
-  const channels = [0, 2, 4].map((i) => {
-    const v = Number.parseInt(h.slice(i, i + 2), 16) / 255;
-    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * channels[0]! + 0.7152 * channels[1]! + 0.0722 * channels[2]!;
+/** Low-contrast warning text (shared by the document-level contrast pass). */
+export function lowContrastMessage(
+  block: BlockRef | null,
+  fontSize: number,
+  ratio: number,
+): string {
+  // Floor, not round: a 4.46:1 ratio must not be displayed as "4.5:1".
+  const shown = (Math.floor(ratio * 10) / 10).toFixed(1);
+  return __(
+    '%s block: %spx text has low contrast against the background (%s:1); it may be hard to read.',
+    blockLabel(block?.type),
+    String(Math.round(fontSize * 100) / 100),
+    shown,
+  );
 }

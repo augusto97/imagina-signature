@@ -36,6 +36,15 @@ export interface CompileContext {
    * horizontal padding).
    */
   availableWidth: number;
+  /**
+   * When true, `compileBlock()` wraps each block's markup in block
+   * boundary comments (`<!--imgsig-block:type:id-->` … see
+   * `core/compiler/issues.ts`) so document-level passes — contrast,
+   * alt text, image collection — can attribute findings to the block.
+   * Set by `compileSignature()`, which strips the markers again; block
+   * compile functions never need to read it. Absent → no markers.
+   */
+  markBlocks?: boolean;
 }
 
 /**

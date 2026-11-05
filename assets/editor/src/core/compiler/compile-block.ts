@@ -2,7 +2,7 @@ import type { Block } from '@/core/schema/blocks';
 import { isBoxEmpty } from '@/core/schema/box';
 import { rendererForBlock, type CompileContext } from '@/core/blocks/registry';
 import { __ } from '@/i18n/helpers';
-import { blockLabel, report } from './issues';
+import { blockLabel, report, wrapWithBlockMarkers } from './issues';
 import { boxLayout, wrapInBox } from './box';
 
 /**
@@ -20,8 +20,17 @@ import { boxLayout, wrapInBox } from './box';
  *
  * The child context shares `warnings` / `issues` with `ctx` by
  * reference, so diagnostics from nested blocks surface at the top.
+ *
+ * With `ctx.markBlocks` the result is delimited by block boundary
+ * comments for the document-level diagnostics (`compileSignature()`
+ * strips them).
  */
 export function compileBlock(block: Block, ctx: CompileContext): string {
+  const html = compileBlockMarkup(block, ctx);
+  return ctx.markBlocks === true && html !== '' ? wrapWithBlockMarkers(html, block) : html;
+}
+
+function compileBlockMarkup(block: Block, ctx: CompileContext): string {
   if (!block || block.visible === false) return '';
   const definition = rendererForBlock(block);
   if (!definition) {
