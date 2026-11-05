@@ -2,6 +2,8 @@
  * Types shared between the admin app and its host (wp-admin).
  */
 
+import type { BrandKit } from '@shared/brandKit';
+
 /** Bootstrap config injected by PHP as `window.IMGSIG_ADMIN_CONFIG`. */
 export interface AdminConfig {
   /** Initial page slug — selected by which wp-admin URL the user opened. */
@@ -41,6 +43,11 @@ export interface AdminConfig {
    * link in their footer is dead weight at best, a 403 wall at worst.
    */
   frontendContext?: 'admin' | 'public';
+  /**
+   * False when the site runs the URL-only storage driver: upload
+   * buttons (Brand kit logo) are hidden. Missing = uploads allowed.
+   */
+  uploadEnabled?: boolean;
   /** URL templates for navigation between admin pages and the editor. */
   urls: {
     signatures: string;
@@ -113,6 +120,8 @@ export interface SiteSettings {
   brand_palette: string[];
   compliance_footer: { enabled: boolean; html: string };
   banner_campaigns: BannerCampaign[];
+  /** Company brand kit (1.2.0+; may be missing on an older server). */
+  brand_kit?: BrandKit;
 }
 
 export interface BannerCampaign {

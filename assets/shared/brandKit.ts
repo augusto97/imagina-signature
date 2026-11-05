@@ -7,7 +7,7 @@
  * sanitises every write and always returns this exact shape.
  */
 
-// i18n-ignore-file — the only literals here are font family names, never translated.
+// i18n-ignore-file — the only literals here are font and brand names, never translated.
 
 /** Company profile networks, in display order. */
 export const BRAND_KIT_SOCIAL_NETWORKS = [
@@ -22,6 +22,18 @@ export const BRAND_KIT_SOCIAL_NETWORKS = [
 ] as const;
 
 export type BrandKitSocialNetwork = (typeof BRAND_KIT_SOCIAL_NETWORKS)[number];
+
+/** Display names (brand names — not translated). */
+export const BRAND_KIT_SOCIAL_NAMES: Record<BrandKitSocialNetwork, string> = {
+  linkedin: 'LinkedIn',
+  x: 'X',
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  youtube: 'YouTube',
+  tiktok: 'TikTok',
+  github: 'GitHub',
+  whatsapp: 'WhatsApp',
+};
 
 export interface BrandKitCompany {
   name: string;
