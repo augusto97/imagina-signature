@@ -9,6 +9,7 @@ import {
   itemPrefix,
   normalizeContactRow,
   type ContactItem,
+  typeLabel,
 } from './normalize';
 
 /**
@@ -66,7 +67,7 @@ export const ContactRowBlock: FC<{ block: ContactRowBlockType }> = ({ block }) =
         src={iconUrl(CONTACT_ICON[item.type], c.icon_shape, c.icon_tone)}
         width={c.icon_size}
         height={c.icon_size}
-        alt=""
+        alt={typeLabel(item.type)}
         draggable={false}
         style={{ display: 'block', border: 0, width: c.icon_size, height: c.icon_size }}
       />

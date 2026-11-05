@@ -267,7 +267,7 @@ describe('template library', () => {
     });
 
     it('compiles without any diagnostic', () => {
-      expect(result().issues).toEqual([]);
+      expect(result().issues.map((i) => `${i.code}: ${i.message}`)).toEqual([]);
     });
 
     it('fits Gmail (fragment under 10,000 characters)', () => {

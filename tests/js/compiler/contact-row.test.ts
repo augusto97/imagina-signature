@@ -101,10 +101,11 @@ describe('contact compile — stacked', () => {
       `${BASE}/assets/icons/circle-brand/phone.png`,
       `${BASE}/assets/icons/circle-brand/website.png`,
     ]);
+    // The icon names its row when images are blocked / for screen readers.
+    expect(imgs.map((i) => i.getAttribute('alt'))).toEqual(['Email', 'Phone', 'Website']);
     for (const img of imgs) {
       expect(img.getAttribute('width')).toBe('16');
       expect(img.getAttribute('height')).toBe('16');
-      expect(img.getAttribute('alt')).toBe('');
       const cell = img.closest('td')!;
       expect(cell.getAttribute('width')).toBe('24');
       expect(cell.getAttribute('valign')).toBe('middle');

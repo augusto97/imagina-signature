@@ -22,6 +22,7 @@ import {
   itemPrefix,
   normalizeContactRow,
   resolveItemValue,
+  typeLabel,
   type ContactItem,
 } from './normalize';
 
@@ -145,7 +146,10 @@ export function compileContactRow(block: ContactRowBlock, ctx: CompileContext): 
       });
       return (
         `<td width="${iconWidth}" valign="middle" style="${style}">` +
-        `<img${marker} src="${attr(src)}" width="${c.icon_size}" height="${c.icon_size}" alt="" style="${iconStyle}">` +
+        // The icon names the row ("Email", "Phone"…) when images are
+        // blocked and for screen readers; an empty alt would leave a
+        // blank gap and is flagged by the validator.
+        `<img${marker} src="${attr(src)}" width="${c.icon_size}" height="${c.icon_size}" alt="${attr(typeLabel(item.type))}" style="${iconStyle}">` +
         `</td>`
       );
     },
