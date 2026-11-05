@@ -127,6 +127,9 @@ const KNOWN_ATTRS = new Set([
   'height',
   'style',
   'href',
+  // Contact rows carry hosted PNG icons.
+  'src',
+  'alt',
   'xmlns',
   'xmlns:v',
   'xmlns:o',

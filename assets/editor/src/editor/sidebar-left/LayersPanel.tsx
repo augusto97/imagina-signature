@@ -21,6 +21,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { rendererForBlock } from '@/core/blocks/registry';
+import { normalizeContactRow } from '@/core/blocks/contact-row/normalize';
+import { iconTitle } from '@/core/blocks/social-icons/iconSet';
+import { normalizeSocialIcons } from '@/core/blocks/social-icons/normalize';
 import type { Block, ContainerBlock } from '@/core/schema/blocks';
 import { childLists, collectBlockIds, columnsOf } from '@/core/schema/tree';
 import { __ } from '@/i18n/helpers';
@@ -414,16 +417,18 @@ function labelForBlock(block: Block): string {
     case 'button_cta':
       raw = (block as { label: string }).label;
       break;
-    case 'social_icons': {
-      const networks = (block as { networks: Array<{ platform: string }> }).networks;
-      raw = networks.map((n) => n.platform).join(', ');
+    case 'social_icons':
+      // v1 (`networks`) and v2 (`items`) alike, via the block's normaliser.
+      raw = normalizeSocialIcons(block)
+        .items.map((i) => iconTitle(i.network))
+        .join(', ');
       break;
-    }
-    case 'contact_row': {
-      const rows = (block as { rows: Array<{ icon: string }> }).rows;
-      raw = rows.map((r) => r.icon).join(' · ');
+    case 'contact_row':
+      raw = normalizeContactRow(block)
+        .items.map((i) => i.value)
+        .filter(Boolean)
+        .join(' · ');
       break;
-    }
     case 'container': {
       const c = block as ContainerBlock;
       const total = childLists(c).reduce((sum, children) => sum + children.length, 0);

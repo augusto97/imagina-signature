@@ -87,23 +87,90 @@ export interface SpacerBlock extends BlockBase {
   height: number;
 }
 
+/** v1 social entry (letter circles). Read only to migrate old blocks. */
 export interface SocialNetwork {
   platform: string;
   url: string;
 }
 
+/**
+ * Row of hosted PNG social icons.
+ *
+ * v2 (1.2.0) fields are all optional so v1 rows keep loading; the
+ * block's own normaliser (`core/blocks/social-icons/normalize.ts`)
+ * turns a v1 row (`networks` / `icon_size` / `gap` / `color`) into the
+ * v2 shape on render / compile, and the properties panel writes v2 on
+ * the first edit (clearing the v1 keys).
+ */
 export interface SocialIconsBlock extends BlockBase {
   type: 'social_icons';
-  networks: SocialNetwork[];
-  icon_size: number;
-  gap: number;
-  color: string;
+  /** One entry per icon, in display order. `network` is an icon name from `assets/icons/manifest.json`. */
+  items?: Array<{ id: string; network: string; url: string }>;
+  /** Icon background. Default `circle`. */
+  shape?: 'circle' | 'rounded' | 'plain';
+  /** Colour treatment. Default `brand`; `light` is for dark backgrounds. */
+  tone?: 'brand' | 'dark' | 'gray' | 'light';
+  /** Displayed icon edge in px (16–40). Default 24. */
+  size?: number;
+  /** Gap between icons in px (0–24). Default 8. */
+  spacing?: number;
+  /** Row alignment inside the block. Default `left`. */
+  align?: 'left' | 'center' | 'right';
+  /** @deprecated v1 — use `items`. */
+  networks?: SocialNetwork[];
+  /** @deprecated v1 — use `size`. */
+  icon_size?: number;
+  /** @deprecated v1 — use `spacing`. */
+  gap?: number;
+  /** @deprecated v1 — letter-circle colour; mapped to a `tone`. */
+  color?: string;
 }
 
+/**
+ * Contact details (email, phone, web, address…) with hosted PNG icons.
+ *
+ * v2 (1.2.0) fields are optional; v1 rows (`rows: [{ icon, label,
+ * href }]`) are converted by `core/blocks/contact-row/normalize.ts` on
+ * render / compile and rewritten as v2 on the first edit.
+ */
 export interface ContactRowBlock extends BlockBase {
   type: 'contact_row';
-  rows: Array<{ icon: 'email' | 'phone' | 'web'; label: string; href: string }>;
-  style: TypographyStyle;
+  /**
+   * One entry per contact detail. `value` is the visible text; the link
+   * is derived from it per `type` (mailto:, tel:, wa.me, https://, a
+   * Maps search…) unless `href` overrides it. `label` is the per-item
+   * prefix used when `label_mode` is `custom`.
+   */
+  items?: Array<{
+    id: string;
+    type: 'email' | 'phone' | 'mobile' | 'website' | 'address' | 'whatsapp' | 'calendar' | 'custom';
+    value: string;
+    label?: string;
+    href?: string;
+  }>;
+  /** `stacked` = one row per item; `inline` = a single line. Default `stacked`. */
+  layout?: 'stacked' | 'inline';
+  /** Inline separator (e.g. ' | ', ' · ', ' / '). Default ' | '. */
+  separator?: string;
+  /** Show an icon before each item. Default true. */
+  show_icons?: boolean;
+  icon_shape?: 'circle' | 'rounded' | 'plain';
+  icon_tone?: 'brand' | 'dark' | 'gray' | 'light';
+  /** Displayed icon edge in px (12–32). Default 16. */
+  icon_size?: number;
+  /** Prefix before each value: none, short ("T:", "E:"…) or each item's `label`. Default none. */
+  label_mode?: 'none' | 'short' | 'custom';
+  /** Colour of linked values. Defaults to `style.color`. */
+  link_color?: string;
+  /** Vertical gap between stacked rows in px (0–24). Default 4. */
+  row_gap?: number;
+  /**
+   * Typography. `font_family` may be omitted (v2) to inherit the
+   * canvas font; `text_align` aligns the whole block.
+   */
+  style: Omit<TypographyStyle, 'font_family'> & { font_family?: string };
+  /** @deprecated v1 — use `items`. */
+  rows?: Array<{ icon: 'email' | 'phone' | 'web'; label: string; href: string }>;
 }
 
 export interface ButtonCtaBlock extends BlockBase {

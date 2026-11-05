@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { compileSignature } from '@/core/compiler/compile';
 import type { Block } from '@/core/schema/blocks';
 import type { SignatureSchema } from '@/core/schema/signature';
+import { normalizeContactRow } from '@/core/blocks/contact-row/normalize';
 import '@/core/blocks';
 
 /**
@@ -100,7 +101,8 @@ function expectedTexts(blocks: Block[], variables: Record<string, string>): stri
         out.push(textOf(sub(b.content)));
         break;
       case 'contact_row':
-        for (const row of b.rows) out.push(norm(sub(row.label)));
+        // v1 rows and v2 items alike (the block normalises v1 on compile).
+        for (const item of normalizeContactRow(b).items) out.push(norm(sub(item.value)));
         break;
       case 'button_cta':
         out.push(norm(sub(b.label)));
