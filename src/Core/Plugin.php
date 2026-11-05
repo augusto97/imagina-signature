@@ -29,6 +29,7 @@ use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\RestRouter;
 use ImaginaSignatures\Directory\Groups;
+use ImaginaSignatures\Directory\ProfilePrivacy;
 use ImaginaSignatures\Directory\ProfileScreen;
 use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Privacy\UserDataManager;
@@ -148,8 +149,10 @@ final class Plugin {
 		// Personal-data exporter / eraser + delete_user cleanup.
 		$this->container->make( UserDataManager::class )->register();
 
-		// 1.3.0: `imgsig_group` user taxonomy (groups / departments).
+		// 1.3.0: `imgsig_group` user taxonomy (groups / departments) and
+		// the profile fields' privacy exporter / eraser.
 		Groups::boot();
+		ProfilePrivacy::boot();
 
 		// Public-facing route — runs on EVERY request, admin or not.
 		// The router self-gates on its own settings; when the feature

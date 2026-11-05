@@ -531,6 +531,8 @@ html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMa
 				'groups'     => FrontendAccess::dashboard_url(),
 			],
 			'frontendContext'  => 'public',
+			// 1.3.0: "My profile" hides its photo upload in URL-only mode.
+			'uploadEnabled'    => 'url_only' !== (string) get_option( 'imgsig_storage_driver', 'media_library' ),
 			'brandPalette'     => $site_opts['brand_palette'],
 			'complianceFooter' => $site_opts['compliance_footer'],
 			'bannerCampaigns'  => $site_opts['banner_campaigns'],
