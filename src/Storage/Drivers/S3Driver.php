@@ -200,6 +200,30 @@ final class S3Driver implements StorageDriverInterface, ObjectInspectorInterface
 	}
 
 	/**
+	 * Origin (`scheme://host[:port]`) browsers PUT presigned uploads to.
+	 *
+	 * Used to scope the public route's CSP `connect-src`.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return string Empty when the endpoint can't be parsed.
+	 */
+	public function endpoint_origin(): string {
+		$parts = wp_parse_url( $this->endpoint );
+		if ( ! is_array( $parts ) || empty( $parts['host'] ) ) {
+			return '';
+		}
+
+		$scheme = isset( $parts['scheme'] ) ? strtolower( (string) $parts['scheme'] ) : 'https';
+		$origin = $scheme . '://' . strtolower( (string) $parts['host'] );
+		if ( isset( $parts['port'] ) ) {
+			$origin .= ':' . (int) $parts['port'];
+		}
+
+		return $origin;
+	}
+
+	/**
 	 * @inheritDoc
 	 */
 	public function get_id(): string {

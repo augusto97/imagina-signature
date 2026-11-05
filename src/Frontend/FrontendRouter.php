@@ -51,7 +51,71 @@ final class FrontendRouter {
 	public function boot(): void {
 		add_action( 'init', [ self::class, 'register_rewrite_rules' ], 10 );
 		add_filter( 'query_vars', [ self::class, 'register_query_vars' ] );
+		add_filter( 'posts_pre_query', [ self::class, 'short_circuit_main_query' ], 10, 2 );
+		add_filter( 'pre_handle_404', [ self::class, 'skip_404_handling' ], 10, 2 );
 		add_action( 'template_redirect', [ $this, 'dispatch' ] );
+	}
+
+	/**
+	 * Skips the main posts query on our route.
+	 *
+	 * The rewrite maps `/<slug>/` to `index.php?imgsig_frontend=…`,
+	 * which WP_Query would otherwise treat as the blog home and run the
+	 * full "latest posts" SQL for a page that never renders posts.
+	 * Returning an empty array from `posts_pre_query` makes WP_Query
+	 * skip the database entirely.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param array<int, mixed>|null $posts Short-circuit value (null = run the query).
+	 * @param \WP_Query|mixed        $query The query.
+	 *
+	 * @return array<int, mixed>|null
+	 */
+	public static function short_circuit_main_query( $posts, $query ) {
+		if ( null !== $posts || ! self::is_our_main_query( $query ) ) {
+			return $posts;
+		}
+
+		$query->found_posts   = 0;
+		$query->max_num_pages = 0;
+		return [];
+	}
+
+	/**
+	 * Keeps WP from flagging our (post-less) route as a 404 before
+	 * `template_redirect` dispatches it.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param bool            $preempt Whether to short-circuit 404 handling.
+	 * @param \WP_Query|mixed $query   Main query.
+	 *
+	 * @return bool
+	 */
+	public static function skip_404_handling( $preempt, $query ) {
+		if ( $preempt || ! self::is_our_main_query( $query ) ) {
+			return (bool) $preempt;
+		}
+		return true;
+	}
+
+	/**
+	 * True for the main query of an enabled public-route request. When
+	 * the feature is disabled the normal flow (and dispatch()'s 404)
+	 * applies.
+	 *
+	 * @param mixed $query Candidate query.
+	 *
+	 * @return bool
+	 */
+	private static function is_our_main_query( $query ): bool {
+		return is_object( $query )
+			&& method_exists( $query, 'is_main_query' )
+			&& method_exists( $query, 'get' )
+			&& $query->is_main_query()
+			&& '' !== (string) $query->get( self::QV_VIEW )
+			&& FrontendAccess::is_enabled();
 	}
 
 	/**

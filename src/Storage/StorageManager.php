@@ -284,6 +284,29 @@ class StorageManager {
 	}
 
 	/**
+	 * Origin the browser uploads to directly (presigned PUT), or '' when
+	 * the active driver uploads through PHP. Never throws.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return string
+	 */
+	public function presigned_upload_origin(): string {
+		if ( S3Driver::ID !== $this->active_driver_id() ) {
+			return '';
+		}
+
+		try {
+			$driver = $this->active_driver();
+		} catch ( \Throwable $e ) {
+			unset( $e );
+			return '';
+		}
+
+		return $driver instanceof S3Driver ? $driver->endpoint_origin() : '';
+	}
+
+	/**
 	 * Probes a draft configuration without persisting it.
 	 *
 	 * Used by the settings page "Test connection" button. Construction
