@@ -4,14 +4,9 @@ import type { Area, Point } from 'react-easy-crop';
 import { AlertTriangle } from 'lucide-react';
 import { Modal } from '@/components/shared/Modal';
 import { __ } from '@/i18n/helpers';
-import {
-  extensionFor,
-  loadImage,
-  renderImage,
-  targetPixelWidth,
-  uploadBlob,
-  uploadErrorMessage,
-} from '@/services/uploads';
+import { loadImageForCanvas } from '@/services/imageDecode';
+import { optimizeImageElement, uploadOptimizedImage } from '@/services/imageOptimize';
+import { uploadErrorMessage } from '@/services/uploads';
 
 function isGifSrc(src: string): boolean {
   if (!src) return false;
@@ -25,6 +20,9 @@ export interface CroppedImage {
   /** Pixel size of the uploaded image. */
   width: number;
   height: number;
+  /** The uploaded bytes (lets callers post-process without a re-download). */
+  blob: Blob;
+  mime: string;
 }
 
 interface Props {
@@ -39,6 +37,13 @@ interface Props {
    * `border-radius`.
    */
   circular?: boolean;
+  /**
+   * Shape of the crop overlay. Defaults to `round` when `circular`,
+   * `rect` otherwise. Set `round` without `circular` to frame a round
+   * avatar while uploading the unmasked square (the avatar block bakes
+   * the mask itself).
+   */
+  cropShape?: 'round' | 'rect';
   /**
    * CSS width the image is displayed at in the signature. The output is
    * resized to at most 2× this (HiDPI), capped at 1200px.
@@ -62,7 +67,8 @@ interface Props {
  * visual overlay — avatars still went out square):
  *
  *  - circular → PNG with a circular alpha mask;
- *  - rectangular → JPEG q~0.88, or PNG when the source has transparency;
+ *  - otherwise optimised like every upload (`services/imageOptimize`):
+ *    JPEG q 0.85, or PNG when the result has transparency;
  *  - resized so its pixel width ≤ 2× `displayWidth` (cap 1200px).
  */
 export const ImageCropperModal: FC<Props> = ({
@@ -70,6 +76,7 @@ export const ImageCropperModal: FC<Props> = ({
   src,
   aspect,
   circular,
+  cropShape,
   displayWidth,
   filenameBase = 'image',
   onCancel,
@@ -80,6 +87,7 @@ export const ImageCropperModal: FC<Props> = ({
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const round = (cropShape ?? (circular ? 'round' : 'rect')) === 'round';
 
   useEffect(() => {
     if (open) setError(null);
@@ -94,18 +102,20 @@ export const ImageCropperModal: FC<Props> = ({
     setBusy(true);
     setError(null);
     try {
-      const image = await loadImage(src);
-      const rendered = await renderImage(image, {
+      const image = await loadImageForCanvas(src);
+      const rendered = await optimizeImageElement(image, {
         crop: croppedAreaPixels,
-        maxWidth: targetPixelWidth(displayWidth),
-        circular,
+        displayWidth,
+        mask: circular ? { shape: 'circle' } : undefined,
       });
-      const asset = await uploadBlob(
-        rendered.blob,
-        `${filenameBase}.${extensionFor(rendered.mime)}`,
-        { width: rendered.width, height: rendered.height },
-      );
-      onConfirm({ url: asset.url, width: rendered.width, height: rendered.height });
+      const asset = await uploadOptimizedImage(rendered, filenameBase);
+      onConfirm({
+        url: asset.url,
+        width: rendered.width,
+        height: rendered.height,
+        blob: rendered.blob,
+        mime: rendered.mime,
+      });
     } catch (e) {
       setError(uploadErrorMessage(e));
     } finally {
@@ -126,11 +136,11 @@ export const ImageCropperModal: FC<Props> = ({
               crop={crop}
               zoom={zoom}
               aspect={aspect}
-              cropShape={circular ? 'round' : 'rect'}
+              cropShape={round ? 'round' : 'rect'}
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onCropComplete={onCropComplete}
-              showGrid={!circular}
+              showGrid={!round}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-[12px] text-white/60">
