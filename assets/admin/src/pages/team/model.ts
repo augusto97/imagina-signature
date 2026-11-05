@@ -201,21 +201,32 @@ export function counters(summary: TeamSummary, channels: TeamChannels): Counter[
       label: __('In Gmail'),
       value: channels.gmail.configured ? outOf(summary.gmail_pushed) : __('Not connected'),
       filter: channels.gmail.configured && summary.gmail_failed > 0 ? 'gmail_failed' : null,
-      tone: !channels.gmail.configured ? 'muted' : summary.gmail_failed > 0 ? 'danger' : 'success',
+      tone: !channels.gmail.configured
+        ? 'muted'
+        : summary.gmail_failed > 0
+          ? 'danger'
+          : summary.with_signature > 0 && summary.gmail_pushed === summary.with_signature
+            ? 'success'
+            : 'info',
     },
     {
       key: 'outlook',
       label: __('Outlook add-in'),
       value: channels.outlook.enabled ? outOf(summary.outlook_delivered) : __('Off'),
       filter: null,
-      tone: channels.outlook.enabled ? 'success' : 'muted',
+      tone: channels.outlook.enabled ? 'info' : 'muted',
     },
     {
       key: 'installed',
       label: __('Installed by hand'),
       value: outOf(summary.installed),
       filter: 'not_installed',
-      tone: summary.install_outdated > 0 ? 'warning' : 'success',
+      tone:
+        summary.install_outdated > 0
+          ? 'warning'
+          : summary.with_signature > 0 && summary.installed === summary.with_signature
+            ? 'success'
+            : 'info',
     },
   ];
 }

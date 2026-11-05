@@ -75,14 +75,20 @@
 }
 
 /*
- * Wins specificity against wp-admin's `forms.css` defaults so our
- * React buttons don't render with the WP grey/blue UA-style border.
+ * Neutral buttons: no UA grey border / background / padding.
+ *
+ * `:where()` keeps the id out of the specificity (0,0,1), so Tailwind
+ * utilities on a button — `:where(#imagina-admin-root) .px-3`, 0,1,0 —
+ * still win. (As `#imagina-admin-root button`, 1,0,1, this reset beat
+ * every utility: tabs, counters and primary buttons lost their
+ * background, padding and border.) wp-admin's own bare `button` rule
+ * only sets fonts, and this file loads after it.
  *
  * Using `border-width: 0` longhand (not shorthand `border: 0`) so
  * Tailwind's `.border` utility on a button can still re-introduce
  * a 1px width while preflight's `border-style: solid` stays applied.
  */
-#imagina-admin-root button {
+:where(#imagina-admin-root) button {
   appearance: none;
   background: transparent;
   border-width: 0;
@@ -96,9 +102,9 @@
   box-shadow: none;
   text-shadow: none;
 }
-#imagina-admin-root button:focus,
-#imagina-admin-root button:hover,
-#imagina-admin-root button:active {
+:where(#imagina-admin-root) button:focus,
+:where(#imagina-admin-root) button:hover,
+:where(#imagina-admin-root) button:active {
   box-shadow: none;
   text-shadow: none;
   outline: none;

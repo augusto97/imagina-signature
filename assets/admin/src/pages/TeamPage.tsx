@@ -368,15 +368,24 @@ export const TeamPage: FC = () => {
                     ? 'border-[var(--accent)] ring-1 ring-[var(--accent)]'
                     : 'border-[var(--border-default)]',
                 );
+                // The admin root's button reset (an id selector) beats
+                // utility classes on <button>, so the card is an inner div.
                 return c.filter !== null ? (
                   <button
                     key={c.key}
                     type="button"
-                    className={cn(cardClass, 'transition-colors hover:bg-[var(--bg-hover)]')}
+                    className="group block w-full text-left"
                     onClick={() => applyFilter(c.filter ?? 'all')}
                     aria-pressed={active}
                   >
-                    {body}
+                    <div
+                      className={cn(
+                        cardClass,
+                        'h-full transition-colors group-hover:bg-[var(--bg-hover)]',
+                      )}
+                    >
+                      {body}
+                    </div>
                   </button>
                 ) : (
                   <div key={c.key} className={cardClass}>
