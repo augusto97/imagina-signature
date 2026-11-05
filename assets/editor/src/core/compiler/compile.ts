@@ -1,7 +1,8 @@
 import type { SignatureSchema } from '@/core/schema/signature';
-import { rendererForBlock, type CompileContext } from '@/core/blocks/registry';
+import type { CompileContext } from '@/core/blocks/registry';
 import { __ } from '@/i18n/helpers';
 import { canvasWidth, wrapInEmailShell } from './table-builder';
+import { compileBlocks } from './compile-block';
 import { applyOutlookFixes } from './outlook-fixes';
 import { minifyHtml } from './minify';
 import { validateEmailOutput } from './validate';
@@ -14,6 +15,7 @@ import type { AppConfig } from '@/bridge/types';
 import { attr, intPx } from './css';
 
 export type { CompileIssue, CompileIssueLevel } from './issues';
+export { compileBlock, compileBlocks } from './compile-block';
 
 export interface CompileResult {
   /** Complete HTML document (doctype, head, body). Copy HTML / Download / test-send. */
@@ -69,31 +71,11 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
     availableWidth: canvasWidth(schema.canvas),
   };
 
-  const blockChunks: string[] = [];
-  for (const block of schema.blocks) {
-    // Hidden blocks (Layers panel "eye" toggle flips `block.visible`
-    // to false) must NOT ship in the exported HTML. Until 1.0.24 the
-    // visible flag was honored on the canvas only — the user thought
-    // they had hidden a banner / disclaimer, hit Export, and the
-    // recipient still saw it. Compile-time skip closes that gap.
-    if (block.visible === false) {
-      continue;
-    }
-    const definition = rendererForBlock(block);
-    if (!definition) {
-      report(
-        ctx,
-        'warning',
-        __('Unknown block type "%s" was skipped.', String(block.type)),
-        block,
-        'unknown-block',
-      );
-      continue;
-    }
-    blockChunks.push(definition.compile(block as never, ctx));
-  }
-
-  const concatenated = blockChunks.join('\n');
+  // Every block — top-level and nested — goes through compileBlock():
+  // hidden blocks (Layers panel "eye") are skipped, unknown types warn,
+  // `block.box` is applied. Until 1.0.24 the visible flag was honoured
+  // on the canvas only, so "hidden" banners still reached recipients.
+  const concatenated = compileBlocks(schema.blocks, ctx);
   const shelled = wrapInEmailShell(concatenated, schema.canvas);
   const withOutlookFixes = applyOutlookFixes(shelled);
   // Campaign banner first (sits visually right under the user's

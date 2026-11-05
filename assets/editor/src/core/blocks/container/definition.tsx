@@ -12,7 +12,7 @@ import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { SortableBlock } from '@/editor/canvas/SortableBlock';
 import { noShiftSortingStrategy } from '@/editor/canvas/dnd';
 import { px } from '@/core/compiler/css';
-import { report } from '@/core/compiler/issues';
+import { compileBlocks } from '@/core/compiler/compile-block';
 import {
   registerBlock,
   rendererForBlock,
@@ -511,20 +511,10 @@ export function containerCellWidths(
 }
 
 function compile(block: ContainerBlock, ctx: CompileContext): string {
-  const compileChildren = (children: Block[], width: number): string => {
-    // Same issue / warning sinks (shared by reference), narrower width.
-    const childCtx: CompileContext = { ...ctx, availableWidth: width };
-    return children
-      .map((child) => {
-        const def = rendererForBlock(child);
-        if (!def) {
-          report(ctx, 'warning', __('Unknown block type "%s" was skipped.', String(child.type)), child, 'unknown-block');
-          return '';
-        }
-        return (def.compile as (b: Block, c: CompileContext) => string)(child, childCtx);
-      })
-      .join('\n');
-  };
+  // Every child goes through compileBlock() (unknown types warn, boxes
+  // apply) with the same issue sinks and a narrower width.
+  const compileChildren = (children: Block[], width: number): string =>
+    compileBlocks(children, { ...ctx, availableWidth: width });
 
   const visibleLeft = block.children.filter((c) => c.visible !== false);
   const visibleRight = rightChildrenOf(block).filter((c) => c.visible !== false);

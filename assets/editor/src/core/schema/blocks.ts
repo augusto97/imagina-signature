@@ -1,4 +1,4 @@
-import type { BorderStyle, Padding, TypographyStyle } from './styles';
+import type { BorderStyle, BoxStyle, Padding, TypographyStyle } from './styles';
 
 /**
  * Block type definitions mirroring CLAUDE.md §8.1 / §10.2.
@@ -14,6 +14,14 @@ export interface BlockBase {
   type: string;
   padding?: Padding;
   visible?: boolean;
+  /**
+   * Optional generic box styling (schema 1.1): background, borders,
+   * radius, inner padding, alignment, fixed width. Applied around the
+   * block's own markup by the canvas (`BoxFrame`) and the compiler
+   * (`compileBlock` → `wrapInBox`), so block definitions never need to
+   * know about it.
+   */
+  box?: BoxStyle;
 }
 
 // ---------------------------------------------------------------------------
