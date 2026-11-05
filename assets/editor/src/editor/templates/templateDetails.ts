@@ -1,7 +1,7 @@
 import type { AvatarBlock, Block } from '@/core/schema/blocks';
 import type { SignatureSchema } from '@/core/schema/signature';
 import { walkBlocks } from '@/core/schema/tree';
-import { isInternalVariable } from '@/core/compiler/variables';
+import { isInternalVariable, profileVariableKeys } from '@/core/compiler/variables';
 import { __ } from '@/i18n/helpers';
 
 /**
@@ -10,15 +10,17 @@ import { __ } from '@/i18n/helpers';
  * from.
  *
  *  - `profile` — `wp_*` system variables, from the user's WordPress
- *    profile;
+ *    profile, and the employee profile fields (job_title, phone… and
+ *    the admin's custom fields) when the bootstrap provides them;
  *  - `company` — `company_*` system variables, from the brand kit;
  *  - `signature` — the signature's own variables (the canonical keys
  *    job_title, department, phone… or anything an admin template adds).
  *
  * Profile / company fields with a value are read-only ("from your
- * profile"). When the value is blank the field is editable and the
+ * profile"): a non-empty profile value is what ships, whatever the
+ * signature says. When the value is blank the field is editable and the
  * entry is stored as a signature variable of the same name, which the
- * compiler lets override the system value.
+ * compiler uses in its place.
  */
 
 export type DetailSource = 'profile' | 'company' | 'signature';
@@ -204,6 +206,7 @@ function rank(order: readonly string[], key: string): number {
 export function detailFields(
   schema: Pick<SignatureSchema, 'blocks' | 'variables'>,
   system: Record<string, string>,
+  profileKeys: readonly string[] = profileVariableKeys(),
 ): DetailField[] {
   const keys = referencedVariables(schema.blocks ?? []);
   for (const key of Object.keys(schema.variables ?? {})) keys.add(key);
@@ -213,11 +216,16 @@ export function detailFields(
   const own: string[] = [];
   for (const key of keys) {
     if (isInternalVariable(key)) continue;
-    if (key.startsWith('wp_') && key in system) profile.push(key);
+    if ((key.startsWith('wp_') || profileKeys.includes(key)) && key in system) profile.push(key);
     else if (key.startsWith('company_') && key in system) company.push(key);
     else own.push(key);
   }
-  profile.sort((a, b) => rank(PROFILE_ORDER, a) - rank(PROFILE_ORDER, b));
+  profile.sort(
+    (a, b) =>
+      rank(PROFILE_ORDER, a) - rank(PROFILE_ORDER, b) ||
+      rank(CANONICAL_KEYS, a) - rank(CANONICAL_KEYS, b) ||
+      a.localeCompare(b),
+  );
   company.sort((a, b) => rank(COMPANY_ORDER, a) - rank(COMPANY_ORDER, b));
   own.sort((a, b) => rank(CANONICAL_KEYS, a) - rank(CANONICAL_KEYS, b) || a.localeCompare(b));
 

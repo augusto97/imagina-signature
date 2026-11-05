@@ -23,7 +23,9 @@ const SYSTEM = {
   imgsig_assets_url: 'https://northwind.example/wp-content/plugins/imagina-signatures/assets',
 };
 
-type ConfigHost = { IMGSIG_EDITOR_CONFIG: { systemVariables?: Record<string, string>; signatureId: number } };
+type ConfigHost = {
+  IMGSIG_EDITOR_CONFIG: { systemVariables?: Record<string, string>; signatureId: number };
+};
 const config = (globalThis as unknown as ConfigHost).IMGSIG_EDITOR_CONFIG;
 
 function templateSchema(): SignatureSchema {
@@ -114,6 +116,28 @@ describe('details form model', () => {
     expect(fields[1]!.label).toBe('Job title');
   });
 
+  it('treats employee profile fields as profile fields: read-only when filled, editable when blank', () => {
+    // 1.3.0: a non-empty profile value is what ships, so it can't be typed over here.
+    const system = { ...SYSTEM, job_title: 'CTO', phone: '' };
+    const fields = detailFields(templateSchema(), system);
+    expect(fields.map((f) => [f.key, f.source, f.readOnly])).toEqual([
+      ['wp_display_name', 'profile', true],
+      ['job_title', 'profile', true],
+      ['phone', 'profile', false],
+      ['company_name', 'company', true],
+      ['company_tagline', 'company', false],
+    ]);
+    expect(fields[1]!.systemValue).toBe('CTO');
+    // The read-only profile value is not copied into the signature; a
+    // blank profile field filled in here is stored as the fallback.
+    expect(
+      variablesFromForm(fields, { job_title: 'x', phone: '+34 600' }, { job_title: 'Directora' }),
+    ).toEqual({
+      job_title: 'Directora',
+      phone: '+34 600',
+    });
+  });
+
   it('never lists plugin-internal variables', () => {
     const schema = templateSchema();
     schema.variables.photo_url = '{{imgsig_assets_url}}/templates/avatar-1.png';
@@ -125,12 +149,18 @@ describe('details form model', () => {
   it('stores a blank-brand-kit override only when it is filled in', () => {
     const fields = detailFields(templateSchema(), SYSTEM);
     const base = { job_title: 'Directora', phone: '1' };
-    expect(variablesFromForm(fields, { job_title: 'CEO', phone: '', company_tagline: '' }, base)).toEqual({
+    expect(
+      variablesFromForm(fields, { job_title: 'CEO', phone: '', company_tagline: '' }, base),
+    ).toEqual({
       job_title: 'CEO',
       phone: '',
     });
     expect(
-      variablesFromForm(fields, { job_title: 'CEO', phone: '2', company_tagline: ' Since 1999 ' }, base),
+      variablesFromForm(
+        fields,
+        { job_title: 'CEO', phone: '2', company_tagline: ' Since 1999 ' },
+        base,
+      ),
     ).toEqual({ job_title: 'CEO', phone: '2', company_tagline: 'Since 1999' });
   });
 });
@@ -243,7 +273,9 @@ describe('template picker polish', () => {
     expect(within(chips).getByText('Corporate')).toBeInTheDocument();
     expect(within(chips).getByText('Real estate')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Search templates'), { target: { value: 'real estate' } });
+    fireEvent.change(screen.getByLabelText('Search templates'), {
+      target: { value: 'real estate' },
+    });
     expect(screen.getByText('1 of 2 templates')).toBeInTheDocument();
     expect(screen.queryByText('Corporate sidebar')).toBeNull();
     expect(screen.getByText('Property agent')).toBeInTheDocument();
