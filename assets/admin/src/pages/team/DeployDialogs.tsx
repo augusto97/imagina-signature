@@ -224,7 +224,7 @@ export const GmailPushDialog: FC<GmailProps> = ({ userIds, force = false, onClos
         </div>
         <p className="text-[12px] text-[var(--text-secondary)]" aria-live="polite">
           {__('%1$s of %2$s people', String(results.length), String(total))} —{' '}
-          {__('%s pushed', String(pushed))}
+          {_n('%s signature pushed', '%s signatures pushed', pushed, String(pushed))}
         </p>
         {results.length > 0 && (
           <ul className="max-h-64 divide-y divide-[var(--border-default)] overflow-auto rounded-md border border-[var(--border-default)]">

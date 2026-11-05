@@ -932,7 +932,7 @@ msgid "Open %s settings"
 msgstr ""
 
 #: src/Deployment/Install/InstallPage.php:390
-#: assets/admin/src/pages/TeamPage.tsx:550
+#: assets/admin/src/pages/TeamPage.tsx:555
 #: assets/editor/src/editor/modals/ExportModal.tsx:703
 #: assets/editor/src/editor/modals/PreviewModal.tsx:44
 msgid "Gmail"
@@ -1219,9 +1219,7 @@ msgid "Message from your administrator:"
 msgstr ""
 
 #. translators: %s: company or site name.
-#. translators: singular form (count = 1)
 #: src/Deployment/OutlookManifest.php:156
-#: assets/admin/src/pages/SignaturesPage.tsx:282
 #, php-format
 msgid "%s signature"
 msgstr ""
@@ -1412,7 +1410,7 @@ msgid "Email signatures"
 msgstr ""
 
 #: src/Privacy/UserDataManager.php:170
-#: assets/admin/src/pages/SignaturesPage.tsx:378
+#: assets/admin/src/pages/SignaturesPage.tsx:383
 #: assets/admin/src/pages/TemplatesPage.tsx:345
 #: assets/admin/src/pages/TemplatesPage.tsx:495
 #: assets/admin/src/pages/groups/GroupDialog.tsx:151
@@ -1421,7 +1419,7 @@ msgid "Name"
 msgstr ""
 
 #: src/Privacy/UserDataManager.php:174
-#: assets/admin/src/pages/SignaturesPage.tsx:379
+#: assets/admin/src/pages/SignaturesPage.tsx:384
 #: assets/admin/src/pages/settings/GoogleWorkspaceTab.tsx:825
 msgid "Status"
 msgstr ""
@@ -2156,7 +2154,7 @@ msgstr ""
 
 #: assets/admin/src/components/AssignTemplateDialog.tsx:237
 #: assets/admin/src/pages/TeamPage.tsx:275
-#: assets/admin/src/pages/TeamPage.tsx:469
+#: assets/admin/src/pages/TeamPage.tsx:474
 msgid "Assign a template"
 msgstr ""
 
@@ -2172,7 +2170,7 @@ msgstr ""
 #: assets/admin/src/pages/groups/GroupDialog.tsx:134
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:396
 #: assets/admin/src/pages/team/DeployDialogs.tsx:70
-#: assets/admin/src/pages/team/RecompilePanel.tsx:53
+#: assets/admin/src/pages/team/RecompilePanel.tsx:63
 #: assets/editor/src/editor/modals/AssetLibraryModal.tsx:490
 #: assets/editor/src/editor/modals/ConfirmDialog.tsx:86
 #: assets/editor/src/editor/modals/ImageCropperModal.tsx:195
@@ -2287,7 +2285,7 @@ msgstr ""
 #: assets/admin/src/components/AssignTemplateDialog.tsx:421
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:314
 #: assets/admin/src/pages/team/DeployDialogs.tsx:215
-#: assets/admin/src/pages/team/RecompilePanel.tsx:65
+#: assets/admin/src/pages/team/RecompilePanel.tsx:75
 msgid "Progress"
 msgstr ""
 
@@ -2313,7 +2311,7 @@ msgid "failed"
 msgstr ""
 
 #: assets/admin/src/components/Modal.tsx:55
-#: assets/admin/src/pages/team/RecompilePanel.tsx:57
+#: assets/admin/src/pages/team/RecompilePanel.tsx:67
 #: assets/editor/src/editor/onboarding/YourDetailsModal.tsx:68
 msgid "Close"
 msgstr ""
@@ -2344,7 +2342,7 @@ msgid "e.g. she/her"
 msgstr ""
 
 #: assets/admin/src/components/ProfileForm.tsx:101
-#: assets/admin/src/pages/TeamPage.tsx:745
+#: assets/admin/src/pages/TeamPage.tsx:750
 msgid "Profile saved."
 msgstr ""
 
@@ -2462,7 +2460,7 @@ msgid "Group saved."
 msgstr ""
 
 #: assets/admin/src/pages/GroupsPage.tsx:210
-#: assets/admin/src/pages/SignaturesPage.tsx:472
+#: assets/admin/src/pages/SignaturesPage.tsx:477
 #: assets/editor/src/editor/canvas/BlockToolbar.tsx:114
 #: assets/editor/src/editor/modals/AssetLibraryModal.tsx:511
 #: assets/editor/src/editor/sidebar-left/LayersPanel.tsx:317
@@ -2638,7 +2636,7 @@ msgid "Visual editor for HTML email signatures. Each user sees only their own."
 msgstr ""
 
 #: assets/admin/src/pages/SignaturesPage.tsx:248
-#: assets/admin/src/pages/SignaturesPage.tsx:350
+#: assets/admin/src/pages/SignaturesPage.tsx:355
 msgid "New signature"
 msgstr ""
 
@@ -2654,70 +2652,81 @@ msgstr ""
 msgid "Drafts"
 msgstr ""
 
+#. translators: singular form (count = 1)
+#: assets/admin/src/pages/SignaturesPage.tsx:282
+msgid "One signature"
+msgstr ""
+
 #. translators: plural form (any other count)
 #: assets/admin/src/pages/SignaturesPage.tsx:282
 #, javascript-format
 msgid "%s signatures"
 msgstr ""
 
+#. translators: singular form (count = 1)
 #: assets/admin/src/pages/SignaturesPage.tsx:292
-#: assets/admin/src/pages/TeamPage.tsx:462
 #, javascript-format
-msgid "%s selected"
+msgid "%s signature selected"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:302
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/SignaturesPage.tsx:292
+#, javascript-format
+msgid "%s signatures selected"
+msgstr ""
+
+#: assets/admin/src/pages/SignaturesPage.tsx:307
 msgid "Clear"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:311
+#: assets/admin/src/pages/SignaturesPage.tsx:316
 msgid "Delete selected"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:333
+#: assets/admin/src/pages/SignaturesPage.tsx:338
 msgid "No signatures yet"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:334
+#: assets/admin/src/pages/SignaturesPage.tsx:339
 msgid "No signatures match your filters"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:338
+#: assets/admin/src/pages/SignaturesPage.tsx:343
 msgid "Create your first signature to get started."
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:339
+#: assets/admin/src/pages/SignaturesPage.tsx:344
 msgid "Try clearing the search or status filter."
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:374
+#: assets/admin/src/pages/SignaturesPage.tsx:379
 msgid "Select all visible"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:380
+#: assets/admin/src/pages/SignaturesPage.tsx:385
 msgid "Last edited"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:381
-#: assets/admin/src/pages/TeamPage.tsx:559
+#: assets/admin/src/pages/SignaturesPage.tsx:386
+#: assets/admin/src/pages/TeamPage.tsx:564
 #: assets/admin/src/pages/team/RowMenu.tsx:51
 msgid "Actions"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:401
-#: assets/admin/src/pages/TeamPage.tsx:574
+#: assets/admin/src/pages/SignaturesPage.tsx:406
+#: assets/admin/src/pages/TeamPage.tsx:579
 #, javascript-format
 msgid "Select %s"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:401
-#: assets/admin/src/pages/SignaturesPage.tsx:410
-#: assets/admin/src/pages/SignaturesPage.tsx:432
-#: assets/admin/src/pages/SignaturesPage.tsx:443
-#: assets/admin/src/pages/SignaturesPage.tsx:455
-#: assets/admin/src/pages/SignaturesPage.tsx:464
-#: assets/admin/src/pages/SignaturesPage.tsx:471
-#: assets/admin/src/pages/TeamPage.tsx:625
+#: assets/admin/src/pages/SignaturesPage.tsx:406
+#: assets/admin/src/pages/SignaturesPage.tsx:415
+#: assets/admin/src/pages/SignaturesPage.tsx:437
+#: assets/admin/src/pages/SignaturesPage.tsx:448
+#: assets/admin/src/pages/SignaturesPage.tsx:460
+#: assets/admin/src/pages/SignaturesPage.tsx:469
+#: assets/admin/src/pages/SignaturesPage.tsx:476
+#: assets/admin/src/pages/TeamPage.tsx:630
 #: assets/editor/src/hooks/useLoadSignature.ts:86
 #: assets/editor/src/services/persistence.ts:175
 #: assets/editor/src/services/templateLink.ts:54
@@ -2725,53 +2734,53 @@ msgstr ""
 msgid "Untitled"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:415
+#: assets/admin/src/pages/SignaturesPage.tsx:420
 msgid "This is the signature deployed to your email clients."
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:418
+#: assets/admin/src/pages/SignaturesPage.tsx:423
 msgid "Primary"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:432
+#: assets/admin/src/pages/SignaturesPage.tsx:437
 #, javascript-format
 msgid "Edit %s"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:433
+#: assets/admin/src/pages/SignaturesPage.tsx:438
 #: assets/admin/src/pages/TemplatesPage.tsx:174
 msgid "Edit"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:441
+#: assets/admin/src/pages/SignaturesPage.tsx:446
 #, javascript-format
 msgid "Install %s in your email client"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:445
+#: assets/admin/src/pages/SignaturesPage.tsx:450
 msgid "Install"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:453
+#: assets/admin/src/pages/SignaturesPage.tsx:458
 #, javascript-format
 msgid "Make %s the primary signature"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:457
+#: assets/admin/src/pages/SignaturesPage.tsx:462
 msgid "Make primary"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:464
+#: assets/admin/src/pages/SignaturesPage.tsx:469
 #, javascript-format
 msgid "Duplicate %s"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:465
+#: assets/admin/src/pages/SignaturesPage.tsx:470
 #: assets/editor/src/editor/canvas/BlockToolbar.tsx:110
 msgid "Duplicate"
 msgstr ""
 
-#: assets/admin/src/pages/SignaturesPage.tsx:471
+#: assets/admin/src/pages/SignaturesPage.tsx:476
 #, javascript-format
 msgid "Delete %s"
 msgstr ""
@@ -2809,7 +2818,7 @@ msgid "Copy install link"
 msgstr ""
 
 #: assets/admin/src/pages/TeamPage.tsx:296
-#: assets/admin/src/pages/TeamPage.tsx:486
+#: assets/admin/src/pages/TeamPage.tsx:491
 #: assets/admin/src/pages/team/DeployDialogs.tsx:202
 msgid "Push to Gmail"
 msgstr ""
@@ -2858,132 +2867,140 @@ msgstr ""
 msgid "Selected people"
 msgstr ""
 
+#. translators: singular form (count = 1)
 #: assets/admin/src/pages/TeamPage.tsx:462
-msgid "1 selected"
+#, javascript-format
+msgid "%s person selected"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:477
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/TeamPage.tsx:462
+#, javascript-format
+msgid "%s people selected"
+msgstr ""
+
+#: assets/admin/src/pages/TeamPage.tsx:482
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:255
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:303
 msgid "Send invitations"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:490
+#: assets/admin/src/pages/TeamPage.tsx:495
 msgid "Clear selection"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:510
+#: assets/admin/src/pages/TeamPage.tsx:515
 msgid "Nobody can use signatures yet"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:511
+#: assets/admin/src/pages/TeamPage.tsx:516
 msgid "Nobody matches"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:515
+#: assets/admin/src/pages/TeamPage.tsx:520
 msgid "Give a role the “Use signatures” capability to see people here."
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:516
+#: assets/admin/src/pages/TeamPage.tsx:521
 msgid "Try another search, group or state."
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:536
+#: assets/admin/src/pages/TeamPage.tsx:541
 msgid "Select everyone on this page"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:541
+#: assets/admin/src/pages/TeamPage.tsx:546
 msgid "Person"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:544
+#: assets/admin/src/pages/TeamPage.tsx:549
 msgid "Primary signature"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:547
+#: assets/admin/src/pages/TeamPage.tsx:552
 msgid "HTML"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:553
+#: assets/admin/src/pages/TeamPage.tsx:558
 #: assets/admin/src/pages/settings/Microsoft365Tab.tsx:156
 #: assets/admin/src/pages/team/model.ts:216
 msgid "Outlook add-in"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:556
+#: assets/admin/src/pages/TeamPage.tsx:561
 msgid "Install link"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:632
+#: assets/admin/src/pages/TeamPage.tsx:637
 #, javascript-format
 msgid "%s signatures in total"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:638
+#: assets/admin/src/pages/TeamPage.tsx:643
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:55
 msgid "No signature yet"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:656
+#: assets/admin/src/pages/TeamPage.tsx:661
 #, javascript-format
 msgid "Actions for %s"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:669
+#: assets/admin/src/pages/TeamPage.tsx:674
 msgid "Pages"
 msgstr ""
 
 #. translators: singular form (count = 1)
-#: assets/admin/src/pages/TeamPage.tsx:672
+#: assets/admin/src/pages/TeamPage.tsx:677
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:188
 #, javascript-format
 msgid "%s person"
 msgstr ""
 
 #. translators: plural form (any other count)
-#: assets/admin/src/pages/TeamPage.tsx:672
+#: assets/admin/src/pages/TeamPage.tsx:677
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:188
 #, javascript-format
 msgid "%s people"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:679
+#: assets/admin/src/pages/TeamPage.tsx:684
 msgid "Previous"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:681
+#: assets/admin/src/pages/TeamPage.tsx:686
 #, javascript-format
 msgid "Page %1$s of %2$s"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:687
+#: assets/admin/src/pages/TeamPage.tsx:692
 msgid "Next"
 msgstr ""
 
 #. translators: singular form (count = 1)
-#: assets/admin/src/pages/TeamPage.tsx:710
+#: assets/admin/src/pages/TeamPage.tsx:715
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:204
 #, javascript-format
 msgid "%s invitation queued. It is sent in the background."
 msgstr ""
 
 #. translators: plural form (any other count)
-#: assets/admin/src/pages/TeamPage.tsx:710
+#: assets/admin/src/pages/TeamPage.tsx:715
 #: assets/admin/src/pages/settings/InvitationsTab.tsx:204
 #, javascript-format
 msgid "%s invitations queued. They are sent in batches in the background."
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:732
+#: assets/admin/src/pages/TeamPage.tsx:737
 #, javascript-format
 msgid "Profile of %s"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:732
+#: assets/admin/src/pages/TeamPage.tsx:737
 msgid "Profile"
 msgstr ""
 
-#: assets/admin/src/pages/TeamPage.tsx:744
+#: assets/admin/src/pages/TeamPage.tsx:749
 msgid ""
 "Profile saved. Their signatures need a recompile to show the new details."
 msgstr ""
@@ -5093,9 +5110,16 @@ msgstr ""
 msgid "%1$s of %2$s people"
 msgstr ""
 
+#. translators: singular form (count = 1)
 #: assets/admin/src/pages/team/DeployDialogs.tsx:227
 #, javascript-format
-msgid "%s pushed"
+msgid "%s signature pushed"
+msgstr ""
+
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/team/DeployDialogs.tsx:227
+#, javascript-format
+msgid "%s signatures pushed"
 msgstr ""
 
 #: assets/admin/src/pages/team/RecompilePanel.tsx:23
@@ -5108,29 +5132,43 @@ msgstr ""
 msgid "Stopped after %1$s of %2$s."
 msgstr ""
 
+#. translators: singular form (count = 1)
 #: assets/admin/src/pages/team/RecompilePanel.tsx:27
 #, javascript-format
-msgid "Done: %s recompiled."
+msgid "Done: %s signature recompiled."
 msgstr ""
 
-#: assets/admin/src/pages/team/RecompilePanel.tsx:32
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/team/RecompilePanel.tsx:27
+#, javascript-format
+msgid "Done: %s signatures recompiled."
+msgstr ""
+
+#: assets/admin/src/pages/team/RecompilePanel.tsx:37
 msgid "Recompile outdated signatures"
 msgstr ""
 
-#: assets/admin/src/pages/team/RecompilePanel.tsx:47
+#. translators: singular form (count = 1)
+#: assets/admin/src/pages/team/RecompilePanel.tsx:52
 #, javascript-format
-msgid "%s failed"
+msgid "%s signature failed"
 msgstr ""
 
-#: assets/admin/src/pages/team/RecompilePanel.tsx:85
+#. translators: plural form (any other count)
+#: assets/admin/src/pages/team/RecompilePanel.tsx:52
+#, javascript-format
+msgid "%s signatures failed"
+msgstr ""
+
+#: assets/admin/src/pages/team/RecompilePanel.tsx:95
 msgid "Hide the errors"
 msgstr ""
 
-#: assets/admin/src/pages/team/RecompilePanel.tsx:85
+#: assets/admin/src/pages/team/RecompilePanel.tsx:95
 msgid "Show the errors"
 msgstr ""
 
-#: assets/admin/src/pages/team/RecompilePanel.tsx:92
+#: assets/admin/src/pages/team/RecompilePanel.tsx:102
 #, javascript-format
 msgid "Signature #%s"
 msgstr ""

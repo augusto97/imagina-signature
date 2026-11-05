@@ -459,7 +459,12 @@ export const TeamPage: FC = () => {
               className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--accent)] bg-[var(--bg-selected)] px-4 py-2.5"
             >
               <span className="mr-auto text-[13px] font-medium text-[var(--text-primary)]">
-                {selected.size === 1 ? __('1 selected') : __('%s selected', String(selected.size))}
+                {_n(
+                  '%s person selected',
+                  '%s people selected',
+                  selected.size,
+                  String(selected.size),
+                )}
               </span>
               <Button
                 size="sm"

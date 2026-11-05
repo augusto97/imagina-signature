@@ -213,7 +213,7 @@ describe('Team page', () => {
     render(<TeamPage />);
     fireEvent.click(await screen.findByRole('button', { name: 'Recompile 1 outdated' }));
 
-    expect(await screen.findByText('Done: 1 recompiled.')).toBeInTheDocument();
+    expect(await screen.findByText('Done: 1 signature recompiled.')).toBeInTheDocument();
     const store = calls.find((c) => c.url.includes('/admin/signatures/30/html'))!;
     const sent = body(store);
     expect(String(sent.html)).toContain('Ana Souza');
@@ -253,7 +253,7 @@ describe('Team page', () => {
 
     fireEvent.click(screen.getByLabelText('Select everyone on this page'));
     const toolbar = screen.getByRole('toolbar', { name: 'Selected people' });
-    expect(within(toolbar).getByText('2 selected')).toBeInTheDocument();
+    expect(within(toolbar).getByText('2 people selected')).toBeInTheDocument();
     fireEvent.click(within(toolbar).getByRole('button', { name: /Send invitations/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 

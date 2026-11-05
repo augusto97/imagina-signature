@@ -279,7 +279,7 @@ export const SignaturesPage: FC = () => {
           <span className="ml-auto text-[12px] text-[var(--text-muted)]">
             {items === null
               ? ''
-              : _n('%s signature', '%s signatures', filtered.length, String(filtered.length))}
+              : _n('One signature', '%s signatures', filtered.length, String(filtered.length))}
           </span>
         </div>
 
@@ -289,7 +289,12 @@ export const SignaturesPage: FC = () => {
         {selected.size > 0 && (
           <div className="mb-3 flex items-center gap-3 rounded-lg border border-[var(--accent)]/30 bg-[var(--bg-selected)] px-4 py-2.5">
             <span className="text-[13px] font-medium text-[var(--text-primary)]">
-              {__('%s selected', String(selected.size))}
+              {_n(
+                '%s signature selected',
+                '%s signatures selected',
+                selected.size,
+                String(selected.size),
+              )}
             </span>
             <div className="ml-auto flex items-center gap-2">
               <Button

@@ -142,7 +142,7 @@ describe('Templates page — Apply', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Apply/ }));
     fireEvent.click(screen.getByLabelText(/Specific user IDs/));
     fireEvent.change(screen.getByPlaceholderText('1, 2, 3'), { target: { value: '7, 8' } });
-    fireEvent.click(screen.getByLabelText(/^Copy/));
+    fireEvent.click(screen.getByLabelText(/^Independent copy/));
     fireEvent.click(screen.getByLabelText(/primary signature/));
     fireEvent.click(submitButton());
 

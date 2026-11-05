@@ -1,7 +1,7 @@
 import { useState, type FC } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@admin/components/Button';
-import { __ } from '@admin/i18n';
+import { __, _n } from '@admin/i18n';
 import type { RecompileProgress } from './recompile';
 
 interface Props {
@@ -24,7 +24,12 @@ export const RecompilePanel: FC<Props> = ({ progress, onCancel, onDismiss }) => 
   } else if (progress.cancelled) {
     status = __('Stopped after %1$s of %2$s.', String(progress.processed), String(progress.total));
   } else {
-    status = __('Done: %s recompiled.', String(progress.succeeded));
+    status = _n(
+      'Done: %s signature recompiled.',
+      'Done: %s signatures recompiled.',
+      progress.succeeded,
+      String(progress.succeeded),
+    );
   }
 
   return (
@@ -44,7 +49,12 @@ export const RecompilePanel: FC<Props> = ({ progress, onCancel, onDismiss }) => 
           {status}
           {progress.failed > 0 && (
             <span className="ml-2 text-[var(--danger)]">
-              {__('%s failed', String(progress.failed))}
+              {_n(
+                '%s signature failed',
+                '%s signatures failed',
+                progress.failed,
+                String(progress.failed),
+              )}
             </span>
           )}
         </p>
