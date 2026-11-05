@@ -1,10 +1,13 @@
-import { describe, expect, it } from 'vitest';
-import { readdirSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { compileSignature } from '@/core/compiler/compile';
 import type { Block } from '@/core/schema/blocks';
-import type { SignatureSchema } from '@/core/schema/signature';
-import { normalizeContactRow } from '@/core/blocks/contact-row/normalize';
+import { displayValue, normalizeContactRow } from '@/core/blocks/contact-row/normalize';
+import {
+  appliedTemplate,
+  installMockSite,
+  mergedVariables,
+  templateSlugs as slugs,
+} from '../fixtures/templateLibrary';
 import '@/core/blocks';
 
 /**
@@ -19,17 +22,13 @@ import '@/core/blocks';
  *  - no error-level diagnostics.
  */
 
-const TEMPLATES_DIR = resolve(__dirname, '../../../templates');
-const slugs = readdirSync(TEMPLATES_DIR)
-  .filter((f) => f.endsWith('.json'))
-  .map((f) => f.replace(/\.json$/, ''))
-  .sort();
-
-function load(slug: string): SignatureSchema {
-  return JSON.parse(
-    readFileSync(resolve(TEMPLATES_DIR, `${slug}.json`), 'utf8'),
-  ) as SignatureSchema;
-}
+// Templates reference the profile / brand kit (`{{wp_*}}`, `{{company_*}}`)
+// and `{{imgsig_assets_url}}`: compile them against a mock site.
+let restore: () => void = () => {};
+beforeAll(() => {
+  restore = installMockSite();
+});
+afterAll(() => restore());
 
 const ALLOWED_ATTRS = new Set([
   'role',
@@ -104,8 +103,11 @@ function expectedTexts(blocks: Block[], variables: Record<string, string>): stri
         out.push(textOf(sub(b.content)));
         break;
       case 'contact_row':
-        // v1 rows and v2 items alike (the block normalises v1 on compile).
-        for (const item of normalizeContactRow(b).items) out.push(norm(sub(item.value)));
+        // v1 rows and v2 items alike (the block normalises v1 on compile);
+        // websites read without their scheme.
+        for (const item of normalizeContactRow(b).items) {
+          out.push(norm(displayValue(item, variables)));
+        }
         break;
       case 'button_cta':
         out.push(norm(sub(b.label)));
@@ -121,11 +123,19 @@ function expectedTexts(blocks: Block[], variables: Record<string, string>): stri
 }
 
 describe.each(slugs)('template %s', (slug) => {
-  const schema = load(slug);
-  const result = compileSignature(schema);
-  const doc = new DOMParser().parseFromString(result.html, 'text/html');
+  const schema = appliedTemplate(slug);
+  let compiled: { result: ReturnType<typeof compileSignature>; doc: Document } | null = null;
+  // Compiled lazily: the mock site is installed in beforeAll.
+  const get = () => {
+    if (!compiled) {
+      const result = compileSignature(schema);
+      compiled = { result, doc: new DOMParser().parseFromString(result.html, 'text/html') };
+    }
+    return compiled;
+  };
 
   it('only uses allowlisted attributes (no quote garbage)', () => {
+    const { doc } = get();
     for (const el of Array.from(doc.querySelectorAll('*'))) {
       for (const a of Array.from(el.attributes)) {
         expect(
@@ -137,6 +147,7 @@ describe.each(slugs)('template %s', (slug) => {
   });
 
   it('has clean style declaration lists', () => {
+    const { doc } = get();
     for (const el of Array.from(doc.querySelectorAll('[style]'))) {
       const style = el.getAttribute('style') ?? '';
       for (const decl of style.split(';').filter((d) => d.trim() !== '')) {
@@ -146,6 +157,7 @@ describe.each(slugs)('template %s', (slug) => {
   });
 
   it('contains no data: / javascript: URLs and no compile markers', () => {
+    const { result, doc } = get();
     expect(result.html).not.toMatch(/data:/i);
     expect(result.html).not.toMatch(/javascript:/i);
     expect(result.html).not.toContain('data-imgsig-src');
@@ -157,13 +169,15 @@ describe.each(slugs)('template %s', (slug) => {
   });
 
   it('keeps every block’s words separated', () => {
+    const { doc } = get();
     const visible = norm(doc.body.textContent ?? '');
-    for (const text of expectedTexts(schema.blocks, schema.variables ?? {})) {
+    for (const text of expectedTexts(schema.blocks, mergedVariables(schema))) {
       expect(visible, `"${text}" in ${slug}`).toContain(text);
     }
   });
 
   it('compiles without errors', () => {
+    const { result } = get();
     expect(result.errors).toEqual([]);
     expect(result.fragment.startsWith('<table')).toBe(true);
     expect(result.text.length).toBeGreaterThan(0);

@@ -1,0 +1,201 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#4338ca"
+  },
+  "variables": {
+    "job_title": "Directora de Marketing",
+    "phone": "+34 910 555 210",
+    "website_url": "https://www.tuempresa.com/novedades"
+  },
+  "blocks": [
+    {
+      "id": "h-1",
+      "type": "heading",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
+      "style": {
+        "font_weight": 700,
+        "line_height": 1.2,
+        "text_align": "left",
+        "font_size": 18,
+        "color": "#111827"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-2",
+      "type": "text",
+      "content": "{{job_title}} · {{company_name}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 13,
+        "color": "#4b5563"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 6,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-3",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-4",
+          "type": "phone",
+          "value": "{{phone}}"
+        },
+        {
+          "id": "ci-5",
+          "type": "email",
+          "value": "{{wp_email}}"
+        },
+        {
+          "id": "ci-6",
+          "type": "website",
+          "value": "{{company_website}}"
+        }
+      ],
+      "layout": "inline",
+      "separator": "    ",
+      "show_icons": true,
+      "icon_shape": "plain",
+      "icon_tone": "gray",
+      "icon_size": 13,
+      "label_mode": "none",
+      "row_gap": 4,
+      "style": {
+        "font_size": 12,
+        "font_weight": 400,
+        "color": "#374151",
+        "text_align": "left",
+        "line_height": 1.4
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "row-13",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-12",
+          "width": 100,
+          "children": [
+            {
+              "id": "row-11",
+              "type": "container",
+              "columns": [
+                {
+                  "id": "col-8",
+                  "width": 74,
+                  "children": [
+                    {
+                      "id": "t-7",
+                      "type": "text",
+                      "content": "<strong>Novedad</strong>  ·  Descubre la nueva versión de nuestra plataforma.",
+                      "style": {
+                        "line_height": 1.4,
+                        "text_align": "left",
+                        "font_size": 13,
+                        "color": "#312e81"
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle"
+                },
+                {
+                  "id": "col-10",
+                  "width": 26,
+                  "children": [
+                    {
+                      "id": "b-9",
+                      "type": "button_cta",
+                      "label": "Descubrir →",
+                      "href": "{{website_url}}",
+                      "background_color": "#4338ca",
+                      "text_color": "#4338ca",
+                      "border_radius": 6,
+                      "preset": "text",
+                      "padding_x": 0,
+                      "padding_y": 0,
+                      "align": "right",
+                      "style": {
+                        "font_size": 13,
+                        "font_weight": 700
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle",
+                  "box": {
+                    "align": "right"
+                  }
+                }
+              ],
+              "gap": 12
+            }
+          ],
+          "box": {
+            "background_color": "#eef2ff",
+            "border_left": {
+              "width": 4,
+              "style": "solid",
+              "color": "#4f46e5"
+            },
+            "border_radius": 8,
+            "padding": {
+              "top": 12,
+              "right": 16,
+              "bottom": 12,
+              "left": 16
+            }
+          }
+        }
+      ],
+      "gap": 0,
+      "box": {
+        "padding": {
+          "top": 14,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      }
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import { CONTACT_ICON_GAP } from './compileContact';
 import {
   CONTACT_ICON,
   contactHref,
+  displayValue,
   itemPrefix,
   normalizeContactRow,
   type ContactItem,
@@ -46,10 +47,10 @@ export const ContactRowBlock: FC<{ block: ContactRowBlockType }> = ({ block }) =
         )}
         {href ? (
           <a href={href} style={{ color: linkColor, textDecoration: 'none' }}>
-            {item.value}
+            {displayValue(item)}
           </a>
         ) : (
-          item.value
+          displayValue(item)
         )}
       </>
     );

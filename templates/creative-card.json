@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "\"Trebuchet MS\", sans-serif",
+    "font_size": 14,
+    "text_color": "#2e1065",
+    "link_color": "#6d28d9"
+  },
+  "variables": {
+    "job_title": "Diseñadora de Producto",
+    "mobile": "+34 655 210 480",
+    "photo_url": "{{imgsig_assets_url}}/templates/avatar-5.png",
+    "linkedin_url": "https://www.linkedin.com/in/tu-perfil"
+  },
+  "blocks": [
+    {
+      "id": "row-15",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-14",
+          "width": 100,
+          "children": [
+            {
+              "id": "row-13",
+              "type": "container",
+              "columns": [
+                {
+                  "id": "col-2",
+                  "width": 24,
+                  "children": [
+                    {
+                      "id": "a-1",
+                      "type": "avatar",
+                      "src": "{{photo_url}}",
+                      "alt": "{{wp_display_name}}",
+                      "size": 88,
+                      "shape": "rounded",
+                      "align": "left",
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle"
+                },
+                {
+                  "id": "col-12",
+                  "width": 76,
+                  "children": [
+                    {
+                      "id": "h-3",
+                      "type": "heading",
+                      "content": "{{wp_display_name}}",
+                      "content_html": "<p>{{wp_display_name}}</p>",
+                      "style": {
+                        "font_weight": 700,
+                        "line_height": 1.2,
+                        "text_align": "left",
+                        "font_size": 20,
+                        "color": "#2e1065"
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 2,
+                        "left": 0
+                      }
+                    },
+                    {
+                      "id": "t-4",
+                      "type": "text",
+                      "content": "{{job_title}} en <strong>{{company_name}}</strong>",
+                      "style": {
+                        "line_height": 1.4,
+                        "text_align": "left",
+                        "font_size": 13,
+                        "color": "#5b21b6"
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 8,
+                        "left": 0
+                      }
+                    },
+                    {
+                      "id": "c-5",
+                      "type": "contact_row",
+                      "items": [
+                        {
+                          "id": "ci-6",
+                          "type": "mobile",
+                          "value": "{{mobile}}"
+                        },
+                        {
+                          "id": "ci-7",
+                          "type": "email",
+                          "value": "{{wp_email}}"
+                        }
+                      ],
+                      "layout": "inline",
+                      "separator": "   ",
+                      "show_icons": true,
+                      "icon_shape": "circle",
+                      "icon_tone": "brand",
+                      "icon_size": 16,
+                      "label_mode": "none",
+                      "row_gap": 4,
+                      "style": {
+                        "font_size": 13,
+                        "font_weight": 400,
+                        "color": "#3b0764",
+                        "text_align": "left",
+                        "line_height": 1.4
+                      },
+                      "link_color": "#3b0764",
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    },
+                    {
+                      "id": "s-8",
+                      "type": "social_icons",
+                      "items": [
+                        {
+                          "id": "sn-9",
+                          "network": "instagram",
+                          "url": "{{company_instagram}}"
+                        },
+                        {
+                          "id": "sn-10",
+                          "network": "tiktok",
+                          "url": "{{company_tiktok}}"
+                        },
+                        {
+                          "id": "sn-11",
+                          "network": "linkedin",
+                          "url": "{{linkedin_url}}"
+                        }
+                      ],
+                      "shape": "circle",
+                      "tone": "brand",
+                      "size": 24,
+                      "spacing": 8,
+                      "align": "left",
+                      "padding": {
+                        "top": 10,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle"
+                }
+              ],
+              "gap": 18
+            }
+          ],
+          "box": {
+            "background_color": "#f5f3ff",
+            "border_radius": 16,
+            "padding": {
+              "top": 18,
+              "right": 20,
+              "bottom": 18,
+              "left": 20
+            }
+          }
+        }
+      ],
+      "gap": 0
+    }
+  ]
+}

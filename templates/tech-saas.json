@@ -1,0 +1,191 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 600,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#4338ca"
+  },
+  "variables": {
+    "job_title": "Customer Success Manager",
+    "phone": "+34 910 555 210",
+    "website_url": "https://www.tuempresa.com/prueba"
+  },
+  "blocks": [
+    {
+      "id": "row-9",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-6",
+          "width": 64,
+          "children": [
+            {
+              "id": "h-1",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 18,
+                "color": "#111827"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-2",
+              "type": "text",
+              "content": "{{job_title}} en <strong>{{company_name}}</strong>",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 13,
+                "color": "#4b5563"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 8,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-3",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-4",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                },
+                {
+                  "id": "ci-5",
+                  "type": "phone",
+                  "value": "{{phone}}"
+                }
+              ],
+              "layout": "inline",
+              "separator": "    ",
+              "show_icons": true,
+              "icon_shape": "plain",
+              "icon_tone": "gray",
+              "icon_size": 13,
+              "label_mode": "none",
+              "row_gap": 4,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#374151",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        },
+        {
+          "id": "col-8",
+          "width": 36,
+          "children": [
+            {
+              "id": "b-7",
+              "type": "button_cta",
+              "label": "Prueba gratis 14 días",
+              "href": "{{website_url}}",
+              "background_color": "#4f46e5",
+              "text_color": "#ffffff",
+              "border_radius": 8,
+              "preset": "solid",
+              "padding_x": 18,
+              "padding_y": 10,
+              "align": "right",
+              "style": {
+                "font_size": 13,
+                "font_weight": 600
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle",
+          "box": {
+            "align": "right"
+          }
+        }
+      ],
+      "gap": 16,
+      "box": {
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 14,
+          "left": 0
+        }
+      }
+    },
+    {
+      "id": "row-12",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-11",
+          "width": 100,
+          "children": [
+            {
+              "id": "t-10",
+              "type": "text",
+              "content": "{{company_tagline}}  ·  <a href=\"{{company_website}}\"><strong>Descubre más →</strong></a>",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 12,
+                "color": "#3730a3"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "box": {
+            "background_color": "#eef2ff",
+            "border_radius": 8,
+            "padding": {
+              "top": 10,
+              "right": 14,
+              "bottom": 10,
+              "left": 14
+            }
+          }
+        }
+      ],
+      "gap": 0
+    }
+  ]
+}

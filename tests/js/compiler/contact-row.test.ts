@@ -299,3 +299,28 @@ describe('contact v1 → v2 normaliser', () => {
     expect(n.style.color).toBe('#374151');
   });
 });
+
+describe('contact values resolved from variables', () => {
+  it('shows a website without its scheme or trailing slash, linking the full URL', () => {
+    const { doc } = compile(contact({ items: [{ id: 'w', type: 'website', value: '{{site}}' }] }), {
+      site: 'https://www.acme.example/',
+    });
+    const link = doc.querySelector('a')!;
+    expect(link.textContent).toBe('www.acme.example');
+    expect(link.getAttribute('href')).toBe('https://www.acme.example/');
+  });
+
+  it('leaves out items whose variable resolves to nothing, icon included', () => {
+    const { doc, fragment } = compile(
+      contact({
+        items: [
+          { id: 'e', type: 'email', value: 'jane@acme.example' },
+          { id: 'm', type: 'mobile', value: '{{mobile}}' },
+        ],
+      }),
+      { mobile: '' },
+    );
+    expect(doc.querySelectorAll('img')).toHaveLength(1);
+    expect(fragment).not.toContain('mobile.png');
+  });
+});

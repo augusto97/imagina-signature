@@ -28,6 +28,20 @@ final class SystemVariablesTest extends TestCase {
 		parent::setUp();
 		Monkey\setUp();
 		$this->stub_sanitizers();
+
+		if ( ! defined( 'IMGSIG_FILE' ) ) {
+			define( 'IMGSIG_FILE', '/var/www/wp-content/plugins/imagina-signatures/imagina-signatures.php' );
+		}
+		Functions\when( 'plugins_url' )->alias(
+			static function ( string $path = '', string $plugin = '' ): string {
+				return 'https://example.com/wp-content/plugins/' . basename( dirname( $plugin ) ) . ( '' !== $path ? '/' . ltrim( $path, '/' ) : '' );
+			}
+		);
+		Functions\when( 'untrailingslashit' )->alias(
+			static function ( $value ): string {
+				return rtrim( (string) $value, '/\\' );
+			}
+		);
 	}
 
 	protected function tearDown(): void {
@@ -78,7 +92,30 @@ final class SystemVariablesTest extends TestCase {
 		$this->assertArrayHasKey( 'company_tiktok', $vars );
 		$this->assertSame( '', $vars['company_tiktok'] );
 		$this->assertSame( '', $vars['company_phone'] );
-		$this->assertCount( 5 + 15, $vars );
+
+		// Templates reference their placeholder images through it.
+		$this->assertSame( 'https://example.com/wp-content/plugins/imagina-signatures/assets', $vars['imgsig_assets_url'] );
+		$this->assertCount( 5 + 15 + 1, $vars );
+	}
+
+	public function test_assets_url_has_no_trailing_slash(): void {
+		Functions\when( 'plugins_url' )->justReturn( 'https://cdn.example.com/plugins/imagina-signatures/assets/' );
+
+		$this->assertSame( 'https://cdn.example.com/plugins/imagina-signatures/assets', SystemVariables::assets_url() );
+	}
+
+	public function test_filter_can_point_the_assets_url_at_a_cdn(): void {
+		Filters\expectApplied( 'imgsig/editor/system_variables' )
+			->once()
+			->andReturnUsing(
+				static function ( array $vars ): array {
+					$vars['imgsig_assets_url'] = 'https://cdn.example.net/imgsig/assets';
+					return $vars;
+				}
+			);
+
+		$vars = SystemVariables::for_user( $this->user(), $this->kit() );
+		$this->assertSame( 'https://cdn.example.net/imgsig/assets', $vars['imgsig_assets_url'] );
 	}
 
 	public function test_reads_the_stored_kit_when_none_is_given(): void {

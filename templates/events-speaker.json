@@ -1,0 +1,216 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#1f2937",
+    "link_color": "#be123c"
+  },
+  "variables": {
+    "job_title": "Responsable de Eventos",
+    "mobile": "+34 655 210 480",
+    "website_url": "https://www.tuempresa.com/eventos",
+    "linkedin_url": "https://www.linkedin.com/in/tu-perfil"
+  },
+  "blocks": [
+    {
+      "id": "h-1",
+      "type": "heading",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
+      "style": {
+        "font_weight": 700,
+        "line_height": 1.2,
+        "text_align": "left",
+        "font_size": 19,
+        "color": "#1f2937"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-2",
+      "type": "text",
+      "content": "{{job_title}} · <strong>{{company_name}}</strong>",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 13,
+        "color": "#4b5563"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 8,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-3",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-4",
+          "type": "mobile",
+          "value": "{{mobile}}"
+        },
+        {
+          "id": "ci-5",
+          "type": "email",
+          "value": "{{wp_email}}"
+        },
+        {
+          "id": "ci-6",
+          "type": "website",
+          "value": "{{company_website}}"
+        }
+      ],
+      "layout": "inline",
+      "separator": "    ",
+      "show_icons": true,
+      "icon_shape": "circle",
+      "icon_tone": "gray",
+      "icon_size": 15,
+      "label_mode": "none",
+      "row_gap": 4,
+      "style": {
+        "font_size": 12,
+        "font_weight": 400,
+        "color": "#374151",
+        "text_align": "left",
+        "line_height": 1.4
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "row-14",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-13",
+          "width": 100,
+          "children": [
+            {
+              "id": "row-12",
+              "type": "container",
+              "columns": [
+                {
+                  "id": "col-9",
+                  "width": 66,
+                  "children": [
+                    {
+                      "id": "t-7",
+                      "type": "text",
+                      "content": "PRÓXIMO EVENTO",
+                      "style": {
+                        "line_height": 1.4,
+                        "text_align": "left",
+                        "font_size": 11,
+                        "font_weight": 700,
+                        "color": "#9f1239",
+                        "letter_spacing": 1.5
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 2,
+                        "left": 0
+                      }
+                    },
+                    {
+                      "id": "t-8",
+                      "type": "text",
+                      "content": "Únete a nuestro próximo encuentro y reserva tu plaza.",
+                      "style": {
+                        "line_height": 1.4,
+                        "text_align": "left",
+                        "font_size": 13,
+                        "color": "#4c0519"
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle"
+                },
+                {
+                  "id": "col-11",
+                  "width": 34,
+                  "children": [
+                    {
+                      "id": "b-10",
+                      "type": "button_cta",
+                      "label": "Reservar plaza",
+                      "href": "{{website_url}}",
+                      "background_color": "#be123c",
+                      "text_color": "#ffffff",
+                      "border_radius": 999,
+                      "preset": "pill",
+                      "padding_x": 16,
+                      "padding_y": 8,
+                      "align": "right",
+                      "style": {
+                        "font_size": 12,
+                        "font_weight": 600
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle",
+                  "box": {
+                    "align": "right"
+                  }
+                }
+              ],
+              "gap": 12
+            }
+          ],
+          "box": {
+            "background_color": "#fff1f2",
+            "border_radius": 10,
+            "padding": {
+              "top": 12,
+              "right": 16,
+              "bottom": 12,
+              "left": 16
+            }
+          }
+        }
+      ],
+      "gap": 0,
+      "box": {
+        "padding": {
+          "top": 14,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      }
+    }
+  ]
+}

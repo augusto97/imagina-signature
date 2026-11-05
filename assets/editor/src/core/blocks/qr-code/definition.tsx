@@ -20,6 +20,7 @@ import {
 } from '@/core/compiler/css';
 import { contentHash } from '@/core/compiler/hash';
 import { clampToAvailable, markerAttr, report } from '@/core/compiler/issues';
+import { replaceVariables, resolvedVariables } from '@/core/compiler/variables';
 import { canvasToBlob, uploadBlob, uploadErrorMessage, UploadError } from '@/services/uploads';
 import {
   alignedRow,
@@ -49,14 +50,39 @@ import { registerBlock, type BlockDefinition, type CompileContext } from '../reg
  * stays instant while the upload is in flight.
  */
 
-/** Hash of the inputs that determine the QR image. */
+/**
+ * The merged variables of the signature being edited (system + its
+ * own) — what the export substitutes. Default for the QR / vCard
+ * helpers when no compile context supplies them.
+ */
+export function editorVariables(): Record<string, string> {
+  return resolvedVariables(useSchemaStore.getState().schema.variables ?? {});
+}
+
+/**
+ * What the QR encodes: `data` with its `{{variables}}` resolved, so a
+ * template's `{{company_website}}` QR points at the company's site.
+ * Unknown tokens stay as written.
+ */
+export function qrData(
+  block: Pick<QrCodeBlock, 'data'>,
+  variables: Record<string, string> = editorVariables(),
+): string {
+  return replaceVariables(block.data ?? '', variables).text;
+}
+
+/**
+ * Hash of the inputs that determine the QR image — the RESOLVED data,
+ * so changing a variable the QR uses re-renders and re-uploads it.
+ */
 export function qrContentHash(
   block: Pick<QrCodeBlock, 'data' | 'size' | 'color' | 'background_color'>,
+  variables: Record<string, string> = editorVariables(),
 ): string {
   return contentHash(
     [
       'qr-v1',
-      block.data ?? '',
+      qrData(block, variables),
       intPx(block.size, 16, 1000, 120),
       safeColor(block.color, '#000000'),
       safeColor(block.background_color, '#ffffff'),
@@ -72,11 +98,13 @@ export function qrContentHash(
 export function renderQrCanvas(
   block: Pick<QrCodeBlock, 'data' | 'size' | 'color' | 'background_color'>,
   scale = 2,
+  variables: Record<string, string> = editorVariables(),
 ): HTMLCanvasElement | null {
-  if (!block.data || typeof document === 'undefined') return null;
+  const data = block.data ? qrData(block, variables) : '';
+  if (!data || typeof document === 'undefined') return null;
   try {
     const qr = qrcode(0, 'M');
-    qr.addData(block.data);
+    qr.addData(data);
     qr.make();
 
     const moduleCount = qr.getModuleCount();
@@ -115,8 +143,9 @@ export function renderQrCanvas(
 /** Local (never exported) preview for the canvas while editing. */
 function previewDataUrl(
   block: Pick<QrCodeBlock, 'data' | 'size' | 'color' | 'background_color'>,
+  variables: Record<string, string>,
 ): string {
-  const canvas = renderQrCanvas(block, 2);
+  const canvas = renderQrCanvas(block, 2, variables);
   if (!canvas) return '';
   try {
     return canvas.toDataURL('image/png');
@@ -131,12 +160,13 @@ function previewDataUrl(
  */
 export async function uploadQrImage(
   block: QrCodeBlock,
+  variables: Record<string, string> = editorVariables(),
 ): Promise<Pick<QrCodeBlock, 'image_url' | 'image_hash'>> {
-  const canvas = renderQrCanvas(block, 2);
+  const canvas = renderQrCanvas(block, 2, variables);
   if (!canvas) {
     throw new UploadError('qr_render', __('The QR code could not be generated in this browser.'));
   }
-  const hash = qrContentHash(block);
+  const hash = qrContentHash(block, variables);
   const blob = await canvasToBlob(canvas, 'image/png');
   const asset = await uploadBlob(blob, `qr-${hash}.png`, {
     width: canvas.width,
@@ -278,9 +308,11 @@ export const HostedAssetStatus: FC<{
 
 const Renderer: FC<{ block: QrCodeBlock }> = ({ block }) => {
   const { data, size, color, background_color } = block;
+  // Re-render when a variable the data references changes.
+  const own = useSchemaStore((s) => s.schema.variables);
   const preview = useMemo(
-    () => previewDataUrl({ data, size, color, background_color }),
-    [data, size, color, background_color],
+    () => previewDataUrl({ data, size, color, background_color }, resolvedVariables(own ?? {})),
+    [data, size, color, background_color, own],
   );
   const src = preview || block.image_url || '';
   const padding = block.padding;
@@ -349,14 +381,17 @@ const Properties: FC<{
   block: QrCodeBlock;
   onChange: (updates: Partial<QrCodeBlock>) => void;
 }> = ({ block, onChange }) => {
-  const hash = qrContentHash(block);
+  // Subscribed so the hash follows variable edits made while the panel is open.
+  const own = useSchemaStore((s) => s.schema.variables);
+  const variables = useMemo(() => resolvedVariables(own ?? {}), [own]);
+  const hash = qrContentHash(block, variables);
   const upToDate = Boolean(block.image_url) && block.image_hash === hash;
   const sync = useHostedAssetSync({
     blockId: block.id,
     hash,
     upToDate,
     canSync: Boolean(block.data),
-    upload: () => uploadQrImage(block),
+    upload: () => uploadQrImage(block, variables),
     hashOf: (latest) => (latest.type === 'qr_code' ? qrContentHash(latest) : null),
   });
 
@@ -441,7 +476,7 @@ function compile(block: QrCodeBlock, ctx: CompileContext): string {
     );
     return '';
   }
-  if (block.image_hash !== qrContentHash(block)) {
+  if (block.image_hash !== qrContentHash(block, ctx.variables)) {
     report(
       ctx,
       'warning',

@@ -2,6 +2,7 @@ import { useState, type FC, type FormEvent } from 'react';
 import { Modal } from '@/components/shared/Modal';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { useToastStore } from '@/stores/toastStore';
+import { useTemplateLibraryStore } from '@/stores/templateLibraryStore';
 import { apiCall, ApiError } from '@/bridge/apiClient';
 import { __ } from '@/i18n/helpers';
 
@@ -46,6 +47,8 @@ export const SaveAsTemplateModal: FC<Props> = ({ open, onClose }) => {
         },
       });
       showToast(__('Template saved.'), 'success');
+      // The picker / onboarding reload the library next time they open.
+      useTemplateLibraryStore.getState().invalidate();
       onClose();
       setName('');
       setCategory('general');

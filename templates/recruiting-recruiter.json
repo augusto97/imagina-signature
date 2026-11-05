@@ -1,0 +1,226 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#1e1b4b",
+    "link_color": "#6d28d9"
+  },
+  "variables": {
+    "job_title": "Talent Acquisition Partner",
+    "mobile": "+34 655 210 480",
+    "photo_url": "{{imgsig_assets_url}}/templates/avatar-5.png",
+    "calendar_url": "https://cal.com/tu-agenda",
+    "linkedin_url": "https://www.linkedin.com/in/tu-perfil"
+  },
+  "blocks": [
+    {
+      "id": "row-16",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-2",
+          "width": 20,
+          "children": [
+            {
+              "id": "a-1",
+              "type": "avatar",
+              "src": "{{photo_url}}",
+              "alt": "{{wp_display_name}}",
+              "size": 84,
+              "shape": "rounded",
+              "align": "left",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "top"
+        },
+        {
+          "id": "col-15",
+          "width": 80,
+          "children": [
+            {
+              "id": "h-3",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 18,
+                "color": "#1e1b4b"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-4",
+              "type": "text",
+              "content": "{{job_title}} · {{company_name}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 13,
+                "color": "#4b5563"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 6,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-5",
+              "type": "text",
+              "content": "Buscamos talento para crecer juntos. ¿Hablamos?",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 13,
+                "color": "#5b21b6",
+                "font_style": "italic"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 8,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-6",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-7",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                },
+                {
+                  "id": "ci-8",
+                  "type": "mobile",
+                  "value": "{{mobile}}"
+                }
+              ],
+              "layout": "inline",
+              "separator": "    ",
+              "show_icons": true,
+              "icon_shape": "plain",
+              "icon_tone": "gray",
+              "icon_size": 13,
+              "label_mode": "none",
+              "row_gap": 4,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#374151",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            },
+            {
+              "id": "row-14",
+              "type": "container",
+              "columns": [
+                {
+                  "id": "col-10",
+                  "width": 46,
+                  "children": [
+                    {
+                      "id": "b-9",
+                      "type": "button_cta",
+                      "label": "Agenda una entrevista",
+                      "href": "{{calendar_url}}",
+                      "background_color": "#6d28d9",
+                      "text_color": "#ffffff",
+                      "border_radius": 6,
+                      "preset": "solid",
+                      "padding_x": 16,
+                      "padding_y": 8,
+                      "align": "left",
+                      "style": {
+                        "font_size": 13,
+                        "font_weight": 600
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle"
+                },
+                {
+                  "id": "col-13",
+                  "width": 54,
+                  "children": [
+                    {
+                      "id": "s-11",
+                      "type": "social_icons",
+                      "items": [
+                        {
+                          "id": "sn-12",
+                          "network": "linkedin",
+                          "url": "{{linkedin_url}}"
+                        }
+                      ],
+                      "shape": "rounded",
+                      "tone": "brand",
+                      "size": 26,
+                      "spacing": 6,
+                      "align": "left",
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle"
+                }
+              ],
+              "gap": 8,
+              "box": {
+                "padding": {
+                  "top": 12,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                }
+              }
+            }
+          ],
+          "valign": "top"
+        }
+      ],
+      "gap": 18
+    }
+  ]
+}

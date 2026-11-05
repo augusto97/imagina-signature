@@ -1,13 +1,161 @@
 {
-  "schema_version": "1.0",
-  "meta": { "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z", "editor_version": "1.0.0" },
-  "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Georgia, serif", "font_size": 14, "text_color": "#1a1a1a", "link_color": "#3b3b3b" },
-  "variables": {},
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 600,
+    "background_color": "#ffffff",
+    "font_family": "Georgia, serif",
+    "font_size": 14,
+    "text_color": "#1f2937",
+    "link_color": "#7f1d1d"
+  },
+  "variables": {
+    "job_title": "Socio · Derecho Procesal",
+    "phone": "+34 910 555 210",
+    "address_line": "Paseo de la Castellana 89, 28046 Madrid"
+  },
   "blocks": [
-    { "id": "name", "type": "heading", "content": "Robert Whitaker, Esq.", "style": { "font_family": "Georgia, serif", "font_size": 17, "font_weight": 700, "color": "#1a1a1a", "line_height": 1.2, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 } },
-    { "id": "title", "type": "text", "content": "Partner · Whitaker & Associates LLP", "style": { "font_family": "Georgia, serif", "font_size": 13, "font_weight": 400, "color": "#3b3b3b", "line_height": 1.4, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
-    { "id": "divider", "type": "divider", "border": { "width": 1, "color": "#cbd5e1", "style": "solid" }, "width_percent": 100, "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
-    { "id": "contact", "type": "contact_row", "rows": [ { "icon": "email", "label": "rwhitaker@example.law", "href": "mailto:rwhitaker@example.law" }, { "icon": "phone", "label": "+1 555 444 8888", "href": "tel:+15554448888" } ], "style": { "font_family": "Georgia, serif", "font_size": 13, "font_weight": 400, "color": "#3b3b3b" }, "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 } },
-    { "id": "disclaimer", "type": "disclaimer", "content": "ATTORNEY-CLIENT PRIVILEGE: This email and any attachments may contain privileged or confidential information intended solely for the named recipient. Unauthorized review, use, disclosure, or distribution is prohibited. If you are not the intended recipient, please notify the sender by reply email and destroy all copies of the original.", "style": { "font_family": "Georgia, serif", "font_size": 9, "font_weight": 400, "color": "#94a3b8", "line_height": 1.4 }, "padding": { "top": 12, "right": 0, "bottom": 0, "left": 0 } }
+    {
+      "id": "h-1",
+      "type": "heading",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
+      "style": {
+        "font_weight": 700,
+        "line_height": 1.2,
+        "text_align": "left",
+        "font_size": 20,
+        "color": "#1f2937"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-2",
+      "type": "text",
+      "content": "{{job_title}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 14,
+        "color": "#4b5563",
+        "font_style": "italic"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-3",
+      "type": "text",
+      "content": "{{company_name}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_family": "Arial, sans-serif",
+        "font_size": 12,
+        "font_weight": 700,
+        "color": "#7f1d1d",
+        "letter_spacing": 1.5,
+        "text_transform": "uppercase"
+      },
+      "padding": {
+        "top": 8,
+        "right": 0,
+        "bottom": 4,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-4",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-5",
+          "type": "phone",
+          "value": "{{phone}}"
+        },
+        {
+          "id": "ci-6",
+          "type": "email",
+          "value": "{{wp_email}}"
+        },
+        {
+          "id": "ci-7",
+          "type": "address",
+          "value": "{{address_line}}"
+        }
+      ],
+      "layout": "inline",
+      "separator": " · ",
+      "show_icons": false,
+      "icon_shape": "plain",
+      "icon_tone": "gray",
+      "icon_size": 14,
+      "label_mode": "none",
+      "row_gap": 4,
+      "style": {
+        "font_size": 12,
+        "font_weight": 400,
+        "color": "#4b5563",
+        "text_align": "left",
+        "line_height": 1.4,
+        "font_family": "Arial, sans-serif"
+      },
+      "link_color": "#4b5563",
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "dv-8",
+      "type": "divider",
+      "border": {
+        "width": 1,
+        "style": "solid",
+        "color": "#d1d5db"
+      },
+      "width_percent": 100,
+      "width_unit": "percent",
+      "align": "left",
+      "padding": {
+        "top": 14,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "d-9",
+      "type": "disclaimer",
+      "content": "Este mensaje y sus anexos son confidenciales y pueden contener información protegida por el secreto profesional. Si lo ha recibido por error, le rogamos que lo comunique al remitente y lo elimine sin copiarlo ni divulgarlo.",
+      "content_html": "<p>Este mensaje y sus anexos son confidenciales y pueden contener información protegida por el secreto profesional. Si lo ha recibido por error, le rogamos que lo comunique al remitente y lo elimine sin copiarlo ni divulgarlo.</p>",
+      "style": {
+        "font_size": 10,
+        "color": "#6b7280",
+        "line_height": 1.5,
+        "font_family": "Arial, sans-serif"
+      },
+      "padding": {
+        "top": 8,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
   ]
 }

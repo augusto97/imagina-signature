@@ -1,0 +1,242 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 600,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#0b1f3a",
+    "link_color": "#1e40af"
+  },
+  "variables": {
+    "job_title": "Directora de Marketing",
+    "phone": "+34 910 555 210",
+    "mobile": "+34 655 210 480"
+  },
+  "blocks": [
+    {
+      "id": "row-10",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-7",
+          "width": 66,
+          "children": [
+            {
+              "id": "h-1",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 20,
+                "color": "#0b1f3a"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-2",
+              "type": "text",
+              "content": "{{job_title}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 13,
+                "color": "#475569"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 8,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-3",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-4",
+                  "type": "phone",
+                  "value": "{{phone}}"
+                },
+                {
+                  "id": "ci-5",
+                  "type": "mobile",
+                  "value": "{{mobile}}"
+                },
+                {
+                  "id": "ci-6",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                }
+              ],
+              "layout": "inline",
+              "separator": " · ",
+              "show_icons": false,
+              "icon_shape": "plain",
+              "icon_tone": "gray",
+              "icon_size": 14,
+              "label_mode": "none",
+              "row_gap": 4,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#334155",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        },
+        {
+          "id": "col-9",
+          "width": 34,
+          "children": [
+            {
+              "id": "i-8",
+              "type": "image",
+              "src": "{{company_logo}}",
+              "alt": "{{company_name}}",
+              "width": 128,
+              "align": "right",
+              "link": "{{company_website}}",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle",
+          "box": {
+            "align": "right"
+          }
+        }
+      ],
+      "gap": 16,
+      "box": {
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 14,
+          "left": 0
+        }
+      }
+    },
+    {
+      "id": "row-18",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-17",
+          "width": 100,
+          "children": [
+            {
+              "id": "row-16",
+              "type": "container",
+              "columns": [
+                {
+                  "id": "col-12",
+                  "width": 70,
+                  "children": [
+                    {
+                      "id": "t-11",
+                      "type": "text",
+                      "content": "<strong>{{company_name}}</strong>  ·  {{company_tagline}}",
+                      "style": {
+                        "line_height": 1.4,
+                        "text_align": "left",
+                        "font_size": 13,
+                        "color": "#e2e8f0"
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle"
+                },
+                {
+                  "id": "col-15",
+                  "width": 36,
+                  "children": [
+                    {
+                      "id": "c-13",
+                      "type": "contact_row",
+                      "items": [
+                        {
+                          "id": "ci-14",
+                          "type": "website",
+                          "value": "{{company_website}}"
+                        }
+                      ],
+                      "layout": "stacked",
+                      "separator": "  |  ",
+                      "show_icons": false,
+                      "icon_shape": "plain",
+                      "icon_tone": "gray",
+                      "icon_size": 14,
+                      "label_mode": "none",
+                      "row_gap": 4,
+                      "style": {
+                        "font_size": 13,
+                        "font_weight": 700,
+                        "color": "#ffffff",
+                        "text_align": "right",
+                        "line_height": 1.4
+                      },
+                      "link_color": "#ffffff",
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle"
+                }
+              ],
+              "gap": 12
+            }
+          ],
+          "box": {
+            "background_color": "#0b1f3a",
+            "border_radius": 6,
+            "padding": {
+              "top": 12,
+              "right": 18,
+              "bottom": 12,
+              "left": 18
+            }
+          }
+        }
+      ],
+      "gap": 0
+    }
+  ]
+}

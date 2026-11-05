@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Loader2,
   Check,
+  UserRound,
 } from 'lucide-react';
 import { useEditorStore } from '@/stores/editorStore';
 import { useHistoryStore } from '@/stores/historyStore';
@@ -143,6 +144,15 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
         >
           <LayoutTemplate size={16} />
         </IconButton>
+        <button
+          type="button"
+          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] px-2.5 text-[12.5px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
+          onClick={() => openModal('your-details')}
+          title={__('Edit the details this signature shows: job title, phone, photo…')}
+        >
+          <UserRound size={14} />
+          {__('Your details')}
+        </button>
       </div>
 
       {/* Right: save state + actions */}

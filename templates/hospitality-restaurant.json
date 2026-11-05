@@ -1,0 +1,188 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#431407",
+    "link_color": "#9a3412"
+  },
+  "variables": {
+    "job_title": "Jefa de Sala",
+    "phone": "+34 910 555 210",
+    "website_url": "https://www.turestaurante.com/reservas",
+    "address_line": "Plaza Mayor 4, 37002 Salamanca"
+  },
+  "blocks": [
+    {
+      "id": "row-12",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-11",
+          "width": 100,
+          "children": [
+            {
+              "id": "row-10",
+              "type": "container",
+              "columns": [
+                {
+                  "id": "col-2",
+                  "width": 30,
+                  "children": [
+                    {
+                      "id": "i-1",
+                      "type": "image",
+                      "src": "{{company_logo}}",
+                      "alt": "{{company_name}}",
+                      "width": 112,
+                      "align": "center",
+                      "link": "{{company_website}}",
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle",
+                  "box": {
+                    "align": "center"
+                  }
+                },
+                {
+                  "id": "col-9",
+                  "width": 70,
+                  "children": [
+                    {
+                      "id": "h-3",
+                      "type": "heading",
+                      "content": "{{wp_display_name}}",
+                      "content_html": "<p>{{wp_display_name}}</p>",
+                      "style": {
+                        "font_weight": 700,
+                        "line_height": 1.2,
+                        "text_align": "left",
+                        "font_size": 18,
+                        "color": "#431407"
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 2,
+                        "left": 0
+                      }
+                    },
+                    {
+                      "id": "t-4",
+                      "type": "text",
+                      "content": "{{job_title}} · {{company_name}}",
+                      "style": {
+                        "line_height": 1.4,
+                        "text_align": "left",
+                        "font_size": 13,
+                        "color": "#9a3412"
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 8,
+                        "left": 0
+                      }
+                    },
+                    {
+                      "id": "c-5",
+                      "type": "contact_row",
+                      "items": [
+                        {
+                          "id": "ci-6",
+                          "type": "phone",
+                          "value": "{{phone}}"
+                        },
+                        {
+                          "id": "ci-7",
+                          "type": "address",
+                          "value": "{{address_line}}"
+                        }
+                      ],
+                      "layout": "stacked",
+                      "separator": "  |  ",
+                      "show_icons": true,
+                      "icon_shape": "plain",
+                      "icon_tone": "dark",
+                      "icon_size": 13,
+                      "label_mode": "none",
+                      "row_gap": 3,
+                      "style": {
+                        "font_size": 12,
+                        "font_weight": 400,
+                        "color": "#431407",
+                        "text_align": "left",
+                        "line_height": 1.4
+                      },
+                      "link_color": "#431407",
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    },
+                    {
+                      "id": "b-8",
+                      "type": "button_cta",
+                      "label": "Reserva tu mesa",
+                      "href": "{{website_url}}",
+                      "background_color": "#9a3412",
+                      "text_color": "#ffffff",
+                      "border_radius": 6,
+                      "preset": "solid",
+                      "padding_x": 16,
+                      "padding_y": 8,
+                      "align": "left",
+                      "style": {
+                        "font_size": 12,
+                        "font_weight": 600
+                      },
+                      "padding": {
+                        "top": 12,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle"
+                }
+              ],
+              "gap": 20,
+              "divider": {
+                "width": 1,
+                "style": "solid",
+                "color": "#fed7aa"
+              }
+            }
+          ],
+          "box": {
+            "background_color": "#fff7ed",
+            "border_radius": 12,
+            "padding": {
+              "top": 16,
+              "right": 18,
+              "bottom": 16,
+              "left": 18
+            }
+          }
+        }
+      ],
+      "gap": 0
+    }
+  ]
+}

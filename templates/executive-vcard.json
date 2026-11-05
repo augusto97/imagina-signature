@@ -1,0 +1,168 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#0c0a09",
+    "link_color": "#292524"
+  },
+  "variables": {
+    "job_title": "Director General",
+    "mobile": "+34 655 210 480"
+  },
+  "blocks": [
+    {
+      "id": "row-11",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-2",
+          "width": 34,
+          "children": [
+            {
+              "id": "i-1",
+              "type": "image",
+              "src": "{{company_logo}}",
+              "alt": "{{company_name}}",
+              "width": 132,
+              "align": "center",
+              "link": "{{company_website}}",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle",
+          "box": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "col-10",
+          "width": 66,
+          "children": [
+            {
+              "id": "h-3",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 19,
+                "color": "#0c0a09"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-4",
+              "type": "text",
+              "content": "{{job_title}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 11,
+                "color": "#57534e",
+                "letter_spacing": 1.5,
+                "text_transform": "uppercase"
+              },
+              "padding": {
+                "top": 2,
+                "right": 0,
+                "bottom": 10,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-5",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-6",
+                  "type": "mobile",
+                  "value": "{{mobile}}"
+                },
+                {
+                  "id": "ci-7",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                },
+                {
+                  "id": "ci-8",
+                  "type": "website",
+                  "value": "{{company_website}}"
+                }
+              ],
+              "layout": "stacked",
+              "separator": "  |  ",
+              "show_icons": true,
+              "icon_shape": "plain",
+              "icon_tone": "dark",
+              "icon_size": 13,
+              "label_mode": "none",
+              "row_gap": 4,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#292524",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            },
+            {
+              "id": "v-9",
+              "type": "vcard",
+              "label": "Guardar contacto",
+              "full_name": "{{wp_display_name}}",
+              "organization": "{{company_name}}",
+              "title": "{{job_title}}",
+              "email": "{{wp_email}}",
+              "phone": "{{mobile}}",
+              "website": "{{company_website}}",
+              "background_color": "#1c1917",
+              "text_color": "#ffffff",
+              "border_radius": 3,
+              "link_style": "button",
+              "align": "left",
+              "padding": {
+                "top": 12,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        }
+      ],
+      "gap": 36,
+      "divider": {
+        "width": 1,
+        "style": "solid",
+        "color": "#d6d3d1"
+      }
+    }
+  ]
+}

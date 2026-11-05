@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "\"Trebuchet MS\", sans-serif",
+    "font_size": 14,
+    "text_color": "#422006",
+    "link_color": "#854d0e"
+  },
+  "variables": {
+    "job_title": "Tutora de 3.º de Primaria",
+    "phone": "+34 910 555 210",
+    "photo_url": "{{imgsig_assets_url}}/templates/avatar-3.png"
+  },
+  "blocks": [
+    {
+      "id": "row-15",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-14",
+          "width": 100,
+          "children": [
+            {
+              "id": "row-13",
+              "type": "container",
+              "columns": [
+                {
+                  "id": "col-2",
+                  "width": 22,
+                  "children": [
+                    {
+                      "id": "a-1",
+                      "type": "avatar",
+                      "src": "{{photo_url}}",
+                      "alt": "{{wp_display_name}}",
+                      "size": 80,
+                      "shape": "rounded",
+                      "align": "left",
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle"
+                },
+                {
+                  "id": "col-12",
+                  "width": 78,
+                  "children": [
+                    {
+                      "id": "h-3",
+                      "type": "heading",
+                      "content": "{{wp_display_name}}",
+                      "content_html": "<p>{{wp_display_name}}</p>",
+                      "style": {
+                        "font_weight": 700,
+                        "line_height": 1.2,
+                        "text_align": "left",
+                        "font_size": 19,
+                        "color": "#422006"
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 2,
+                        "left": 0
+                      }
+                    },
+                    {
+                      "id": "t-4",
+                      "type": "text",
+                      "content": "{{job_title}} · {{company_name}}",
+                      "style": {
+                        "line_height": 1.4,
+                        "text_align": "left",
+                        "font_size": 13,
+                        "color": "#854d0e"
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 8,
+                        "left": 0
+                      }
+                    },
+                    {
+                      "id": "c-5",
+                      "type": "contact_row",
+                      "items": [
+                        {
+                          "id": "ci-6",
+                          "type": "email",
+                          "value": "{{wp_email}}"
+                        },
+                        {
+                          "id": "ci-7",
+                          "type": "phone",
+                          "value": "{{phone}}"
+                        }
+                      ],
+                      "layout": "inline",
+                      "separator": "    ",
+                      "show_icons": true,
+                      "icon_shape": "circle",
+                      "icon_tone": "brand",
+                      "icon_size": 16,
+                      "label_mode": "none",
+                      "row_gap": 4,
+                      "style": {
+                        "font_size": 13,
+                        "font_weight": 400,
+                        "color": "#422006",
+                        "text_align": "left",
+                        "line_height": 1.4
+                      },
+                      "link_color": "#422006",
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    },
+                    {
+                      "id": "s-8",
+                      "type": "social_icons",
+                      "items": [
+                        {
+                          "id": "sn-9",
+                          "network": "facebook",
+                          "url": "{{company_facebook}}"
+                        },
+                        {
+                          "id": "sn-10",
+                          "network": "instagram",
+                          "url": "{{company_instagram}}"
+                        },
+                        {
+                          "id": "sn-11",
+                          "network": "youtube",
+                          "url": "{{company_youtube}}"
+                        }
+                      ],
+                      "shape": "circle",
+                      "tone": "brand",
+                      "size": 22,
+                      "spacing": 8,
+                      "align": "left",
+                      "padding": {
+                        "top": 10,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle"
+                }
+              ],
+              "gap": 18
+            }
+          ],
+          "box": {
+            "background_color": "#fefce8",
+            "border": {
+              "width": 1,
+              "style": "solid",
+              "color": "#fde68a"
+            },
+            "border_radius": 14,
+            "padding": {
+              "top": 16,
+              "right": 18,
+              "bottom": 16,
+              "left": 18
+            }
+          }
+        }
+      ],
+      "gap": 0
+    }
+  ]
+}

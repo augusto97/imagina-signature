@@ -11,6 +11,7 @@ import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
 import { SegmentedInput } from '@/editor/sidebar-right/inputs/SegmentedInput';
 import { contentHash } from '@/core/compiler/hash';
 import { report } from '@/core/compiler/issues';
+import { replaceVariables, resolvedVariables } from '@/core/compiler/variables';
 import { isUploadEnabled } from '@/bridge/apiClient';
 import { slugFilename, uploadBlob } from '@/services/uploads';
 import { useSchemaStore } from '@/stores/schemaStore';
@@ -24,7 +25,7 @@ import {
   type ButtonSpec,
 } from '../button-cta/buttonMarkup';
 import { BUTTON_TYPOGRAPHY } from '../text/typography';
-import { HostedAssetStatus, useHostedAssetSync } from '../qr-code/definition';
+import { editorVariables, HostedAssetStatus, useHostedAssetSync } from '../qr-code/definition';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 /**
@@ -38,9 +39,32 @@ import { registerBlock, type BlockDefinition, type CompileContext } from '../reg
  * hash in `vcf_hash`), and the compiler emits a normal https link.
  */
 
-/** Hash of the vCard text the hosted file must contain. */
-export function vcardContentHash(block: VCardBlock): string {
-  return contentHash(`vcf-v1|${buildVCardString(block)}`);
+/** vCard text fields, in file order. */
+const VCARD_FIELDS = ['full_name', 'organization', 'title', 'email', 'phone', 'website'] as const;
+
+/**
+ * The block with `{{variables}}` resolved in its contact fields — the
+ * hosted .vcf carries the values the recipient sees in the signature
+ * (`{{wp_display_name}}`, `{{job_title}}`…), never the raw tokens.
+ * Unknown tokens stay as written.
+ */
+export function resolveVCardFields(
+  block: VCardBlock,
+  variables: Record<string, string> = editorVariables(),
+): VCardBlock {
+  const out = { ...block };
+  for (const key of VCARD_FIELDS) {
+    if (typeof block[key] === 'string') out[key] = replaceVariables(block[key], variables).text;
+  }
+  return out;
+}
+
+/** Hash of the vCard text the hosted file must contain (variables resolved). */
+export function vcardContentHash(
+  block: VCardBlock,
+  variables: Record<string, string> = editorVariables(),
+): string {
+  return contentHash(`vcf-v1|${buildVCardString(resolveVCardFields(block, variables))}`);
 }
 
 /** True when the block carries at least one contact detail. */
@@ -62,10 +86,12 @@ export function vcardFilename(block: VCardBlock): string {
 /** Generates the .vcf, uploads it and resolves to the block fields to store. */
 export async function uploadVCardFile(
   block: VCardBlock,
+  variables: Record<string, string> = editorVariables(),
 ): Promise<Pick<VCardBlock, 'vcf_url' | 'vcf_hash'>> {
-  const blob = new Blob([buildVCardString(block)], { type: 'text/vcard' });
-  const asset = await uploadBlob(blob, vcardFilename(block));
-  return { vcf_url: asset.url, vcf_hash: vcardContentHash(block) };
+  const resolved = resolveVCardFields(block, variables);
+  const blob = new Blob([buildVCardString(resolved)], { type: 'text/vcard' });
+  const asset = await uploadBlob(blob, vcardFilename(resolved));
+  return { vcf_url: asset.url, vcf_hash: vcardContentHash(block, variables) };
 }
 
 /** vCard link look: a compact 13px / medium button (8 × 14 px padding). */
@@ -113,14 +139,17 @@ const Properties: FC<{
   block: VCardBlock;
   onChange: (updates: Partial<VCardBlock>) => void;
 }> = ({ block, onChange }) => {
-  const hash = vcardContentHash(block);
+  // Subscribed so the hash follows variable edits made while the panel is open.
+  const own = useSchemaStore((s) => s.schema.variables);
+  const variables = useMemo(() => resolvedVariables(own ?? {}), [own]);
+  const hash = vcardContentHash(block, variables);
   const upToDate = Boolean(block.vcf_url) && block.vcf_hash === hash;
   const sync = useHostedAssetSync({
     blockId: block.id,
     hash,
     upToDate,
     canSync: vcardHasDetails(block),
-    upload: () => uploadVCardFile(block),
+    upload: () => uploadVCardFile(block, variables),
     hashOf: (latest) => (latest.type === 'vcard' ? vcardContentHash(latest) : null),
   });
   const isText = block.link_style === 'text';
@@ -295,7 +324,7 @@ function compile(block: VCardBlock, ctx: CompileContext): string {
     );
     return '';
   }
-  if (block.vcf_hash !== vcardContentHash(block)) {
+  if (block.vcf_hash !== vcardContentHash(block, ctx.variables)) {
     report(
       ctx,
       'warning',

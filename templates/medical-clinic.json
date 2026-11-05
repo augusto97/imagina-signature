@@ -1,0 +1,198 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#134e4a",
+    "link_color": "#0f766e"
+  },
+  "variables": {
+    "job_title": "Médica especialista en Dermatología",
+    "department": "Unidad de Dermatología",
+    "phone": "+34 910 555 210",
+    "photo_url": "{{imgsig_assets_url}}/templates/avatar-2.png",
+    "calendar_url": "https://cal.com/tu-agenda",
+    "address_line": "Paseo de la Castellana 89, 28046 Madrid"
+  },
+  "blocks": [
+    {
+      "id": "row-12",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-2",
+          "width": 21,
+          "children": [
+            {
+              "id": "a-1",
+              "type": "avatar",
+              "src": "{{photo_url}}",
+              "alt": "{{wp_display_name}}",
+              "size": 88,
+              "shape": "circle",
+              "align": "left",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "top"
+        },
+        {
+          "id": "col-11",
+          "width": 79,
+          "children": [
+            {
+              "id": "h-3",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 19,
+                "color": "#134e4a"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-4",
+              "type": "text",
+              "content": "{{job_title}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 13,
+                "font_weight": 700,
+                "color": "#0f766e"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-5",
+              "type": "text",
+              "content": "{{department}} · {{company_name}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 12,
+                "color": "#4b5563"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 8,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-6",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-7",
+                  "type": "phone",
+                  "value": "{{phone}}"
+                },
+                {
+                  "id": "ci-8",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                },
+                {
+                  "id": "ci-9",
+                  "type": "address",
+                  "value": "{{address_line}}"
+                }
+              ],
+              "layout": "stacked",
+              "separator": "  |  ",
+              "show_icons": true,
+              "icon_shape": "plain",
+              "icon_tone": "gray",
+              "icon_size": 13,
+              "label_mode": "none",
+              "row_gap": 3,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#374151",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            },
+            {
+              "id": "b-10",
+              "type": "button_cta",
+              "label": "Pedir cita",
+              "href": "{{calendar_url}}",
+              "background_color": "#0f766e",
+              "text_color": "#ffffff",
+              "border_radius": 6,
+              "preset": "solid",
+              "padding_x": 18,
+              "padding_y": 8,
+              "align": "left",
+              "style": {
+                "font_size": 13,
+                "font_weight": 600
+              },
+              "padding": {
+                "top": 12,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "top"
+        }
+      ],
+      "gap": 20
+    },
+    {
+      "id": "d-13",
+      "type": "disclaimer",
+      "content": "Este mensaje es confidencial. Si no es su destinatario, comuníquelo al remitente y elimínelo. Tratamos sus datos conforme a nuestra política de privacidad.",
+      "content_html": "<p>Este mensaje es confidencial. Si no es su destinatario, comuníquelo al remitente y elimínelo. Tratamos sus datos conforme a nuestra política de privacidad.</p>",
+      "style": {
+        "font_size": 10,
+        "color": "#6b7280",
+        "line_height": 1.5
+      },
+      "padding": {
+        "top": 14,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
+  ]
+}

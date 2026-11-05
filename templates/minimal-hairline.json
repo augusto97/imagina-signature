@@ -1,0 +1,136 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 520,
+    "background_color": "#ffffff",
+    "font_family": "Helvetica, Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#111827"
+  },
+  "variables": {
+    "job_title": "Directora de Marketing",
+    "phone": "+34 910 555 210"
+  },
+  "blocks": [
+    {
+      "id": "h-1",
+      "type": "heading",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
+      "style": {
+        "font_weight": 600,
+        "line_height": 1.2,
+        "text_align": "left",
+        "font_size": 18,
+        "color": "#111827"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-2",
+      "type": "text",
+      "content": "{{job_title}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 11,
+        "color": "#6b7280",
+        "letter_spacing": 1.5,
+        "text_transform": "uppercase"
+      },
+      "padding": {
+        "top": 2,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "dv-3",
+      "type": "divider",
+      "border": {
+        "width": 1,
+        "style": "solid",
+        "color": "#111827"
+      },
+      "width_percent": 100,
+      "width_unit": "px",
+      "align": "left",
+      "width_px": 28,
+      "padding": {
+        "top": 12,
+        "right": 0,
+        "bottom": 12,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-4",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-5",
+          "type": "phone",
+          "value": "{{phone}}"
+        },
+        {
+          "id": "ci-6",
+          "type": "email",
+          "value": "{{wp_email}}"
+        },
+        {
+          "id": "ci-7",
+          "type": "website",
+          "value": "{{company_website}}"
+        }
+      ],
+      "layout": "stacked",
+      "separator": "  |  ",
+      "show_icons": false,
+      "icon_shape": "plain",
+      "icon_tone": "gray",
+      "icon_size": 14,
+      "label_mode": "short",
+      "row_gap": 3,
+      "style": {
+        "font_size": 12,
+        "font_weight": 400,
+        "color": "#374151",
+        "text_align": "left",
+        "line_height": 1.4
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "i-8",
+      "type": "image",
+      "src": "{{company_logo}}",
+      "alt": "{{company_name}}",
+      "width": 92,
+      "align": "left",
+      "link": "{{company_website}}",
+      "padding": {
+        "top": 14,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
+  ]
+}

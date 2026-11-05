@@ -22,7 +22,13 @@ defined( 'ABSPATH' ) || exit;
  *  - `wp_*`      — from the current WordPress user record;
  *  - `company_*` — from the site-wide brand kit ({@see BrandKit::company_variables()}),
  *                  always present (empty string when blank) so the
- *                  tokens resolve instead of shipping as `{{…}}`.
+ *                  tokens resolve instead of shipping as `{{…}}`;
+ *  - `imgsig_assets_url` — absolute URL of the plugin's `assets/`
+ *                  folder, so shipped templates reference their
+ *                  placeholder images as
+ *                  `{{imgsig_assets_url}}/templates/avatar-1.png`
+ *                  and never hard-code a host. Internal: the editor
+ *                  hides `imgsig_*` keys from its field pickers.
  *
  * The `imgsig/editor/system_variables` filter runs AFTER the merge, so a
  * host plugin sees (and can override or remove) the company variables
@@ -52,7 +58,10 @@ final class SystemVariables {
 				'wp_last_name'    => (string) $user->last_name,
 				'wp_url'          => (string) $user->user_url,
 			],
-			BrandKit::company_variables( $kit )
+			BrandKit::company_variables( $kit ),
+			[
+				'imgsig_assets_url' => self::assets_url(),
+			]
 		);
 
 		/**
@@ -77,5 +86,20 @@ final class SystemVariables {
 			}
 		}
 		return $out;
+	}
+
+	/**
+	 * Absolute URL of the plugin's `assets/` folder, without a trailing
+	 * slash — the value of the `imgsig_assets_url` system variable.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return string
+	 */
+	public static function assets_url(): string {
+		if ( ! defined( 'IMGSIG_FILE' ) ) {
+			return '';
+		}
+		return untrailingslashit( esc_url_raw( plugins_url( 'assets', IMGSIG_FILE ) ) );
 	}
 }

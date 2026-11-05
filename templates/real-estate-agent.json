@@ -1,0 +1,214 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 600,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#0f172a",
+    "link_color": "#92400e"
+  },
+  "variables": {
+    "job_title": "Asesora Inmobiliaria",
+    "mobile": "+34 655 210 480",
+    "photo_url": "{{imgsig_assets_url}}/templates/avatar-3.png",
+    "website_url": "https://www.tuinmobiliaria.com/inmuebles"
+  },
+  "blocks": [
+    {
+      "id": "row-16",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-2",
+          "width": 20,
+          "children": [
+            {
+              "id": "a-1",
+              "type": "avatar",
+              "src": "{{photo_url}}",
+              "alt": "{{wp_display_name}}",
+              "size": 96,
+              "shape": "circle",
+              "align": "left",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        },
+        {
+          "id": "col-13",
+          "width": 56,
+          "children": [
+            {
+              "id": "h-3",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 18,
+                "color": "#0f172a"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-4",
+              "type": "text",
+              "content": "{{job_title}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 13,
+                "font_weight": 700,
+                "color": "#92400e"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 1,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-5",
+              "type": "text",
+              "content": "{{company_name}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 12,
+                "color": "#4b5563"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 8,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-6",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-7",
+                  "type": "mobile",
+                  "value": "{{mobile}}"
+                },
+                {
+                  "id": "ci-8",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                }
+              ],
+              "layout": "stacked",
+              "separator": "  |  ",
+              "show_icons": true,
+              "icon_shape": "plain",
+              "icon_tone": "dark",
+              "icon_size": 13,
+              "label_mode": "none",
+              "row_gap": 3,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#1f2937",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            },
+            {
+              "id": "s-9",
+              "type": "social_icons",
+              "items": [
+                {
+                  "id": "sn-10",
+                  "network": "instagram",
+                  "url": "{{company_instagram}}"
+                },
+                {
+                  "id": "sn-11",
+                  "network": "facebook",
+                  "url": "{{company_facebook}}"
+                },
+                {
+                  "id": "sn-12",
+                  "network": "whatsapp",
+                  "url": "{{company_whatsapp}}"
+                }
+              ],
+              "shape": "circle",
+              "tone": "brand",
+              "size": 20,
+              "spacing": 6,
+              "align": "left",
+              "padding": {
+                "top": 10,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        },
+        {
+          "id": "col-15",
+          "width": 24,
+          "children": [
+            {
+              "id": "q-14",
+              "type": "qr_code",
+              "data": "{{website_url}}",
+              "size": 92,
+              "color": "#111827",
+              "background_color": "#ffffff",
+              "align": "center",
+              "caption": "Ver inmuebles",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle",
+          "box": {
+            "align": "center"
+          }
+        }
+      ],
+      "gap": 18,
+      "divider": {
+        "width": 1,
+        "style": "solid",
+        "color": "#e5e7eb"
+      }
+    }
+  ]
+}

@@ -140,7 +140,8 @@ describe('resolveBlockVariables', () => {
     expect(out.id).toBe('{{wp_first_name}}');
     expect(out.type).toBe('qr_code');
     expect(out.image_hash).toBe('{{company_name}}');
-    // The hosted PNG encodes the raw data; the canvas must show the same.
+    // The QR block resolves its own data (qrData) for the preview and the
+    // hosted PNG alike, so the canvas copy keeps the raw token.
     expect(out.data).toBe('{{company_website}}');
     expect(out.caption).toBe('Visit https://acme.example');
   });

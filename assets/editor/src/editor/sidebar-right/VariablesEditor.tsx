@@ -3,6 +3,7 @@ import { Plus, Trash2, Lock } from 'lucide-react';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { useToastStore } from '@/stores/toastStore';
 import { getConfig } from '@/bridge/apiClient';
+import { isInternalVariable } from '@/core/compiler/variables';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 
@@ -271,6 +272,7 @@ function groupSystemVariables(system: Record<string, string>): {
   const profile: Array<[string, string]> = [];
   const company: Array<[string, string]> = [];
   for (const entry of Object.entries(system)) {
+    if (isInternalVariable(entry[0])) continue;
     (entry[0].startsWith(COMPANY_PREFIX) ? company : profile).push(entry);
   }
   return { profile, company };

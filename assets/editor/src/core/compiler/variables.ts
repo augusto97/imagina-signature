@@ -87,12 +87,38 @@ export function systemVariables(): Record<string, string> {
  * The map every substitution uses: system variables overlaid with the
  * signature's own. User-defined variables win on key conflict so the
  * user can override any auto-merged value.
+ *
+ * A signature variable's VALUE may itself reference system variables
+ * — a template ships `photo_url: "{{imgsig_assets_url}}/templates/avatar-1.png"`
+ * so its placeholder photo works on every site. Those references are
+ * expanded here, one level deep and against the system variables only
+ * (never other signature variables), so there are no chains or cycles.
+ * Unknown tokens stay as written and are reported by the compiler.
  */
 export function resolvedVariables(
   userDefined: Record<string, string>,
   system: Record<string, string> = systemVariables(),
 ): Record<string, string> {
-  return { ...system, ...userDefined };
+  const merged: Record<string, string> = { ...system };
+  for (const [key, value] of Object.entries(userDefined)) {
+    merged[key] =
+      typeof value === 'string' && hasVariableTokens(value)
+        ? replaceVariables(value, system).text
+        : value;
+  }
+  return merged;
+}
+
+/** Prefix of plugin-internal system variables (`imgsig_assets_url`). */
+const INTERNAL_PREFIX = 'imgsig_';
+
+/**
+ * Plugin-internal system variables — present so shipped templates can
+ * reference their placeholder images, but not something a user would
+ * insert by hand, so field pickers hide them.
+ */
+export function isInternalVariable(key: string): boolean {
+  return key.startsWith(INTERNAL_PREFIX);
 }
 
 /** HTML text / attribute escaper applied to substituted values. */

@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 600,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#4338ca"
+  },
+  "variables": {
+    "job_title": "Responsable de Talento",
+    "phone": "+34 910 555 210",
+    "website_url": "https://www.tuempresa.com/empleo"
+  },
+  "blocks": [
+    {
+      "id": "h-1",
+      "type": "heading",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
+      "style": {
+        "font_weight": 700,
+        "line_height": 1.2,
+        "text_align": "left",
+        "font_size": 18,
+        "color": "#111827"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-2",
+      "type": "text",
+      "content": "{{job_title}} · {{company_name}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 13,
+        "color": "#4b5563"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 8,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-3",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-4",
+          "type": "email",
+          "value": "{{wp_email}}"
+        },
+        {
+          "id": "ci-5",
+          "type": "phone",
+          "value": "{{phone}}"
+        }
+      ],
+      "layout": "inline",
+      "separator": "    ",
+      "show_icons": true,
+      "icon_shape": "rounded",
+      "icon_tone": "brand",
+      "icon_size": 16,
+      "label_mode": "none",
+      "row_gap": 4,
+      "style": {
+        "font_size": 12,
+        "font_weight": 400,
+        "color": "#1f2937",
+        "text_align": "left",
+        "line_height": 1.4
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "bn-6",
+      "type": "banner",
+      "src": "{{imgsig_assets_url}}/templates/banner-hiring.png",
+      "alt": "Estamos contratando — descubre nuestras vacantes",
+      "link": "{{website_url}}",
+      "width": 600,
+      "full_width": true,
+      "align": "left",
+      "natural_width": 1200,
+      "natural_height": 300,
+      "border_radius": 8,
+      "padding": {
+        "top": 14,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#15803d"
+  },
+  "variables": {
+    "job_title": "Ejecutiva de Cuentas",
+    "mobile": "+34 655 210 480",
+    "photo_url": "{{imgsig_assets_url}}/templates/avatar-3.png",
+    "calendar_url": "https://cal.com/tu-agenda"
+  },
+  "blocks": [
+    {
+      "id": "row-10",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-2",
+          "width": 21,
+          "children": [
+            {
+              "id": "a-1",
+              "type": "avatar",
+              "src": "{{photo_url}}",
+              "alt": "{{wp_display_name}}",
+              "size": 92,
+              "shape": "circle",
+              "align": "left",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        },
+        {
+          "id": "col-9",
+          "width": 79,
+          "children": [
+            {
+              "id": "h-3",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 19,
+                "color": "#111827"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-4",
+              "type": "text",
+              "content": "{{job_title}} · {{company_name}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 13,
+                "color": "#4b5563"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 8,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-5",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-6",
+                  "type": "mobile",
+                  "value": "{{mobile}}"
+                },
+                {
+                  "id": "ci-7",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                }
+              ],
+              "layout": "inline",
+              "separator": "    ",
+              "show_icons": true,
+              "icon_shape": "circle",
+              "icon_tone": "dark",
+              "icon_size": 16,
+              "label_mode": "none",
+              "row_gap": 4,
+              "style": {
+                "font_size": 13,
+                "font_weight": 400,
+                "color": "#1f2937",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "link_color": "#1f2937",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            },
+            {
+              "id": "b-8",
+              "type": "button_cta",
+              "label": "Agenda una reunión",
+              "href": "{{calendar_url}}",
+              "background_color": "#15803d",
+              "text_color": "#ffffff",
+              "border_radius": 999,
+              "preset": "pill",
+              "padding_x": 20,
+              "padding_y": 9,
+              "align": "left",
+              "style": {
+                "font_size": 13,
+                "font_weight": 600
+              },
+              "padding": {
+                "top": 12,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        }
+      ],
+      "gap": 20
+    }
+  ]
+}

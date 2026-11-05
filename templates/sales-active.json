@@ -1,12 +1,125 @@
 {
-  "schema_version": "1.0",
-  "meta": { "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z", "editor_version": "1.0.0" },
-  "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Arial, sans-serif", "font_size": 14, "text_color": "#0f172a", "link_color": "#dc2626" },
-  "variables": {},
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#0f172a",
+    "link_color": "#2563eb"
+  },
+  "variables": {
+    "job_title": "Gerente Comercial",
+    "phone": "+34 910 555 210",
+    "mobile": "+34 655 210 480",
+    "calendar_url": "https://cal.com/tu-agenda"
+  },
   "blocks": [
-    { "id": "name", "type": "heading", "content": "Alex Rivera", "style": { "font_family": "Arial, sans-serif", "font_size": 18, "font_weight": 700, "color": "#0f172a", "line_height": 1.2, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 } },
-    { "id": "title", "type": "text", "content": "Senior Account Executive · ACME", "style": { "font_family": "Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569", "line_height": 1.4, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
-    { "id": "cta", "type": "button_cta", "label": "Book a 15-min call", "href": "https://cal.example.com/alex", "background_color": "#dc2626", "text_color": "#ffffff", "border_radius": 4, "padding": { "top": 4, "right": 0, "bottom": 8, "left": 0 } },
-    { "id": "contact", "type": "contact_row", "rows": [ { "icon": "email", "label": "alex@acme.com", "href": "mailto:alex@acme.com" }, { "icon": "phone", "label": "+1 555 200 3000", "href": "tel:+15552003000" } ], "style": { "font_family": "Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569" }, "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 } }
+    {
+      "id": "h-1",
+      "type": "heading",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
+      "style": {
+        "font_weight": 700,
+        "line_height": 1.2,
+        "text_align": "left",
+        "font_size": 19,
+        "color": "#0f172a"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-2",
+      "type": "text",
+      "content": "{{job_title}} · <strong>{{company_name}}</strong>",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 13,
+        "color": "#475569"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 8,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-3",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-4",
+          "type": "mobile",
+          "value": "{{mobile}}"
+        },
+        {
+          "id": "ci-5",
+          "type": "phone",
+          "value": "{{phone}}"
+        },
+        {
+          "id": "ci-6",
+          "type": "email",
+          "value": "{{wp_email}}"
+        }
+      ],
+      "layout": "inline",
+      "separator": "    ",
+      "show_icons": true,
+      "icon_shape": "circle",
+      "icon_tone": "brand",
+      "icon_size": 16,
+      "label_mode": "none",
+      "row_gap": 4,
+      "style": {
+        "font_size": 12,
+        "font_weight": 400,
+        "color": "#1e293b",
+        "text_align": "left",
+        "line_height": 1.4
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "b-7",
+      "type": "button_cta",
+      "label": "Agenda una demo",
+      "href": "{{calendar_url}}",
+      "background_color": "#2563eb",
+      "text_color": "#ffffff",
+      "border_radius": 6,
+      "preset": "solid",
+      "padding_x": 20,
+      "padding_y": 10,
+      "align": "left",
+      "style": {
+        "font_size": 13,
+        "font_weight": 600
+      },
+      "padding": {
+        "top": 14,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
   ]
 }

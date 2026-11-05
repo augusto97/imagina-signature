@@ -3,6 +3,7 @@ import { __ } from '@/i18n/helpers';
 import { getAssetsBaseUrl, iconUrl } from '@/core/compiler/assets';
 import { attr, horizontalPadding, inlineStyle, paddingCss } from '@/core/compiler/css';
 import { blockLabel, markerAttr, report } from '@/core/compiler/issues';
+import { replaceVariables } from '@/core/compiler/variables';
 import type { CompileContext } from '../registry';
 import { iconTitle } from './iconSet';
 import { normalizeSocialIcons, socialHref } from './normalize';
@@ -15,8 +16,9 @@ import { normalizeSocialIcons, socialHref } from './normalize';
  * `<a href><img width height alt></a>`. Icons are hosted PNGs
  * (`core/compiler/assets.ts`), spacing is cell padding, alignment is
  * the inner table's `align` (contained by the wrapper cell so it never
- * floats next to the following block). Items without a URL are left
- * out with a warning.
+ * floats next to the following block). Items without a URL — including
+ * a `{{variable}}` that resolves to nothing — are left out with a
+ * warning.
  */
 export function compileSocialIcons(block: SocialIconsBlock, ctx: CompileContext): string {
   const s = normalizeSocialIcons(block);
@@ -35,7 +37,10 @@ export function compileSocialIcons(block: SocialIconsBlock, ctx: CompileContext)
 
   const links: Array<{ href: string; network: string }> = [];
   for (const item of s.items) {
-    const href = socialHref(item.network, item.url);
+    // Resolved first, so an icon whose `{{company_x}}` is blank in the
+    // brand kit is left out (with a warning) instead of linking to `#`,
+    // and a scheme-less variable value still gets its https://.
+    const href = socialHref(item.network, replaceVariables(item.url, ctx.variables).text);
     if (href === '') {
       report(
         ctx,

@@ -1,0 +1,166 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 520,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#be123c"
+  },
+  "variables": {
+    "job_title": "Directora de Arte",
+    "website_url": "https://www.tuportfolio.com",
+    "linkedin_url": "https://www.linkedin.com/in/tu-perfil"
+  },
+  "blocks": [
+    {
+      "id": "h-1",
+      "type": "heading",
+      "content": "{{wp_display_name}}.",
+      "content_html": "<p>{{wp_display_name}}<span style=\"color:#e11d48\">.</span></p>",
+      "style": {
+        "font_weight": 700,
+        "line_height": 1.2,
+        "text_align": "left",
+        "font_size": 24,
+        "color": "#111827",
+        "letter_spacing": -0.5
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-2",
+      "type": "text",
+      "content": "{{job_title}} — {{company_name}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 13,
+        "color": "#6b7280"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "dv-3",
+      "type": "divider",
+      "border": {
+        "width": 3,
+        "style": "solid",
+        "color": "#e11d48"
+      },
+      "width_percent": 100,
+      "width_unit": "px",
+      "align": "left",
+      "width_px": 40,
+      "padding": {
+        "top": 12,
+        "right": 0,
+        "bottom": 12,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-4",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-5",
+          "type": "email",
+          "value": "{{wp_email}}"
+        },
+        {
+          "id": "ci-6",
+          "type": "website",
+          "value": "{{website_url}}"
+        }
+      ],
+      "layout": "inline",
+      "separator": " / ",
+      "show_icons": false,
+      "icon_shape": "plain",
+      "icon_tone": "gray",
+      "icon_size": 14,
+      "label_mode": "none",
+      "row_gap": 4,
+      "style": {
+        "font_size": 13,
+        "font_weight": 400,
+        "color": "#374151",
+        "text_align": "left",
+        "line_height": 1.4
+      },
+      "link_color": "#374151",
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-7",
+      "type": "text",
+      "content": "<a href=\"{{website_url}}\"><strong>Ver portfolio →</strong></a>",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 13,
+        "color": "#be123c"
+      },
+      "padding": {
+        "top": 8,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "s-8",
+      "type": "social_icons",
+      "items": [
+        {
+          "id": "sn-9",
+          "network": "instagram",
+          "url": "{{company_instagram}}"
+        },
+        {
+          "id": "sn-10",
+          "network": "linkedin",
+          "url": "{{linkedin_url}}"
+        },
+        {
+          "id": "sn-11",
+          "network": "tiktok",
+          "url": "{{company_tiktok}}"
+        }
+      ],
+      "shape": "plain",
+      "tone": "dark",
+      "size": 18,
+      "spacing": 12,
+      "align": "left",
+      "padding": {
+        "top": 12,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
+  ]
+}

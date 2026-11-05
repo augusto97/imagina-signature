@@ -1,96 +1,159 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "meta": {
-    "created_at": "2026-01-01T00:00:00Z",
-    "updated_at": "2026-01-01T00:00:00Z",
-    "editor_version": "1.0.0"
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
   },
   "canvas": {
-    "width": 600,
+    "width": 560,
     "background_color": "#ffffff",
     "font_family": "Georgia, serif",
     "font_size": 14,
-    "text_color": "#111827",
-    "link_color": "#1f2937"
+    "text_color": "#1f2937",
+    "link_color": "#1e3a8a"
   },
-  "variables": {},
+  "variables": {
+    "job_title": "Directora de Marketing",
+    "department": "Dirección Comercial",
+    "phone": "+34 910 555 210"
+  },
   "blocks": [
     {
-      "id": "name",
+      "id": "h-1",
       "type": "heading",
-      "content": "Jane Doe",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
       "style": {
-        "font_family": "Georgia, serif",
-        "font_size": 20,
         "font_weight": 700,
-        "color": "#1f2937",
         "line_height": 1.2,
-        "text_align": "left"
+        "text_align": "left",
+        "font_size": 21,
+        "color": "#1f2937"
       },
-      "padding": { "top": 0, "right": 0, "bottom": 4, "left": 0 }
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
     },
     {
-      "id": "title",
+      "id": "t-2",
       "type": "text",
-      "content": "<em>Director of Operations</em>",
+      "content": "{{job_title}}, {{department}}",
       "style": {
-        "font_family": "Georgia, serif",
+        "line_height": 1.4,
+        "text_align": "left",
         "font_size": 14,
-        "font_weight": 400,
-        "color": "#374151",
-        "line_height": 1.4,
-        "text_align": "left"
+        "color": "#4b5563",
+        "font_style": "italic"
       },
-      "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
+      "padding": {
+        "top": 2,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
     },
     {
-      "id": "company",
-      "type": "text",
-      "content": "<strong>ACME Industries</strong>",
-      "style": {
-        "font_family": "Georgia, serif",
-        "font_size": 13,
-        "font_weight": 600,
-        "color": "#111827",
-        "line_height": 1.4,
-        "text_align": "left"
-      },
-      "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
-    },
-    {
-      "id": "divider",
+      "id": "dv-3",
       "type": "divider",
-      "border": { "width": 2, "color": "#1f2937", "style": "solid" },
-      "width_percent": 30,
-      "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
+      "border": {
+        "width": 2,
+        "style": "solid",
+        "color": "#1e3a8a"
+      },
+      "width_percent": 100,
+      "width_unit": "px",
+      "align": "left",
+      "width_px": 48,
+      "padding": {
+        "top": 12,
+        "right": 0,
+        "bottom": 12,
+        "left": 0
+      }
     },
     {
-      "id": "contact",
+      "id": "t-4",
+      "type": "text",
+      "content": "{{company_name}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_family": "Arial, sans-serif",
+        "font_size": 12,
+        "font_weight": 700,
+        "color": "#1e3a8a",
+        "letter_spacing": 1.5,
+        "text_transform": "uppercase"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 4,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-5",
       "type": "contact_row",
-      "rows": [
-        { "icon": "email", "label": "jane@acme.com", "href": "mailto:jane@acme.com" },
-        { "icon": "phone", "label": "+1 555 100 2000", "href": "tel:+15551002000" }
+      "items": [
+        {
+          "id": "ci-6",
+          "type": "phone",
+          "value": "{{phone}}"
+        },
+        {
+          "id": "ci-7",
+          "type": "email",
+          "value": "{{wp_email}}"
+        },
+        {
+          "id": "ci-8",
+          "type": "website",
+          "value": "{{company_website}}"
+        }
       ],
+      "layout": "inline",
+      "separator": " · ",
+      "show_icons": false,
+      "icon_shape": "plain",
+      "icon_tone": "gray",
+      "icon_size": 14,
+      "label_mode": "none",
+      "row_gap": 4,
       "style": {
-        "font_family": "Georgia, serif",
-        "font_size": 13,
+        "font_size": 12,
         "font_weight": 400,
-        "color": "#374151"
+        "color": "#4b5563",
+        "text_align": "left",
+        "line_height": 1.4,
+        "font_family": "Arial, sans-serif"
       },
-      "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 }
+      "link_color": "#4b5563",
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
     },
     {
-      "id": "disclaimer",
-      "type": "disclaimer",
-      "content": "This email and any attachments are confidential. If you are not the intended recipient, please notify the sender.",
-      "style": {
-        "font_family": "Georgia, serif",
-        "font_size": 10,
-        "font_weight": 400,
-        "color": "#9ca3af",
-        "line_height": 1.4
-      },
-      "padding": { "top": 12, "right": 0, "bottom": 0, "left": 0 }
+      "id": "i-9",
+      "type": "image",
+      "src": "{{company_logo}}",
+      "alt": "{{company_name}}",
+      "width": 104,
+      "align": "left",
+      "link": "{{company_website}}",
+      "padding": {
+        "top": 14,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
     }
   ]
 }

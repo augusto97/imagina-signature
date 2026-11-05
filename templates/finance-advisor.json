@@ -1,0 +1,173 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 600,
+    "background_color": "#ffffff",
+    "font_family": "Georgia, serif",
+    "font_size": 14,
+    "text_color": "#102a43",
+    "link_color": "#102a43"
+  },
+  "variables": {
+    "job_title": "Asesor Financiero Certificado",
+    "phone": "+34 910 555 210",
+    "mobile": "+34 655 210 480"
+  },
+  "blocks": [
+    {
+      "id": "row-11",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-2",
+          "width": 28,
+          "children": [
+            {
+              "id": "i-1",
+              "type": "image",
+              "src": "{{company_logo}}",
+              "alt": "{{company_name}}",
+              "width": 120,
+              "align": "center",
+              "link": "{{company_website}}",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle",
+          "box": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "col-10",
+          "width": 72,
+          "children": [
+            {
+              "id": "h-3",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 19,
+                "color": "#102a43"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-4",
+              "type": "text",
+              "content": "{{job_title}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_family": "Arial, sans-serif",
+                "font_size": 11,
+                "font_weight": 700,
+                "color": "#92400e",
+                "letter_spacing": 1.2,
+                "text_transform": "uppercase"
+              },
+              "padding": {
+                "top": 2,
+                "right": 0,
+                "bottom": 8,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-5",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-6",
+                  "type": "phone",
+                  "value": "{{phone}}"
+                },
+                {
+                  "id": "ci-7",
+                  "type": "mobile",
+                  "value": "{{mobile}}"
+                },
+                {
+                  "id": "ci-8",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                },
+                {
+                  "id": "ci-9",
+                  "type": "website",
+                  "value": "{{company_website}}"
+                }
+              ],
+              "layout": "stacked",
+              "separator": "  |  ",
+              "show_icons": false,
+              "icon_shape": "plain",
+              "icon_tone": "gray",
+              "icon_size": 14,
+              "label_mode": "short",
+              "row_gap": 2,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#243b53",
+                "text_align": "left",
+                "line_height": 1.4,
+                "font_family": "Arial, sans-serif"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        }
+      ],
+      "gap": 32,
+      "divider": {
+        "width": 2,
+        "style": "solid",
+        "color": "#b7791f"
+      }
+    },
+    {
+      "id": "d-12",
+      "type": "disclaimer",
+      "content": "La información de este mensaje no constituye asesoramiento financiero personalizado. Rentabilidades pasadas no garantizan rentabilidades futuras.",
+      "content_html": "<p>La información de este mensaje no constituye asesoramiento financiero personalizado. Rentabilidades pasadas no garantizan rentabilidades futuras.</p>",
+      "style": {
+        "font_size": 10,
+        "color": "#64748b",
+        "line_height": 1.5,
+        "font_family": "Arial, sans-serif"
+      },
+      "padding": {
+        "top": 14,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
+  ]
+}

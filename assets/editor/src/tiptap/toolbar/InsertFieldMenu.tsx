@@ -3,6 +3,7 @@ import type { Editor } from '@tiptap/react';
 import { Braces } from 'lucide-react';
 import { getConfig } from '@/bridge/apiClient';
 import { useSchemaStore } from '@/stores/schemaStore';
+import { isInternalVariable } from '@/core/compiler/variables';
 import { __ } from '@/i18n/helpers';
 import { ToolbarMenu } from './ToolbarMenu';
 
@@ -40,6 +41,7 @@ export const InsertFieldMenu: FC<Props> = ({ editor }) => {
     {
       title: __('Profile fields'),
       fields: Object.keys(system)
+        .filter((key) => !isInternalVariable(key))
         .sort()
         .map((key) => ({ key, value: valueOf(key) })),
     },
