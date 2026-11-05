@@ -30,7 +30,7 @@ final class SchemaShape {
 	 *
 	 * @var string[]
 	 */
-	private const OBJECT_KEYS = [ 'variables', 'meta', 'canvas' ];
+	private const OBJECT_KEYS = [ 'variables', 'meta', 'canvas', 'settings', 'overrides' ];
 
 	/**
 	 * Returns the schema with empty object fields restored to `stdClass`.

@@ -40,7 +40,13 @@ class SignatureRepository extends BaseRepository {
 	/**
 	 * Columns selected for list summaries (no LONGTEXT blobs).
 	 */
-	private const SUMMARY_COLUMNS = 'id, user_id, name, preview_url, template_id, status, schema_version, html_cache IS NOT NULL AS has_html, compiled_at, created_at, updated_at';
+	private const SUMMARY_COLUMNS = 'id, user_id, name, preview_url, template_id, link_mode, status, schema_version, html_cache IS NOT NULL AS has_html, compiled_at, created_at, updated_at';
+
+	/**
+	 * SQL condition for "the stored HTML does not describe the current
+	 * design": never compiled, or compiled before the last edit.
+	 */
+	private const STALE_CONDITION = '(html_cache IS NULL OR compiled_at IS NULL OR compiled_at < updated_at)';
 
 	/**
 	 * Per-request cache of owned rows, keyed `"{id}:{user_id}"`, so the
@@ -220,6 +226,196 @@ class SignatureRepository extends BaseRepository {
 	}
 
 	/**
+	 * The user's most recently updated signature stamped with
+	 * `$template_id` (the one template assignment updates), or null.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int $user_id     Owner.
+	 * @param int $template_id Template.
+	 *
+	 * @return Signature|null
+	 */
+	public function find_latest_by_user_and_template( int $user_id, int $template_id ): ?Signature {
+		$row = $this->wpdb->get_row(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$this->wpdb->prepare(
+				"SELECT * FROM {$this->table()} WHERE user_id = %d AND template_id = %d ORDER BY (link_mode = 'linked') DESC, updated_at DESC, id DESC LIMIT 1",
+				$user_id,
+				$template_id
+			),
+			ARRAY_A
+		);
+
+		return is_array( $row ) ? Signature::from_row( $row ) : null;
+	}
+
+	/**
+	 * Signatures linked to a template, in id order, after a cursor —
+	 * one propagation batch.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int $template_id Template.
+	 * @param int $after_id    Return rows with an id above this (0 = from the start).
+	 * @param int $limit       Batch size.
+	 *
+	 * @return Signature[]
+	 */
+	public function find_linked_to_template( int $template_id, int $after_id, int $limit ): array {
+		$rows = $this->wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$this->wpdb->prepare(
+				"SELECT * FROM {$this->table()} WHERE template_id = %d AND link_mode = %s AND id > %d ORDER BY id ASC LIMIT %d",
+				$template_id,
+				Signature::LINK_LINKED,
+				$after_id,
+				max( 1, $limit )
+			),
+			ARRAY_A
+		);
+
+		if ( ! is_array( $rows ) ) {
+			return [];
+		}
+		return array_map( [ Signature::class, 'from_row' ], $rows );
+	}
+
+	/**
+	 * Number of signatures linked to a template.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int $template_id Template.
+	 *
+	 * @return int
+	 */
+	public function count_linked_to_template( int $template_id ): int {
+		return (int) $this->wpdb->get_var(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$this->wpdb->prepare(
+				"SELECT COUNT(*) FROM {$this->table()} WHERE template_id = %d AND link_mode = %s",
+				$template_id,
+				Signature::LINK_LINKED
+			)
+		);
+	}
+
+	/**
+	 * Detaches every signature linked to a template (it was deleted):
+	 * each keeps its current design. `updated_at` is left alone — the
+	 * design did not change, so the stored HTML stays valid.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int $template_id Template.
+	 *
+	 * @return int Rows updated.
+	 */
+	public function detach_all_from_template( int $template_id ): int {
+		$this->owned_cache = [];
+		$rows              = $this->wpdb->update(
+			$this->table(),
+			[ 'link_mode' => Signature::LINK_DETACHED ],
+			[
+				'template_id' => $template_id,
+				'link_mode'   => Signature::LINK_LINKED,
+			],
+			[ '%s' ],
+			[ '%d', '%s' ]
+		);
+		return is_int( $rows ) ? $rows : 0;
+	}
+
+	/**
+	 * Signatures (of every user) whose stored HTML is missing or older
+	 * than their design — the team console recompiles these. Summary
+	 * projection (no LONGTEXT blobs), in id order.
+	 *
+	 * Supported `$args`:
+	 *  - `template_id`      int   Only rows of this template.
+	 *  - `include_archived` bool  Include archived rows (default false).
+	 *  - `after_id`         int   Cursor: only rows with a higher id.
+	 *  - `page`             int   1-indexed page (default 1).
+	 *  - `per_page`         int   Default 20, max 100.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param array<string, mixed> $args Filters / pagination.
+	 *
+	 * @return Signature[]
+	 */
+	public function find_stale( array $args = [] ): array {
+		[ $where_sql, $values ] = $this->build_stale_where( $args );
+
+		$per_page = max( 1, min( 100, (int) ( $args['per_page'] ?? 20 ) ) );
+		$page     = max( 1, (int) ( $args['page'] ?? 1 ) );
+		$columns  = self::SUMMARY_COLUMNS;
+
+		$rows = $this->wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$this->wpdb->prepare(
+				"SELECT {$columns} FROM {$this->table()} WHERE {$where_sql} ORDER BY id ASC LIMIT %d OFFSET %d",
+				...array_merge( $values, [ $per_page, ( $page - 1 ) * $per_page ] )
+			),
+			ARRAY_A
+		);
+
+		if ( ! is_array( $rows ) ) {
+			return [];
+		}
+		return array_map( [ Signature::class, 'from_row' ], $rows );
+	}
+
+	/**
+	 * Counts the rows {@see find_stale()} pages through.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param array<string, mixed> $args Same filters as find_stale().
+	 *
+	 * @return int
+	 */
+	public function count_stale( array $args = [] ): int {
+		[ $where_sql, $values ] = $this->build_stale_where( $args );
+
+		return (int) $this->wpdb->get_var(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$this->wpdb->prepare( "SELECT COUNT(*) FROM {$this->table()} WHERE {$where_sql}", ...$values )
+		);
+	}
+
+	/**
+	 * WHERE clause + values for the stale listing.
+	 *
+	 * @param array<string, mixed> $args Filters.
+	 *
+	 * @return array{0: string, 1: array<int, mixed>}
+	 */
+	private function build_stale_where( array $args ): array {
+		// `1 = %d` keeps prepare() happy when no other value is bound.
+		$clauses = [ self::STALE_CONDITION, '1 = %d' ];
+		$values  = [ 1 ];
+
+		if ( empty( $args['include_archived'] ) ) {
+			$clauses[] = 'status <> %s';
+			$values[]  = Signature::STATUS_ARCHIVED;
+		}
+
+		if ( ! empty( $args['template_id'] ) ) {
+			$clauses[] = 'template_id = %d';
+			$values[]  = (int) $args['template_id'];
+		}
+
+		if ( ! empty( $args['after_id'] ) ) {
+			$clauses[] = 'id > %d';
+			$values[]  = (int) $args['after_id'];
+		}
+
+		return [ implode( ' AND ', $clauses ), $values ];
+	}
+
+	/**
 	 * Lists signatures owned by the given user.
 	 *
 	 * Supported `$args`:
@@ -331,12 +527,16 @@ class SignatureRepository extends BaseRepository {
 			// A compile sent with the create belongs to this exact row
 			// state, so it is stamped with the same instant as updated_at.
 			'compiled_at'    => isset( $data['html_cache'] ) ? $now : null,
+			// 1.3.0: only a row with a template can follow it.
+			'link_mode'      => Signature::LINK_LINKED === ( $data['link_mode'] ?? '' ) && isset( $data['template_id'] )
+				? Signature::LINK_LINKED
+				: Signature::LINK_DETACHED,
 		];
 
 		$inserted = $this->wpdb->insert(
 			$this->table(),
 			$row,
-			[ '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' ]
+			[ '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' ]
 		);
 
 		// `$wpdb->insert` returns false on actual SQL failure (vs zero
@@ -395,6 +595,7 @@ class SignatureRepository extends BaseRepository {
 			'schema_version' => '%s',
 			'html_text'      => '%s',
 			'html_hash'      => '%s',
+			'link_mode'      => '%s',
 		];
 
 		$update  = [];

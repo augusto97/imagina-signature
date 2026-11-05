@@ -34,6 +34,21 @@ final class Signature extends BaseModel {
 	public const STATUSES = [ self::STATUS_DRAFT, self::STATUS_READY, self::STATUS_ARCHIVED ];
 
 	/**
+	 * The design always comes from `template_id` (1.3.0).
+	 */
+	public const LINK_LINKED = 'linked';
+
+	/**
+	 * The signature is its own design (default).
+	 */
+	public const LINK_DETACHED = 'detached';
+
+	/**
+	 * All allowed values for the `link_mode` column.
+	 */
+	public const LINK_MODES = [ self::LINK_LINKED, self::LINK_DETACHED ];
+
+	/**
 	 * Owner user ID.
 	 *
 	 * @var int
@@ -108,6 +123,14 @@ final class Signature extends BaseModel {
 	public ?int $template_id = null;
 
 	/**
+	 * `linked` (design follows `template_id`) or `detached` — one of
+	 * {@see LINK_MODES} (1.3.0).
+	 *
+	 * @var string
+	 */
+	public string $link_mode = self::LINK_DETACHED;
+
+	/**
 	 * Status — one of {@see STATUSES}.
 	 *
 	 * @var string
@@ -152,6 +175,9 @@ final class Signature extends BaseModel {
 			: ( null !== $model->html_cache && '' !== $model->html_cache );
 		$model->preview_url    = isset( $row['preview_url'] ) && null !== $row['preview_url'] ? (string) $row['preview_url'] : null;
 		$model->template_id    = isset( $row['template_id'] ) && null !== $row['template_id'] ? (int) $row['template_id'] : null;
+		$model->link_mode      = isset( $row['link_mode'] ) && self::LINK_LINKED === $row['link_mode'] && null !== $model->template_id
+			? self::LINK_LINKED
+			: self::LINK_DETACHED;
 		$model->status         = isset( $row['status'] ) ? (string) $row['status'] : self::STATUS_DRAFT;
 		$model->schema_version = isset( $row['schema_version'] ) ? (string) $row['schema_version'] : '1.0';
 		$model->created_at     = isset( $row['created_at'] ) ? (string) $row['created_at'] : '';
@@ -174,6 +200,7 @@ final class Signature extends BaseModel {
 			'name'           => $this->name,
 			'preview_url'    => $this->preview_url,
 			'template_id'    => $this->template_id,
+			'link_mode'      => $this->link_mode,
 			'status'         => $this->status,
 			'schema_version' => $this->schema_version,
 			'compiled_at'    => $this->compiled_at,
@@ -219,10 +246,22 @@ final class Signature extends BaseModel {
 			'html_stale'     => $this->is_html_stale(),
 			'preview_url'    => $this->preview_url,
 			'template_id'    => $this->template_id,
+			'link_mode'      => $this->link_mode,
 			'status'         => $this->status,
 			'schema_version' => $this->schema_version,
 			'created_at'     => $this->created_at,
 			'updated_at'     => $this->updated_at,
 		];
+	}
+
+	/**
+	 * Whether the design follows a template (1.3.0).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return bool
+	 */
+	public function is_linked(): bool {
+		return self::LINK_LINKED === $this->link_mode && null !== $this->template_id;
 	}
 }

@@ -31,6 +31,10 @@ defined( 'ABSPATH' ) || exit;
  *    contains any.
  *  - `{{variable}}` values additionally lose script / data URLs,
  *    since they are substituted into link targets at compile time.
+ *  - 1.3.0: `blocks[].locked` must be a boolean; `settings.employee_mode`
+ *    one of the template employee modes; `overrides` keeps only
+ *    `content` / `content_html` strings per block id, cleaned with the
+ *    rules of the block type they override.
  *  - Style objects (schema 1.1) are rebuilt from an allowlist: any
  *    block's / column's `box` (colours, border sides, radius, padding,
  *    alignment, width), a container's `divider`, and column `width` /
@@ -152,6 +156,18 @@ final class SchemaSanitizer {
 				continue;
 			}
 
+			if ( 'settings' === $key && is_array( $value ) ) {
+				$schema[ $key ] = $this->sanitize_settings( $value );
+				continue;
+			}
+
+			if ( 'overrides' === $key ) {
+				$schema[ $key ] = is_array( $value )
+					? $this->sanitize_overrides( $value, $this->block_types( isset( $schema['blocks'] ) && is_array( $schema['blocks'] ) ? $schema['blocks'] : [] ) )
+					: [];
+				continue;
+			}
+
 			$schema[ $key ] = $this->sanitize_value( $value, $key, '', $key );
 		}
 
@@ -219,6 +235,15 @@ final class SchemaSanitizer {
 					unset( $block[ $key ] );
 				} else {
 					$block[ $key ] = $box;
+				}
+				continue;
+			}
+
+			// 1.3.0: administrator lock — a strict boolean, nothing else.
+			if ( 'locked' === $key ) {
+				if ( ! is_bool( $value ) ) {
+					$this->note( $field_path, 'Removed an invalid lock flag.' );
+					unset( $block[ $key ] );
 				}
 				continue;
 			}
@@ -545,6 +570,82 @@ final class SchemaSanitizer {
 		}
 
 		return $variables;
+	}
+
+	/**
+	 * Sanitises `settings` (1.3.0): `employee_mode` must be one of
+	 * {@see TemplateLink::MODES}; any other key is treated like a
+	 * plain value.
+	 *
+	 * @param array<int|string, mixed> $settings Settings object.
+	 *
+	 * @return array<int|string, mixed>
+	 */
+	private function sanitize_settings( array $settings ): array {
+		foreach ( $settings as $name => $value ) {
+			$path = 'settings.' . $name;
+			if ( 'employee_mode' === $name ) {
+				if ( ! is_string( $value ) || ! in_array( $value, TemplateLink::MODES, true ) ) {
+					$this->note( $path, 'Removed an invalid employee mode.' );
+					unset( $settings[ $name ] );
+				}
+				continue;
+			}
+			$settings[ $name ] = $this->sanitize_value( $value, (string) $name, '', $path );
+		}
+		return $settings;
+	}
+
+	/**
+	 * Sanitises a linked signature's `overrides` map (1.3.0): one entry
+	 * per block id holding only `content` / `content_html` strings.
+	 * `content_html` is always HTML; `content` is HTML or plain text
+	 * depending on the type of the block it overrides (the same rule as
+	 * the block itself — heading / disclaimer `content` is plain text).
+	 *
+	 * @param array<int|string, mixed> $overrides Candidate map.
+	 * @param array<string, string>    $types     Block id → type.
+	 *
+	 * @return array<string, array<string, string>>
+	 */
+	private function sanitize_overrides( array $overrides, array $types ): array {
+		$out = [];
+		foreach ( $overrides as $block_id => $fields ) {
+			$block_id = (string) $block_id;
+			$path     = 'overrides.' . $block_id;
+			if ( '' === $block_id || ! is_array( $fields ) ) {
+				$this->note( $path, 'Removed an invalid override.' );
+				continue;
+			}
+			$type  = $types[ $block_id ] ?? 'text';
+			$clean = [];
+			foreach ( [ 'content', 'content_html' ] as $field ) {
+				if ( ! isset( $fields[ $field ] ) || ! is_string( $fields[ $field ] ) ) {
+					continue;
+				}
+				$clean[ $field ] = $this->sanitize_value( $fields[ $field ], $field, $type, $path . '.' . $field );
+			}
+			if ( [] !== $clean ) {
+				$out[ $block_id ] = $clean;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Block id → type for every block of the tree (1.1 columns and 1.0
+	 * child lists).
+	 *
+	 * @param array<int|string, mixed> $blocks Block list.
+	 *
+	 * @return array<string, string>
+	 */
+	private function block_types( array $blocks ): array {
+		$types = [];
+		foreach ( TemplateLink::index_blocks( $blocks ) as $id => $entry ) {
+			$types[ $id ] = (string) ( $entry['block']['type'] ?? '' );
+		}
+		return $types;
 	}
 
 	/**

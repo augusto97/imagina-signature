@@ -28,6 +28,8 @@ defined( 'ABSPATH' ) || exit;
  *    `right_children` lists — carries an `id` and a known `type`
  *    string. A container holds at most {@see self::MAX_COLUMNS}
  *    columns.
+ *  - 1.3.0: `blocks[].locked` is a boolean, `settings.employee_mode`
+ *    one of {@see TemplateLink::MODES}, `overrides` an object of objects.
  *  - Size limits: encoded JSON ≤ 256 KB, block nesting depth ≤ 4,
  *    ≤ 200 blocks in total (filterable via `imgsig/schema/limits`).
  *    Columns are not blocks: they add no depth and are not counted.
@@ -226,6 +228,43 @@ final class JsonSchemaValidator {
 			];
 		}
 
+		// 1.3.0: template employee mode + per-block text overrides of
+		// linked signatures (see TemplateLink).
+		if ( isset( $data['settings'] ) ) {
+			if ( ! is_array( $data['settings'] ) ) {
+				$errors[] = [
+					'path'    => 'settings',
+					'message' => 'settings must be an object.',
+				];
+			} elseif (
+				array_key_exists( 'employee_mode', $data['settings'] )
+				&& ! in_array( $data['settings']['employee_mode'], TemplateLink::MODES, true )
+			) {
+				$errors[] = [
+					'path'    => 'settings.employee_mode',
+					'message' => sprintf( 'employee_mode must be one of "%s".', implode( '", "', TemplateLink::MODES ) ),
+				];
+			}
+		}
+
+		if ( isset( $data['overrides'] ) ) {
+			if ( ! is_array( $data['overrides'] ) ) {
+				$errors[] = [
+					'path'    => 'overrides',
+					'message' => 'overrides must be an object.',
+				];
+			} else {
+				foreach ( $data['overrides'] as $block_id => $fields ) {
+					if ( ! is_array( $fields ) ) {
+						$errors[] = [
+							'path'    => 'overrides.' . $block_id,
+							'message' => 'An override must be an object.',
+						];
+					}
+				}
+			}
+		}
+
 		if ( isset( $data['blocks'] ) ) {
 			if ( ! is_array( $data['blocks'] ) ) {
 				$errors[] = [
@@ -375,6 +414,13 @@ final class JsonSchemaValidator {
 					'message' => sprintf( 'Unknown block type "%s".', (string) $block['type'] ),
 				];
 			}
+		}
+
+		if ( array_key_exists( 'locked', $block ) && ! is_bool( $block['locked'] ) ) {
+			$errors[] = [
+				'path'    => $path . '.locked',
+				'message' => 'locked must be a boolean.',
+			];
 		}
 
 		if ( $depth > $this->limits['max_depth'] ) {
