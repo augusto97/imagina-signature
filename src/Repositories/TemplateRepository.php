@@ -287,8 +287,10 @@ class TemplateRepository extends BaseRepository {
 
 		// Visibility filter: when given, returns only templates whose
 		// visible_to_roles is empty (visible to everyone) OR contains
-		// at least one of the supplied roles. Implemented with FIND_IN_SET
-		// so the comma-separated storage stays a single column query.
+		// at least one of the supplied roles. The comma-separated column is
+		// wrapped in commas and searched with INSTR — portable SQL that
+		// MySQL and the SQLite database driver both run (FIND_IN_SET
+		// isn't available on SQLite, which made the whole query fail).
 		if ( ! empty( $args['visible_to_roles'] ) && is_array( $args['visible_to_roles'] ) ) {
 			$role_clauses = [ '(visible_to_roles IS NULL OR visible_to_roles = %s)' ];
 			$values[]     = '';
@@ -296,8 +298,8 @@ class TemplateRepository extends BaseRepository {
 				if ( ! is_string( $role ) || '' === $role ) {
 					continue;
 				}
-				$role_clauses[] = 'FIND_IN_SET(%s, visible_to_roles) > 0';
-				$values[]       = sanitize_key( $role );
+				$role_clauses[] = "INSTR(CONCAT(',', visible_to_roles, ','), %s) > 0";
+				$values[]       = ',' . sanitize_key( $role ) . ',';
 			}
 			$clauses[] = '(' . implode( ' OR ', $role_clauses ) . ')';
 		}
