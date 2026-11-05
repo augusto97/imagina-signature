@@ -174,6 +174,19 @@ final class Filters {
 	public const SANITIZER_ALLOWED_PROTOCOLS = 'imgsig/sanitizer/allowed_protocols';
 
 	/**
+	 * Filters the user meta keys whose change marks the owner's compiled
+	 * signature HTML as outdated (default: `first_name`, `last_name` and
+	 * every meta key a profile field reads). Add the keys an
+	 * `imgsig/editor/system_variables` callback reads; `imgsig_*` keys are
+	 * ignored.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string[] $keys Meta keys.
+	 */
+	public const SIGNATURE_STALE_META_KEYS = 'imgsig/signature/stale_meta_keys';
+
+	/**
 	 * Constructor is private — this class is a static registry.
 	 */
 	private function __construct() {}

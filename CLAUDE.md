@@ -32,7 +32,8 @@ Varias secciones de este documento describen el diseño original del MVP. Donde 
 - **Límites atómicos.** Tabla `imgsig_rate_limits` (ventanas fijas, `Retry-After`). El autoguardado se pausa ante un 429.
 - **i18n real.** Pipeline `npm run i18n:pot` / `i18n:build` / `i18n:check`; PHP carga el text domain con fallback de cualquier `es_*` a `es_ES`; los bootstraps JS inyectan `translations`.
 - **Pruebas.** Vitest (compilador, sanitizador, stores), PHPUnit con kses real de WordPress, y `tests/e2e/smoke.cjs` (Playwright contra un WordPress vivo).
-- **Complemento de Outlook (1.3.0).** Microsoft no ofrece API de Graph para firmas: el despliegue es un complemento con activación por eventos que el admin del tenant sube una vez (Centro de administración → Configuración → Aplicaciones integradas). `src/Deployment/Outlook*` + `src/Api/Controllers/OutlookController.php` generan el manifiesto XML (`GET /outlook/manifest.xml?key=…`) y sirven `GET /outlook/signature?email=` (cabecera `X-Imgsig-Deploy-Key`, `hash_equals`, límites por IP y por clave, CORS propio sin credenciales) con el `html_cache` fresco de la firma principal. Opción `imgsig_outlook` {enabled, deploy_key, replace_client_signature, add_in_id, revision}; regenerar la clave invalida el manifiesto anterior. El runtime vive en `assets/outlook/` (sin build, se distribuye tal cual): `launchevent.js` (ES2017 plano, también corre en el runtime solo-JavaScript de Outlook clásico) y `commands.html`. **Excepción documentada a la regla "cero CDNs":** `commands.html` carga Office.js desde `https://appsforoffice.microsoft.com/lib/1/hosted/office.js`, porque Office exige la biblioteca alojada por Microsoft; no se carga nada más desde fuera. Office exige HTTPS. Mientras está activo, WordPress sirve `/.well-known/microsoft-officeaddins-allowed.json` (CORS del runtime de Outlook clásico). Hooks: `imgsig/outlook/user_for_email`, `imgsig/outlook/cors_origins`, `imgsig/outlook/client_ip`, `imgsig/outlook/manifest_min_mailbox` (filtros) y `imgsig/outlook/key_regenerated` (acción). La alternativa sin complemento (regla de flujo de correo de Exchange en PowerShell) se genera en el navegador del admin: Ajustes → Microsoft 365.
+- **Complemento de Outlook (1.3.0).** Microsoft no ofrece API de Graph para firmas: el despliegue es un complemento con activación por eventos que el admin del tenant sube una vez (Centro de administración → Configuración → Aplicaciones integradas). `src/Deployment/Outlook*` + `src/Api/Controllers/OutlookController.php` generan el manifiesto XML (`GET /outlook/manifest.xml?key=…`) y sirven `GET /outlook/signature?email=` (cabecera `X-Imgsig-Deploy-Key`, `hash_equals`, límites por IP y por clave, CORS propio sin credenciales) con el último `html_cache` compilado de la firma principal (también mientras está desactualizado; solo responde 404 si nunca se compiló — igual que la página de instalación). Opción `imgsig_outlook` {enabled, deploy_key, replace_client_signature, add_in_id, revision}; regenerar la clave invalida el manifiesto anterior. El runtime vive en `assets/outlook/` (sin build, se distribuye tal cual): `launchevent.js` (ES2017 plano, también corre en el runtime solo-JavaScript de Outlook clásico) y `commands.html`. **Excepción documentada a la regla "cero CDNs":** `commands.html` carga Office.js desde `https://appsforoffice.microsoft.com/lib/1/hosted/office.js`, porque Office exige la biblioteca alojada por Microsoft; no se carga nada más desde fuera. Office exige HTTPS. Mientras está activo, WordPress sirve `/.well-known/microsoft-officeaddins-allowed.json` (CORS del runtime de Outlook clásico). Hooks: `imgsig/outlook/user_for_email`, `imgsig/outlook/cors_origins`, `imgsig/outlook/client_ip`, `imgsig/outlook/manifest_min_mailbox` (filtros) y `imgsig/outlook/key_regenerated` (acción). La alternativa sin complemento (regla de flujo de correo de Exchange en PowerShell) se genera en el navegador del admin: Ajustes → Microsoft 365.
+- **Consola de equipo (1.3.0).** Página wp-admin "Equipo" (`imgsig_manage_team`, app `team`) sobre `GET /admin/team`: cada usuario con `imgsig_use_signatures`, su firma principal, el estado del HTML del servidor y de cada canal (Gmail / complemento de Outlook / enlace de instalación), contadores y acciones (asignar plantilla, invitar, enviar a Gmail, copiar enlace, editar perfil, **editar en su nombre**). `src/Team/` (`TeamDirectory` con consultas en lote — nunca N+1 —, `TeamRows` modelo puro, `OnBehalf`). **HTML desactualizado:** `Services/StaleHtmlMarker` limpia `compiled_at` (una UPDATE, sin tocar `json_content` ni `updated_at`) cuando cambian perfil, campos WP del usuario, grupos, mapeo de campos, pie legal, campañas o datos de empresa del kit de marca. La página de instalación y Outlook siguen sirviendo el último HTML; Gmail espera a la recompilación. **Recompilar** corre en el navegador del admin (`assets/admin/src/pages/team/`): recorre `/admin/signatures/stale` con `after_id`, compila con el contexto del DUEÑO (`Services/RenderInputs`: variables, pie de su grupo, campañas dirigidas, idioma) y guarda con `expected_updated_at` + `expected_inputs_hash` (409 → reintenta una vez). Los editores envían `inputs_hash` (bootstrap `inputsHash`): HTML compilado con entradas que cambiaron desde que se abrió la página se guarda pero queda desactualizado. **Editar en su nombre:** `GET`/`PATCH /signatures/:id` aceptan a un `imgsig_manage_team` que no es el dueño (borrar / duplicar / principal siguen siendo solo del dueño); el bootstrap del editor usa las entradas del dueño (`onBehalfOf`, `signatureLocale`) y cada guardado dispara `imgsig/signature/edited_on_behalf`.
 
 ### 0.2. Alcance (actualizado con la hoja de ruta de noviembre 2026)
 
@@ -717,6 +718,7 @@ do_action( 'imgsig/template/created', Template $template );
 // Filtros: imgsig/{noun}/{adjective}
 $data    = apply_filters( 'imgsig/signature/data_before_save', array $data, string $context );
 $html    = apply_filters( 'imgsig/signature/compiled_html', string $html, Signature $signature );
+$keys    = apply_filters( 'imgsig/signature/stale_meta_keys', string[] $keys ); // 1.3.0: user meta que desactualiza el HTML
 $drivers = apply_filters( 'imgsig/storage/available_drivers', array $drivers );
 $blocks  = apply_filters( 'imgsig/editor/registered_blocks', array $blocks );
 $networks = apply_filters( 'imgsig/social/networks', array $networks );
@@ -1897,6 +1899,7 @@ class CapabilitiesInstaller {
 | `imgsig_use_signatures` | admin, editor, author | Crear/editar/borrar **sus propias** firmas |
 | `imgsig_manage_templates` | admin | CRUD de plantillas globales |
 | `imgsig_manage_storage` | admin | Configurar storage settings |
+| `imgsig_manage_team` | admin | Consola de equipo, grupos, campos de perfil, despliegue (Gmail / Outlook / invitaciones), asignar plantillas y **editar la firma de otro usuario en su nombre** (leer + guardar; no borrar / duplicar / marcar principal) |
 
 ### 15.3. Aislamiento entre usuarios
 
@@ -1930,8 +1933,8 @@ Los assets siguen la misma regla. Las plantillas son globales (cualquiera con `i
 
 GET    /signatures                      Lista firmas del usuario actual
 POST   /signatures                      Crear nueva firma
-GET    /signatures/:id                  Obtener (valida ownership)
-PATCH  /signatures/:id                  Actualizar
+GET    /signatures/:id                  Obtener (valida ownership; 1.3.0: también [manage_team] en nombre del dueño → `on_behalf: true`)
+PATCH  /signatures/:id                  Actualizar (ídem; `html` + `inputs_hash` del bootstrap: si las entradas del dueño cambiaron, el HTML queda desactualizado)
 DELETE /signatures/:id                  Borrar
 POST   /signatures/:id/duplicate        Duplicar
 GET    /signatures/:id/export           HTML compilado
@@ -1949,9 +1952,13 @@ DELETE /templates/:id                   [admin] Borrar (sus firmas vinculadas pa
 POST   /admin/templates/:id/assign            [manage_team] {user_ids?, group_ids?, role?, all?, mode: linked|copy, make_primary, offset?}
                                               → {processed, created, updated, skipped, failed, total, next_offset|null} (≤ 50 usuarios)
 GET    /admin/templates/:id/propagation       [manage_templates] Progreso de la propagación (opción imgsig_template_propagation)
+GET    /admin/team                            [manage_team] ?search&group&state&page&per_page(≤100) → {items, total, page, per_page, total_pages,
+                                              summary, channels} (+ X-WP-Total). state: all|no_signature|outdated|up_to_date|gmail_failed|not_installed|install_outdated
 GET    /admin/signatures/stale                [manage_team] Firmas con HTML desactualizado (?page&per_page&template_id&after_id)
-GET    /admin/signatures/:id/render-context   [manage_team] json_content + systemVariables del usuario DESTINO + footer + campañas
-POST   /admin/signatures/:id/html             [manage_team] {html, text?, expected_updated_at?} → guarda el HTML compilado (409 si cambió)
+GET    /admin/signatures/:id/render-context   [manage_team] json_content + systemVariables, footer (override de su grupo), campañas dirigidas,
+                                              profileFields y locale del usuario DESTINO + pluginUrl + inputs_hash
+POST   /admin/signatures/:id/html             [manage_team] {html, text?, expected_updated_at?, expected_inputs_hash?} → guarda el HTML compilado
+                                              (409 imgsig_conflict si cambió el diseño o las entradas del dueño; reason: inputs_changed)
 
 === Assets / Upload (user-scoped) ===
 
@@ -2576,6 +2583,9 @@ do_action( 'imgsig/signature/before_update', Signature $old, array $changes );
 do_action( 'imgsig/signature/updated', Signature $signature );
 do_action( 'imgsig/signature/before_delete', Signature $signature );
 do_action( 'imgsig/signature/deleted', int $signature_id );
+do_action( 'imgsig/signature/edited_on_behalf', Signature $signature, int $editor_id, string[] $fields ); // 1.3.0
+do_action( 'imgsig/signature/html_outdated', ?int[] $user_ids, string $reason, int $rows );            // 1.3.0
+do_action( 'imgsig/site_settings/changed', string[] $changed, array $before, array $after );            // 1.3.0
 
 do_action( 'imgsig/template/created', Template $template );
 do_action( 'imgsig/template/deleted', int $template_id );
