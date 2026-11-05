@@ -22,6 +22,17 @@ if ! command -v zip >/dev/null 2>&1; then
   exit 1
 fi
 
+# Only tracked (or ignored) files may ship: refuse to package stray
+# untracked files (screenshots, scratch output) that rsync would copy.
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  UNTRACKED="$(git ls-files --others --exclude-standard)"
+  if [[ -n "$UNTRACKED" ]]; then
+    echo "Untracked files would be packaged; commit, ignore or remove them first:" >&2
+    echo "$UNTRACKED" | head -n 20 >&2
+    exit 1
+  fi
+fi
+
 VERSION="$(grep -oE "Version:\s*[0-9.]+" imagina-signatures.php | head -n1 | awk '{print $2}')"
 if [[ -z "$VERSION" ]]; then
   echo "Could not parse version from imagina-signatures.php" >&2
