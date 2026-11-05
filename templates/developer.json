@@ -1,11 +1,124 @@
 {
-  "schema_version": "1.0",
-  "meta": { "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z", "editor_version": "1.0.0" },
-  "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "\"Courier New\", Courier, monospace", "font_size": 13, "text_color": "#1f2937", "link_color": "#0d9488" },
-  "variables": {},
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "\"Courier New\", Courier, monospace",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#1d4ed8"
+  },
+  "variables": {
+    "job_title": "Desarrolladora Full Stack",
+    "linkedin_url": "https://www.linkedin.com/in/tu-perfil"
+  },
   "blocks": [
-    { "id": "name", "type": "heading", "content": "$ jamie.dev", "style": { "font_family": "\"Courier New\", Courier, monospace", "font_size": 16, "font_weight": 700, "color": "#1f2937", "line_height": 1.2, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 } },
-    { "id": "title", "type": "text", "content": "Senior Backend Engineer · OpenSource Co.", "style": { "font_family": "\"Courier New\", Courier, monospace", "font_size": 12, "font_weight": 400, "color": "#4b5563", "line_height": 1.4, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
-    { "id": "contact", "type": "contact_row", "rows": [ { "icon": "email", "label": "jamie@dev.example", "href": "mailto:jamie@dev.example" }, { "icon": "web", "label": "github.com/jamie", "href": "https://github.com/jamie" } ], "style": { "font_family": "\"Courier New\", Courier, monospace", "font_size": 12, "font_weight": 400, "color": "#4b5563" }, "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 } }
+    {
+      "id": "h-1",
+      "type": "heading",
+      "content": "> {{wp_display_name}}",
+      "content_html": "<p><span style=\"color:#16a34a\">&gt;</span> {{wp_display_name}}</p>",
+      "style": {
+        "font_weight": 700,
+        "line_height": 1.2,
+        "text_align": "left",
+        "font_size": 18,
+        "color": "#111827"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-2",
+      "type": "text",
+      "content": "{{job_title}} @ {{company_name}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 13,
+        "color": "#4b5563"
+      },
+      "padding": {
+        "top": 2,
+        "right": 0,
+        "bottom": 10,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-3",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-4",
+          "type": "email",
+          "value": "{{wp_email}}",
+          "label": "mail:"
+        },
+        {
+          "id": "ci-5",
+          "type": "website",
+          "value": "{{company_website}}",
+          "label": "web: "
+        }
+      ],
+      "layout": "stacked",
+      "separator": "  |  ",
+      "show_icons": false,
+      "icon_shape": "plain",
+      "icon_tone": "gray",
+      "icon_size": 14,
+      "label_mode": "custom",
+      "row_gap": 2,
+      "style": {
+        "font_size": 13,
+        "font_weight": 400,
+        "color": "#374151",
+        "text_align": "left",
+        "line_height": 1.4
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "s-6",
+      "type": "social_icons",
+      "items": [
+        {
+          "id": "sn-7",
+          "network": "github",
+          "url": "{{company_github}}"
+        },
+        {
+          "id": "sn-8",
+          "network": "linkedin",
+          "url": "{{linkedin_url}}"
+        }
+      ],
+      "shape": "rounded",
+      "tone": "dark",
+      "size": 22,
+      "spacing": 6,
+      "align": "left",
+      "padding": {
+        "top": 12,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
   ]
 }

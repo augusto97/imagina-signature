@@ -193,7 +193,7 @@ const AVATARS = [
   { file: 'avatar-2', shape: 'circle', from: '#ccfbf1', to: '#5eead4', figure: '#ffffff', shade: '#0d9488' },
   { file: 'avatar-3', shape: 'circle', from: '#ffedd5', to: '#fdba74', figure: '#ffffff', shade: '#ea580c' },
   { file: 'avatar-4', shape: 'circle', from: '#f1f5f9', to: '#cbd5e1', figure: '#ffffff', shade: '#475569' },
-  { file: 'avatar-5', shape: 'rounded', from: '#fce7f3', to: '#c4b5fd', figure: '#ffffff', shade: '#7c3aed' },
+  { file: 'avatar-5', shape: 'rounded', from: '#e9d5ff', to: '#8b5cf6', figure: '#ffffff', shade: '#5b21b6' },
   { file: 'avatar-6', shape: 'rounded', from: '#1e3a8a', to: '#3b82f6', figure: '#dbeafe', shade: '#1e40af' },
 ];
 

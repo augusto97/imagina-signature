@@ -1,0 +1,183 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Georgia, serif",
+    "font_size": 14,
+    "text_color": "#111111",
+    "link_color": "#111111"
+  },
+  "variables": {
+    "job_title": "Propiedades Exclusivas",
+    "mobile": "+34 655 210 480",
+    "website_url": "https://www.tuinmobiliaria.com/exclusivas"
+  },
+  "blocks": [
+    {
+      "id": "row-4",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-3",
+          "width": 100,
+          "children": [
+            {
+              "id": "h-1",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 400,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 21,
+                "color": "#ffffff",
+                "letter_spacing": 0.5
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-2",
+              "type": "text",
+              "content": "{{job_title}}  ·  {{company_name}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_family": "Arial, sans-serif",
+                "font_size": 13,
+                "color": "#e7c98a",
+                "letter_spacing": 1.5,
+                "text_transform": "uppercase"
+              },
+              "padding": {
+                "top": 4,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "box": {
+            "background_color": "#111111",
+            "padding": {
+              "top": 16,
+              "right": 20,
+              "bottom": 16,
+              "left": 20
+            }
+          }
+        }
+      ],
+      "gap": 0
+    },
+    {
+      "id": "row-11",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-8",
+          "width": 62,
+          "children": [
+            {
+              "id": "c-5",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-6",
+                  "type": "mobile",
+                  "value": "{{mobile}}"
+                },
+                {
+                  "id": "ci-7",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                }
+              ],
+              "layout": "stacked",
+              "separator": "  |  ",
+              "show_icons": true,
+              "icon_shape": "plain",
+              "icon_tone": "dark",
+              "icon_size": 13,
+              "label_mode": "none",
+              "row_gap": 4,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#1f2937",
+                "text_align": "left",
+                "line_height": 1.4,
+                "font_family": "Arial, sans-serif"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        },
+        {
+          "id": "col-10",
+          "width": 38,
+          "children": [
+            {
+              "id": "b-9",
+              "type": "button_cta",
+              "label": "Ver propiedades",
+              "href": "{{website_url}}",
+              "background_color": "#111111",
+              "text_color": "#111111",
+              "border_radius": 0,
+              "preset": "outline",
+              "padding_x": 16,
+              "padding_y": 8,
+              "align": "right",
+              "style": {
+                "font_size": 12,
+                "font_weight": 600,
+                "font_family": "Arial, sans-serif",
+                "letter_spacing": 1,
+                "text_transform": "uppercase"
+              },
+              "border_width": 1,
+              "border_color": "#111111",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle",
+          "box": {
+            "align": "right"
+          }
+        }
+      ],
+      "gap": 12,
+      "box": {
+        "padding": {
+          "top": 14,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      }
+    }
+  ]
+}

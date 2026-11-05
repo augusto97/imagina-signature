@@ -1,70 +1,119 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "meta": {
-    "created_at": "2026-01-01T00:00:00Z",
-    "updated_at": "2026-01-01T00:00:00Z",
-    "editor_version": "1.0.0"
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
   },
   "canvas": {
-    "width": 600,
+    "width": 520,
     "background_color": "#ffffff",
     "font_family": "Arial, sans-serif",
     "font_size": 14,
     "text_color": "#111827",
-    "link_color": "#1d4ed8"
+    "link_color": "#111827"
   },
-  "variables": {},
+  "variables": {
+    "job_title": "Diseñadora de Producto",
+    "phone": "+34 910 555 210"
+  },
   "blocks": [
     {
-      "id": "name",
+      "id": "h-1",
       "type": "heading",
-      "content": "Your Name",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
       "style": {
-        "font_family": "Arial, sans-serif",
-        "font_size": 18,
         "font_weight": 700,
-        "color": "#111827",
         "line_height": 1.2,
-        "text_align": "left"
+        "text_align": "left",
+        "font_size": 20,
+        "color": "#111827",
+        "letter_spacing": -0.2
       },
-      "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 }
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
     },
     {
-      "id": "title",
+      "id": "t-2",
       "type": "text",
-      "content": "Title · Company",
+      "content": "{{job_title}} · {{company_name}}",
       "style": {
-        "font_family": "Arial, sans-serif",
-        "font_size": 13,
-        "font_weight": 400,
-        "color": "#6b7280",
         "line_height": 1.4,
-        "text_align": "left"
+        "text_align": "left",
+        "font_size": 13,
+        "color": "#6b7280"
       },
-      "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
     },
     {
-      "id": "divider",
+      "id": "dv-3",
       "type": "divider",
-      "border": { "width": 1, "color": "#e5e7eb", "style": "solid" },
+      "border": {
+        "width": 1,
+        "style": "solid",
+        "color": "#e5e7eb"
+      },
       "width_percent": 100,
-      "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
+      "width_unit": "percent",
+      "align": "left",
+      "padding": {
+        "top": 14,
+        "right": 0,
+        "bottom": 14,
+        "left": 0
+      }
     },
     {
-      "id": "contact",
+      "id": "c-4",
       "type": "contact_row",
-      "rows": [
-        { "icon": "email", "label": "you@example.com", "href": "mailto:you@example.com" },
-        { "icon": "phone", "label": "+1 555 000 0000", "href": "tel:+15550000000" },
-        { "icon": "web", "label": "example.com", "href": "https://example.com" }
+      "items": [
+        {
+          "id": "ci-5",
+          "type": "email",
+          "value": "{{wp_email}}"
+        },
+        {
+          "id": "ci-6",
+          "type": "phone",
+          "value": "{{phone}}"
+        },
+        {
+          "id": "ci-7",
+          "type": "website",
+          "value": "{{company_website}}"
+        }
       ],
+      "layout": "stacked",
+      "separator": "  |  ",
+      "show_icons": true,
+      "icon_shape": "plain",
+      "icon_tone": "gray",
+      "icon_size": 14,
+      "label_mode": "none",
+      "row_gap": 6,
       "style": {
-        "font_family": "Arial, sans-serif",
         "font_size": 13,
         "font_weight": 400,
-        "color": "#374151"
+        "color": "#374151",
+        "text_align": "left",
+        "line_height": 1.4
       },
-      "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 }
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
     }
   ]
 }

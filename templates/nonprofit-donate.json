@@ -1,0 +1,213 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#14532d",
+    "link_color": "#15803d"
+  },
+  "variables": {
+    "job_title": "Coordinadora de Proyectos",
+    "phone": "+34 910 555 210",
+    "website_url": "https://www.tuorganizacion.org/dona"
+  },
+  "blocks": [
+    {
+      "id": "i-1",
+      "type": "image",
+      "src": "{{company_logo}}",
+      "alt": "{{company_name}}",
+      "width": 110,
+      "align": "left",
+      "link": "{{company_website}}",
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 12,
+        "left": 0
+      }
+    },
+    {
+      "id": "h-2",
+      "type": "heading",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
+      "style": {
+        "font_weight": 700,
+        "line_height": 1.2,
+        "text_align": "left",
+        "font_size": 18,
+        "color": "#14532d"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-3",
+      "type": "text",
+      "content": "{{job_title}} · {{company_name}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 13,
+        "color": "#4b5563"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-4",
+      "type": "text",
+      "content": "“{{company_tagline}}”",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 13,
+        "color": "#166534",
+        "font_style": "italic"
+      },
+      "padding": {
+        "top": 6,
+        "right": 0,
+        "bottom": 8,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-5",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-6",
+          "type": "email",
+          "value": "{{wp_email}}"
+        },
+        {
+          "id": "ci-7",
+          "type": "phone",
+          "value": "{{phone}}"
+        }
+      ],
+      "layout": "inline",
+      "separator": "    ",
+      "show_icons": true,
+      "icon_shape": "plain",
+      "icon_tone": "gray",
+      "icon_size": 13,
+      "label_mode": "none",
+      "row_gap": 4,
+      "style": {
+        "font_size": 12,
+        "font_weight": 400,
+        "color": "#374151",
+        "text_align": "left",
+        "line_height": 1.4
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "row-15",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-9",
+          "width": 30,
+          "children": [
+            {
+              "id": "b-8",
+              "type": "button_cta",
+              "label": "Haz tu donación",
+              "href": "{{website_url}}",
+              "background_color": "#15803d",
+              "text_color": "#ffffff",
+              "border_radius": 999,
+              "preset": "pill",
+              "padding_x": 20,
+              "padding_y": 9,
+              "align": "left",
+              "style": {
+                "font_size": 13,
+                "font_weight": 600
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        },
+        {
+          "id": "col-14",
+          "width": 64,
+          "children": [
+            {
+              "id": "s-10",
+              "type": "social_icons",
+              "items": [
+                {
+                  "id": "sn-11",
+                  "network": "facebook",
+                  "url": "{{company_facebook}}"
+                },
+                {
+                  "id": "sn-12",
+                  "network": "instagram",
+                  "url": "{{company_instagram}}"
+                },
+                {
+                  "id": "sn-13",
+                  "network": "youtube",
+                  "url": "{{company_youtube}}"
+                }
+              ],
+              "shape": "circle",
+              "tone": "brand",
+              "size": 22,
+              "spacing": 6,
+              "align": "left",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        }
+      ],
+      "gap": 8,
+      "box": {
+        "padding": {
+          "top": 12,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      }
+    }
+  ]
+}

@@ -1,12 +1,163 @@
 {
-  "schema_version": "1.0",
-  "meta": { "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z", "editor_version": "1.0.0" },
-  "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Arial, sans-serif", "font_size": 14, "text_color": "#1e3a8a", "link_color": "#1e40af" },
-  "variables": {},
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#083344",
+    "link_color": "#0e7490"
+  },
+  "variables": {
+    "job_title": "Médico Especialista en Cardiología",
+    "department": "Servicio de Cardiología",
+    "phone": "+34 910 555 210",
+    "address_line": "Paseo de la Castellana 89, 28046 Madrid"
+  },
   "blocks": [
-    { "id": "name", "type": "heading", "content": "Dr. Maria Hernandez, MD", "style": { "font_family": "Arial, sans-serif", "font_size": 17, "font_weight": 700, "color": "#1e3a8a", "line_height": 1.2, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 } },
-    { "id": "title", "type": "text", "content": "Internal Medicine · Lic. #MD-12345", "style": { "font_family": "Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569", "line_height": 1.4, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
-    { "id": "contact", "type": "contact_row", "rows": [ { "icon": "phone", "label": "Reception: +1 555 700 8000", "href": "tel:+15557008000" }, { "icon": "email", "label": "appointments@clinic.example", "href": "mailto:appointments@clinic.example" } ], "style": { "font_family": "Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569" }, "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 } },
-    { "id": "disclaimer", "type": "disclaimer", "content": "CONFIDENTIAL: This message may contain protected health information. If you are not the intended recipient, delete this message immediately.", "style": { "font_family": "Arial, sans-serif", "font_size": 10, "font_weight": 400, "color": "#94a3b8", "line_height": 1.4 }, "padding": { "top": 12, "right": 0, "bottom": 0, "left": 0 } }
+    {
+      "id": "row-9",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-8",
+          "width": 100,
+          "children": [
+            {
+              "id": "h-1",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 19,
+                "color": "#083344"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-2",
+              "type": "text",
+              "content": "{{job_title}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 13,
+                "font_weight": 700,
+                "color": "#0e7490"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-3",
+              "type": "text",
+              "content": "{{department}} · {{company_name}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 12,
+                "color": "#4b5563"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 8,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-4",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-5",
+                  "type": "phone",
+                  "value": "{{phone}}"
+                },
+                {
+                  "id": "ci-6",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                },
+                {
+                  "id": "ci-7",
+                  "type": "address",
+                  "value": "{{address_line}}"
+                }
+              ],
+              "layout": "stacked",
+              "separator": "  |  ",
+              "show_icons": true,
+              "icon_shape": "plain",
+              "icon_tone": "gray",
+              "icon_size": 13,
+              "label_mode": "none",
+              "row_gap": 3,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#374151",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "box": {
+            "border_left": {
+              "width": 3,
+              "style": "solid",
+              "color": "#0e7490"
+            },
+            "padding": {
+              "top": 2,
+              "right": 0,
+              "bottom": 2,
+              "left": 16
+            }
+          }
+        }
+      ],
+      "gap": 0
+    },
+    {
+      "id": "d-10",
+      "type": "disclaimer",
+      "content": "Este mensaje es confidencial. Si no es su destinatario, comuníquelo al remitente y elimínelo. Tratamos sus datos conforme a nuestra política de privacidad.",
+      "content_html": "<p>Este mensaje es confidencial. Si no es su destinatario, comuníquelo al remitente y elimínelo. Tratamos sus datos conforme a nuestra política de privacidad.</p>",
+      "style": {
+        "font_size": 10,
+        "color": "#6b7280",
+        "line_height": 1.5
+      },
+      "padding": {
+        "top": 14,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
   ]
 }

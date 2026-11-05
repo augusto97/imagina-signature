@@ -1,0 +1,194 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 500,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#0f3d3e",
+    "link_color": "#0f766e"
+  },
+  "variables": {
+    "job_title": "Socia Directora",
+    "mobile": "+34 655 210 480",
+    "photo_url": "{{imgsig_assets_url}}/templates/avatar-4.png",
+    "calendar_url": "https://cal.com/tu-agenda",
+    "linkedin_url": "https://www.linkedin.com/in/tu-perfil"
+  },
+  "blocks": [
+    {
+      "id": "row-13",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-8",
+          "width": 74,
+          "children": [
+            {
+              "id": "h-1",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 19,
+                "color": "#0f3d3e"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-2",
+              "type": "text",
+              "content": "{{job_title}} · {{company_name}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 13,
+                "color": "#4b5563"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 8,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-3",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-4",
+                  "type": "mobile",
+                  "value": "{{mobile}}"
+                },
+                {
+                  "id": "ci-5",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                },
+                {
+                  "id": "ci-6",
+                  "type": "website",
+                  "value": "{{company_website}}"
+                }
+              ],
+              "layout": "stacked",
+              "separator": "  |  ",
+              "show_icons": true,
+              "icon_shape": "plain",
+              "icon_tone": "gray",
+              "icon_size": 13,
+              "label_mode": "none",
+              "row_gap": 3,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#374151",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-7",
+              "type": "text",
+              "content": "<a href=\"{{calendar_url}}\"><strong>Reserva una llamada de 30 min →</strong></a>",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 13,
+                "color": "#0f766e"
+              },
+              "padding": {
+                "top": 10,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle",
+          "box": {
+            "border_left": {
+              "width": 3,
+              "style": "solid",
+              "color": "#0f766e"
+            },
+            "padding": {
+              "top": 2,
+              "right": 0,
+              "bottom": 2,
+              "left": 16
+            }
+          }
+        },
+        {
+          "id": "col-12",
+          "width": 26,
+          "children": [
+            {
+              "id": "a-9",
+              "type": "avatar",
+              "src": "{{photo_url}}",
+              "alt": "{{wp_display_name}}",
+              "size": 96,
+              "shape": "circle",
+              "align": "center",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            },
+            {
+              "id": "s-10",
+              "type": "social_icons",
+              "items": [
+                {
+                  "id": "sn-11",
+                  "network": "linkedin",
+                  "url": "{{linkedin_url}}"
+                }
+              ],
+              "shape": "rounded",
+              "tone": "brand",
+              "size": 20,
+              "spacing": 6,
+              "align": "center",
+              "padding": {
+                "top": 8,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle",
+          "box": {
+            "align": "center"
+          }
+        }
+      ],
+      "gap": 16
+    }
+  ]
+}

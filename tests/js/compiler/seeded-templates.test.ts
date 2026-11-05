@@ -1,13 +1,16 @@
-import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { afterAll, beforeAll, describe, it, expect } from 'vitest';
 import { compileSignature } from '@/core/compiler/compile';
-import type { SignatureSchema } from '@/core/schema/signature';
+import {
+  appliedTemplate,
+  installMockSite,
+  templateSlugs as slugs,
+} from '../fixtures/templateLibrary';
 import '@/core/blocks';
 
 /**
  * Every JSON file under `templates/` ships in the plugin ZIP and
- * gets seeded by `DefaultTemplatesSeeder` on activation. If a
+ * gets seeded by `DefaultTemplatesSeeder` on activation (the stricter
+ * design gate lives in `tests/js/templates/library.test.ts`). If a
  * template is malformed (unknown block type, missing required
  * field, broken Container shape) the user picks it from the
  * Template Picker and silently gets a broken signature.
@@ -22,21 +25,17 @@ import '@/core/blocks';
  *     right_children must match what `compile` reads).
  */
 
-const TEMPLATES_DIR = resolve(__dirname, '../../../templates');
-
-function loadTemplate(slug: string): SignatureSchema {
-  const raw = readFileSync(resolve(TEMPLATES_DIR, `${slug}.json`), 'utf8');
-  return JSON.parse(raw) as SignatureSchema;
-}
-
-const slugs = readdirSync(TEMPLATES_DIR)
-  .filter((f) => f.endsWith('.json'))
-  .map((f) => f.replace(/\.json$/, ''))
-  .sort();
+// Templates reference the profile / brand kit (`{{wp_*}}`, `{{company_*}}`)
+// and `{{imgsig_assets_url}}`: compile them against a mock site.
+let restore: () => void = () => {};
+beforeAll(() => {
+  restore = installMockSite();
+});
+afterAll(() => restore());
 
 describe('shipped templates compile cleanly', () => {
   it.each(slugs)('compiles %s', (slug) => {
-    const schema = loadTemplate(slug);
+    const schema = appliedTemplate(slug);
     const result = compileSignature(schema);
 
     expect(result.html).toContain('<!DOCTYPE html');
@@ -50,17 +49,15 @@ describe('shipped templates compile cleanly', () => {
     expect(unknownTypeWarnings).toEqual([]);
   });
 
-  it('multi-column templates render BOTH cells', () => {
-    // Sanity-check the new 1.0.32 templates render distinct text
-    // strings from each cell so an accidental mis-wiring (e.g.
-    // compile only emitting `children` and forgetting
-    // `right_children`) shows up here.
-    const t = loadTemplate('logo-left');
-    const html = compileSignature(t).html;
-    // Left cell content (logo URL) AND right cell content (heading
-    // text) must both appear.
-    expect(html).toContain('Logo'); // alt text from the logo image
-    expect(html).toContain('Jane Doe'); // heading from the right cell
-    expect(html).toContain('jane@acme.com'); // contact_row from the right cell
+  it('multi-column templates render EVERY cell', () => {
+    // Distinct content from each column must reach the output, so a
+    // mis-wired container (a column compiled and another dropped)
+    // shows up here.
+    const html = compileSignature(appliedTemplate('real-estate-agent')).html;
+    expect(html).toContain('templates/avatar-3.png'); // column 1: photo
+    expect(html).toContain('Lucía Fernández'); // column 2: name
+    expect(html).toContain('lucia.fernandez@northwind.es'); // column 2: contact
+    expect(html).toContain('templates/qr-sample.png'); // column 3: hosted QR
+    expect(html).toContain('Ver inmuebles'); // column 3: QR caption
   });
 });

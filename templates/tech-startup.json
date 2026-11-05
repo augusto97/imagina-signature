@@ -1,12 +1,136 @@
 {
-  "schema_version": "1.0",
-  "meta": { "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z", "editor_version": "1.0.0" },
-  "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Helvetica, Arial, sans-serif", "font_size": 14, "text_color": "#0f172a", "link_color": "#6366f1" },
-  "variables": {},
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Verdana, Geneva, sans-serif",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#4338ca"
+  },
+  "variables": {
+    "job_title": "Cofundadora y CTO",
+    "mobile": "+34 655 210 480",
+    "website_url": "https://www.tuempresa.com/producto"
+  },
   "blocks": [
-    { "id": "name", "type": "heading", "content": "Priya Anand", "style": { "font_family": "Helvetica, Arial, sans-serif", "font_size": 18, "font_weight": 700, "color": "#0f172a", "line_height": 1.2, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 } },
-    { "id": "title", "type": "text", "content": "<strong>Co-founder & CTO</strong> · Vector Labs", "style": { "font_family": "Helvetica, Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569", "line_height": 1.4, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 6, "left": 0 } },
-    { "id": "cta", "type": "button_cta", "label": "See what we're building →", "href": "https://vector.example", "background_color": "#6366f1", "text_color": "#ffffff", "border_radius": 8, "padding": { "top": 4, "right": 0, "bottom": 8, "left": 0 } },
-    { "id": "contact", "type": "contact_row", "rows": [ { "icon": "email", "label": "priya@vector.example", "href": "mailto:priya@vector.example" } ], "style": { "font_family": "Helvetica, Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569" }, "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 } }
+    {
+      "id": "i-1",
+      "type": "image",
+      "src": "{{company_logo}}",
+      "alt": "{{company_name}}",
+      "width": 110,
+      "align": "left",
+      "link": "{{company_website}}",
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 12,
+        "left": 0
+      }
+    },
+    {
+      "id": "h-2",
+      "type": "heading",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
+      "style": {
+        "font_weight": 700,
+        "line_height": 1.2,
+        "text_align": "left",
+        "font_size": 17,
+        "color": "#111827"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-3",
+      "type": "text",
+      "content": "{{job_title}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 12,
+        "color": "#4b5563"
+      },
+      "padding": {
+        "top": 2,
+        "right": 0,
+        "bottom": 8,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-4",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-5",
+          "type": "mobile",
+          "value": "{{mobile}}"
+        },
+        {
+          "id": "ci-6",
+          "type": "email",
+          "value": "{{wp_email}}"
+        }
+      ],
+      "layout": "inline",
+      "separator": "    ",
+      "show_icons": true,
+      "icon_shape": "plain",
+      "icon_tone": "gray",
+      "icon_size": 13,
+      "label_mode": "none",
+      "row_gap": 4,
+      "style": {
+        "font_size": 12,
+        "font_weight": 400,
+        "color": "#374151",
+        "text_align": "left",
+        "line_height": 1.4
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "b-7",
+      "type": "button_cta",
+      "label": "Conoce el producto →",
+      "href": "{{website_url}}",
+      "background_color": "#4338ca",
+      "text_color": "#4338ca",
+      "border_radius": 8,
+      "preset": "outline",
+      "padding_x": 16,
+      "padding_y": 8,
+      "align": "left",
+      "style": {
+        "font_size": 12,
+        "font_weight": 600
+      },
+      "border_width": 1,
+      "border_color": "#4338ca",
+      "padding": {
+        "top": 12,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
   ]
 }

@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Helvetica, Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#0a0a0a",
+    "link_color": "#0a0a0a"
+  },
+  "variables": {
+    "job_title": "Directora Creativa",
+    "mobile": "+34 655 210 480"
+  },
+  "blocks": [
+    {
+      "id": "row-3",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-2",
+          "width": 100,
+          "children": [
+            {
+              "id": "t-1",
+              "type": "text",
+              "content": "{{company_name}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 12,
+                "font_weight": 700,
+                "color": "#0a0a0a",
+                "letter_spacing": 2,
+                "text_transform": "uppercase"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "box": {
+            "background_color": "#facc15",
+            "padding": {
+              "top": 6,
+              "right": 12,
+              "bottom": 6,
+              "left": 12
+            }
+          }
+        }
+      ],
+      "gap": 0,
+      "box": {
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 10,
+          "left": 0
+        },
+        "width": 220
+      }
+    },
+    {
+      "id": "h-4",
+      "type": "heading",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
+      "style": {
+        "font_weight": 700,
+        "line_height": 1.1,
+        "text_align": "left",
+        "font_size": 26,
+        "color": "#0a0a0a",
+        "letter_spacing": -0.5
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-5",
+      "type": "text",
+      "content": "{{job_title}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 14,
+        "color": "#404040"
+      },
+      "padding": {
+        "top": 2,
+        "right": 0,
+        "bottom": 10,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-6",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-7",
+          "type": "mobile",
+          "value": "{{mobile}}"
+        },
+        {
+          "id": "ci-8",
+          "type": "email",
+          "value": "{{wp_email}}"
+        },
+        {
+          "id": "ci-9",
+          "type": "website",
+          "value": "{{company_website}}"
+        }
+      ],
+      "layout": "inline",
+      "separator": "    ",
+      "show_icons": true,
+      "icon_shape": "plain",
+      "icon_tone": "dark",
+      "icon_size": 13,
+      "label_mode": "none",
+      "row_gap": 4,
+      "style": {
+        "font_size": 12,
+        "font_weight": 400,
+        "color": "#171717",
+        "text_align": "left",
+        "line_height": 1.4
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "s-10",
+      "type": "social_icons",
+      "items": [
+        {
+          "id": "sn-11",
+          "network": "instagram",
+          "url": "{{company_instagram}}"
+        },
+        {
+          "id": "sn-12",
+          "network": "linkedin",
+          "url": "{{company_linkedin}}"
+        },
+        {
+          "id": "sn-13",
+          "network": "tiktok",
+          "url": "{{company_tiktok}}"
+        },
+        {
+          "id": "sn-14",
+          "network": "youtube",
+          "url": "{{company_youtube}}"
+        }
+      ],
+      "shape": "rounded",
+      "tone": "dark",
+      "size": 22,
+      "spacing": 6,
+      "align": "left",
+      "padding": {
+        "top": 12,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,206 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 520,
+    "background_color": "#ffffff",
+    "font_family": "Georgia, serif",
+    "font_size": 14,
+    "text_color": "#3f2d20",
+    "link_color": "#7c2d12"
+  },
+  "variables": {
+    "job_title": "Guest Relations Manager",
+    "phone": "+34 910 555 210",
+    "website_url": "https://www.tuhotel.com/reservas",
+    "address_line": "Calle del Prado 12, 28014 Madrid"
+  },
+  "blocks": [
+    {
+      "id": "i-1",
+      "type": "image",
+      "src": "{{company_logo}}",
+      "alt": "{{company_name}}",
+      "width": 120,
+      "align": "center",
+      "link": "{{company_website}}",
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 12,
+        "left": 0
+      }
+    },
+    {
+      "id": "h-2",
+      "type": "heading",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
+      "style": {
+        "font_weight": 700,
+        "line_height": 1.2,
+        "text_align": "center",
+        "font_size": 19,
+        "color": "#3f2d20"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-3",
+      "type": "text",
+      "content": "{{job_title}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "center",
+        "font_family": "Arial, sans-serif",
+        "font_size": 11,
+        "color": "#7c5c3b",
+        "letter_spacing": 1.5,
+        "text_transform": "uppercase"
+      },
+      "padding": {
+        "top": 3,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "dv-4",
+      "type": "divider",
+      "border": {
+        "width": 1,
+        "style": "solid",
+        "color": "#c2a27c"
+      },
+      "width_percent": 100,
+      "width_unit": "px",
+      "align": "center",
+      "width_px": 40,
+      "padding": {
+        "top": 12,
+        "right": 0,
+        "bottom": 12,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-5",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-6",
+          "type": "phone",
+          "value": "{{phone}}"
+        },
+        {
+          "id": "ci-7",
+          "type": "email",
+          "value": "{{wp_email}}"
+        }
+      ],
+      "layout": "inline",
+      "separator": " · ",
+      "show_icons": false,
+      "icon_shape": "plain",
+      "icon_tone": "gray",
+      "icon_size": 14,
+      "label_mode": "none",
+      "row_gap": 4,
+      "style": {
+        "font_size": 12,
+        "font_weight": 400,
+        "color": "#57534e",
+        "text_align": "center",
+        "line_height": 1.4,
+        "font_family": "Arial, sans-serif"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-8",
+      "type": "text",
+      "content": "{{address_line}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "center",
+        "font_family": "Arial, sans-serif",
+        "font_size": 12,
+        "color": "#57534e"
+      },
+      "padding": {
+        "top": 3,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "b-9",
+      "type": "button_cta",
+      "label": "Reserva tu estancia",
+      "href": "{{website_url}}",
+      "background_color": "#7c2d12",
+      "text_color": "#ffffff",
+      "border_radius": 2,
+      "preset": "solid",
+      "padding_x": 20,
+      "padding_y": 9,
+      "align": "center",
+      "style": {
+        "font_size": 12,
+        "font_weight": 600,
+        "font_family": "Arial, sans-serif",
+        "letter_spacing": 1,
+        "text_transform": "uppercase"
+      },
+      "padding": {
+        "top": 14,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "s-10",
+      "type": "social_icons",
+      "items": [
+        {
+          "id": "sn-11",
+          "network": "instagram",
+          "url": "{{company_instagram}}"
+        },
+        {
+          "id": "sn-12",
+          "network": "facebook",
+          "url": "{{company_facebook}}"
+        }
+      ],
+      "shape": "plain",
+      "tone": "dark",
+      "size": 18,
+      "spacing": 12,
+      "align": "center",
+      "padding": {
+        "top": 12,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
+  ]
+}

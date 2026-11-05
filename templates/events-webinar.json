@@ -1,0 +1,154 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 600,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#0f172a",
+    "link_color": "#1d4ed8"
+  },
+  "variables": {
+    "job_title": "Directora de Marketing",
+    "phone": "+34 910 555 210",
+    "website_url": "https://www.tuempresa.com/webinar"
+  },
+  "blocks": [
+    {
+      "id": "row-9",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-6",
+          "width": 70,
+          "children": [
+            {
+              "id": "h-1",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 18,
+                "color": "#0f172a"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-2",
+              "type": "text",
+              "content": "{{job_title}} · {{company_name}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 13,
+                "color": "#475569"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 6,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-3",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-4",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                },
+                {
+                  "id": "ci-5",
+                  "type": "phone",
+                  "value": "{{phone}}"
+                }
+              ],
+              "layout": "inline",
+              "separator": "    ",
+              "show_icons": true,
+              "icon_shape": "plain",
+              "icon_tone": "gray",
+              "icon_size": 13,
+              "label_mode": "none",
+              "row_gap": 4,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#334155",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        },
+        {
+          "id": "col-8",
+          "width": 30,
+          "children": [
+            {
+              "id": "i-7",
+              "type": "image",
+              "src": "{{company_logo}}",
+              "alt": "{{company_name}}",
+              "width": 110,
+              "align": "right",
+              "link": "{{company_website}}",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle",
+          "box": {
+            "align": "right"
+          }
+        }
+      ],
+      "gap": 12
+    },
+    {
+      "id": "bn-10",
+      "type": "banner",
+      "src": "{{imgsig_assets_url}}/templates/banner-webinar.png",
+      "alt": "Webinar gratuito en directo — inscríbete",
+      "link": "{{website_url}}",
+      "width": 600,
+      "full_width": true,
+      "align": "left",
+      "natural_width": 1200,
+      "natural_height": 300,
+      "border_radius": 10,
+      "padding": {
+        "top": 14,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
+  ]
+}

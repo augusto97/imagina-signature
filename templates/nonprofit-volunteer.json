@@ -1,0 +1,177 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#1f2937",
+    "link_color": "#0f766e"
+  },
+  "variables": {
+    "job_title": "Coordinador de Voluntariado",
+    "mobile": "+34 655 210 480",
+    "photo_url": "{{imgsig_assets_url}}/templates/avatar-2.png",
+    "website_url": "https://www.tuorganizacion.org/voluntariado"
+  },
+  "blocks": [
+    {
+      "id": "row-12",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-11",
+          "width": 100,
+          "children": [
+            {
+              "id": "row-10",
+              "type": "container",
+              "columns": [
+                {
+                  "id": "col-2",
+                  "width": 20,
+                  "children": [
+                    {
+                      "id": "a-1",
+                      "type": "avatar",
+                      "src": "{{photo_url}}",
+                      "alt": "{{wp_display_name}}",
+                      "size": 76,
+                      "shape": "circle",
+                      "align": "left",
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle"
+                },
+                {
+                  "id": "col-9",
+                  "width": 80,
+                  "children": [
+                    {
+                      "id": "h-3",
+                      "type": "heading",
+                      "content": "{{wp_display_name}}",
+                      "content_html": "<p>{{wp_display_name}}</p>",
+                      "style": {
+                        "font_weight": 700,
+                        "line_height": 1.2,
+                        "text_align": "left",
+                        "font_size": 17,
+                        "color": "#1f2937"
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 2,
+                        "left": 0
+                      }
+                    },
+                    {
+                      "id": "t-4",
+                      "type": "text",
+                      "content": "{{job_title}} · {{company_name}}",
+                      "style": {
+                        "line_height": 1.4,
+                        "text_align": "left",
+                        "font_size": 13,
+                        "color": "#4b5563"
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 6,
+                        "left": 0
+                      }
+                    },
+                    {
+                      "id": "c-5",
+                      "type": "contact_row",
+                      "items": [
+                        {
+                          "id": "ci-6",
+                          "type": "mobile",
+                          "value": "{{mobile}}"
+                        },
+                        {
+                          "id": "ci-7",
+                          "type": "email",
+                          "value": "{{wp_email}}"
+                        }
+                      ],
+                      "layout": "inline",
+                      "separator": "    ",
+                      "show_icons": true,
+                      "icon_shape": "plain",
+                      "icon_tone": "gray",
+                      "icon_size": 13,
+                      "label_mode": "none",
+                      "row_gap": 4,
+                      "style": {
+                        "font_size": 12,
+                        "font_weight": 400,
+                        "color": "#374151",
+                        "text_align": "left",
+                        "line_height": 1.4
+                      },
+                      "padding": {
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    },
+                    {
+                      "id": "t-8",
+                      "type": "text",
+                      "content": "<a href=\"{{website_url}}\"><strong>Hazte voluntario →</strong></a>",
+                      "style": {
+                        "line_height": 1.4,
+                        "text_align": "left",
+                        "font_size": 13,
+                        "color": "#0f766e"
+                      },
+                      "padding": {
+                        "top": 8,
+                        "right": 0,
+                        "bottom": 0,
+                        "left": 0
+                      }
+                    }
+                  ],
+                  "valign": "middle"
+                }
+              ],
+              "gap": 16
+            }
+          ],
+          "box": {
+            "border": {
+              "width": 1,
+              "style": "solid",
+              "color": "#99f6e4"
+            },
+            "border_radius": 12,
+            "padding": {
+              "top": 16,
+              "right": 18,
+              "bottom": 16,
+              "left": 18
+            }
+          }
+        }
+      ],
+      "gap": 0
+    }
+  ]
+}

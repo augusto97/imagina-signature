@@ -1,93 +1,204 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "meta": {
-    "created_at": "2026-05-03T00:00:00Z",
-    "updated_at": "2026-05-03T00:00:00Z",
-    "editor_version": "1.0.31"
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
   },
   "canvas": {
-    "width": 600,
+    "width": 560,
     "background_color": "#ffffff",
     "font_family": "Arial, sans-serif",
     "font_size": 14,
     "text_color": "#0f172a",
-    "link_color": "#0ea5e9"
+    "link_color": "#0369a1"
   },
-  "variables": {},
+  "variables": {
+    "job_title": "Product Manager",
+    "phone": "+34 910 555 210",
+    "mobile": "+34 655 210 480",
+    "photo_url": "{{imgsig_assets_url}}/templates/avatar-1.png",
+    "linkedin_url": "https://www.linkedin.com/in/tu-perfil"
+  },
   "blocks": [
     {
-      "id": "row",
+      "id": "row-16",
       "type": "container",
-      "columns": 2,
-      "gap": 18,
-      "left_width": 18,
-      "children": [
+      "columns": [
         {
-          "id": "avatar",
-          "type": "avatar",
-          "src": "https://placehold.co/96x96/0ea5e9/ffffff?text=JD",
-          "alt": "Profile photo",
-          "size": 84,
-          "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 }
+          "id": "col-4",
+          "width": 40,
+          "children": [
+            {
+              "id": "a-1",
+              "type": "avatar",
+              "src": "{{photo_url}}",
+              "alt": "{{wp_display_name}}",
+              "size": 84,
+              "shape": "circle",
+              "align": "center",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 8,
+                "left": 0
+              }
+            },
+            {
+              "id": "h-2",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "center",
+                "font_size": 16,
+                "color": "#0f172a"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-3",
+              "type": "text",
+              "content": "{{job_title}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "center",
+                "font_size": 12,
+                "color": "#0369a1"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle",
+          "box": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "col-15",
+          "width": 60,
+          "children": [
+            {
+              "id": "t-5",
+              "type": "text",
+              "content": "{{company_name}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 11,
+                "font_weight": 700,
+                "color": "#475569",
+                "letter_spacing": 1.5,
+                "text_transform": "uppercase"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 8,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-6",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-7",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                },
+                {
+                  "id": "ci-8",
+                  "type": "phone",
+                  "value": "{{phone}}"
+                },
+                {
+                  "id": "ci-9",
+                  "type": "mobile",
+                  "value": "{{mobile}}"
+                },
+                {
+                  "id": "ci-10",
+                  "type": "website",
+                  "value": "{{company_website}}"
+                }
+              ],
+              "layout": "stacked",
+              "separator": "  |  ",
+              "show_icons": true,
+              "icon_shape": "circle",
+              "icon_tone": "brand",
+              "icon_size": 16,
+              "label_mode": "none",
+              "row_gap": 5,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#1e293b",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            },
+            {
+              "id": "s-11",
+              "type": "social_icons",
+              "items": [
+                {
+                  "id": "sn-12",
+                  "network": "linkedin",
+                  "url": "{{linkedin_url}}"
+                },
+                {
+                  "id": "sn-13",
+                  "network": "x",
+                  "url": "{{company_x}}"
+                },
+                {
+                  "id": "sn-14",
+                  "network": "instagram",
+                  "url": "{{company_instagram}}"
+                }
+              ],
+              "shape": "circle",
+              "tone": "brand",
+              "size": 22,
+              "spacing": 6,
+              "align": "left",
+              "padding": {
+                "top": 12,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
         }
       ],
-      "right_children": [
-        {
-          "id": "name",
-          "type": "heading",
-          "content": "Jane Doe",
-          "style": {
-            "font_family": "Arial, sans-serif",
-            "font_size": 19,
-            "font_weight": 700,
-            "color": "#0f172a",
-            "line_height": 1.15,
-            "text_align": "left"
-          },
-          "padding": { "top": 2, "right": 0, "bottom": 1, "left": 0 }
-        },
-        {
-          "id": "role",
-          "type": "text",
-          "content": "Senior Product Designer · <strong>ACME Studio</strong>",
-          "style": {
-            "font_family": "Arial, sans-serif",
-            "font_size": 13,
-            "font_weight": 400,
-            "color": "#475569",
-            "line_height": 1.4,
-            "text_align": "left"
-          },
-          "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
-        },
-        {
-          "id": "contact",
-          "type": "contact_row",
-          "rows": [
-            { "icon": "email", "label": "jane@acmestudio.com", "href": "mailto:jane@acmestudio.com" },
-            { "icon": "phone", "label": "+1 555 200 3000", "href": "tel:+15552003000" }
-          ],
-          "style": {
-            "font_family": "Arial, sans-serif",
-            "font_size": 12.5,
-            "font_weight": 400,
-            "color": "#0f172a"
-          },
-          "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
-        },
-        {
-          "id": "social",
-          "type": "social_icons",
-          "networks": [
-            { "platform": "linkedin", "url": "https://linkedin.com/in/janedoe" },
-            { "platform": "twitter", "url": "https://twitter.com/janedoe" },
-            { "platform": "instagram", "url": "https://instagram.com/janedoe" }
-          ],
-          "icon_size": 22,
-          "gap": 6,
-          "color": "#0ea5e9"
-        }
-      ]
+      "gap": 28,
+      "divider": {
+        "width": 1,
+        "style": "solid",
+        "color": "#e2e8f0"
+      }
     }
   ]
 }

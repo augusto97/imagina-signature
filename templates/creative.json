@@ -1,12 +1,138 @@
 {
-  "schema_version": "1.0",
-  "meta": { "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z", "editor_version": "1.0.0" },
-  "canvas": { "width": 600, "background_color": "#ffffff", "font_family": "Helvetica, Arial, sans-serif", "font_size": 14, "text_color": "#0f172a", "link_color": "#ec4899" },
-  "variables": {},
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "\"Trebuchet MS\", sans-serif",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#7c3aed"
+  },
+  "variables": {
+    "job_title": "Content Creator",
+    "mobile": "+34 655 210 480",
+    "linkedin_url": "https://www.linkedin.com/in/tu-perfil"
+  },
   "blocks": [
-    { "id": "name", "type": "heading", "content": "Sofia Chen", "style": { "font_family": "Helvetica, Arial, sans-serif", "font_size": 22, "font_weight": 700, "color": "#ec4899", "line_height": 1.1, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 2, "left": 0 } },
-    { "id": "title", "type": "text", "content": "<strong>Brand Designer</strong> · Studio Lumen", "style": { "font_family": "Helvetica, Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#0f172a", "line_height": 1.4, "text_align": "left" }, "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 } },
-    { "id": "social", "type": "social_icons", "networks": [ { "platform": "instagram", "url": "https://instagram.com/sofia" }, { "platform": "linkedin", "url": "https://linkedin.com/in/sofia" } ], "icon_size": 28, "gap": 8, "color": "#ec4899", "padding": { "top": 4, "right": 0, "bottom": 8, "left": 0 } },
-    { "id": "contact", "type": "contact_row", "rows": [ { "icon": "email", "label": "hello@sofia.studio", "href": "mailto:hello@sofia.studio" } ], "style": { "font_family": "Helvetica, Arial, sans-serif", "font_size": 13, "font_weight": 400, "color": "#475569" }, "padding": { "top": 2, "right": 0, "bottom": 2, "left": 0 } }
+    {
+      "id": "h-1",
+      "type": "heading",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
+      "style": {
+        "font_weight": 700,
+        "line_height": 1.2,
+        "text_align": "left",
+        "font_size": 22,
+        "color": "#111827"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-2",
+      "type": "text",
+      "content": "<span style=\"color:#7c3aed\">●</span> {{job_title}}  <span style=\"color:#db2777\">●</span> {{company_name}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 13,
+        "color": "#374151"
+      },
+      "padding": {
+        "top": 2,
+        "right": 0,
+        "bottom": 10,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-3",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-4",
+          "type": "mobile",
+          "value": "{{mobile}}"
+        },
+        {
+          "id": "ci-5",
+          "type": "email",
+          "value": "{{wp_email}}"
+        }
+      ],
+      "layout": "inline",
+      "separator": "    ",
+      "show_icons": true,
+      "icon_shape": "circle",
+      "icon_tone": "brand",
+      "icon_size": 16,
+      "label_mode": "none",
+      "row_gap": 4,
+      "style": {
+        "font_size": 13,
+        "font_weight": 400,
+        "color": "#1f2937",
+        "text_align": "left",
+        "line_height": 1.4
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "s-6",
+      "type": "social_icons",
+      "items": [
+        {
+          "id": "sn-7",
+          "network": "instagram",
+          "url": "{{company_instagram}}"
+        },
+        {
+          "id": "sn-8",
+          "network": "tiktok",
+          "url": "{{company_tiktok}}"
+        },
+        {
+          "id": "sn-9",
+          "network": "youtube",
+          "url": "{{company_youtube}}"
+        },
+        {
+          "id": "sn-10",
+          "network": "x",
+          "url": "{{company_x}}"
+        },
+        {
+          "id": "sn-11",
+          "network": "linkedin",
+          "url": "{{linkedin_url}}"
+        }
+      ],
+      "shape": "circle",
+      "tone": "brand",
+      "size": 26,
+      "spacing": 8,
+      "align": "left",
+      "padding": {
+        "top": 12,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
   ]
 }

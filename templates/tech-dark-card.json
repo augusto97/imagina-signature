@@ -1,0 +1,158 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#0f172a",
+    "link_color": "#0e7490"
+  },
+  "variables": {
+    "job_title": "Ingeniera de Software",
+    "mobile": "+34 655 210 480",
+    "linkedin_url": "https://www.linkedin.com/in/tu-perfil"
+  },
+  "blocks": [
+    {
+      "id": "row-12",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-11",
+          "width": 100,
+          "children": [
+            {
+              "id": "h-1",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 19,
+                "color": "#f8fafc"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-2",
+              "type": "text",
+              "content": "{{job_title}} @ {{company_name}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_family": "\"Courier New\", Courier, monospace",
+                "font_size": 13,
+                "color": "#67e8f9"
+              },
+              "padding": {
+                "top": 2,
+                "right": 0,
+                "bottom": 12,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-3",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-4",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                },
+                {
+                  "id": "ci-5",
+                  "type": "mobile",
+                  "value": "{{mobile}}"
+                },
+                {
+                  "id": "ci-6",
+                  "type": "website",
+                  "value": "{{company_website}}"
+                }
+              ],
+              "layout": "inline",
+              "separator": "    ",
+              "show_icons": true,
+              "icon_shape": "plain",
+              "icon_tone": "light",
+              "icon_size": 14,
+              "label_mode": "none",
+              "row_gap": 4,
+              "style": {
+                "font_size": 13,
+                "font_weight": 400,
+                "color": "#cbd5e1",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "link_color": "#e2e8f0",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            },
+            {
+              "id": "s-7",
+              "type": "social_icons",
+              "items": [
+                {
+                  "id": "sn-8",
+                  "network": "github",
+                  "url": "{{company_github}}"
+                },
+                {
+                  "id": "sn-9",
+                  "network": "linkedin",
+                  "url": "{{linkedin_url}}"
+                },
+                {
+                  "id": "sn-10",
+                  "network": "x",
+                  "url": "{{company_x}}"
+                }
+              ],
+              "shape": "rounded",
+              "tone": "light",
+              "size": 22,
+              "spacing": 8,
+              "align": "left",
+              "padding": {
+                "top": 14,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "box": {
+            "background_color": "#0f172a",
+            "border_radius": 12,
+            "padding": {
+              "top": 20,
+              "right": 22,
+              "bottom": 20,
+              "left": 22
+            }
+          }
+        }
+      ],
+      "gap": 0
+    }
+  ]
+}

@@ -1,0 +1,151 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 560,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#c2410c"
+  },
+  "variables": {
+    "job_title": "Equipo de Atención al Cliente",
+    "mobile": "+34 655 210 480"
+  },
+  "blocks": [
+    {
+      "id": "t-1",
+      "type": "text",
+      "content": "ATENCIÓN AL CLIENTE",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 11,
+        "font_weight": 700,
+        "color": "#c2410c",
+        "letter_spacing": 1.5
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 4,
+        "left": 0
+      }
+    },
+    {
+      "id": "h-2",
+      "type": "heading",
+      "content": "{{wp_display_name}}",
+      "content_html": "<p>{{wp_display_name}}</p>",
+      "style": {
+        "font_weight": 700,
+        "line_height": 1.2,
+        "text_align": "left",
+        "font_size": 18,
+        "color": "#111827"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 2,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-3",
+      "type": "text",
+      "content": "{{job_title}} · {{company_name}}",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 13,
+        "color": "#4b5563"
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 10,
+        "left": 0
+      }
+    },
+    {
+      "id": "c-4",
+      "type": "contact_row",
+      "items": [
+        {
+          "id": "ci-5",
+          "type": "whatsapp",
+          "value": "{{mobile}}"
+        },
+        {
+          "id": "ci-6",
+          "type": "phone",
+          "value": "{{company_phone}}"
+        },
+        {
+          "id": "ci-7",
+          "type": "email",
+          "value": "{{company_email}}"
+        }
+      ],
+      "layout": "stacked",
+      "separator": "  |  ",
+      "show_icons": true,
+      "icon_shape": "circle",
+      "icon_tone": "brand",
+      "icon_size": 18,
+      "label_mode": "none",
+      "row_gap": 6,
+      "style": {
+        "font_size": 13,
+        "font_weight": 400,
+        "color": "#1f2937",
+        "text_align": "left",
+        "line_height": 1.4
+      },
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "t-8",
+      "type": "text",
+      "content": "Lunes a viernes, de 9:00 a 18:00",
+      "style": {
+        "line_height": 1.4,
+        "text_align": "left",
+        "font_size": 12,
+        "color": "#6b7280"
+      },
+      "padding": {
+        "top": 8,
+        "right": 0,
+        "bottom": 10,
+        "left": 0
+      }
+    },
+    {
+      "id": "i-9",
+      "type": "image",
+      "src": "{{company_logo}}",
+      "alt": "{{company_name}}",
+      "width": 100,
+      "align": "left",
+      "link": "{{company_website}}",
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 600,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#1c1917",
+    "link_color": "#9a3412"
+  },
+  "variables": {
+    "job_title": "Atención al Cliente",
+    "phone": "+34 910 555 210"
+  },
+  "blocks": [
+    {
+      "id": "row-9",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-2",
+          "width": 30,
+          "children": [
+            {
+              "id": "i-1",
+              "type": "image",
+              "src": "{{company_logo}}",
+              "alt": "{{company_name}}",
+              "width": 120,
+              "align": "left",
+              "link": "{{company_website}}",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        },
+        {
+          "id": "col-8",
+          "width": 70,
+          "children": [
+            {
+              "id": "h-3",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 17,
+                "color": "#1c1917"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-4",
+              "type": "text",
+              "content": "{{job_title}} · {{company_name}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 12,
+                "color": "#57534e"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 4,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-5",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-6",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                },
+                {
+                  "id": "ci-7",
+                  "type": "phone",
+                  "value": "{{phone}}"
+                }
+              ],
+              "layout": "inline",
+              "separator": "    ",
+              "show_icons": true,
+              "icon_shape": "plain",
+              "icon_tone": "gray",
+              "icon_size": 13,
+              "label_mode": "none",
+              "row_gap": 4,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#44403c",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        }
+      ],
+      "gap": 24,
+      "divider": {
+        "width": 1,
+        "style": "solid",
+        "color": "#e7e5e4"
+      }
+    },
+    {
+      "id": "bn-10",
+      "type": "banner",
+      "src": "{{imgsig_assets_url}}/templates/banner-collection.png",
+      "alt": "Nueva colección — descúbrela en nuestra tienda online",
+      "link": "{{company_website}}",
+      "width": 600,
+      "full_width": true,
+      "align": "left",
+      "natural_width": 1200,
+      "natural_height": 300,
+      "border_radius": 8,
+      "padding": {
+        "top": 14,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "s-11",
+      "type": "social_icons",
+      "items": [
+        {
+          "id": "sn-12",
+          "network": "instagram",
+          "url": "{{company_instagram}}"
+        },
+        {
+          "id": "sn-13",
+          "network": "tiktok",
+          "url": "{{company_tiktok}}"
+        },
+        {
+          "id": "sn-14",
+          "network": "facebook",
+          "url": "{{company_facebook}}"
+        }
+      ],
+      "shape": "plain",
+      "tone": "dark",
+      "size": 18,
+      "spacing": 14,
+      "align": "center",
+      "padding": {
+        "top": 12,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
+  ]
+}

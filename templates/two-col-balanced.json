@@ -1,105 +1,168 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "meta": {
-    "created_at": "2026-05-03T00:00:00Z",
-    "updated_at": "2026-05-03T00:00:00Z",
-    "editor_version": "1.0.31"
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
   },
   "canvas": {
     "width": 600,
     "background_color": "#ffffff",
-    "font_family": "Helvetica, Arial, sans-serif",
+    "font_family": "Arial, sans-serif",
     "font_size": 14,
     "text_color": "#111827",
-    "link_color": "#1d4ed8"
+    "link_color": "#0f766e"
   },
-  "variables": {},
+  "variables": {
+    "job_title": "Consultor Senior",
+    "mobile": "+34 655 210 480",
+    "calendar_url": "https://cal.com/tu-agenda"
+  },
   "blocks": [
     {
-      "id": "split",
+      "id": "row-11",
       "type": "container",
-      "columns": 2,
-      "gap": 24,
-      "left_width": 50,
-      "children": [
+      "columns": [
         {
-          "id": "name",
-          "type": "heading",
-          "content": "Jane Doe",
-          "style": {
-            "font_family": "Helvetica, Arial, sans-serif",
-            "font_size": 22,
-            "font_weight": 700,
-            "color": "#111827",
-            "line_height": 1.1,
-            "text_align": "left"
-          },
-          "padding": { "top": 0, "right": 0, "bottom": 4, "left": 0 }
+          "id": "col-4",
+          "width": 52,
+          "children": [
+            {
+              "id": "h-1",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 20,
+                "color": "#111827"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-2",
+              "type": "text",
+              "content": "{{job_title}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 13,
+                "font_weight": 700,
+                "color": "#0f766e"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 6,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-3",
+              "type": "text",
+              "content": "{{company_name}} — {{company_tagline}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 12,
+                "color": "#4b5563"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
         },
         {
-          "id": "tagline",
-          "type": "text",
-          "content": "<strong>Head of Customer Success</strong><br>Helping teams ship faster.",
-          "style": {
-            "font_family": "Helvetica, Arial, sans-serif",
-            "font_size": 13,
-            "font_weight": 400,
-            "color": "#475569",
-            "line_height": 1.5,
-            "text_align": "left"
-          },
-          "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
-        },
-        {
-          "id": "divider",
-          "type": "divider",
-          "border": { "width": 2, "color": "#1d4ed8", "style": "solid" },
-          "width_percent": 30,
-          "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 }
+          "id": "col-10",
+          "width": 48,
+          "children": [
+            {
+              "id": "c-5",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-6",
+                  "type": "mobile",
+                  "value": "{{mobile}}"
+                },
+                {
+                  "id": "ci-7",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                },
+                {
+                  "id": "ci-8",
+                  "type": "website",
+                  "value": "{{company_website}}"
+                }
+              ],
+              "layout": "stacked",
+              "separator": "  |  ",
+              "show_icons": true,
+              "icon_shape": "plain",
+              "icon_tone": "gray",
+              "icon_size": 13,
+              "label_mode": "none",
+              "row_gap": 3,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#374151",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            },
+            {
+              "id": "b-9",
+              "type": "button_cta",
+              "label": "Reserva una llamada",
+              "href": "{{calendar_url}}",
+              "background_color": "#0f766e",
+              "text_color": "#ffffff",
+              "border_radius": 6,
+              "preset": "solid",
+              "padding_x": 16,
+              "padding_y": 8,
+              "align": "left",
+              "style": {
+                "font_size": 12,
+                "font_weight": 600
+              },
+              "padding": {
+                "top": 10,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
         }
       ],
-      "right_children": [
-        {
-          "id": "company",
-          "type": "text",
-          "content": "<strong>ACME, Inc.</strong>",
-          "style": {
-            "font_family": "Helvetica, Arial, sans-serif",
-            "font_size": 13,
-            "font_weight": 600,
-            "color": "#111827",
-            "line_height": 1.4,
-            "text_align": "left"
-          },
-          "padding": { "top": 0, "right": 0, "bottom": 6, "left": 0 }
-        },
-        {
-          "id": "contact",
-          "type": "contact_row",
-          "rows": [
-            { "icon": "email", "label": "jane@acme.com", "href": "mailto:jane@acme.com" },
-            { "icon": "phone", "label": "+1 555 300 4000", "href": "tel:+15553004000" },
-            { "icon": "web", "label": "acme.com/jane", "href": "https://acme.com/jane" }
-          ],
-          "style": {
-            "font_family": "Helvetica, Arial, sans-serif",
-            "font_size": 12.5,
-            "font_weight": 400,
-            "color": "#475569"
-          },
-          "padding": { "top": 0, "right": 0, "bottom": 8, "left": 0 }
-        },
-        {
-          "id": "cta",
-          "type": "button_cta",
-          "label": "Book a call",
-          "href": "https://acme.com/book",
-          "background_color": "#1d4ed8",
-          "text_color": "#ffffff",
-          "border_radius": 6,
-          "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 }
-        }
-      ]
+      "gap": 28,
+      "divider": {
+        "width": 1,
+        "style": "solid",
+        "color": "#d1d5db"
+      }
     }
   ]
 }

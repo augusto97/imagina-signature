@@ -1,0 +1,188 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 600,
+    "background_color": "#ffffff",
+    "font_family": "\"Times New Roman\", Times, serif",
+    "font_size": 14,
+    "text_color": "#111827",
+    "link_color": "#7f1d1d"
+  },
+  "variables": {
+    "job_title": "Abogada Asociada · Derecho Mercantil",
+    "phone": "+34 910 555 210",
+    "address_line": "Paseo de la Castellana 89, 28046 Madrid"
+  },
+  "blocks": [
+    {
+      "id": "row-11",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-2",
+          "width": 28,
+          "children": [
+            {
+              "id": "i-1",
+              "type": "image",
+              "src": "{{company_logo}}",
+              "alt": "{{company_name}}",
+              "width": 120,
+              "align": "center",
+              "link": "{{company_website}}",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle",
+          "box": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "col-10",
+          "width": 72,
+          "children": [
+            {
+              "id": "h-3",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 20,
+                "color": "#111827"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-4",
+              "type": "text",
+              "content": "{{job_title}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 14,
+                "color": "#4b5563",
+                "font_style": "italic"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 8,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-5",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-6",
+                  "type": "phone",
+                  "value": "{{phone}}"
+                },
+                {
+                  "id": "ci-7",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                },
+                {
+                  "id": "ci-8",
+                  "type": "website",
+                  "value": "{{company_website}}"
+                },
+                {
+                  "id": "ci-9",
+                  "type": "address",
+                  "value": "{{address_line}}"
+                }
+              ],
+              "layout": "stacked",
+              "separator": "  |  ",
+              "show_icons": false,
+              "icon_shape": "plain",
+              "icon_tone": "gray",
+              "icon_size": 14,
+              "label_mode": "short",
+              "row_gap": 2,
+              "style": {
+                "font_size": 13,
+                "font_weight": 400,
+                "color": "#374151",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "link_color": "#374151",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        }
+      ],
+      "gap": 32,
+      "divider": {
+        "width": 1,
+        "style": "solid",
+        "color": "#d1d5db"
+      }
+    },
+    {
+      "id": "dv-12",
+      "type": "divider",
+      "border": {
+        "width": 1,
+        "style": "solid",
+        "color": "#e5e7eb"
+      },
+      "width_percent": 100,
+      "width_unit": "percent",
+      "align": "left",
+      "padding": {
+        "top": 14,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "id": "d-13",
+      "type": "disclaimer",
+      "content": "Este mensaje y sus anexos son confidenciales y pueden contener información protegida por el secreto profesional. Si lo ha recibido por error, le rogamos que lo comunique al remitente y lo elimine sin copiarlo ni divulgarlo.",
+      "content_html": "<p>Este mensaje y sus anexos son confidenciales y pueden contener información protegida por el secreto profesional. Si lo ha recibido por error, le rogamos que lo comunique al remitente y lo elimine sin copiarlo ni divulgarlo.</p>",
+      "style": {
+        "font_size": 10,
+        "color": "#6b7280",
+        "line_height": 1.5,
+        "font_family": "Arial, sans-serif"
+      },
+      "padding": {
+        "top": 8,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
+  ]
+}

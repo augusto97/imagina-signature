@@ -1,0 +1,158 @@
+{
+  "schema_version": "1.1",
+  "meta": {
+    "created_at": "2026-11-05T00:00:00Z",
+    "updated_at": "2026-11-05T00:00:00Z",
+    "editor_version": "1.2.0"
+  },
+  "canvas": {
+    "width": 600,
+    "background_color": "#ffffff",
+    "font_family": "Arial, sans-serif",
+    "font_size": 14,
+    "text_color": "#0f172a",
+    "link_color": "#1d4ed8"
+  },
+  "variables": {
+    "job_title": "Directora de Marketing",
+    "mobile": "+34 655 210 480",
+    "website_url": "https://www.tuempresa.com/webinar"
+  },
+  "blocks": [
+    {
+      "id": "row-9",
+      "type": "container",
+      "columns": [
+        {
+          "id": "col-2",
+          "width": 28,
+          "children": [
+            {
+              "id": "i-1",
+              "type": "image",
+              "src": "{{company_logo}}",
+              "alt": "{{company_name}}",
+              "width": 116,
+              "align": "center",
+              "link": "{{company_website}}",
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle",
+          "box": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "col-8",
+          "width": 72,
+          "children": [
+            {
+              "id": "h-3",
+              "type": "heading",
+              "content": "{{wp_display_name}}",
+              "content_html": "<p>{{wp_display_name}}</p>",
+              "style": {
+                "font_weight": 700,
+                "line_height": 1.2,
+                "text_align": "left",
+                "font_size": 18,
+                "color": "#0f172a"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 2,
+                "left": 0
+              }
+            },
+            {
+              "id": "t-4",
+              "type": "text",
+              "content": "{{job_title}}",
+              "style": {
+                "line_height": 1.4,
+                "text_align": "left",
+                "font_size": 13,
+                "color": "#475569"
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 6,
+                "left": 0
+              }
+            },
+            {
+              "id": "c-5",
+              "type": "contact_row",
+              "items": [
+                {
+                  "id": "ci-6",
+                  "type": "mobile",
+                  "value": "{{mobile}}"
+                },
+                {
+                  "id": "ci-7",
+                  "type": "email",
+                  "value": "{{wp_email}}"
+                }
+              ],
+              "layout": "inline",
+              "separator": "    ",
+              "show_icons": true,
+              "icon_shape": "circle",
+              "icon_tone": "brand",
+              "icon_size": 15,
+              "label_mode": "none",
+              "row_gap": 4,
+              "style": {
+                "font_size": 12,
+                "font_weight": 400,
+                "color": "#1e293b",
+                "text_align": "left",
+                "line_height": 1.4
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "valign": "middle"
+        }
+      ],
+      "gap": 28,
+      "divider": {
+        "width": 1,
+        "style": "solid",
+        "color": "#cbd5e1"
+      }
+    },
+    {
+      "id": "bn-10",
+      "type": "banner",
+      "src": "{{imgsig_assets_url}}/templates/banner-webinar.png",
+      "alt": "Webinar gratuito en directo — inscríbete",
+      "link": "{{website_url}}",
+      "width": 600,
+      "full_width": true,
+      "align": "left",
+      "natural_width": 1200,
+      "natural_height": 300,
+      "padding": {
+        "top": 16,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
+  ]
+}
