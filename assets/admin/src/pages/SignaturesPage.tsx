@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FC } from 'react';
-import { Plus, Search, FileSignature, Pencil, Copy, Trash2, X } from 'lucide-react';
+import { Plus, Search, FileSignature, Pencil, Copy, Trash2, X, Star } from 'lucide-react';
 import { Topbar } from '@admin/components/Topbar';
 import { Button } from '@admin/components/Button';
 import { StatusPill } from '@admin/components/StatusPill';
@@ -82,6 +82,19 @@ export const SignaturesPage: FC = () => {
     } catch (e) {
       const message = e instanceof ApiError ? e.message : (e as Error).message;
       window.alert(__('Could not duplicate: %s', message));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const onMakePrimary = async (row: SignatureRow): Promise<void> => {
+    setBusyId(row.id);
+    try {
+      await apiCall(`/signatures/${row.id}/primary`, { method: 'POST' });
+      await load();
+    } catch (e) {
+      const message = e instanceof ApiError ? e.message : (e as Error).message;
+      window.alert(__('Could not set the primary signature: %s', message));
     } finally {
       setBusyId(null);
     }
@@ -354,6 +367,15 @@ export const SignaturesPage: FC = () => {
                         >
                           {row.name || __('Untitled')}
                         </a>
+                        {row.is_primary && (
+                          <span
+                            className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-amber-700 ring-1 ring-inset ring-amber-200"
+                            title={__('This is the signature deployed to your email clients.')}
+                          >
+                            <Star size={10} className="fill-current" />
+                            {__('Primary')}
+                          </span>
+                        )}
                       </td>
                       <td className="px-5 py-4">
                         <StatusPill status={row.status} />
@@ -369,6 +391,15 @@ export const SignaturesPage: FC = () => {
                             tooltip={__('Edit')}
                             onClick={() => { window.location.href = editorUrl(row.id); }}
                           />
+                          {!row.is_primary && (
+                            <IconAction
+                              icon={<Star size={14} />}
+                              label={__('Make %s the primary signature', row.name || __('Untitled'))}
+                              tooltip={__('Make primary')}
+                              disabled={busy}
+                              onClick={() => void onMakePrimary(row)}
+                            />
+                          )}
                           <IconAction
                             icon={<Copy size={14} />}
                             label={__('Duplicate %s', row.name || __('Untitled'))}

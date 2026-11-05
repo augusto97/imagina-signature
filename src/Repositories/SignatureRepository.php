@@ -40,7 +40,7 @@ class SignatureRepository extends BaseRepository {
 	/**
 	 * Columns selected for list summaries (no LONGTEXT blobs).
 	 */
-	private const SUMMARY_COLUMNS = 'id, user_id, name, preview_url, template_id, status, schema_version, created_at, updated_at';
+	private const SUMMARY_COLUMNS = 'id, user_id, name, preview_url, template_id, status, schema_version, html_cache IS NOT NULL AS has_html, compiled_at, created_at, updated_at';
 
 	/**
 	 * Per-request cache of owned rows, keyed `"{id}:{user_id}"`, so the
@@ -326,12 +326,17 @@ class SignatureRepository extends BaseRepository {
 			'schema_version' => (string) ( $data['schema_version'] ?? '1.0' ),
 			'created_at'     => $now,
 			'updated_at'     => $now,
+			'html_text'      => $data['html_text'] ?? null,
+			'html_hash'      => $data['html_hash'] ?? null,
+			// A compile sent with the create belongs to this exact row
+			// state, so it is stamped with the same instant as updated_at.
+			'compiled_at'    => isset( $data['html_cache'] ) ? $now : null,
 		];
 
 		$inserted = $this->wpdb->insert(
 			$this->table(),
 			$row,
-			[ '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s' ]
+			[ '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' ]
 		);
 
 		// `$wpdb->insert` returns false on actual SQL failure (vs zero
@@ -388,6 +393,8 @@ class SignatureRepository extends BaseRepository {
 			'template_id'    => '%d',
 			'status'         => '%s',
 			'schema_version' => '%s',
+			'html_text'      => '%s',
+			'html_hash'      => '%s',
 		];
 
 		$update  = [];
@@ -405,6 +412,13 @@ class SignatureRepository extends BaseRepository {
 
 		$update['updated_at'] = $this->now();
 		$formats[]            = '%s';
+
+		// HTML compiled alongside this write describes exactly this row
+		// state: stamp it with the same instant so it isn't seen as stale.
+		if ( array_key_exists( 'html_cache', $data ) ) {
+			$update['compiled_at'] = $update['updated_at'];
+			$formats[]             = '%s';
+		}
 
 		$this->forget( $id );
 

@@ -1,30 +1,30 @@
 {
-  "_templateCategories-DxHZNAsL.js": {
-    "file": "templateCategories-DxHZNAsL.js",
-    "name": "templateCategories"
+  "_brandKit-hRDqOUvV.js": {
+    "file": "brandKit-hRDqOUvV.js",
+    "name": "brandKit"
   },
   "assets/admin/src/main.tsx": {
-    "file": "admin.CBYutaei.js",
+    "file": "admin.Bcpn41T6.js",
     "name": "admin",
     "src": "assets/admin/src/main.tsx",
     "isEntry": true,
     "imports": [
-      "_templateCategories-DxHZNAsL.js"
+      "_brandKit-hRDqOUvV.js"
     ],
     "css": [
-      "admin.COyDYp2O.css"
+      "admin.BXWN-oVN.css"
     ]
   },
   "assets/editor/src/main.tsx": {
-    "file": "editor.BmObw7Gq.js",
+    "file": "editor.cF5M3wA6.js",
     "name": "editor",
     "src": "assets/editor/src/main.tsx",
     "isEntry": true,
     "imports": [
-      "_templateCategories-DxHZNAsL.js"
+      "_brandKit-hRDqOUvV.js"
     ],
     "css": [
-      "editor.pSAzxR8X.css"
+      "editor.DuBYWj70.css"
     ]
   }
 }

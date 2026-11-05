@@ -20,6 +20,7 @@ import { useSchemaStore } from '@/stores/schemaStore';
 import { usePersistenceStore } from '@/stores/persistenceStore';
 import { useToastStore } from '@/stores/toastStore';
 import type { SignatureSchema } from '@/core/schema/signature';
+import { compileSignature } from '@/core/compiler/compile';
 import { __ } from '@/i18n/helpers';
 
 /** Delay between the last edit and the autosave. */
@@ -74,6 +75,16 @@ export function sameJson(a: unknown, b: unknown): boolean {
 function isEmptyContainer(value: unknown): boolean {
   if (Array.isArray(value)) return value.length === 0;
   return value !== null && typeof value === 'object' && Object.keys(value).length === 0;
+}
+
+/** Fragment + plain text for the server copy, or null if compiling threw. */
+function compileForServer(schema: SignatureSchema): { html: string; text: string } | null {
+  try {
+    const result = compileSignature(schema);
+    return { html: result.fragment, text: result.text };
+  } catch {
+    return null;
+  }
 }
 
 class Persistence {
@@ -172,17 +183,28 @@ class Persistence {
 
     persistence.markSaving();
 
+    // The server keeps the compiled signature so it can deploy it on its
+    // own (Gmail, Outlook add-in, install links). A compile failure must
+    // never block saving the design itself.
+    const compiled = compileForServer(schema);
+    const body = {
+      name: rowName,
+      status: rowStatus,
+      json_content: schema,
+      ...(compiled ? { html: compiled.html, text: compiled.text } : {}),
+    };
+
     try {
       let response: SaveResponse;
       if (this.signatureId > 0) {
         response = await apiCall<SaveResponse>(`/signatures/${this.signatureId}`, {
           method: 'PATCH',
-          body: { name: rowName, status: rowStatus, json_content: schema },
+          body,
         });
       } else {
         response = await apiCall<SaveResponse>('/signatures', {
           method: 'POST',
-          body: { name: rowName, status: rowStatus, json_content: schema },
+          body,
         });
         if (typeof response?.id !== 'number' || response.id <= 0) {
           throw new Error(__('The server returned no signature id.'));

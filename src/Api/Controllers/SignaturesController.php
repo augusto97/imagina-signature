@@ -180,6 +180,18 @@ final class SignaturesController extends BaseController {
 
 		register_rest_route(
 			self::NAMESPACE,
+			'/signatures/(?P<id>\d+)/primary',
+			[
+				[
+					'methods'             => 'POST',
+					'callback'            => [ $this, 'make_primary' ],
+					'permission_callback' => $ownership,
+				],
+			]
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
 			'/signatures/test-send',
 			[
 				[
@@ -249,9 +261,13 @@ final class SignaturesController extends BaseController {
 		$items = $this->repo->find_by_user( $user_id, $args );
 		$total = $this->repo->count_by_user( $user_id, $args );
 
+		$primary_id = $this->service->primary_id_for_user( $user_id );
+
 		$payload = [];
 		foreach ( $items as $signature ) {
-			$payload[] = $full ? $signature->to_array() : $signature->to_summary_array();
+			$row               = $full ? $signature->to_array() : $signature->to_summary_array();
+			$row['is_primary'] = $signature->id === $primary_id;
+			$payload[]         = $row;
 		}
 
 		return $this->paginated_response( $payload, $total, (int) $args['per_page'] );
@@ -418,6 +434,28 @@ final class SignaturesController extends BaseController {
 	}
 
 	/**
+	 * `POST /signatures/:id/primary` — marks the signature as the one
+	 * deployed for its owner (Gmail push, Outlook add-in, install link).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param \WP_REST_Request $request Inbound.
+	 *
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function make_primary( \WP_REST_Request $request ) {
+		try {
+			$signature = $this->service->set_primary( get_current_user_id(), (int) $request->get_param( 'id' ) );
+		} catch ( ImaginaSignaturesException $e ) {
+			return $this->exception_to_wp_error( $e );
+		}
+
+		$row               = $signature->to_summary_array();
+		$row['is_primary'] = true;
+		return rest_ensure_response( $row );
+	}
+
+	/**
 	 * `POST /signatures/test-send` — emails the compiled HTML to the
 	 * current user's own address so they can copy / paste it from their
 	 * real mail client.
@@ -581,6 +619,13 @@ final class SignaturesController extends BaseController {
 			$payload['json_content'] = $request->get_param( 'json_content' );
 		}
 
+		if ( is_string( $request->get_param( 'html' ) ) ) {
+			$payload['html'] = (string) $request->get_param( 'html' );
+			if ( is_string( $request->get_param( 'text' ) ) ) {
+				$payload['text'] = (string) $request->get_param( 'text' );
+			}
+		}
+
 		return $payload;
 	}
 
@@ -655,6 +700,14 @@ final class SignaturesController extends BaseController {
 			],
 			'json_content' => [
 				'type' => 'object',
+			],
+			// Compiled signature fragment + plain text (1.3.0). The
+			// service sanitises them with the email-safe allowlist.
+			'html'         => [
+				'type' => 'string',
+			],
+			'text'         => [
+				'type' => 'string',
 			],
 		];
 	}

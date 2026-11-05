@@ -54,6 +54,13 @@ class SignatureService {
 	private SchemaSanitizer $sanitizer;
 
 	/**
+	 * Email-safe sanitiser for compiled HTML sent by the editor.
+	 *
+	 * @var HtmlSanitizer
+	 */
+	private HtmlSanitizer $html_sanitizer;
+
+	/**
 	 * Notes produced by the sanitizer during the last create / update.
 	 *
 	 * @var array<int, array{path: string, message: string}>
@@ -68,7 +75,104 @@ class SignatureService {
 	public function __construct( SignatureRepository $repo, JsonSchemaValidator $validator, ?SchemaSanitizer $sanitizer = null ) {
 		$this->repo      = $repo;
 		$this->validator = $validator;
-		$this->sanitizer = $sanitizer ?? new SchemaSanitizer( new HtmlSanitizer() );
+		$this->sanitizer      = $sanitizer ?? new SchemaSanitizer( new HtmlSanitizer() );
+		$this->html_sanitizer = new HtmlSanitizer();
+	}
+
+	/**
+	 * User meta key holding the id of the user's primary signature —
+	 * the one deployed to Gmail / Outlook and shown on install links.
+	 */
+	public const PRIMARY_META_KEY = 'imgsig_primary_signature';
+
+	/** Largest compiled HTML accepted on save, in bytes. */
+	public const MAX_HTML_BYTES = 200 * 1024;
+
+	/** Largest plain-text alternative accepted on save, in bytes. */
+	public const MAX_TEXT_BYTES = 20 * 1024;
+
+	/**
+	 * The signature a user deploys: the one they marked as primary if
+	 * it still exists, else their most recently updated "ready" one,
+	 * else their most recently updated one. Null when they have none.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int $user_id Owner.
+	 *
+	 * @return Signature|null
+	 */
+	public function primary_for_user( int $user_id ): ?Signature {
+		$marked = (int) get_user_meta( $user_id, self::PRIMARY_META_KEY, true );
+		if ( $marked > 0 ) {
+			$signature = $this->repo->find_owned_by( $marked, $user_id );
+			if ( null !== $signature ) {
+				return $signature;
+			}
+		}
+
+		foreach ( [ Signature::STATUS_READY, '' ] as $status ) {
+			$args = [
+				'per_page' => 1,
+				'order_by' => 'updated_at',
+				'order'    => 'desc',
+			];
+			if ( '' !== $status ) {
+				$args['status'] = $status;
+			}
+			$rows = $this->repo->find_by_user( $user_id, $args );
+			if ( ! empty( $rows ) ) {
+				return $rows[0];
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Marks one of the user's signatures as primary.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int $user_id      Owner.
+	 * @param int $signature_id Signature to mark.
+	 *
+	 * @return Signature
+	 *
+	 * @throws OwnershipException When the signature isn't the user's.
+	 */
+	public function set_primary( int $user_id, int $signature_id ): Signature {
+		$signature = $this->repo->find_owned_by( $signature_id, $user_id );
+		if ( null === $signature ) {
+			throw new OwnershipException( __( 'Signature not found or not owned by the caller.', 'imagina-signatures' ) );
+		}
+		update_user_meta( $user_id, self::PRIMARY_META_KEY, $signature_id );
+
+		/**
+		 * Fires after a user's primary signature changes.
+		 *
+		 * @since 1.3.0
+		 *
+		 * @param int $user_id      Owner.
+		 * @param int $signature_id New primary signature.
+		 */
+		do_action( 'imgsig/signature/primary_changed', $user_id, $signature_id );
+
+		return $signature;
+	}
+
+	/**
+	 * Id of the signature currently treated as primary (0 when none).
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int $user_id Owner.
+	 *
+	 * @return int
+	 */
+	public function primary_id_for_user( int $user_id ): int {
+		$primary = $this->primary_for_user( $user_id );
+		return null === $primary ? 0 : $primary->id;
 	}
 
 	/**
@@ -372,6 +476,38 @@ class SignatureService {
 
 		if ( array_key_exists( 'template_id', $data ) ) {
 			$prepared['template_id'] = (int) $data['template_id'];
+		}
+
+		// Compiled output from the editor (1.3.0). The browser is the only
+		// compiler; the server stores a sanitised copy so it can deploy
+		// the signature (Gmail, Outlook, install links) on its own.
+		if ( array_key_exists( 'html', $data ) && is_string( $data['html'] ) ) {
+			$raw_html = $data['html'];
+			if ( strlen( $raw_html ) > self::MAX_HTML_BYTES ) {
+				throw new ValidationException(
+					__( 'The compiled signature is too large to store.', 'imagina-signatures' ),
+					[
+						[
+							'path'    => 'html',
+							'message' => sprintf(
+								/* translators: %d: maximum size in KB. */
+								__( 'Maximum %d KB.', 'imagina-signatures' ),
+								(int) ( self::MAX_HTML_BYTES / 1024 )
+							),
+						],
+					]
+				);
+			}
+			$html                   = '' === trim( $raw_html ) ? '' : $this->html_sanitizer->sanitize_email_document( $raw_html );
+			$prepared['html_cache'] = $html;
+			$prepared['html_hash']  = '' === $html ? null : hash( 'sha256', $html );
+
+			$text = array_key_exists( 'text', $data ) && is_string( $data['text'] ) ? $data['text'] : $this->html_sanitizer->to_plain_text( $html );
+			$text = wp_strip_all_tags( $text );
+			if ( strlen( $text ) > self::MAX_TEXT_BYTES ) {
+				$text = substr( $text, 0, self::MAX_TEXT_BYTES );
+			}
+			$prepared['html_text'] = $text;
 		}
 
 		if ( array_key_exists( 'json_content', $data ) ) {

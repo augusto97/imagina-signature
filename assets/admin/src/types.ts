@@ -75,6 +75,10 @@ export interface SignatureRow {
   template_id: number | null;
   status: 'draft' | 'ready' | 'archived';
   schema_version: string;
+  /** The one deployed to Gmail / Outlook / install links (1.3.0). */
+  is_primary?: boolean;
+  /** UTC time the server copy of the HTML was compiled (1.3.0). */
+  compiled_at?: string | null;
   created_at: string;
   updated_at: string;
 }

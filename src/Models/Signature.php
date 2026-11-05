@@ -64,6 +64,36 @@ final class Signature extends BaseModel {
 	public ?string $html_cache = null;
 
 	/**
+	 * Plain-text alternative of the compiled signature (1.3.0).
+	 *
+	 * @var string|null
+	 */
+	public ?string $html_text = null;
+
+	/**
+	 * SHA-256 of `html_cache` (1.3.0).
+	 *
+	 * @var string|null
+	 */
+	public ?string $html_hash = null;
+
+	/**
+	 * UTC time the HTML was last compiled (1.3.0). Older than
+	 * `updated_at` means the stored HTML is stale.
+	 *
+	 * @var string|null
+	 */
+	public ?string $compiled_at = null;
+
+	/**
+	 * Whether compiled HTML exists. Set from the summary projection,
+	 * which doesn't load the `html_cache` blob itself.
+	 *
+	 * @var bool
+	 */
+	public bool $has_html = false;
+
+	/**
 	 * URL to a preview image, or null.
 	 *
 	 * @var string|null
@@ -114,6 +144,12 @@ final class Signature extends BaseModel {
 		$model->name           = isset( $row['name'] ) ? (string) $row['name'] : '';
 		$model->json_content   = isset( $row['json_content'] ) ? (string) $row['json_content'] : '';
 		$model->html_cache     = isset( $row['html_cache'] ) && null !== $row['html_cache'] ? (string) $row['html_cache'] : null;
+		$model->html_text      = isset( $row['html_text'] ) && null !== $row['html_text'] ? (string) $row['html_text'] : null;
+		$model->html_hash      = isset( $row['html_hash'] ) && null !== $row['html_hash'] ? (string) $row['html_hash'] : null;
+		$model->compiled_at    = isset( $row['compiled_at'] ) && null !== $row['compiled_at'] ? (string) $row['compiled_at'] : null;
+		$model->has_html       = array_key_exists( 'has_html', $row )
+			? (bool) (int) $row['has_html']
+			: ( null !== $model->html_cache && '' !== $model->html_cache );
 		$model->preview_url    = isset( $row['preview_url'] ) && null !== $row['preview_url'] ? (string) $row['preview_url'] : null;
 		$model->template_id    = isset( $row['template_id'] ) && null !== $row['template_id'] ? (int) $row['template_id'] : null;
 		$model->status         = isset( $row['status'] ) ? (string) $row['status'] : self::STATUS_DRAFT;
@@ -140,9 +176,25 @@ final class Signature extends BaseModel {
 			'template_id'    => $this->template_id,
 			'status'         => $this->status,
 			'schema_version' => $this->schema_version,
+			'compiled_at'    => $this->compiled_at,
+			'html_stale'     => $this->is_html_stale(),
 			'created_at'     => $this->created_at,
 			'updated_at'     => $this->updated_at,
 		];
+	}
+
+	/**
+	 * True when there is no compiled HTML, or it predates the last edit.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return bool
+	 */
+	public function is_html_stale(): bool {
+		if ( ! $this->has_html || null === $this->compiled_at ) {
+			return true;
+		}
+		return strcmp( $this->compiled_at, $this->updated_at ) < 0;
 	}
 
 	/**
@@ -162,6 +214,9 @@ final class Signature extends BaseModel {
 			'name'           => $this->name,
 			'json_content'   => is_array( $decoded ) ? SchemaShape::restore_objects( $decoded ) : [],
 			'html_cache'     => $this->html_cache,
+			'html_text'      => $this->html_text,
+			'compiled_at'    => $this->compiled_at,
+			'html_stale'     => $this->is_html_stale(),
 			'preview_url'    => $this->preview_url,
 			'template_id'    => $this->template_id,
 			'status'         => $this->status,
