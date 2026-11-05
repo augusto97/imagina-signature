@@ -318,7 +318,7 @@ final class BrandKit {
 	}
 
 	/**
-	 * http(s) URL or ''.
+	 * Absolute http(s) URL, or '' when the value is anything else.
 	 *
 	 * @param string $value Raw URL.
 	 *
