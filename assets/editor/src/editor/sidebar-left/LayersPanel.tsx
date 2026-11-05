@@ -37,9 +37,12 @@ import { cn } from '@/utils/cn';
  * pointer sensor and ID space).
  *
  * Drop semantics inside the panel:
- *   - Drop on a regular block row    → move AFTER that row's block
+ *   - Drop on a regular block row    → move next to that row's block
  *     (uses `moveBlock` which walks both Container cells via
- *     `findParentAndIndex`).
+ *     `findParentAndIndex`). The rows shift out of the way while
+ *     dragging (sortable list), so the side matches what the user
+ *     sees: dragging DOWN lands after the target, dragging UP lands
+ *     before it — which is what makes "drag to the very top" work.
  *   - Drop on a "Left cell" / "Right cell" zone of a Container →
  *     append to that cell.
  *
@@ -72,6 +75,11 @@ function parseLayersCellDropId(id: string): {
  * `items` array — dnd-kit needs to know about every sortable id
  * that participates in the same context.
  */
+function sortableIndexOf(data: unknown): number | null {
+  const index = (data as { sortable?: { index?: unknown } } | undefined)?.sortable?.index;
+  return typeof index === 'number' ? index : null;
+}
+
 function flattenBlockIds(blocks: Block[]): string[] {
   const ids: string[] = [];
   for (const block of blocks) {
@@ -117,10 +125,16 @@ export const LayersPanel: FC = () => {
       return;
     }
 
-    // Drop on another block row → reorder after it. `moveBlock`
-    // walks both cells of every container, so this works for top-
-    // level AND cross-cell drags.
-    moveBlock(activeId, overId, 'after');
+    // Drop on another block row → reorder next to it. Rows live in
+    // one flat SortableContext (pre-order), so comparing sortable
+    // indices tells whether the drag went down (→ after) or up
+    // (→ before). `moveBlock` walks both cells of every container, so
+    // this works for top-level AND cross-cell drags.
+    const activeIndex = sortableIndexOf(active.data.current);
+    const overIndex = sortableIndexOf(over.data.current);
+    const position =
+      activeIndex !== null && overIndex !== null && overIndex < activeIndex ? 'before' : 'after';
+    moveBlock(activeId, overId, position);
   };
 
   if (blocks.length === 0) {
@@ -248,7 +262,7 @@ const LayerRow: FC<LayerRowProps> = ({ block, depth, index, siblingsCount, dragg
               )}
             />
           )}
-          <span className="truncate font-medium">{def?.label ?? block.type}</span>
+          <span className="truncate font-medium">{def ? __(def.label) : block.type}</span>
           <span className="ml-1 truncate text-[11px] font-normal text-[var(--text-muted)]">
             {labelForBlock(block)}
           </span>
@@ -445,7 +459,10 @@ function labelForBlock(block: Block): string {
     case 'container': {
       const c = block as ContainerBlock;
       const total = c.children.length + (Array.isArray(c.right_children) ? c.right_children.length : 0);
-      raw = `${c.columns}-col, ${total} item${total === 1 ? '' : 's'}`;
+      raw =
+        total === 1
+          ? __('%s-col, 1 item', String(c.columns))
+          : __('%s-col, %s items', String(c.columns), String(total));
       break;
     }
     default:

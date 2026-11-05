@@ -26,8 +26,17 @@ export interface AppConfig {
   userId: number;
   /** REST API base, e.g. `https://example.com/wp-json/imagina-signatures/v1`. */
   apiBase: string;
-  /** WP REST nonce; sent as `X-WP-Nonce` on every request. */
+  /**
+   * WP REST nonce; sent as `X-WP-Nonce` on every request. Mutable:
+   * the API client refreshes it in place when it expires.
+   */
   restNonce: string;
+  /**
+   * Absolute URL of `wp-admin/admin-ajax.php`, used to fetch a fresh
+   * REST nonce (`?action=rest-nonce`). Optional for back-compat; the
+   * client falls back to `${location.origin}/wp-admin/admin-ajax.php`.
+   */
+  ajaxUrl?: string;
   /** WP locale code (e.g. `en_US`, `es_ES`). */
   locale: string;
   /** Plugin URL for static asset references. */

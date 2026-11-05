@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useSchemaStore } from '@/stores/schemaStore';
+import { useSchemaStore, endHistoryBurst } from '@/stores/schemaStore';
 import { useHistoryStore } from '@/stores/historyStore';
 import { createEmptySchema } from '@/core/schema/signature';
 import type { TextBlock } from '@/core/schema/blocks';
@@ -31,15 +31,16 @@ describe('schemaStore', () => {
     expect(useHistoryStore.getState().past.length).toBe(2);
   });
 
-  it('updateBlock mutates fields without pushing history', () => {
+  it('updateBlock mutates fields and opens one undo step per edit burst', () => {
     useSchemaStore.getState().addBlock(sample('a'));
     useHistoryStore.setState({ past: [], future: [] });
+    endHistoryBurst();
 
     useSchemaStore.getState().updateBlock('a', { content: 'changed' });
 
     const block = useSchemaStore.getState().schema.blocks[0] as TextBlock;
     expect(block.content).toBe('changed');
-    expect(useHistoryStore.getState().past.length).toBe(0);
+    expect(useHistoryStore.getState().past.length).toBe(1);
   });
 
   it('moveBlock reorders to "before" / "after" target', () => {

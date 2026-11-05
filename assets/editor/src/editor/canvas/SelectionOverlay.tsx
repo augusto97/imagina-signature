@@ -16,7 +16,13 @@ interface Props {
  * of a border on the wrapper itself so it doesn't mess with the
  * table-based block layout. Selected uses a 1px solid ring with an
  * outer offset glow so the boundary reads cleanly without feeling
- * heavy; hover is a 1px dashed neutral border.
+ * heavy; hover is a 1px neutral ring.
+ *
+ * Nesting: blocks inside a container render their own overlay inside
+ * the container's. Hover uses `mouseover` + `stopPropagation` so the
+ * innermost block under the pointer is the hovered one (moving from a
+ * child back onto the container's own area re-hovers the container),
+ * and click selection stops propagation the same way.
  */
 export const SelectionOverlay: FC<Props> = ({
   selected,
@@ -36,7 +42,7 @@ export const SelectionOverlay: FC<Props> = ({
   } else if (hovered) {
     overlayStyle = {
       ...overlayStyle,
-      boxShadow: '0 0 0 1px var(--border-default)',
+      boxShadow: '0 0 0 1px var(--border-strong)',
       borderRadius: 4,
     };
   }
@@ -44,7 +50,10 @@ export const SelectionOverlay: FC<Props> = ({
   return (
     <div
       className="relative"
-      onMouseEnter={onHoverEnter}
+      onMouseOver={(e) => {
+        e.stopPropagation();
+        onHoverEnter();
+      }}
       onMouseLeave={onHoverLeave}
       onClick={(e) => {
         e.stopPropagation();

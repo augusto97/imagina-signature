@@ -1,3 +1,4 @@
+import { createRestNonceManager } from '@shared/restNonce';
 import type { AppConfig } from './types';
 
 /**
@@ -56,9 +57,29 @@ interface ApiCallOptions extends Omit<RequestInit, 'body'> {
 }
 
 /**
+ * REST nonce lifecycle for the editor (see `assets/shared/restNonce.ts`).
+ * Refreshes `IMGSIG_EDITOR_CONFIG.restNonce` in place — any code that
+ * reads `getConfig().restNonce` (e.g. upload helpers) gets the fresh
+ * value automatically.
+ */
+const nonceManager = createRestNonceManager(getConfig);
+
+/**
+ * Fetch a fresh REST nonce now (normally automatic: on a nonce error
+ * and every 10 h). Resolves the new nonce, or null when WordPress
+ * refused (e.g. the user was logged out).
+ */
+export function refreshRestNonce(): Promise<string | null> {
+  return nonceManager.refresh();
+}
+
+/**
  * Performs a REST call against the plugin's namespace.
  *
  * - Authentication: WP cookie + `X-WP-Nonce` header (CLAUDE.md §14.4 / §16.1).
+ * - A `401/403` nonce failure (`rest_cookie_invalid_nonce`, i.e. the
+ *   tab outlived the nonce) refreshes the nonce from WordPress and
+ *   retries the request once, so long-open editors keep saving.
  * - Request body is JSON-encoded automatically when present.
  * - Error envelope is unwrapped into a typed {@link ApiError}.
  */
@@ -67,29 +88,32 @@ export async function apiCall<T = unknown>(path: string, options: ApiCallOptions
   const url = `${config.apiBase}${path.startsWith('/') ? path : `/${path}`}`;
   const { body, headers, ...rest } = options;
 
-  const init: RequestInit = {
-    ...rest,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-WP-Nonce': config.restNonce,
-      Accept: 'application/json',
-      ...(headers ?? {}),
-    },
+  const buildInit = (nonce: string): RequestInit => {
+    const init: RequestInit = {
+      ...rest,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-WP-Nonce': nonce,
+        Accept: 'application/json',
+        ...(headers ?? {}),
+      },
+    };
+
+    if (body !== undefined && body !== null) {
+      init.body = body instanceof FormData ? body : JSON.stringify(body);
+      if (body instanceof FormData) {
+        // Browsers must set the multipart boundary themselves — the
+        // 'Content-Type' header above gets in the way.
+        const next = { ...(init.headers as Record<string, string>) };
+        delete next['Content-Type'];
+        init.headers = next;
+      }
+    }
+    return init;
   };
 
-  if (body !== undefined && body !== null) {
-    init.body = body instanceof FormData ? body : JSON.stringify(body);
-    if (body instanceof FormData) {
-      // Browsers must set the multipart boundary themselves — the
-      // 'Content-Type' header above gets in the way.
-      const next = { ...(init.headers as Record<string, string>) };
-      delete next['Content-Type'];
-      init.headers = next;
-    }
-  }
-
-  const response = await fetch(url, init);
+  const response = await nonceManager.fetchWithNonce(url, buildInit);
 
   if (!response.ok) {
     let payload: { code?: string; message?: string; data?: unknown } = {};

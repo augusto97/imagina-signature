@@ -38,7 +38,12 @@ export const RightSidebar: FC = () => {
         </div>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {block ? <PropertyPanel block={block} /> : <CanvasProperties />}
+        {/* Keyed by block id so moving the selection from one block to
+            another (or to a block of the same type) mounts a fresh
+            panel. Without the key React reused the previous block's
+            panel instance — its Tiptap editor kept block A's text and
+            typing then wrote that text into block B. */}
+        {block ? <PropertyPanel key={block.id} block={block} /> : <CanvasProperties />}
       </div>
     </aside>
   );

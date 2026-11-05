@@ -16,8 +16,14 @@ export interface AdminConfig {
   };
   /** REST API base, e.g. `https://example.com/wp-json/imagina-signatures/v1`. */
   apiBase: string;
-  /** WP REST nonce. */
+  /** WP REST nonce. Mutable: the API client refreshes it in place when it expires. */
   restNonce: string;
+  /**
+   * Absolute URL of `wp-admin/admin-ajax.php`, used to fetch a fresh
+   * REST nonce (`?action=rest-nonce`). Optional for back-compat; the
+   * client falls back to `${location.origin}/wp-admin/admin-ajax.php`.
+   */
+  ajaxUrl?: string;
   /** WP locale code. */
   locale: string;
   /** URL of the wp-admin home (so the breadcrumb back-link goes somewhere sensible). */

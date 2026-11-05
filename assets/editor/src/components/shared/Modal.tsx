@@ -33,6 +33,9 @@ export const Modal: FC<Props> = ({ open, title, onClose, children, width = 560 }
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         className="relative max-h-[90vh] overflow-auto rounded-lg bg-[var(--bg-panel)] shadow-xl"
         style={{ width }}
         onClick={(e) => e.stopPropagation()}
