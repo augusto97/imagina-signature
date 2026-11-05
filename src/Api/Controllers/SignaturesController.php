@@ -213,7 +213,9 @@ final class SignaturesController extends BaseController {
 	 * @return bool
 	 */
 	public function owns_signature( int $signature_id, int $user_id ): bool {
-		return null !== $this->repo->find_owned_by( $signature_id, $user_id );
+		// `SELECT 1` — the permission callback only needs a yes/no; the
+		// handler fetches the row it actually uses.
+		return $this->repo->exists_owned_by( $signature_id, $user_id );
 	}
 
 	/**
@@ -227,13 +229,21 @@ final class SignaturesController extends BaseController {
 	 */
 	public function index( \WP_REST_Request $request ): \WP_REST_Response {
 		$user_id = get_current_user_id();
-		$args    = [
+
+		// List rows are a summary projection (no json_content /
+		// html_cache — the LONGTEXT columns aren't even selected) unless
+		// the caller asks for `context=edit`. GET /signatures/:id still
+		// returns the full row.
+		$full = 'edit' === $request->get_param( 'context' );
+
+		$args = [
 			'status'   => $request->get_param( 'status' ),
 			'search'   => $request->get_param( 'search' ),
 			'page'     => $this->read_int( $request, 'page', 1 ),
 			'per_page' => $this->read_int( $request, 'per_page', 20 ),
 			'order_by' => $request->get_param( 'order_by' ),
 			'order'    => $request->get_param( 'order' ),
+			'fields'   => $full ? 'all' : 'summary',
 		];
 
 		$items = $this->repo->find_by_user( $user_id, $args );
@@ -241,7 +251,7 @@ final class SignaturesController extends BaseController {
 
 		$payload = [];
 		foreach ( $items as $signature ) {
-			$payload[] = $signature->to_array();
+			$payload[] = $full ? $signature->to_array() : $signature->to_summary_array();
 		}
 
 		return $this->paginated_response( $payload, $total, (int) $args['per_page'] );
@@ -325,6 +335,8 @@ final class SignaturesController extends BaseController {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function show( \WP_REST_Request $request ) {
+		// Served from the repository's request cache when the service
+		// already loaded this row.
 		$signature = $this->repo->find_owned_by( (int) $request['id'], get_current_user_id() );
 		if ( null === $signature ) {
 			return new \WP_Error(
@@ -608,6 +620,11 @@ final class SignaturesController extends BaseController {
 			'order'    => [
 				'type' => 'string',
 				'enum' => [ 'asc', 'desc' ],
+			],
+			'context'  => [
+				'type'    => 'string',
+				'enum'    => [ 'view', 'edit' ],
+				'default' => 'view',
 			],
 		];
 	}

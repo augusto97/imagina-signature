@@ -38,6 +38,20 @@ class SignatureRepository extends BaseRepository {
 	public const ALLOWED_ORDER_BY = [ 'updated_at', 'created_at', 'name' ];
 
 	/**
+	 * Columns selected for list summaries (no LONGTEXT blobs).
+	 */
+	private const SUMMARY_COLUMNS = 'id, user_id, name, preview_url, template_id, status, schema_version, created_at, updated_at';
+
+	/**
+	 * Per-request cache of owned rows, keyed `"{id}:{user_id}"`, so the
+	 * same row isn't re-read by the controller after the service loaded
+	 * it. Invalidated on every write to that id.
+	 *
+	 * @var array<string, Signature>
+	 */
+	private array $owned_cache = [];
+
+	/**
 	 * @inheritDoc
 	 */
 	protected function table(): string {
@@ -78,6 +92,11 @@ class SignatureRepository extends BaseRepository {
 	 * @return Signature|null
 	 */
 	public function find_owned_by( int $signature_id, int $user_id ): ?Signature {
+		$cache_key = $signature_id . ':' . $user_id;
+		if ( isset( $this->owned_cache[ $cache_key ] ) ) {
+			return $this->owned_cache[ $cache_key ];
+		}
+
 		$row = $this->wpdb->get_row(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 			$this->wpdb->prepare(
@@ -88,7 +107,55 @@ class SignatureRepository extends BaseRepository {
 			ARRAY_A
 		);
 
-		return is_array( $row ) ? Signature::from_row( $row ) : null;
+		if ( ! is_array( $row ) ) {
+			return null;
+		}
+
+		$signature                       = Signature::from_row( $row );
+		$this->owned_cache[ $cache_key ] = $signature;
+		return $signature;
+	}
+
+	/**
+	 * Cheap ownership probe (`SELECT 1`) for permission callbacks.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param int $signature_id Primary key.
+	 * @param int $user_id      Owner's user ID.
+	 *
+	 * @return bool
+	 */
+	public function exists_owned_by( int $signature_id, int $user_id ): bool {
+		if ( isset( $this->owned_cache[ $signature_id . ':' . $user_id ] ) ) {
+			return true;
+		}
+
+		$found = $this->wpdb->get_var(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$this->wpdb->prepare(
+				"SELECT 1 FROM {$this->table()} WHERE id = %d AND user_id = %d LIMIT 1",
+				$signature_id,
+				$user_id
+			)
+		);
+
+		return null !== $found;
+	}
+
+	/**
+	 * Drops cached rows for an id (after any write to it).
+	 *
+	 * @param int $signature_id Primary key.
+	 *
+	 * @return void
+	 */
+	private function forget( int $signature_id ): void {
+		foreach ( array_keys( $this->owned_cache ) as $key ) {
+			if ( 0 === strpos( $key, $signature_id . ':' ) ) {
+				unset( $this->owned_cache[ $key ] );
+			}
+		}
 	}
 
 	/**
@@ -125,6 +192,8 @@ class SignatureRepository extends BaseRepository {
 	 *  - `per_page` int          Items per page (default 20, max 100).
 	 *  - `order_by` string       Column from {@see ALLOWED_ORDER_BY}.
 	 *  - `order`    string       `asc` | `desc` (default `desc`).
+	 *  - `fields`   string       `all` (default) | `summary` — summary skips
+	 *                            the json_content / html_cache LONGTEXTs.
 	 *
 	 * @since 1.0.0
 	 *
@@ -145,9 +214,11 @@ class SignatureRepository extends BaseRepository {
 		$page     = max( 1, (int) ( $args['page'] ?? 1 ) );
 		$offset   = ( $page - 1 ) * $per_page;
 
+		$columns = 'summary' === ( $args['fields'] ?? 'all' ) ? self::SUMMARY_COLUMNS : '*';
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		$sql = $this->wpdb->prepare(
-			"SELECT * FROM {$this->table()} WHERE {$where_sql} ORDER BY {$order_by} {$order} LIMIT %d OFFSET %d",
+			"SELECT {$columns} FROM {$this->table()} WHERE {$where_sql} ORDER BY {$order_by} {$order} LIMIT %d OFFSET %d",
 			...array_merge( $where_values, [ $per_page, $offset ] )
 		);
 
@@ -298,6 +369,8 @@ class SignatureRepository extends BaseRepository {
 		$update['updated_at'] = $this->now();
 		$formats[]            = '%s';
 
+		$this->forget( $id );
+
 		// `$wpdb->update` returns false on SQL failure or int (rows
 		// affected) on success. Zero rows affected is fine — it means
 		// the new values matched the stored values, NOT that the write
@@ -332,6 +405,7 @@ class SignatureRepository extends BaseRepository {
 	 * @return bool True when at least one row was deleted.
 	 */
 	public function delete( int $id ): bool {
+		$this->forget( $id );
 		$rows = $this->wpdb->delete( $this->table(), [ 'id' => $id ], [ '%d' ] );
 		return is_int( $rows ) && $rows > 0;
 	}

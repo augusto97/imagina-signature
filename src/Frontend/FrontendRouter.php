@@ -156,6 +156,30 @@ final class FrontendRouter {
 	}
 
 	/**
+	 * Removes this plugin's rules from the in-memory rewrite registry
+	 * (they were added on `init` of the current request), so a
+	 * following `flush_rewrite_rules()` — e.g. on deactivation — doesn't
+	 * persist them again.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return void
+	 */
+	public static function unregister_rewrite_rules(): void {
+		global $wp_rewrite;
+
+		if ( ! is_object( $wp_rewrite ) || ! isset( $wp_rewrite->extra_rules_top ) || ! is_array( $wp_rewrite->extra_rules_top ) ) {
+			return;
+		}
+
+		foreach ( array_keys( $wp_rewrite->extra_rules_top ) as $regex ) {
+			if ( false !== strpos( (string) $wp_rewrite->extra_rules_top[ $regex ], self::QV_VIEW . '=' ) ) {
+				unset( $wp_rewrite->extra_rules_top[ $regex ] );
+			}
+		}
+	}
+
+	/**
 	 * Registers our query vars so WP keeps them on the request after
 	 * matching the rewrite rule.
 	 *
