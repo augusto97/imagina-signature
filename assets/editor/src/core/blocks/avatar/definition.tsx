@@ -9,6 +9,7 @@ import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
 import { attr, horizontalPadding, intPx, paddingCss } from '@/core/compiler/css';
 import { checkAlt, clampToAvailable, markerAttr } from '@/core/compiler/issues';
 import { isUploadEnabled } from '@/bridge/apiClient';
+import { ImageUploadButton } from '../image/definition';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: AvatarBlock }> = ({ block }) => {
@@ -47,18 +48,29 @@ const Properties: FC<{ block: AvatarBlock; onChange: (u: Partial<AvatarBlock>) =
   const [cropping, setCropping] = useState(false);
   return (
     <div className="space-y-3 text-xs">
-      <label className="block">
+      <div className="block">
         <span className="mb-1 block text-[var(--text-secondary)]">{__('Image URL')}</span>
-        <input
-          type="url"
-          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
-          value={block.src}
-          onChange={(e) => onChange({ src: e.target.value })}
-        />
-      </label>
-      {/* Crop emits a data-URL into block.src — disabled in URL-only
-          mode (1.0.29) since that would defeat the no-uploads
-          contract. */}
+        <div className="flex items-center gap-1.5">
+          <input
+            type="url"
+            aria-label={__('Image URL')}
+            className="w-full min-w-0 rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
+            value={block.src}
+            onChange={(e) => onChange({ src: e.target.value })}
+          />
+          {/* Uploads are centre-cropped to a square with a circular
+              alpha mask so the avatar is round even in Outlook. */}
+          <ImageUploadButton
+            displayWidth={block.size}
+            square
+            circular
+            filenameBase="avatar"
+            onUploaded={(url) => onChange({ src: url })}
+          />
+        </div>
+      </div>
+      {/* Crop renders + uploads a real circular PNG — hidden in
+          URL-only mode (1.0.29). */}
       {isUploadEnabled() && (
         <button
           type="button"
@@ -87,9 +99,11 @@ const Properties: FC<{ block: AvatarBlock; onChange: (u: Partial<AvatarBlock>) =
         src={block.src}
         aspect={1}
         circular
+        displayWidth={block.size}
+        filenameBase="avatar"
         onCancel={() => setCropping(false)}
-        onConfirm={(croppedDataUrl) => {
-          onChange({ src: croppedDataUrl });
+        onConfirm={(result) => {
+          onChange({ src: result.url });
           setCropping(false);
         }}
       />

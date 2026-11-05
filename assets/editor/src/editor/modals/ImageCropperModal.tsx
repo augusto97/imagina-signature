@@ -1,14 +1,30 @@
-import { useCallback, useState, type FC } from 'react';
+import { useCallback, useEffect, useState, type FC } from 'react';
 import Cropper from 'react-easy-crop';
 import type { Area, Point } from 'react-easy-crop';
 import { AlertTriangle } from 'lucide-react';
 import { Modal } from '@/components/shared/Modal';
 import { __ } from '@/i18n/helpers';
+import {
+  extensionFor,
+  loadImage,
+  renderImage,
+  targetPixelWidth,
+  uploadBlob,
+  uploadErrorMessage,
+} from '@/services/uploads';
 
 function isGifSrc(src: string): boolean {
   if (!src) return false;
   const noQuery = src.split('?')[0]?.toLowerCase() ?? '';
   return noQuery.endsWith('.gif');
+}
+
+export interface CroppedImage {
+  /** Public URL of the uploaded result. */
+  url: string;
+  /** Pixel size of the uploaded image. */
+  width: number;
+  height: number;
 }
 
 interface Props {
@@ -17,14 +33,22 @@ interface Props {
   src: string;
   /** Aspect ratio (width / height). 1 for avatar (square), undefined for free. */
   aspect?: number;
-  /** Whether the crop should be displayed as a circle (purely visual). */
+  /**
+   * Produce a round image: a PNG with a true circular alpha mask, so
+   * it is round everywhere — including Outlook, which ignores
+   * `border-radius`.
+   */
   circular?: boolean;
-  /** Output mime type. Defaults to PNG so transparency is preserved. */
-  mimeType?: 'image/png' | 'image/jpeg' | 'image/webp';
-  /** JPEG / WebP quality 0-1. Ignored for PNG. */
-  quality?: number;
+  /**
+   * CSS width the image is displayed at in the signature. The output is
+   * resized to at most 2× this (HiDPI), capped at 1200px.
+   */
+  displayWidth: number;
+  /** Base name for the uploaded file (extension added automatically). */
+  filenameBase?: string;
   onCancel: () => void;
-  onConfirm: (croppedDataUrl: string) => void;
+  /** Receives the hosted result once the crop has been uploaded. */
+  onConfirm: (result: CroppedImage) => void;
 }
 
 /**
@@ -32,19 +56,22 @@ interface Props {
  * editor-shell layout (centred crop area, zoom slider, Cancel / Save
  * footer).
  *
- * Output is a data URI (base64 PNG / JPEG / WebP). Most modern email
- * clients render data URI `<img>` inline; older Outlook builds
- * sometimes strip them. For an externally-hosted URL, the user can
- * upload the cropped image to the Media Library / S3 separately and
- * paste the URL in — that path is unchanged.
+ * "Apply" renders a REAL image and uploads it (it used to write a
+ * full-resolution base64 data URI into the schema, which Gmail /
+ * Outlook.com don't display, and whose "circular" crop was only a
+ * visual overlay — avatars still went out square):
+ *
+ *  - circular → PNG with a circular alpha mask;
+ *  - rectangular → JPEG q~0.88, or PNG when the source has transparency;
+ *  - resized so its pixel width ≤ 2× `displayWidth` (cap 1200px).
  */
 export const ImageCropperModal: FC<Props> = ({
   open,
   src,
   aspect,
   circular,
-  mimeType = 'image/png',
-  quality = 0.92,
+  displayWidth,
+  filenameBase = 'image',
   onCancel,
   onConfirm,
 }) => {
@@ -52,6 +79,11 @@ export const ImageCropperModal: FC<Props> = ({
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) setError(null);
+  }, [open]);
 
   const onCropComplete = useCallback((_: Area, pixels: Area) => {
     setCroppedAreaPixels(pixels);
@@ -60,9 +92,22 @@ export const ImageCropperModal: FC<Props> = ({
   const apply = async (): Promise<void> => {
     if (!croppedAreaPixels || busy) return;
     setBusy(true);
+    setError(null);
     try {
-      const url = await renderCroppedImage(src, croppedAreaPixels, mimeType, quality);
-      onConfirm(url);
+      const image = await loadImage(src);
+      const rendered = await renderImage(image, {
+        crop: croppedAreaPixels,
+        maxWidth: targetPixelWidth(displayWidth),
+        circular,
+      });
+      const asset = await uploadBlob(
+        rendered.blob,
+        `${filenameBase}.${extensionFor(rendered.mime)}`,
+        { width: rendered.width, height: rendered.height },
+      );
+      onConfirm({ url: asset.url, width: rendered.width, height: rendered.height });
+    } catch (e) {
+      setError(uploadErrorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -121,6 +166,15 @@ export const ImageCropperModal: FC<Props> = ({
           </div>
         )}
 
+        {error && (
+          <div
+            role="alert"
+            className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[11.5px] text-red-800"
+          >
+            {error}
+          </div>
+        )}
+
         <div className="flex justify-end gap-2 pt-1 text-[12px]">
           <button
             type="button"
@@ -132,65 +186,14 @@ export const ImageCropperModal: FC<Props> = ({
           </button>
           <button
             type="button"
-            onClick={apply}
+            onClick={() => void apply()}
             disabled={!src || !croppedAreaPixels || busy}
             className="inline-flex h-8 items-center rounded-md bg-[var(--accent)] px-3 font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-50"
           >
-            {busy ? __('Applying…') : __('Apply crop')}
+            {busy ? __('Uploading…') : __('Apply crop')}
           </button>
         </div>
       </div>
     </Modal>
   );
 };
-
-/**
- * Draws the requested crop region of `src` onto an offscreen canvas
- * and exports a data URI. CORS: if `src` is a remote URL on a
- * different origin without permissive CORS headers, the canvas
- * becomes "tainted" and `toDataURL` throws — we catch and surface
- * the original src unchanged so the user at least doesn't lose
- * their image.
- */
-async function renderCroppedImage(
-  src: string,
-  area: Area,
-  mimeType: string,
-  quality: number,
-): Promise<string> {
-  const image = await loadImage(src);
-
-  const canvas = document.createElement('canvas');
-  canvas.width = area.width;
-  canvas.height = area.height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return src;
-
-  ctx.drawImage(
-    image,
-    area.x,
-    area.y,
-    area.width,
-    area.height,
-    0,
-    0,
-    area.width,
-    area.height,
-  );
-
-  try {
-    return canvas.toDataURL(mimeType, quality);
-  } catch {
-    return src;
-  }
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous'; // best-effort for remote URLs
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Could not load image for cropping.'));
-    img.src = src;
-  });
-}

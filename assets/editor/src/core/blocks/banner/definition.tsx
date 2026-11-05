@@ -7,7 +7,7 @@ import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { horizontalPadding, intPx, paddingCss, px } from '@/core/compiler/css';
 import { checkAlt, clampToAvailable, markerAttr } from '@/core/compiler/issues';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
-import { isAnimatedGif, withOutlookFallback } from '../image/definition';
+import { ImageUploadButton, isAnimatedGif, withOutlookFallback } from '../image/definition';
 
 /**
  * Banner block — promotional / campaign image with a link.
@@ -64,15 +64,24 @@ const Properties: FC<{
   onChange: (updates: Partial<BannerBlock>) => void;
 }> = ({ block, onChange }) => (
   <div className="flex flex-col gap-3 text-[12px]">
-    <label className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5">
       <span className="font-medium text-[var(--text-secondary)]">{__('Image URL')}</span>
-      <input
-        type="url"
-        value={block.src}
-        onChange={(e) => onChange({ src: e.target.value })}
-        placeholder="https://example.com/banner.png"
-      />
-    </label>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="url"
+          aria-label={__('Image URL')}
+          className="min-w-0 flex-1"
+          value={block.src}
+          onChange={(e) => onChange({ src: e.target.value })}
+          placeholder="https://example.com/banner.png"
+        />
+        <ImageUploadButton
+          displayWidth={block.width || 600}
+          filenameBase="banner"
+          onUploaded={(url) => onChange({ src: url })}
+        />
+      </div>
+    </div>
 
     <label className="flex flex-col gap-1.5">
       <span className="font-medium text-[var(--text-secondary)]">{__('Alt text')}</span>
