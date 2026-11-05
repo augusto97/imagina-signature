@@ -215,6 +215,16 @@ export interface BannerBlock extends BlockBase {
   width: number;
   border_radius?: number;
   /**
+   * Fill the whole width available where the banner sits (ignores
+   * `width`). Absent = `false`, so pre-1.2 rows keep their fixed width.
+   */
+  full_width?: boolean;
+  /** Horizontal alignment when narrower than the space. Absent = `center`. */
+  align?: 'left' | 'center' | 'right';
+  /** Intrinsic pixel size of `src` (upload / library); absent for pasted URLs. */
+  natural_width?: number;
+  natural_height?: number;
+  /**
    * Optional static image URL used as a graceful Outlook 2007–2019
    * fallback when `src` is an animated GIF. See `ImageBlock` for the
    * mechanism (`<!--[if mso]>` swaps the `src` for this on those
