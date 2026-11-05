@@ -2,7 +2,7 @@ import { useEffect, useState, type FC } from 'react';
 import { Button } from '@admin/components/Button';
 import { Modal } from '@admin/components/Modal';
 import { apiCall, ApiError } from '@admin/api';
-import { __ } from '@admin/i18n';
+import { __, _n } from '@admin/i18n';
 import type { InvitationProgress } from '@admin/pages/settings/InvitationsTab';
 import type { GmailPushRow } from '@admin/pages/settings/GoogleWorkspaceTab';
 
@@ -82,12 +82,12 @@ export const InviteDialog: FC<InviteProps> = ({ userIds, onClose, onQueued }) =>
     >
       <div className="flex flex-col gap-3 text-[13px]">
         <p className="text-[var(--text-secondary)]">
-          {count === 1
-            ? __('Email 1 person a personal link to install their signature in their email client.')
-            : __(
-                'Email %s people a personal link to install their signature in their email client.',
-                String(count),
-              )}
+          {_n(
+            'Email %s person a personal link to install their signature in their email client.',
+            'Email %s people a personal link to install their signature in their email client.',
+            count,
+            String(count),
+          )}
         </p>
         <label className="flex flex-col gap-1.5">
           <span className="text-[12px] font-medium text-[var(--text-primary)]">

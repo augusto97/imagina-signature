@@ -4,7 +4,7 @@
  * Pure — the page component only renders what these return.
  */
 
-import { __ } from '@admin/i18n';
+import { __, _n } from '@admin/i18n';
 import type { TeamChannels, TeamPrimary, TeamRow, TeamStateFilter, TeamSummary } from './types';
 
 export type Tone = 'success' | 'warning' | 'danger' | 'info' | 'muted';
@@ -135,8 +135,10 @@ export function installPill(row: TeamRow): Pill {
         label: __('Invited'),
         detail:
           install.reminders > 0
-            ? __(
-                '%1$s · %2$s reminder(s)',
+            ? _n(
+                '%1$s · %2$s reminder',
+                '%1$s · %2$s reminders',
+                install.reminders,
                 formatUtc(install.invited_at),
                 String(install.reminders),
               )

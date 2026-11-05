@@ -7,7 +7,7 @@ import { Spinner } from '@admin/components/Spinner';
 import { Modal } from '@admin/components/Modal';
 import { AssignTemplateDialog } from '@admin/components/AssignTemplateDialog';
 import { apiCall, ApiError, getConfig } from '@admin/api';
-import { __ } from '@admin/i18n';
+import { __, _n } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
 import { WP_ROLES, roleLabel } from '@admin/utils/roles';
 import type { EmployeeMode, PropagationProgress, TemplateRow } from '@admin/types';
@@ -24,12 +24,15 @@ const EMPLOYEE_MODES: Array<{ value: EmployeeMode; label: () => string; hint: ()
     value: 'locked_design',
     label: () => __('Locked design'),
     hint: () =>
-      __('Employees can only change the text of unlocked text blocks. Layout and styles are fixed.'),
+      __(
+        'Employees can only change the text of unlocked text blocks. Layout and styles are fixed.',
+      ),
   },
   {
     value: 'fields_only',
     label: () => __('Fields only'),
-    hint: () => __('Employees only fill in their details (variables and profile). No canvas editing.'),
+    hint: () =>
+      __('Employees only fill in their details (variables and profile). No canvas editing.'),
   },
 ];
 
@@ -90,16 +93,14 @@ export const TemplatesPage: FC = () => {
         title={__('Templates')}
         description={
           canManage
-            ? __('Global signature templates. Tag with roles to scope visibility, or apply in bulk to seed a signature for every user.')
+            ? __(
+                'Global signature templates. Tag with roles to scope visibility, or apply in bulk to seed a signature for every user.',
+              )
             : __('Browse the signature templates available on this site.')
         }
         actions={
           canManage ? (
-            <Button
-              variant="primary"
-              icon={<Plus size={14} />}
-              onClick={() => setCreating(true)}
-            >
+            <Button variant="primary" icon={<Plus size={14} />} onClick={() => setCreating(true)}>
               {__('New template')}
             </Button>
           ) : null
@@ -206,9 +207,7 @@ export const TemplatesPage: FC = () => {
             onClose={() => setEditing(null)}
             onSaved={(row, close = true) => {
               if (close) setEditing(null);
-              setItems((prev) =>
-                prev ? prev.map((t) => (t.id === row.id ? row : t)) : prev,
-              );
+              setItems((prev) => (prev ? prev.map((t) => (t.id === row.id ? row : t)) : prev));
             }}
           />
           {canAssign && (
@@ -565,8 +564,18 @@ const EditTemplateModal: FC<EditTemplateModalProps> = ({ open, template, onClose
         {propagation && (
           <div className="rounded-md bg-[var(--bg-selected)] px-3 py-2 text-[12px] text-[var(--text-secondary)]">
             {propagation.status === 'done'
-              ? __('Saved. %s linked signatures were updated.', String(propagation.updated))
-              : __('Saved. %s linked signatures are being updated in the background.', String(propagation.total))}
+              ? _n(
+                  'Saved. %s linked signature was updated.',
+                  'Saved. %s linked signatures were updated.',
+                  propagation.updated,
+                  String(propagation.updated),
+                )
+              : _n(
+                  'Saved. %s linked signature is being updated in the background.',
+                  'Saved. %s linked signatures are being updated in the background.',
+                  propagation.total,
+                  String(propagation.total),
+                )}
           </div>
         )}
 
@@ -603,12 +612,14 @@ const Field: FC<FieldProps> = ({ label, hint, required, children }) => (
 );
 
 function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize('NFKD')
-    // U+0300..U+036F = combining diacriticals — strip so "Médico" -> "medico".
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60);
+  return (
+    value
+      .toLowerCase()
+      .normalize('NFKD')
+      // U+0300..U+036F = combining diacriticals — strip so "Médico" -> "medico".
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60)
+  );
 }

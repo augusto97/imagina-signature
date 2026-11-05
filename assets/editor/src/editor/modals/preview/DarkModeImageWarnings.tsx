@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { MoonStar } from 'lucide-react';
 import type { CompiledImage } from '@/core/compiler/images';
 import { blockLabel } from '@/core/compiler/issues';
-import { __ } from '@/i18n/helpers';
+import { __, _n } from '@/i18n/helpers';
 import type { DarkImageCandidate } from './darkImages';
 import { addLightBackground, useDarkImageRisks } from './useDarkImageRisks';
 
@@ -26,7 +26,12 @@ export const DarkModeImageWarnings: FC<{ images: CompiledImage[]; enabled: boole
     >
       <div className="flex items-center gap-1.5 font-semibold">
         <MoonStar size={13} />
-        {__('%s image(s) may disappear in dark mode', String(byBlock.size))}
+        {_n(
+          '%s image may disappear in dark mode',
+          '%s images may disappear in dark mode',
+          byBlock.size,
+          String(byBlock.size),
+        )}
       </div>
       <p className="leading-relaxed text-amber-800">
         {__(

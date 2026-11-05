@@ -14,7 +14,7 @@ import {
 import { Button } from '@admin/components/Button';
 import { Spinner } from '@admin/components/Spinner';
 import { apiCall, ApiError } from '@admin/api';
-import { __, sprintf } from '@admin/i18n';
+import { __, _n, sprintf } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
 import { Banner, Field, Section, type Flash } from './_shared';
 
@@ -648,8 +648,9 @@ export const GoogleWorkspaceTab: FC = () => {
           {state.daily_sync && lastSync && (
             <p className="text-[11.5px] text-[var(--text-muted)]">
               {state.sync.running
-                ? sprintf(
-                    __('Daily sync in progress: %d users checked so far.'),
+                ? _n(
+                    'Daily sync in progress: %d user checked so far.',
+                    'Daily sync in progress: %d users checked so far.',
                     state.sync.scanned,
                   )
                 : sprintf(
@@ -792,7 +793,7 @@ export const GoogleWorkspaceTab: FC = () => {
                   ? sprintf(__('Pushing… %1$d of %2$d users'), push.processed, push.total)
                   : push.stopped
                     ? sprintf(__('Stopped after %1$d of %2$d users.'), push.processed, push.total)
-                    : sprintf(__('Done: %d users processed.'), push.processed)}
+                    : _n('Done: %d user processed.', 'Done: %d users processed.', push.processed)}
               </p>
               {Object.keys(counts).length > 0 && (
                 <div className="flex flex-wrap gap-1.5">

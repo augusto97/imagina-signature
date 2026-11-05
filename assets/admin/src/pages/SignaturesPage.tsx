@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useState, type FC } from 'react';
-import { Plus, Search, FileSignature, Pencil, Copy, Trash2, X, Star, MonitorSmartphone } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  FileSignature,
+  Pencil,
+  Copy,
+  Trash2,
+  X,
+  Star,
+  MonitorSmartphone,
+} from 'lucide-react';
 import { Topbar } from '@admin/components/Topbar';
 import { Button } from '@admin/components/Button';
 import { StatusPill } from '@admin/components/StatusPill';
 import { EmptyState } from '@admin/components/EmptyState';
 import { Spinner } from '@admin/components/Spinner';
 import { apiCall, ApiError, getConfig } from '@admin/api';
-import { __ } from '@admin/i18n';
+import { __, _n } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
 import type { SignatureRow } from '@admin/types';
 
@@ -157,10 +167,8 @@ export const SignaturesPage: FC = () => {
    * touched so the user can't accidentally bulk-delete an archived
    * signature they can't see.
    */
-  const allVisibleSelected =
-    filtered.length > 0 && filtered.every((row) => selected.has(row.id));
-  const someVisibleSelected =
-    filtered.some((row) => selected.has(row.id)) && !allVisibleSelected;
+  const allVisibleSelected = filtered.length > 0 && filtered.every((row) => selected.has(row.id));
+  const someVisibleSelected = filtered.some((row) => selected.has(row.id)) && !allVisibleSelected;
 
   const toggleAllVisible = (on: boolean): void => {
     setSelected((prev) => {
@@ -179,8 +187,10 @@ export const SignaturesPage: FC = () => {
     const count = selected.size;
     if (
       !window.confirm(
-        __(
-          'Delete %s signature(s)? This cannot be undone.',
+        _n(
+          'Delete %s signature? This cannot be undone.',
+          'Delete %s signatures? This cannot be undone.',
+          count,
           String(count),
         ),
       )
@@ -206,9 +216,7 @@ export const SignaturesPage: FC = () => {
     if (failures.length > 0) {
       const first = failures[0]!.r as PromiseRejectedResult;
       const message =
-        first.reason instanceof ApiError
-          ? first.reason.message
-          : (first.reason as Error).message;
+        first.reason instanceof ApiError ? first.reason.message : (first.reason as Error).message;
       window.alert(
         __(
           'Deleted %s of %s. First failure: %s',
@@ -230,7 +238,13 @@ export const SignaturesPage: FC = () => {
         title={__('My Signatures')}
         description={__('Visual editor for HTML email signatures. Each user sees only their own.')}
         actions={
-          <Button variant="primary" icon={<Plus size={14} />} onClick={() => { window.location.href = newSignatureUrl; }}>
+          <Button
+            variant="primary"
+            icon={<Plus size={14} />}
+            onClick={() => {
+              window.location.href = newSignatureUrl;
+            }}
+          >
             {__('New signature')}
           </Button>
         }
@@ -240,7 +254,10 @@ export const SignaturesPage: FC = () => {
         {/* Filters */}
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <div className="relative max-w-xs flex-1">
-            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+            <Search
+              size={14}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+            />
             <input
               type="search"
               placeholder={__('Search by name…')}
@@ -262,7 +279,7 @@ export const SignaturesPage: FC = () => {
           <span className="ml-auto text-[12px] text-[var(--text-muted)]">
             {items === null
               ? ''
-              : __('%s signature(s)', String(filtered.length))}
+              : _n('%s signature', '%s signatures', filtered.length, String(filtered.length))}
           </span>
         </div>
 
@@ -299,9 +316,7 @@ export const SignaturesPage: FC = () => {
 
         {/* Body */}
         <div className="flex-1 overflow-auto rounded-lg border border-[var(--border-default)] bg-[var(--bg-panel)] shadow-[var(--shadow-xs)]">
-          {error && (
-            <div className="p-6 text-center text-[13px] text-[var(--danger)]">{error}</div>
-          )}
+          {error && <div className="p-6 text-center text-[13px] text-[var(--danger)]">{error}</div>}
 
           {!error && items === null && (
             <div className="flex h-full items-center justify-center p-10">
@@ -328,7 +343,9 @@ export const SignaturesPage: FC = () => {
                     <Button
                       variant="primary"
                       icon={<Plus size={14} />}
-                      onClick={() => { window.location.href = newSignatureUrl; }}
+                      onClick={() => {
+                        window.location.href = newSignatureUrl;
+                      }}
                     >
                       {__('New signature')}
                     </Button>
@@ -414,12 +431,17 @@ export const SignaturesPage: FC = () => {
                             icon={<Pencil size={14} />}
                             label={__('Edit %s', row.name || __('Untitled'))}
                             tooltip={__('Edit')}
-                            onClick={() => { window.location.href = editorUrl(row.id); }}
+                            onClick={() => {
+                              window.location.href = editorUrl(row.id);
+                            }}
                           />
                           {row.is_primary && (
                             <IconAction
                               icon={<MonitorSmartphone size={14} />}
-                              label={__('Install %s in your email client', row.name || __('Untitled'))}
+                              label={__(
+                                'Install %s in your email client',
+                                row.name || __('Untitled'),
+                              )}
                               tooltip={__('Install')}
                               disabled={busy}
                               onClick={() => void onInstall(row)}
@@ -428,7 +450,10 @@ export const SignaturesPage: FC = () => {
                           {!row.is_primary && (
                             <IconAction
                               icon={<Star size={14} />}
-                              label={__('Make %s the primary signature', row.name || __('Untitled'))}
+                              label={__(
+                                'Make %s the primary signature',
+                                row.name || __('Untitled'),
+                              )}
                               tooltip={__('Make primary')}
                               disabled={busy}
                               onClick={() => void onMakePrimary(row)}
@@ -467,10 +492,7 @@ const Th: FC<{ children: React.ReactNode; align?: 'left' | 'right' }> = ({
   children,
   align = 'left',
 }) => (
-  <th
-    className="is-section-label px-4 py-2.5 font-semibold"
-    style={{ textAlign: align }}
-  >
+  <th className="is-section-label px-4 py-2.5 font-semibold" style={{ textAlign: align }}>
     {children}
   </th>
 );

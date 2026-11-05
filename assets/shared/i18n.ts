@@ -55,17 +55,20 @@ export function translate(map: TranslationMap, text: string): string {
  */
 export function sprintf(format: string, ...args: Array<string | number>): string {
   let next = 0;
-  return format.replace(/%(?:(\d+)\$)?([sd%])/g, (match, position: string | undefined, conv: string) => {
-    if (conv === '%') return position ? match : '%';
-    const index = position ? Number(position) - 1 : next++;
-    const value = index >= 0 && index < args.length ? args[index] : undefined;
-    if (value === undefined || value === null) return '';
-    if (conv === 'd') {
-      const n = Number(value);
-      return Number.isFinite(n) ? String(Math.trunc(n)) : '0';
-    }
-    return String(value);
-  });
+  return format.replace(
+    /%(?:(\d+)\$)?([sd%])/g,
+    (match, position: string | undefined, conv: string) => {
+      if (conv === '%') return position ? match : '%';
+      const index = position ? Number(position) - 1 : next++;
+      const value = index >= 0 && index < args.length ? args[index] : undefined;
+      if (value === undefined || value === null) return '';
+      if (conv === 'd') {
+        const n = Number(value);
+        return Number.isFinite(n) ? String(Math.trunc(n)) : '0';
+      }
+      return String(value);
+    },
+  );
 }
 
 /**
@@ -84,4 +87,28 @@ export function sprintf(format: string, ...args: Array<string | number>): string
 export function __(text: string, ...args: Array<string | number>): string {
   const localised = translate(getTranslations(), text);
   return args.length === 0 ? localised : sprintf(localised, ...args);
+}
+
+/**
+ * Count-dependent string: `_n(singular, plural, count, ...args)`.
+ *
+ * Picks `singular` when `count` is 1 and `plural` otherwise, then
+ * translates and formats it like {@link __} — with `count` as the only
+ * argument when no others are given. Both forms are extracted as their
+ * own msgids. One-vs-other is exactly the plural rule of every locale
+ * the plugin ships (English, Spanish); languages with more plural forms
+ * would need the gettext Plural-Forms expression here.
+ *
+ * @example
+ *   _n('%s person', '%s people', n, String(n));
+ *   _n('%d image', '%d images', n);
+ */
+export function _n(
+  singular: string,
+  plural: string,
+  count: number,
+  ...args: Array<string | number>
+): string {
+  // i18n-dynamic: both forms are extracted from the _n() call site.
+  return __(count === 1 ? singular : plural, ...(args.length === 0 ? [count] : args));
 }

@@ -69,6 +69,11 @@ trait GmailTestHarness {
 		$this->meta_writes   = 0;
 
 		Functions\when( '__' )->returnArg( 1 );
+		Functions\when( '_n' )->alias(
+			static function ( string $single, string $plural, int $count ): string {
+				return 1 === $count ? $single : $plural;
+			}
+		);
 		Functions\when( 'wp_json_encode' )->alias(
 			static function ( $data, $options = 0, $depth = 512 ) {
 				return json_encode( $data, $options, $depth );

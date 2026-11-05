@@ -78,7 +78,7 @@ afterEach(() => {
 describe('Export → Fix embedded images', () => {
   it('flags data: images (also inside container cells) and un-hosted vCards', () => {
     render(<ExportModal />);
-    expect(screen.getByText(/3 embedded image\(s\) or file\(s\)/)).toBeInTheDocument();
+    expect(screen.getByText(/3 embedded images or files/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Fix embedded images' })).toBeInTheDocument();
   });
 
@@ -88,13 +88,17 @@ describe('Export → Fix embedded images', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Fix embedded images' }));
     });
 
-    await waitFor(() => expect(screen.queryByText(/embedded image\(s\)/)).toBeNull());
+    await waitFor(() => expect(screen.queryByText(/embedded images? or files?/)).toBeNull());
     expect(uploads).toEqual(['avatar.png', 'image.png', 'jane-doe.vcf']);
 
     const { schema } = useSchemaStore.getState();
     const row = schema.blocks[0] as ContainerBlock;
-    expect((row.columns[0]!.children[0] as AvatarBlock).src).toMatch(/^https:\/\/site\.example\/u\//);
-    expect((row.columns[1]!.children[0] as ImageBlock).src).toMatch(/^https:\/\/site\.example\/u\//);
+    expect((row.columns[0]!.children[0] as AvatarBlock).src).toMatch(
+      /^https:\/\/site\.example\/u\//,
+    );
+    expect((row.columns[1]!.children[0] as ImageBlock).src).toMatch(
+      /^https:\/\/site\.example\/u\//,
+    );
     expect((schema.blocks[1] as VCardBlock).vcf_url).toMatch(/^https:\/\/site\.example\/u\//);
 
     const result = compileSignature(schema);

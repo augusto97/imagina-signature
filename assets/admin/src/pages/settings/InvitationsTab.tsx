@@ -3,7 +3,7 @@ import { BellRing, Save, Send, Users, X } from 'lucide-react';
 import { Button } from '@admin/components/Button';
 import { Spinner } from '@admin/components/Spinner';
 import { apiCall, ApiError, getConfig } from '@admin/api';
-import { __ } from '@admin/i18n';
+import { __, _n } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
 import { Banner, Field, Section, type Flash } from './_shared';
 
@@ -185,7 +185,7 @@ export const InvitationsTab: FC = () => {
     const count =
       audience === 'all'
         ? __('everyone with access to signatures')
-        : __('%s people', String(picked.length));
+        : _n('%s person', '%s people', picked.length, String(picked.length));
     if (!window.confirm(__('Email the install link to %s?', count))) return;
 
     setSending(true);
@@ -201,8 +201,10 @@ export const InvitationsTab: FC = () => {
       setProgress(next);
       setFlash({
         type: 'success',
-        message: __(
-          '%s invitation(s) queued. They are sent in batches in the background.',
+        message: _n(
+          '%s invitation queued. It is sent in the background.',
+          '%s invitations queued. They are sent in batches in the background.',
+          next.total,
           String(next.total),
         ),
       });
@@ -424,7 +426,12 @@ const ProgressView: FC<{ progress: InvitationProgress; onCancel: () => void }> =
       {progress.report.length > 0 && (
         <details>
           <summary className="cursor-pointer text-[12px] text-[var(--text-secondary)]">
-            {__('%s person(s) not emailed', String(progress.report.length))}
+            {_n(
+              '%s person not emailed',
+              '%s people not emailed',
+              progress.report.length,
+              String(progress.report.length),
+            )}
           </summary>
           <ul className="mt-2 max-h-64 space-y-1 overflow-auto text-[12px]">
             {progress.report.map((row) => (

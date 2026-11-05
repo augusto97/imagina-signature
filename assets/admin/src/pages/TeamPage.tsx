@@ -18,7 +18,7 @@ import { Spinner } from '@admin/components/Spinner';
 import { ProfileForm } from '@admin/components/ProfileForm';
 import { AssignTemplateDialog } from '@admin/components/AssignTemplateDialog';
 import { apiCall, apiCallWithHeaders, ApiError, getConfig } from '@admin/api';
-import { __ } from '@admin/i18n';
+import { __, _n } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
 import { Banner, type Flash } from '@admin/pages/settings/_shared';
 import type { GroupRow } from '@admin/directoryTypes';
@@ -669,7 +669,7 @@ export const TeamPage: FC = () => {
               aria-label={__('Pages')}
               className="flex flex-wrap items-center justify-between gap-2 text-[12.5px] text-[var(--text-secondary)]"
             >
-              <span>{__('%s people', String(data.total))}</span>
+              <span>{_n('%s person', '%s people', data.total, String(data.total))}</span>
               <span className="flex items-center gap-2">
                 <Button
                   size="sm"
@@ -707,8 +707,10 @@ export const TeamPage: FC = () => {
           setInviteFor(null);
           setFlash({
             type: 'success',
-            message: __(
-              '%s invitation(s) queued. They are sent in batches in the background.',
+            message: _n(
+              '%s invitation queued. It is sent in the background.',
+              '%s invitations queued. They are sent in batches in the background.',
+              count,
               String(count),
             ),
           });

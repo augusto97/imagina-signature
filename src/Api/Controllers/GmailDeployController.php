@@ -377,7 +377,12 @@ final class GmailDeployController extends BaseController {
 				'email'    => $email,
 				'message'  => sprintf(
 					/* translators: 1: number of addresses, 2: email address. */
-					__( 'Connected. Gmail returned %1$d send-as address(es) for %2$s.', 'imagina-signatures' ),
+					_n(
+						'Connected. Gmail returned %1$d send-as address for %2$s.',
+						'Connected. Gmail returned %1$d send-as addresses for %2$s.',
+						count( $send_as ),
+						'imagina-signatures'
+					),
 					count( $send_as ),
 					$email
 				),

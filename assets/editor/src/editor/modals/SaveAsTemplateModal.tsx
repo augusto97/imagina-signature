@@ -9,7 +9,7 @@ import { apiCall, ApiError } from '@/bridge/apiClient';
 import { walkBlocks } from '@/core/schema/tree';
 import { templateJsonFor } from '@/core/schema/locks';
 import type { EmployeeMode } from '@/core/schema/signature';
-import { __ } from '@/i18n/helpers';
+import { __, _n } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 
 interface Props {
@@ -305,13 +305,17 @@ export const SaveAsTemplateModal: FC<Props> = ({ open, onClose }) => {
 function propagationMessage(propagation: Propagation | undefined): string {
   if (!propagation || propagation.total === 0) return __('Template updated.');
   if (propagation.status === 'done') {
-    return __(
+    return _n(
+      'Template updated. %s linked signature was refreshed.',
       'Template updated. %s linked signatures were refreshed.',
+      propagation.updated,
       String(propagation.updated),
     );
   }
-  return __(
+  return _n(
+    'Template updated. %s linked signature is being refreshed in the background.',
     'Template updated. %s linked signatures are being refreshed in the background.',
+    propagation.total,
     String(propagation.total),
   );
 }

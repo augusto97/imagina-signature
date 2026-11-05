@@ -44,7 +44,7 @@ import {
 } from '@/services/uploads';
 import { useToastStore } from '@/stores/toastStore';
 import { copyText, copyRichHtml } from '@/utils/clipboard';
-import { __ } from '@/i18n/helpers';
+import { __, _n } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 import { Modal } from '@/components/shared/Modal';
 import { DarkModeImageWarnings } from './preview/DarkModeImageWarnings';
@@ -241,7 +241,13 @@ export const ExportModal: FC = () => {
       showToast(__('All embedded images are now hosted.'), 'success');
     } else {
       showToast(
-        __('%s item(s) could not be uploaded: %s', String(failures.length), failures[0] ?? ''),
+        _n(
+          '%1$s item could not be uploaded: %2$s',
+          '%1$s items could not be uploaded: %2$s',
+          failures.length,
+          String(failures.length),
+          failures[0] ?? '',
+        ),
         'error',
         8000,
       );
@@ -348,8 +354,10 @@ export const ExportModal: FC = () => {
             >
               <div className="flex items-center gap-1.5 font-semibold">
                 <AlertOctagon size={14} />
-                {__(
-                  '%s embedded image(s) or file(s) will not show in Gmail or Outlook.com',
+                {_n(
+                  '%s embedded image or file will not show in Gmail or Outlook.com',
+                  '%s embedded images or files will not show in Gmail or Outlook.com',
+                  embedded.length,
                   String(embedded.length),
                 )}
               </div>
@@ -986,7 +994,12 @@ export const CompileIssues: FC<{
         >
           <summary className="flex cursor-pointer items-center gap-1.5 font-medium">
             <AlertTriangle size={12} />
-            {__('%s compile warning(s)', String(warnings.length))}
+            {_n(
+              '%s compile warning',
+              '%s compile warnings',
+              warnings.length,
+              String(warnings.length),
+            )}
           </summary>
           <ul className="mt-2 list-disc pl-4">{warnings.map(item)}</ul>
         </details>

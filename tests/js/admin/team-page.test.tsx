@@ -263,6 +263,6 @@ describe('Team page', () => {
     const sent = body(calls.find((c) => c.url.endsWith('/admin/deploy/invitations'))!);
     // Bruno has no signature: not invited.
     expect(sent).toMatchObject({ user_ids: [3] });
-    expect(await screen.findByText(/1 invitation\(s\) queued/)).toBeInTheDocument();
+    expect(await screen.findByText(/1 invitation queued/)).toBeInTheDocument();
   });
 });

@@ -6,4 +6,4 @@
  * and substitutes `%s` / `%d` / positional `%1$s` placeholders. Same
  * implementation as the editor's — see `assets/shared/i18n.ts`.
  */
-export { __, sprintf } from '@shared/i18n';
+export { __, _n, sprintf } from '@shared/i18n';

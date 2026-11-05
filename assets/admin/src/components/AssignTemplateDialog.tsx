@@ -391,7 +391,7 @@ export const AssignTemplateDialog: FC<Props> = ({ open, template, userIds, onClo
             onSelect={() => setMode('linked')}
           />
           <ScopeOption
-            label={__('Copy')}
+            label={__('Independent copy')}
             description={__(
               'Each user gets an independent copy. Later template changes don’t reach it; users who already have a copy are skipped.',
             )}

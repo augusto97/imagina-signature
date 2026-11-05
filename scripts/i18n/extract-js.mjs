@@ -30,6 +30,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SCAN_DIRS = ['assets'];
 const SKIP_DIRS = new Set(['node_modules', 'build', 'dist', 'vendor', 'public']);
 const FUNCTION_NAMES = new Set(['__']);
+/** `_n(singular, plural, count, …)`: both literal forms are msgids. */
+const PLURAL_NAMES = new Set(['_n']);
 
 /** Recursively lists .ts/.tsx sources (no tests, no declaration files). */
 export function listSourceFiles(root = ROOT) {
@@ -88,8 +90,26 @@ export function extractFromSource(fileName, source) {
   const found = [];
   const dynamic = [];
 
+  const isLiteral = (arg) =>
+    arg && (ts.isStringLiteral(arg) || ts.isNoSubstitutionTemplateLiteral(arg));
+
   const visit = (node) => {
     if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      PLURAL_NAMES.has(node.expression.text)
+    ) {
+      const [one, other] = node.arguments;
+      const line = lineOf(sf, node.getStart(sf));
+      if (isLiteral(one) && isLiteral(other)) {
+        const note = translatorNote(commentsAround(sf, node));
+        found.push({ msgid: one.text, line, note: note ?? 'translators: singular form (count = 1)' });
+        found.push({ msgid: other.text, line, note: note ?? 'translators: plural form (any other count)' });
+      } else {
+        const marked = commentsAround(sf, node).some((c) => /i18n-dynamic/.test(c));
+        dynamic.push({ line, expr: node.getText(sf).replace(/\s+/g, ' ').slice(0, 100), marked });
+      }
+    } else if (
       ts.isCallExpression(node) &&
       ts.isIdentifier(node.expression) &&
       FUNCTION_NAMES.has(node.expression.text)

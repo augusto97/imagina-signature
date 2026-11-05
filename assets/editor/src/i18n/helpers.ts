@@ -12,4 +12,4 @@
  *   __('My Signatures');
  *   __('Created on %s', formattedDate);
  */
-export { __, sprintf } from '@shared/i18n';
+export { __, _n, sprintf } from '@shared/i18n';

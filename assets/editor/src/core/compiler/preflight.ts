@@ -1,4 +1,4 @@
-import { __ } from '@/i18n/helpers';
+import { __, _n } from '@/i18n/helpers';
 import { parseAttributes, tokenizeHtml } from './html-tokens';
 import type { CompileIssue } from './issues';
 import { classifyUrl, decodeEntities, isLocalHost, urlHost } from './urls';
@@ -95,7 +95,12 @@ export function gmailPreflight(input: {
       : {
           id: 'data-uri',
           status: 'fail',
-          label: __('%s embedded (data:) image(s)', String(embedded)),
+          label: _n(
+            '%s embedded (data:) image',
+            '%s embedded (data:) images',
+            embedded,
+            String(embedded),
+          ),
           detail: __(
             'Gmail does not show embedded images. Use "Fix embedded images" or upload them so the signature links to hosted copies.',
           ),
@@ -109,7 +114,7 @@ export function gmailPreflight(input: {
       : {
           id: 'https',
           status: 'warn',
-          label: __('%s image(s) use http://', String(insecure)),
+          label: _n('%s image uses http://', '%s images use http://', insecure, String(insecure)),
           detail: __(
             'Gmail shows a security warning or blocks insecure images. Host them on an https:// address.',
           ),
@@ -123,7 +128,12 @@ export function gmailPreflight(input: {
       : {
           id: 'hosts',
           status: 'fail',
-          label: __('%s image(s) on localhost, .local or .test addresses', String(unreachable)),
+          label: _n(
+            '%s image on a localhost, .local or .test address',
+            '%s images on localhost, .local or .test addresses',
+            unreachable,
+            String(unreachable),
+          ),
           detail: __(
             'Recipients (and Gmail’s image proxy) cannot reach these addresses. Upload the images to your public site.',
           ),
@@ -133,7 +143,7 @@ export function gmailPreflight(input: {
   checks.push({
     id: 'images',
     status: 'ok',
-    label: __('%s image(s) in total', String(images.length)),
+    label: _n('%s image in total', '%s images in total', images.length, String(images.length)),
   });
 
   const errors = issues.filter((i) => i.level === 'error');

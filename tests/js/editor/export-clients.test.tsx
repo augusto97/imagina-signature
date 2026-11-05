@@ -75,7 +75,7 @@ describe('Export → Gmail / Google Workspace', () => {
     expect(screen.getByText('Before you copy')).toBeInTheDocument();
     expect(screen.getByText(/Length: [\d,]+ of 10,000 characters/)).toBeInTheDocument();
     expect(screen.getByText('No embedded (data:) images')).toBeInTheDocument();
-    expect(screen.getByText('0 image(s) in total')).toBeInTheDocument();
+    expect(screen.getByText('0 images in total')).toBeInTheDocument();
     expect(screen.queryByText(/Copying is on hold/)).toBeNull();
 
     await act(async () => {
@@ -94,7 +94,7 @@ describe('Export → Gmail / Google Workspace', () => {
     expect(screen.getByText(/Copying is on hold/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Copy for Gmail' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Copy anyway' })).toBeInTheDocument();
-    expect(screen.getByText('1 embedded (data:) image(s)')).toBeInTheDocument();
+    expect(screen.getByText('1 embedded (data:) image')).toBeInTheDocument();
   });
 });
 
