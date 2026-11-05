@@ -16,6 +16,7 @@ use ImaginaSignatures\Admin\Pages\EditorPage;
 use ImaginaSignatures\Frontend\FrontendRouter;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 use ImaginaSignatures\Api\Controllers\AssetsController;
+use ImaginaSignatures\Api\Controllers\InstallController;
 use ImaginaSignatures\Api\Controllers\FrontendAccessController;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Api\Controllers\MeController;
@@ -24,6 +25,7 @@ use ImaginaSignatures\Api\Controllers\StorageController;
 use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\RestRouter;
+use ImaginaSignatures\Deployment\Install\InstallModule;
 use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\SignatureRepository;
@@ -141,6 +143,9 @@ final class Plugin {
 
 		// Personal-data exporter / eraser + delete_user cleanup.
 		$this->container->make( UserDataManager::class )->register();
+
+		// Install link: outdated installs.
+		InstallModule::register( $this->container );
 
 		// Public-facing route — runs on EVERY request, admin or not.
 		// The router self-gates on its own settings; when the feature
@@ -304,6 +309,7 @@ final class Plugin {
 				$this->container->make( AssetsController::class ),
 				$this->container->make( SiteSettingsController::class ),
 				$this->container->make( FrontendAccessController::class ),
+				$this->container->make( InstallController::class ),
 			]
 		);
 		$router->register();
