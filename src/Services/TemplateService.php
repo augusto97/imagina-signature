@@ -43,12 +43,41 @@ final class TemplateService {
 	private JsonSchemaValidator $validator;
 
 	/**
-	 * @param TemplateRepository  $repo      Template repository.
-	 * @param JsonSchemaValidator $validator Schema validator.
+	 * @var SchemaSanitizer
 	 */
-	public function __construct( TemplateRepository $repo, JsonSchemaValidator $validator ) {
+	private SchemaSanitizer $sanitizer;
+
+	/**
+	 * Notes produced by the sanitizer during the last create / update.
+	 *
+	 * @var array<int, array{path: string, message: string}>
+	 */
+	private array $last_notes = [];
+
+	/**
+	 * Templates are kses'd exactly like signatures — even for admins
+	 * with `unfiltered_html` — because every user who applies a
+	 * template inherits its content.
+	 *
+	 * @param TemplateRepository   $repo      Template repository.
+	 * @param JsonSchemaValidator  $validator Schema validator.
+	 * @param SchemaSanitizer|null $sanitizer Recursive schema sanitizer (defaults to a fresh one).
+	 */
+	public function __construct( TemplateRepository $repo, JsonSchemaValidator $validator, ?SchemaSanitizer $sanitizer = null ) {
 		$this->repo      = $repo;
 		$this->validator = $validator;
+		$this->sanitizer = $sanitizer ?? new SchemaSanitizer( new HtmlSanitizer() );
+	}
+
+	/**
+	 * Returns the sanitisation notes from the last create / update.
+	 *
+	 * @since 1.0.40
+	 *
+	 * @return array<int, array{path: string, message: string}>
+	 */
+	public function last_sanitization_notes(): array {
+		return $this->last_notes;
 	}
 
 	/**
@@ -187,7 +216,8 @@ final class TemplateService {
 	 * @throws ValidationException On schema failure.
 	 */
 	private function prepare_for_save( array $data ): array {
-		$prepared = [];
+		$prepared         = [];
+		$this->last_notes = [];
 
 		if ( array_key_exists( 'slug', $data ) ) {
 			$prepared['slug'] = sanitize_title( (string) $data['slug'] );
@@ -231,6 +261,8 @@ final class TemplateService {
 			}
 
 			$this->validator->validate( $decoded );
+			$decoded          = $this->sanitizer->sanitize( $decoded );
+			$this->last_notes = $this->sanitizer->notes();
 
 			$prepared['json_content']   = (string) wp_json_encode( $decoded );
 			$prepared['schema_version'] = (string) ( $decoded['schema_version'] ?? '1.0' );

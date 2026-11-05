@@ -25,6 +25,7 @@ use ImaginaSignatures\Security\Encryption;
 use ImaginaSignatures\Security\RateLimitStore;
 use ImaginaSignatures\Services\HtmlSanitizer;
 use ImaginaSignatures\Services\JsonSchemaValidator;
+use ImaginaSignatures\Services\SchemaSanitizer;
 use ImaginaSignatures\Services\SignatureService;
 use ImaginaSignatures\Services\TemplateService;
 use ImaginaSignatures\Storage\StorageManager;
@@ -80,6 +81,12 @@ final class ServiceProvider {
 				return new HtmlSanitizer();
 			}
 		);
+		$container->singleton(
+			SchemaSanitizer::class,
+			static function ( Container $c ): SchemaSanitizer {
+				return new SchemaSanitizer( $c->make( HtmlSanitizer::class ) );
+			}
+		);
 
 		// Rate-limit primitives.
 		$container->singleton(
@@ -125,7 +132,8 @@ final class ServiceProvider {
 			static function ( Container $c ): SignatureService {
 				return new SignatureService(
 					$c->make( SignatureRepository::class ),
-					$c->make( JsonSchemaValidator::class )
+					$c->make( JsonSchemaValidator::class ),
+					$c->make( SchemaSanitizer::class )
 				);
 			}
 		);
@@ -134,7 +142,8 @@ final class ServiceProvider {
 			static function ( Container $c ): TemplateService {
 				return new TemplateService(
 					$c->make( TemplateRepository::class ),
-					$c->make( JsonSchemaValidator::class )
+					$c->make( JsonSchemaValidator::class ),
+					$c->make( SchemaSanitizer::class )
 				);
 			}
 		);

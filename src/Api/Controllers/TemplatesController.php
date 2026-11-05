@@ -232,7 +232,7 @@ final class TemplatesController extends BaseController {
 			return $this->exception_to_wp_error( $e );
 		}
 
-		$response = rest_ensure_response( $template->to_array() );
+		$response = rest_ensure_response( $this->with_notes( $template->to_array() ) );
 		$response->set_status( 201 );
 		return $response;
 	}
@@ -252,7 +252,24 @@ final class TemplatesController extends BaseController {
 		} catch ( ImaginaSignaturesException $e ) {
 			return $this->exception_to_wp_error( $e );
 		}
-		return rest_ensure_response( $template->to_array() );
+		return rest_ensure_response( $this->with_notes( $template->to_array() ) );
+	}
+
+	/**
+	 * Appends sanitisation notes (additive; only when non-empty).
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param array<string, mixed> $payload Serialised template.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function with_notes( array $payload ): array {
+		$notes = $this->service->last_sanitization_notes();
+		if ( ! empty( $notes ) ) {
+			$payload['sanitization_notes'] = $notes;
+		}
+		return $payload;
 	}
 
 	/**

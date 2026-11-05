@@ -248,9 +248,28 @@ final class SignaturesController extends BaseController {
 			);
 		}
 
-		$response = rest_ensure_response( $signature->to_array() );
+		$response = rest_ensure_response( $this->with_notes( $signature->to_array() ) );
 		$response->set_status( 201 );
 		return $response;
+	}
+
+	/**
+	 * Appends the service's sanitisation notes to a response payload
+	 * (additive, and only when the server actually removed something —
+	 * the common clean-save response is unchanged).
+	 *
+	 * @since 1.0.40
+	 *
+	 * @param array<string, mixed> $payload Serialised signature.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function with_notes( array $payload ): array {
+		$notes = $this->service->last_sanitization_notes();
+		if ( ! empty( $notes ) ) {
+			$payload['sanitization_notes'] = $notes;
+		}
+		return $payload;
 	}
 
 	/**
@@ -302,7 +321,7 @@ final class SignaturesController extends BaseController {
 			);
 		}
 
-		return rest_ensure_response( $signature->to_array() );
+		return rest_ensure_response( $this->with_notes( $signature->to_array() ) );
 	}
 
 	/**
