@@ -13,8 +13,9 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Walks a decoded signature / template schema — including every
- * container's `children` / `right_children`, at any depth — and
- * neutralises the fields that end up in the compiled email:
+ * schema 1.1 container column (`columns[].children`) and the 1.0
+ * `children` / `right_children` lists, at any depth — and neutralises
+ * the fields that end up in the compiled email:
  *
  *  - Rich-text HTML (`text.content`, any `html` / `*_html` key, and
  *    `content` on block types not known to be plain text) goes through
@@ -30,6 +31,11 @@ defined( 'ABSPATH' ) || exit;
  *    contains any.
  *  - `{{variable}}` values additionally lose script / data URLs,
  *    since they are substituted into link targets at compile time.
+ *  - Style objects (schema 1.1) are rebuilt from an allowlist: any
+ *    block's / column's `box` (colours, border sides, radius, padding,
+ *    alignment, width), a container's `divider`, and column `width` /
+ *    `valign`. Invalid colours, numbers or enums are dropped (with a
+ *    note) instead of reaching the compiler.
  *
  * Structural validation and size limits live in
  * {@see JsonSchemaValidator}; this class never throws.
@@ -54,11 +60,53 @@ final class SchemaSanitizer {
 	private const PLAIN_CONTENT_TYPES = [ 'heading', 'disclaimer' ];
 
 	/**
-	 * Keys holding nested block arrays.
+	 * Keys holding nested block arrays directly on a block (schema 1.0).
 	 *
 	 * @var string[]
 	 */
 	private const CHILD_KEYS = [ 'children', 'right_children' ];
+
+	/**
+	 * Colour keywords accepted in style fields (mirrors the editor's
+	 * `safeColor()`).
+	 *
+	 * @var string[]
+	 */
+	private const NAMED_COLORS = [
+		'transparent',
+		'black',
+		'white',
+		'red',
+		'green',
+		'blue',
+		'gray',
+		'grey',
+		'silver',
+		'navy',
+		'maroon',
+		'orange',
+		'purple',
+		'teal',
+		'yellow',
+		'olive',
+		'lime',
+		'aqua',
+		'fuchsia',
+	];
+
+	/**
+	 * Border line styles.
+	 *
+	 * @var string[]
+	 */
+	private const BORDER_STYLES = [ 'solid', 'dashed', 'dotted' ];
+
+	/**
+	 * `box` keys holding a single border side.
+	 *
+	 * @var string[]
+	 */
+	private const BOX_BORDER_KEYS = [ 'border', 'border_top', 'border_right', 'border_bottom', 'border_left' ];
 
 	/**
 	 * @var HtmlSanitizer
@@ -159,10 +207,257 @@ final class SchemaSanitizer {
 				continue;
 			}
 
+			// Schema 1.1 container columns (in 1.0 `columns` is an int).
+			if ( 'columns' === $key && is_array( $value ) ) {
+				$block[ $key ] = $this->sanitize_columns( $value, $field_path );
+				continue;
+			}
+
+			if ( 'box' === $key ) {
+				$box = is_array( $value ) ? $this->sanitize_box( $value, $field_path ) : [];
+				if ( [] === $box ) {
+					unset( $block[ $key ] );
+				} else {
+					$block[ $key ] = $box;
+				}
+				continue;
+			}
+
+			if ( 'divider' === $key && 'container' === $type ) {
+				$divider = is_array( $value ) ? $this->sanitize_border_side( $value ) : null;
+				if ( null === $divider ) {
+					if ( null !== $value ) {
+						$this->note( $field_path, 'Removed an invalid column divider.' );
+					}
+					unset( $block[ $key ] );
+				} else {
+					$block[ $key ] = $divider;
+				}
+				continue;
+			}
+
 			$block[ $key ] = $this->sanitize_value( $value, $key, $type, $field_path );
 		}
 
 		return $block;
+	}
+
+	/**
+	 * Sanitises a schema 1.1 container's columns: children are block
+	 * lists, `box` / `width` / `valign` are style fields, anything else
+	 * is treated like any other value.
+	 *
+	 * @param array<int|string, mixed> $columns Column list.
+	 * @param string                   $path    JSON path of the list.
+	 *
+	 * @return array<int|string, mixed>
+	 */
+	private function sanitize_columns( array $columns, string $path ): array {
+		foreach ( $columns as $index => $column ) {
+			$column_path = $path . '[' . $index . ']';
+			if ( ! is_array( $column ) ) {
+				$columns[ $index ] = $this->sanitize_value( $column, 'columns', 'container', $column_path );
+				continue;
+			}
+
+			foreach ( $column as $key => $value ) {
+				$key        = (string) $key;
+				$field_path = $column_path . '.' . $key;
+
+				switch ( $key ) {
+					case 'children':
+						$column[ $key ] = is_array( $value )
+							? $this->sanitize_block_list( $value, $field_path )
+							: [];
+						break;
+
+					case 'box':
+						$box = is_array( $value ) ? $this->sanitize_box( $value, $field_path ) : [];
+						if ( [] === $box ) {
+							unset( $column[ $key ] );
+						} else {
+							$column[ $key ] = $box;
+						}
+						break;
+
+					case 'width':
+						$width = $this->number( $value, 0, 100 );
+						if ( null === $width ) {
+							$this->note( $field_path, 'Removed an invalid column width.' );
+							unset( $column[ $key ] );
+						} else {
+							$column[ $key ] = $width;
+						}
+						break;
+
+					case 'valign':
+						if ( ! in_array( $value, [ 'top', 'middle', 'bottom' ], true ) ) {
+							$this->note( $field_path, 'Removed an invalid vertical alignment.' );
+							unset( $column[ $key ] );
+						}
+						break;
+
+					default:
+						$column[ $key ] = $this->sanitize_value( $value, $key, 'container', $field_path );
+				}
+			}
+
+			$columns[ $index ] = $column;
+		}
+
+		return $columns;
+	}
+
+	/**
+	 * Rebuilds a `box` style object from its allowlisted fields.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param array<string, mixed> $box  Candidate box.
+	 * @param string               $path JSON path, for notes.
+	 *
+	 * @return array<string, mixed> Clean box (empty when nothing valid is left).
+	 */
+	private function sanitize_box( array $box, string $path ): array {
+		$out = [];
+
+		foreach ( $box as $key => $value ) {
+			$key        = (string) $key;
+			$field_path = $path . '.' . $key;
+
+			if ( 'background_color' === $key ) {
+				$color = $this->color( $value );
+				if ( null === $color ) {
+					$this->note( $field_path, 'Removed an invalid colour.' );
+				} else {
+					$out[ $key ] = $color;
+				}
+				continue;
+			}
+
+			if ( in_array( $key, self::BOX_BORDER_KEYS, true ) ) {
+				$side = is_array( $value ) ? $this->sanitize_border_side( $value ) : null;
+				if ( null === $side ) {
+					$this->note( $field_path, 'Removed an invalid border.' );
+				} else {
+					$out[ $key ] = $side;
+				}
+				continue;
+			}
+
+			if ( 'border_radius' === $key || 'width' === $key ) {
+				$number = 'width' === $key ? $this->number( $value, 0, 4000 ) : $this->number( $value, 0, 999 );
+				if ( null === $number ) {
+					$this->note( $field_path, 'Removed an invalid number.' );
+				} elseif ( 'width' !== $key || $number > 0 ) {
+					// A 0 width means "no fixed width": drop it rather than
+					// shipping a 1px box.
+					$out[ $key ] = $number;
+				}
+				continue;
+			}
+
+			if ( 'padding' === $key ) {
+				if ( ! is_array( $value ) ) {
+					$this->note( $field_path, 'Removed an invalid padding.' );
+					continue;
+				}
+				$padding = [];
+				foreach ( [ 'top', 'right', 'bottom', 'left' ] as $side ) {
+					$padding[ $side ] = $this->number( $value[ $side ] ?? 0, 0, 400 ) ?? 0;
+				}
+				$out[ $key ] = $padding;
+				continue;
+			}
+
+			if ( 'align' === $key ) {
+				if ( in_array( $value, [ 'left', 'center', 'right' ], true ) ) {
+					$out[ $key ] = $value;
+				} else {
+					$this->note( $field_path, 'Removed an invalid alignment.' );
+				}
+				continue;
+			}
+
+			$this->note( $field_path, 'Removed an unknown box style field.' );
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Validates one border side (`{ width, style, color }`).
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param array<string, mixed> $side Candidate side.
+	 *
+	 * @return array{width: int|float, style: string, color: string}|null Null when invalid (callers add the note).
+	 */
+	private function sanitize_border_side( array $side ): ?array {
+		$width = $this->number( $side['width'] ?? null, 0, 50 );
+		$color = $this->color( $side['color'] ?? null );
+		if ( null === $width || null === $color ) {
+			return null;
+		}
+		$style = isset( $side['style'] ) && in_array( $side['style'], self::BORDER_STYLES, true )
+			? (string) $side['style']
+			: 'solid';
+
+		return [
+			'width' => $width,
+			'style' => $style,
+			'color' => $color,
+		];
+	}
+
+	/**
+	 * A CSS colour the compiler can ship safely (`#rgb`, `#rgba`,
+	 * `#rrggbb`, `#rrggbbaa`, `rgb()`, `rgba()` or a short keyword list),
+	 * trimmed; `null` for anything else.
+	 *
+	 * @param mixed $value Candidate.
+	 *
+	 * @return string|null
+	 */
+	private function color( $value ): ?string {
+		if ( ! is_string( $value ) ) {
+			return null;
+		}
+		$color = trim( $value );
+		if ( 1 === preg_match( '/^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i', $color ) ) {
+			return $color;
+		}
+		$channel = '\s*\d{1,3}(?:\.\d+)?%?\s*';
+		$alpha   = '\s*(?:0|1|0?\.\d+|\d{1,3}%)\s*';
+		if ( 1 === preg_match( '/^rgba?\(' . $channel . ',' . $channel . ',' . $channel . '(?:,' . $alpha . ')?\)$/i', $color ) ) {
+			return $color;
+		}
+		if ( in_array( strtolower( $color ), self::NAMED_COLORS, true ) ) {
+			return strtolower( $color );
+		}
+		return null;
+	}
+
+	/**
+	 * A JSON number clamped to `[min, max]` (integers stay integers),
+	 * or `null` when `$value` is not numeric.
+	 *
+	 * @param mixed     $value Candidate.
+	 * @param int|float $min   Lower bound.
+	 * @param int|float $max   Upper bound.
+	 *
+	 * @return int|float|null
+	 */
+	private function number( $value, $min, $max ) {
+		if ( is_bool( $value ) || ! is_numeric( $value ) ) {
+			return null;
+		}
+		$number = max( $min, min( $max, 0 + $value ) );
+		if ( is_float( $number ) && floor( $number ) === $number ) {
+			return (int) $number;
+		}
+		return is_float( $number ) ? round( $number, 2 ) : $number;
 	}
 
 	/**

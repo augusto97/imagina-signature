@@ -260,4 +260,252 @@ final class SchemaSanitizerTest extends TestCase {
 		$this->assertSame( '<p>hi</p>', $out['blocks'][0]['content'] );
 		$this->assertSame( '1<em>ok</em>', $out['blocks'][0]['body_html'] );
 	}
+
+	// -----------------------------------------------------------------
+	// Schema 1.1: container columns + box styles
+	// -----------------------------------------------------------------
+
+	/**
+	 * @return array<string, mixed>
+	 */
+	private function clean_v2_container(): array {
+		return [
+			'id'              => 'row',
+			'type'            => 'container',
+			'gap'             => 16,
+			'stack_on_mobile' => true,
+			'divider'         => [
+				'width' => 1,
+				'style' => 'dashed',
+				'color' => '#e5e7eb',
+			],
+			'box'             => [
+				'background_color' => '#f8fafc',
+				'border'           => [
+					'width' => 1,
+					'style' => 'solid',
+					'color' => 'rgba(15, 23, 42, 0.1)',
+				],
+				'border_left'      => [
+					'width' => 4,
+					'style' => 'solid',
+					'color' => '#2563eb',
+				],
+				'border_radius'    => 12,
+				'padding'          => [
+					'top'    => 16,
+					'right'  => 20,
+					'bottom' => 16,
+					'left'   => 20,
+				],
+				'align'            => 'center',
+				'width'            => 480,
+			],
+			'columns'         => [
+				[
+					'id'       => 'col_a',
+					'width'    => 33,
+					'valign'   => 'middle',
+					'box'      => [ 'background_color' => 'navy' ],
+					'children' => [
+						[
+							'id'      => 'h',
+							'type'    => 'heading',
+							'content' => 'Smith & Sons',
+						],
+					],
+				],
+				[
+					'id'       => 'col_b',
+					'width'    => 67,
+					'children' => [],
+				],
+			],
+		];
+	}
+
+	public function test_clean_v2_schema_is_returned_unchanged_without_notes(): void {
+		$schema                   = $this->schema( [ $this->clean_v2_container() ] );
+		$schema['schema_version'] = '1.1';
+
+		$out = $this->sanitizer->sanitize( $schema );
+
+		$this->assertSame( $schema['blocks'], $out['blocks'] );
+		$this->assertSame( [], $this->sanitizer->notes() );
+	}
+
+	public function test_recurses_into_v2_column_children(): void {
+		$row                                  = $this->clean_v2_container();
+		$row['columns'][1]['children']        = [
+			[
+				'id'      => 'x',
+				'type'    => 'text',
+				'content' => '<p>a<script>alert(1)</script></p>',
+			],
+			[
+				'id'   => 'btn',
+				'type' => 'button_cta',
+				'href' => 'javascript:alert(1)',
+			],
+		];
+		$row['columns'][0]['children'][]      = [
+			'id'      => 'inner',
+			'type'    => 'container',
+			'columns' => [
+				[
+					'id'       => 'ic',
+					'width'    => 100,
+					'children' => [
+						[
+							'id'   => 'img',
+							'type' => 'image',
+							'src'  => 'data:image/png;base64,AAAA',
+							'alt'  => '<b>Logo</b>',
+						],
+					],
+				],
+			],
+		];
+
+		$out  = $this->sanitizer->sanitize( $this->schema( [ $row ] ) );
+		$cols = $out['blocks'][0]['columns'];
+
+		$this->assertStringNotContainsString( '<script', $cols[1]['children'][0]['content'] );
+		$this->assertSame( '', $cols[1]['children'][1]['href'] );
+		// Plain-text heading content inside a column is not entity-encoded.
+		$this->assertSame( 'Smith & Sons', $cols[0]['children'][0]['content'] );
+		$image = $cols[0]['children'][1]['columns'][0]['children'][0];
+		$this->assertSame( '', $image['src'] );
+		$this->assertSame( 'Logo', $image['alt'] );
+
+		$paths = array_column( $this->sanitizer->notes(), 'path' );
+		$this->assertContains( 'blocks[0].columns[1].children[0].content', $paths );
+		$this->assertContains( 'blocks[0].columns[1].children[1].href', $paths );
+		$this->assertContains( 'blocks[0].columns[0].children[1].columns[0].children[0].src', $paths );
+	}
+
+	public function test_box_styles_are_rebuilt_from_an_allowlist(): void {
+		$out = $this->sanitizer->sanitize(
+			$this->schema(
+				[
+					[
+						'id'      => 't',
+						'type'    => 'text',
+						'content' => 'Hi',
+						'box'     => [
+							'background_color' => 'red;background:url(javascript:alert(1))',
+							'border'           => [
+								'width' => 2,
+								'style' => 'groove',
+								'color' => '#ABCDEF',
+							],
+							'border_top'       => [
+								'width' => 'wide',
+								'style' => 'solid',
+								'color' => '#000',
+							],
+							'border_bottom'    => [
+								'width' => 1,
+								'style' => 'solid',
+								'color' => '"><script>',
+							],
+							'border_radius'    => 5000,
+							'padding'          => [
+								'top'   => -4,
+								'right' => '12',
+								'left'  => 'x',
+							],
+							'align'            => 'justify',
+							'width'            => 0,
+							'onclick'          => 'alert(1)',
+						],
+					],
+				]
+			)
+		);
+
+		$box = $out['blocks'][0]['box'];
+		$this->assertSame(
+			[
+				'border'        => [
+					'width' => 2,
+					'style' => 'solid',
+					'color' => '#ABCDEF',
+				],
+				'border_radius' => 999,
+				'padding'       => [
+					'top'    => 0,
+					'right'  => 12,
+					'bottom' => 0,
+					'left'   => 0,
+				],
+			],
+			$box
+		);
+
+		$paths = array_column( $this->sanitizer->notes(), 'path' );
+		foreach ( [ 'background_color', 'border_top', 'border_bottom', 'align', 'onclick' ] as $key ) {
+			$this->assertContains( 'blocks[0].box.' . $key, $paths );
+		}
+	}
+
+	public function test_invalid_box_is_removed_entirely(): void {
+		$out = $this->sanitizer->sanitize(
+			$this->schema(
+				[
+					[
+						'id'   => 's',
+						'type' => 'spacer',
+						'box'  => [ 'background_color' => 'expression(alert(1))' ],
+					],
+					[
+						'id'   => 'd',
+						'type' => 'divider',
+						'box'  => 'not-an-object',
+					],
+				]
+			)
+		);
+
+		$this->assertArrayNotHasKey( 'box', $out['blocks'][0] );
+		$this->assertArrayNotHasKey( 'box', $out['blocks'][1] );
+	}
+
+	public function test_column_and_divider_fields_are_validated(): void {
+		$row                            = $this->clean_v2_container();
+		$row['divider']['color']        = 'url(x)';
+		$row['columns'][0]['width']     = '250';
+		$row['columns'][0]['valign']    = 'baseline';
+		$row['columns'][1]['width']     = 'wide';
+		$row['columns'][1]['box']       = [
+			'padding' => [
+				'top'    => 999,
+				'right'  => 1,
+				'bottom' => 2,
+				'left'   => 3.5,
+			],
+		];
+
+		$out = $this->sanitizer->sanitize( $this->schema( [ $row ] ) );
+		$row = $out['blocks'][0];
+
+		$this->assertArrayNotHasKey( 'divider', $row );
+		$this->assertSame( 100, $row['columns'][0]['width'] );
+		$this->assertArrayNotHasKey( 'valign', $row['columns'][0] );
+		$this->assertArrayNotHasKey( 'width', $row['columns'][1] );
+		$this->assertSame(
+			[
+				'top'    => 400,
+				'right'  => 1,
+				'bottom' => 2,
+				'left'   => 3.5,
+			],
+			$row['columns'][1]['box']['padding']
+		);
+
+		$paths = array_column( $this->sanitizer->notes(), 'path' );
+		$this->assertContains( 'blocks[0].divider', $paths );
+		$this->assertContains( 'blocks[0].columns[0].valign', $paths );
+		$this->assertContains( 'blocks[0].columns[1].width', $paths );
+	}
 }
