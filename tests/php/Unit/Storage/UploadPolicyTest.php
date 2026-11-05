@@ -103,7 +103,10 @@ final class UploadPolicyTest extends TestCase {
 		$token = UploadPolicy::user_token( 42 );
 
 		$this->assertMatchesRegularExpression( '#^u/[a-f0-9]{16}/[a-f0-9]{32}\.png$#', $key );
-		$this->assertStringNotContainsString( '42', $token . '/' );
+		// No path segment is the user id. (A substring check was flaky: a
+		// random hex token contains "42" in ~6% of runs.)
+		$this->assertNotContains( '42', explode( '/', $key ) );
+		$this->assertSame( 1, preg_match( '#^[a-f0-9]{16}$#', $token ) );
 		$this->assertSame( $token, UploadPolicy::user_token( 42 ), 'Token is stable per user.' );
 		$this->assertNotSame( $token, UploadPolicy::user_token( 43 ) );
 		$this->assertTrue( UploadPolicy::key_belongs_to( $key, 42 ) );
