@@ -1,13 +1,22 @@
 import type { FC } from 'react';
-import { getConfig } from '@/bridge/apiClient';
+import { RotateCcw } from 'lucide-react';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 import { Field } from './_shared';
+import { brandPalette } from './brandPalette';
 
 interface Props {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  /**
+   * When set, a reset button is shown next to the hex field (e.g. to
+   * go back to the inherited canvas colour). Omit it while the value is
+   * already the inherited one.
+   */
+  onReset?: () => void;
+  /** Tooltip of the reset button. */
+  resetLabel?: string;
 }
 
 /**
@@ -20,13 +29,8 @@ interface Props {
  * row of small clickable circles below the picker — single-click to
  * apply, no typing required.
  */
-export const ColorInput: FC<Props> = ({ label, value, onChange }) => {
-  let palette: string[] = [];
-  try {
-    palette = getConfig().brandPalette ?? [];
-  } catch {
-    // Bootstrap unavailable (preview / tests). Swatches simply omitted.
-  }
+export const ColorInput: FC<Props> = ({ label, value, onChange, onReset, resetLabel }) => {
+  const palette = brandPalette();
 
   return (
     <Field label={label}>
@@ -44,6 +48,20 @@ export const ColorInput: FC<Props> = ({ label, value, onChange }) => {
             value={value}
             onChange={(e) => onChange(e.target.value)}
           />
+          {onReset && (
+            <button
+              type="button"
+              title={resetLabel ?? __('Reset')}
+              aria-label={resetLabel ?? __('Reset')}
+              onClick={(e) => {
+                e.preventDefault();
+                onReset();
+              }}
+              className="shrink-0 rounded p-1 text-[var(--text-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+            >
+              <RotateCcw size={11} />
+            </button>
+          )}
         </div>
         {palette.length > 0 && (
           <div className="flex flex-wrap items-center gap-1" aria-label={__('Brand palette')}>
@@ -57,9 +75,7 @@ export const ColorInput: FC<Props> = ({ label, value, onChange }) => {
                   onClick={() => onChange(swatch)}
                   className={cn(
                     'h-4 w-4 shrink-0 rounded-full ring-1 ring-inset transition-transform hover:scale-110',
-                    active
-                      ? 'ring-[var(--accent)] ring-offset-1'
-                      : 'ring-[var(--border-strong)]',
+                    active ? 'ring-[var(--accent)] ring-offset-1' : 'ring-[var(--border-strong)]',
                   )}
                   style={{ backgroundColor: swatch }}
                 />

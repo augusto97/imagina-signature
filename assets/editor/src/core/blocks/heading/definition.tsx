@@ -1,92 +1,133 @@
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
 import { Heading as HeadingIcon } from 'lucide-react';
 import type { HeadingBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
-import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
-import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
-import { FontFamilyInput } from '@/editor/sidebar-right/inputs/FontFamilyInput';
-import { FontWeightInput } from '@/editor/sidebar-right/inputs/FontWeightInput';
+import { sanitizeEmailHtml } from '@/core/compiler/sanitize';
 import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
+import { TypographySection } from '@/editor/sidebar-right/inputs/TypographySection';
+import { PropertySection } from '@/editor/sidebar-right/sections/PropertySection';
+import { TiptapEditor } from '@/tiptap/TiptapEditor';
+import { useSchemaStore } from '@/stores/schemaStore';
+import { compileRichTextCell } from '../text/compileText';
 import {
-  escapeHtml,
-  fontStack,
-  fontWeight,
-  inlineStyle,
-  num,
-  paddingCss,
-  px,
-  safeColor,
-  textAlign,
-} from '@/core/compiler/css';
-import { checkContrast } from '@/core/compiler/issues';
+  plainTextToHtml,
+  resolveRichContent,
+  richContentPatch,
+  richTextToPlain,
+  scaleSpanLineHeights,
+} from '../text/richText';
+import {
+  HEADING_TYPOGRAPHY,
+  inheritedTypography,
+  resolveTypography,
+  typographyCss,
+} from '../text/typography';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
+/**
+ * Heading block — single-paragraph rich text (so part of a name can be
+ * bold or coloured), larger by default than body text.
+ *
+ * Pre-1.2 headings stored plain text in `content`; those still render
+ * (escaped) until the first edit writes `content_html` — see
+ * `../text/richText.ts`. Typography inherits the canvas font and colour
+ * and scales its size from the canvas default (18px at 14px).
+ */
+
 const Renderer: FC<{ block: HeadingBlock }> = ({ block }) => {
+  const canvas = useSchemaStore((s) => s.schema.canvas);
+  const typography = useMemo(
+    () => resolveTypography(block.style, canvas, HEADING_TYPOGRAPHY),
+    [block.style, canvas],
+  );
+  const { content, content_html } = block;
+  const html = useMemo(() => {
+    const safe = sanitizeEmailHtml(resolveRichContent({ content, content_html }), {
+      linkColor: canvas.link_color,
+    });
+    return typography.lineHeightPx !== null
+      ? scaleSpanLineHeights(safe, typography.lineHeight)
+      : safe;
+  }, [content, content_html, canvas.link_color, typography.lineHeightPx, typography.lineHeight]);
+
   const padding = block.padding;
   const td: React.CSSProperties = {
+    ...typographyCss(typography),
     padding: padding
       ? `${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px`
       : '0',
-    fontFamily: block.style.font_family,
-    fontSize: `${block.style.font_size}px`,
-    fontWeight: block.style.font_weight,
-    color: block.style.color,
-    lineHeight: block.style.line_height ?? 1.2,
-    textAlign: block.style.text_align ?? 'left',
   };
 
   return (
-    <table role="presentation" cellPadding={0} cellSpacing={0} border={0} style={{ borderCollapse: 'collapse', width: '100%' }}>
+    <table
+      role="presentation"
+      cellPadding={0}
+      cellSpacing={0}
+      border={0}
+      style={{ borderCollapse: 'collapse', width: '100%' }}
+    >
       <tbody>
         <tr>
-          <td style={td}>{block.content}</td>
+          <td style={td} dangerouslySetInnerHTML={{ __html: html }} />
         </tr>
       </tbody>
     </table>
   );
 };
 
-const Properties: FC<{ block: HeadingBlock; onChange: (u: Partial<HeadingBlock>) => void }> = ({ block, onChange }) => {
-  const setStyle = <K extends keyof HeadingBlock['style']>(k: K, v: HeadingBlock['style'][K]) =>
-    onChange({ style: { ...block.style, [k]: v } });
-
+const Properties: FC<{ block: HeadingBlock; onChange: (u: Partial<HeadingBlock>) => void }> = ({
+  block,
+  onChange,
+}) => {
+  const canvas = useSchemaStore((s) => s.schema.canvas);
   return (
-    <div className="space-y-4 text-xs">
-      <label className="block">
-        <span className="mb-1 block text-[var(--text-secondary)]">{__('Text')}</span>
-        <input
-          type="text"
-          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
-          value={block.content}
-          onChange={(e) => onChange({ content: e.target.value })}
+    <>
+      <PropertySection title={__('Text')}>
+        <TiptapEditor
+          content={resolveRichContent(block)}
+          onChange={(html) => onChange(richContentPatch(html))}
+          allowedFormats={['bold', 'italic', 'underline', 'link', 'color', 'fontSize']}
+          singleParagraph
+          minHeight={36}
         />
-      </label>
-      <FontFamilyInput label={__('Font')} value={block.style.font_family} onChange={(v) => setStyle('font_family', v)} />
-      <DimensionInput label={__('Size')} value={block.style.font_size} onChange={(v) => setStyle('font_size', v)} min={10} max={72} />
-      <FontWeightInput label={__('Weight')} value={block.style.font_weight} onChange={(v) => setStyle('font_weight', v)} />
-      <ColorInput label={__('Color')} value={block.style.color} onChange={(v) => setStyle('color', v)} />
-      <PaddingInput value={block.padding ?? { top: 0, right: 0, bottom: 0, left: 0 }} onChange={(p) => onChange({ padding: p })} />
-    </div>
+      </PropertySection>
+      <TypographySection
+        value={block.style}
+        onChange={(style) => onChange({ style })}
+        inherited={inheritedTypography(canvas, HEADING_TYPOGRAPHY)}
+        sizeRange={[10, 72]}
+      />
+      <PropertySection title={__('Spacing')} defaultOpen={false}>
+        <PaddingInput
+          value={block.padding ?? { top: 0, right: 0, bottom: 0, left: 0 }}
+          onChange={(p) => onChange({ padding: p })}
+        />
+      </PropertySection>
+    </>
   );
 };
 
 function compile(block: HeadingBlock, ctx: CompileContext): string {
-  const color = safeColor(block.style.color, '#111827');
-  const fontSize = px(block.style.font_size, 6, 96, 18);
-  checkContrast(ctx, block, color, safeColor(ctx.canvas.background_color, '#ffffff'), fontSize);
-  const style = inlineStyle({
-    'font-family': fontStack(block.style.font_family),
-    'font-size': `${fontSize}px`,
-    'font-weight': fontWeight(block.style.font_weight, 700),
-    color,
-    'line-height': num(block.style.line_height ?? 1.2, 0.5, 4, 1.2),
-    'text-align': textAlign(block.style.text_align),
-    padding: paddingCss(block.padding),
-  });
+  return compileRichTextCell(
+    block,
+    resolveRichContent(block),
+    block.style,
+    block.padding,
+    ctx,
+    HEADING_TYPOGRAPHY,
+  );
+}
 
-  const safe = escapeHtml(block.content);
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="${style}">${safe}</td></tr></table>`;
+/**
+ * Normalises a heading in place to the 1.2 storage model: a legacy
+ * plain-text `content` gets its escaped `content_html` twin. Idempotent.
+ * (Rendering never needs this — {@link resolveRichContent} migrates on
+ * the fly — but callers that want explicit HTML can use it.)
+ */
+export function normaliseHeading(block: HeadingBlock): HeadingBlock {
+  const html = resolveRichContent(block);
+  return { ...block, content_html: html, content: richTextToPlain(html) };
 }
 
 const definition: BlockDefinition<HeadingBlock> = {
@@ -95,23 +136,26 @@ const definition: BlockDefinition<HeadingBlock> = {
   description: 'Larger text for emphasis.',
   icon: HeadingIcon,
   category: 'content',
-  create: (): HeadingBlock => ({
-    id: generateId('h'),
-    type: 'heading',
-    content: __('Your Name'),
-    style: {
-      font_family: 'Arial, sans-serif',
-      font_size: 18,
-      font_weight: 700,
-      color: '#111827',
-      line_height: 1.2,
-      text_align: 'left',
-    },
-    padding: { top: 4, right: 0, bottom: 4, left: 0 },
-  }),
+  create: (): HeadingBlock => {
+    const text = __('Your Name');
+    return {
+      id: generateId('h'),
+      type: 'heading',
+      content: text,
+      content_html: `<p>${plainTextToHtml(text)}</p>`,
+      // Family, size and colour follow the canvas defaults (size scaled ×18/14).
+      style: {
+        font_weight: 700,
+        line_height: 1.2,
+        text_align: 'left',
+      },
+      padding: { top: 4, right: 0, bottom: 4, left: 0 },
+    };
+  },
   Renderer,
   PropertiesPanel: Properties,
   compile,
+  wrap_in_section: false,
 };
 
 registerBlock(definition);

@@ -45,11 +45,16 @@ describe('divider markup', () => {
   it('keeps the width percentage and the padding around the line', () => {
     const { html } = compile([divider]);
     const doc = new DOMParser().parseFromString(html, 'text/html');
-    const outer = doc.querySelector('table[width="30%"]')!;
-    expect(outer).not.toBeNull();
-    expect(outer.getAttribute('style')).toContain('width:30%');
-    expect(outer.querySelector('td')!.getAttribute('style')).toBe('padding:4px 0px 8px 0px');
-    expect(outer.querySelector('table[width="100%"] td[height="1"]')).not.toBeNull();
+    const line = doc.querySelector('table[width="30%"]')!;
+    expect(line).not.toBeNull();
+    expect(line.getAttribute('style')).toContain('width:30%');
+    expect(line.querySelector('td[height="1"]')).not.toBeNull();
+    // The padding sits on the full-width row that positions the line.
+    const row = line.parentElement as HTMLTableCellElement;
+    expect(row.tagName).toBe('TD');
+    expect(row.getAttribute('align')).toBe('left');
+    expect(row.getAttribute('style')).toBe('padding:4px 0px 8px 0px;text-align:left');
+    expect(row.closest('table')!.getAttribute('width')).toBe('100%');
   });
 
   it('survives the shape a rich-text paste keeps (non-empty cell)', () => {

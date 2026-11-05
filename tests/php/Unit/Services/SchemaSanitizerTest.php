@@ -510,4 +510,35 @@ final class SchemaSanitizerTest extends TestCase {
 		$this->assertContains( 'blocks[0].columns[0].valign', $paths );
 		$this->assertContains( 'blocks[0].columns[1].width', $paths );
 	}
+
+	public function test_rich_heading_and_disclaimer_html_is_kept_beside_plain_mirror(): void {
+		$heading_html    = '<p>Jane <span style="color: #2563eb; font-size: 22px; letter-spacing: 1px">Doe</span> &amp; Co</p>';
+		$disclaimer_html = '<p>Confidential.<br>See <a href="https://acme.example/legal" target="_blank" rel="noopener">terms</a></p>';
+
+		$out = $this->sanitizer->sanitize(
+			$this->schema(
+				[
+					[
+						'id'           => 'h',
+						'type'         => 'heading',
+						'content'      => 'Jane Doe & Co',
+						'content_html' => $heading_html,
+					],
+					[
+						'id'           => 'd',
+						'type'         => 'disclaimer',
+						'content'      => "Confidential.\nSee terms (https://acme.example/legal)",
+						'content_html' => $disclaimer_html . '<script>alert(1)</script>',
+					],
+				]
+			)
+		);
+
+		// The `_html` suffix routes the rich value through kses…
+		$this->assertSame( $heading_html, $out['blocks'][0]['content_html'] );
+		$this->assertSame( $disclaimer_html . 'alert(1)', $out['blocks'][1]['content_html'] );
+		// …while the plain mirror stays byte-identical (no entity encoding).
+		$this->assertSame( 'Jane Doe & Co', $out['blocks'][0]['content'] );
+		$this->assertSame( "Confidential.\nSee terms (https://acme.example/legal)", $out['blocks'][1]['content'] );
+	}
 }

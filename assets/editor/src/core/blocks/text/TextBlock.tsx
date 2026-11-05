@@ -2,6 +2,8 @@ import { useMemo, type FC } from 'react';
 import type { TextBlock as TextBlockType } from '@/core/schema/blocks';
 import { sanitizeEmailHtml } from '@/core/compiler/sanitize';
 import { useSchemaStore } from '@/stores/schemaStore';
+import { scaleSpanLineHeights } from './richText';
+import { TEXT_TYPOGRAPHY, resolveTypography, typographyCss } from './typography';
 
 interface Props {
   block: TextBlockType;
@@ -19,16 +21,19 @@ interface Props {
  * but a corrupted JSON row / template-pick / undo replay could put
  * arbitrary HTML in the store, and the canvas renderer must not be
  * the path that executes it.
+ *
+ * Unset font family / size / colour inherit the canvas defaults via the
+ * same resolver the compiler uses.
  */
 export const TextBlock: FC<Props> = ({ block }) => {
+  const canvas = useSchemaStore((s) => s.schema.canvas);
+  const typography = useMemo(
+    () => resolveTypography(block.style, canvas, TEXT_TYPOGRAPHY),
+    [block.style, canvas],
+  );
   const padding = block.padding;
   const td: React.CSSProperties = {
-    fontFamily: block.style.font_family,
-    fontSize: `${block.style.font_size}px`,
-    fontWeight: block.style.font_weight,
-    color: block.style.color,
-    lineHeight: block.style.line_height ?? 1.4,
-    textAlign: block.style.text_align ?? 'left',
+    ...typographyCss(typography),
     padding: padding
       ? `${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px`
       : '0',
@@ -36,11 +41,12 @@ export const TextBlock: FC<Props> = ({ block }) => {
 
   // Same sanitiser + link colour as the compile path so links look the
   // same on the canvas as in the recipient's inbox (WYSIWYG).
-  const linkColor = useSchemaStore((s) => s.schema.canvas.link_color);
-  const safeContent = useMemo(
-    () => sanitizeEmailHtml(block.content, { linkColor }),
-    [block.content, linkColor],
-  );
+  const safeContent = useMemo(() => {
+    const html = sanitizeEmailHtml(block.content, { linkColor: canvas.link_color });
+    return typography.lineHeightPx !== null
+      ? scaleSpanLineHeights(html, typography.lineHeight)
+      : html;
+  }, [block.content, canvas.link_color, typography.lineHeightPx, typography.lineHeight]);
 
   return (
     <table

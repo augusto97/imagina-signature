@@ -16,9 +16,15 @@ import { attr, escapeHtml, parseColor } from './css';
  *    token that the compile-time URL pass re-validates after
  *    substitution), `title`, `target` (`_blank` only), `rel` (known
  *    tokens only).
- *  - `style` (span / p / inline formatting tags): only `color`,
- *    `font-weight`, `font-style`, `text-decoration`, each value
- *    validated and re-serialised.
+ *  - `style`, each value validated and re-serialised:
+ *      - `<span>` (Tiptap text-style marks): `color`, `font-size` (px),
+ *        `letter-spacing` (px / normal), `text-transform`,
+ *        `font-style`, `font-weight`, `text-decoration`;
+ *      - `<p>` and the inline formatting tags: `color`, `font-weight`,
+ *        `font-style`, `text-decoration`.
+ *    Opaque `rgb()` colours are rewritten as `#rrggbb` (Tiptap's colour
+ *    mark reads them back as rgb; old Outlook / Lotus prefer hex).
+ *    Every other property is dropped.
  *  - Dangerous containers (script, style, iframe, object, embed, svg,
  *    math, form controls, link, meta, base, template, noscript, …) are
  *    dropped INCLUDING their contents.
@@ -43,7 +49,33 @@ export interface SanitizeOptions {
 }
 
 const ALLOWED_TAGS = new Set(['strong', 'b', 'em', 'i', 'u', 'a', 'br', 'span', 'p']);
-const STYLE_TAGS = new Set(['span', 'p', 'strong', 'b', 'em', 'i', 'u']);
+
+/** CSS properties kept on `<p>` and the inline formatting tags. */
+const BASE_STYLE_PROPS = ['color', 'font-weight', 'font-style', 'text-decoration'] as const;
+
+/** CSS properties kept on `<span>` (rich-text colour / size / tracking marks). */
+const SPAN_STYLE_PROPS = [
+  ...BASE_STYLE_PROPS,
+  'font-size',
+  'letter-spacing',
+  'text-transform',
+] as const;
+
+type StyleProp = (typeof SPAN_STYLE_PROPS)[number];
+
+const STYLE_PROPS_BY_TAG: Record<string, ReadonlySet<StyleProp>> = {
+  span: new Set(SPAN_STYLE_PROPS),
+  p: new Set(BASE_STYLE_PROPS),
+  strong: new Set(BASE_STYLE_PROPS),
+  b: new Set(BASE_STYLE_PROPS),
+  em: new Set(BASE_STYLE_PROPS),
+  i: new Set(BASE_STYLE_PROPS),
+  u: new Set(BASE_STYLE_PROPS),
+};
+
+/** Font sizes accepted inside rich text (px). */
+export const RICH_TEXT_FONT_SIZE_MIN = 6;
+export const RICH_TEXT_FONT_SIZE_MAX = 96;
 
 /** Dropped together with everything inside them. */
 const DROP_WITH_CONTENT = new Set([
@@ -190,46 +222,84 @@ function linkAttributes(el: Element, linkStyle: string): string {
 
 function styleAttribute(el: Element, tag: string): string {
   const decls: string[] = tag === 'p' ? ['margin:0'] : [];
-  if (STYLE_TAGS.has(tag)) {
-    decls.push(...allowedDeclarations(el.getAttribute('style') ?? ''));
+  const allowed = STYLE_PROPS_BY_TAG[tag];
+  if (allowed) {
+    decls.push(...allowedDeclarations(el.getAttribute('style') ?? '', allowed));
   }
   return decls.length > 0 ? ` style="${decls.join(';')}"` : '';
 }
 
 const FONT_WEIGHT = /^(?:normal|bold|bolder|lighter|[1-9]00)$/;
 const FONT_STYLE = /^(?:normal|italic|oblique)$/;
+const TEXT_TRANSFORM = /^(?:none|uppercase|lowercase|capitalize)$/;
+const PX_LENGTH = /^(-?\d{1,3}(?:\.\d+)?)px$/;
 const DECORATION_TOKENS = new Set(['none', 'underline', 'line-through', 'overline']);
 
 /**
- * Parses an inline `style` attribute and returns only the allowlisted
- * declarations, each re-serialised from a validated value.
+ * Parses an inline `style` attribute and returns only the declarations
+ * whose property is in `allowed`, each re-serialised from a validated
+ * value (anything that doesn't validate is dropped).
  */
-function allowedDeclarations(style: string): string[] {
+function allowedDeclarations(style: string, allowed: ReadonlySet<StyleProp>): string[] {
   const out = new Map<string, string>();
   for (const chunk of style.split(';')) {
     const idx = chunk.indexOf(':');
     if (idx <= 0) continue;
-    const prop = chunk.slice(0, idx).trim().toLowerCase();
+    let prop = chunk.slice(0, idx).trim().toLowerCase();
+    if (prop === 'text-decoration-line') prop = 'text-decoration';
+    if (!allowed.has(prop as StyleProp)) continue;
     const value = chunk
       .slice(idx + 1)
       .replace(/!important/gi, '')
       .trim()
       .toLowerCase();
     if (!value) continue;
-
-    if (prop === 'color') {
-      const color = parseColor(value);
-      if (color) out.set('color', color);
-    } else if (prop === 'font-weight') {
-      if (FONT_WEIGHT.test(value)) out.set('font-weight', value);
-    } else if (prop === 'font-style') {
-      if (FONT_STYLE.test(value)) out.set('font-style', value);
-    } else if (prop === 'text-decoration' || prop === 'text-decoration-line') {
-      const tokens = value.split(/\s+/).filter((t) => DECORATION_TOKENS.has(t));
-      if (tokens.length > 0) out.set('text-decoration', tokens.join(' '));
-    }
+    const clean = validValue(prop as StyleProp, value);
+    if (clean !== null) out.set(prop, clean);
   }
   return Array.from(out, ([k, v]) => `${k}:${v}`);
+}
+
+function validValue(prop: StyleProp, value: string): string | null {
+  switch (prop) {
+    case 'color': {
+      const color = parseColor(value);
+      return color ? rgbToHex(color) : null;
+    }
+    case 'font-weight':
+      return FONT_WEIGHT.test(value) ? value : null;
+    case 'font-style':
+      return FONT_STYLE.test(value) ? value : null;
+    case 'text-transform':
+      return TEXT_TRANSFORM.test(value) ? value : null;
+    case 'text-decoration': {
+      const tokens = value.split(/\s+/).filter((t) => DECORATION_TOKENS.has(t));
+      return tokens.length > 0 ? tokens.join(' ') : null;
+    }
+    case 'font-size': {
+      const m = PX_LENGTH.exec(value);
+      if (!m) return null;
+      const n = Number(m[1]);
+      return n >= RICH_TEXT_FONT_SIZE_MIN && n <= RICH_TEXT_FONT_SIZE_MAX ? `${n}px` : null;
+    }
+    case 'letter-spacing': {
+      if (value === 'normal') return value;
+      const m = PX_LENGTH.exec(value);
+      if (!m) return null;
+      const n = Number(m[1]);
+      return n >= -5 && n <= 20 ? `${n}px` : null;
+    }
+    default:
+      return null;
+  }
+}
+
+/** `rgb(r,g,b)` / `rgba(r,g,b,1)` → `#rrggbb`; anything else unchanged. */
+function rgbToHex(color: string): string {
+  const m = /^rgba?\((\d{1,3}),(\d{1,3}),(\d{1,3})(?:,(1|1\.0+|100%))?\)$/.exec(color);
+  if (!m) return color;
+  const channels = [m[1], m[2], m[3]].map((c) => Math.min(255, Number(c)));
+  return `#${channels.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
 }
 
 /** Removes characters browsers ignore in URLs (tabs, newlines, …). */

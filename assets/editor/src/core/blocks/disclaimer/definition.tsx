@@ -1,90 +1,130 @@
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
 import { FileText } from 'lucide-react';
 import type { DisclaimerBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
-import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
-import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
+import { sanitizeEmailHtml } from '@/core/compiler/sanitize';
 import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
+import { TypographySection } from '@/editor/sidebar-right/inputs/TypographySection';
+import { PropertySection } from '@/editor/sidebar-right/sections/PropertySection';
+import { TiptapEditor } from '@/tiptap/TiptapEditor';
+import { useSchemaStore } from '@/stores/schemaStore';
+import { compileRichTextCell } from '../text/compileText';
 import {
-  escapeHtml,
-  fontStack,
-  inlineStyle,
-  num,
-  paddingCss,
-  px,
-  safeColor,
-} from '@/core/compiler/css';
-import { checkContrast } from '@/core/compiler/issues';
+  plainTextToHtml,
+  resolveRichContent,
+  richContentPatch,
+  richTextToPlain,
+  scaleSpanLineHeights,
+} from '../text/richText';
+import {
+  DISCLAIMER_TYPOGRAPHY,
+  inheritedTypography,
+  resolveTypography,
+  typographyCss,
+} from '../text/typography';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
+/**
+ * Disclaimer — small print with bold / italic / links.
+ *
+ * Pre-1.2 disclaimers stored plain text (newlines = line breaks) in
+ * `content`; they keep rendering that way — escaped, newlines → `<br>` —
+ * until the first edit writes `content_html` (see `../text/richText.ts`).
+ * Unset family / size / colour inherit the canvas: size scaled ×10/14,
+ * colour a muted tone of the canvas text colour.
+ */
+
 const Renderer: FC<{ block: DisclaimerBlock }> = ({ block }) => {
+  const canvas = useSchemaStore((s) => s.schema.canvas);
+  const typography = useMemo(
+    () => resolveTypography(block.style, canvas, DISCLAIMER_TYPOGRAPHY),
+    [block.style, canvas],
+  );
+  const { content, content_html } = block;
+  const html = useMemo(() => {
+    const safe = sanitizeEmailHtml(resolveRichContent({ content, content_html }), {
+      linkColor: canvas.link_color,
+    });
+    return typography.lineHeightPx !== null
+      ? scaleSpanLineHeights(safe, typography.lineHeight)
+      : safe;
+  }, [content, content_html, canvas.link_color, typography.lineHeightPx, typography.lineHeight]);
+
   const padding = block.padding;
   const td: React.CSSProperties = {
-    padding: padding ? `${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px` : '0',
-    fontFamily: block.style.font_family,
-    fontSize: `${block.style.font_size}px`,
-    color: block.style.color,
-    lineHeight: block.style.line_height ?? 1.4,
-    // The export turns newlines into <br>; mirror that on the canvas.
-    whiteSpace: 'pre-line',
+    ...typographyCss(typography),
+    padding: padding
+      ? `${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px`
+      : '0',
   };
 
   return (
-    <table role="presentation" cellPadding={0} cellSpacing={0} border={0} style={{ borderCollapse: 'collapse', width: '100%' }}>
+    <table
+      role="presentation"
+      cellPadding={0}
+      cellSpacing={0}
+      border={0}
+      style={{ borderCollapse: 'collapse', width: '100%' }}
+    >
       <tbody>
         <tr>
-          <td style={td}>{block.content}</td>
+          <td style={td} dangerouslySetInnerHTML={{ __html: html }} />
         </tr>
       </tbody>
     </table>
   );
 };
 
-const Properties: FC<{ block: DisclaimerBlock; onChange: (u: Partial<DisclaimerBlock>) => void }> = ({
-  block,
-  onChange,
-}) => (
-  <div className="space-y-3 text-xs">
-    <label className="block">
-      <span className="mb-1 block text-[var(--text-secondary)]">{__('Disclaimer text')}</span>
-      <textarea
-        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5 text-xs"
-        rows={4}
-        value={block.content}
-        onChange={(e) => onChange({ content: e.target.value })}
+const Properties: FC<{
+  block: DisclaimerBlock;
+  onChange: (u: Partial<DisclaimerBlock>) => void;
+}> = ({ block, onChange }) => {
+  const canvas = useSchemaStore((s) => s.schema.canvas);
+  return (
+    <>
+      <PropertySection title={__('Disclaimer text')}>
+        <TiptapEditor
+          content={resolveRichContent(block)}
+          onChange={(html) => onChange(richContentPatch(html))}
+          allowedFormats={['bold', 'italic', 'link']}
+        />
+      </PropertySection>
+      <TypographySection
+        value={block.style}
+        onChange={(style) => onChange({ style })}
+        inherited={inheritedTypography(canvas, DISCLAIMER_TYPOGRAPHY)}
+        sizeRange={[6, 16]}
       />
-    </label>
-    <DimensionInput
-      label={__('Font size')}
-      value={block.style.font_size}
-      onChange={(v) => onChange({ style: { ...block.style, font_size: v } })}
-      min={8}
-      max={14}
-    />
-    <ColorInput
-      label={__('Color')}
-      value={block.style.color}
-      onChange={(v) => onChange({ style: { ...block.style, color: v } })}
-    />
-    <PaddingInput value={block.padding ?? { top: 0, right: 0, bottom: 0, left: 0 }} onChange={(p) => onChange({ padding: p })} />
-  </div>
-);
+      <PropertySection title={__('Spacing')} defaultOpen={false}>
+        <PaddingInput
+          value={block.padding ?? { top: 0, right: 0, bottom: 0, left: 0 }}
+          onChange={(p) => onChange({ padding: p })}
+        />
+      </PropertySection>
+    </>
+  );
+};
 
 function compile(block: DisclaimerBlock, ctx: CompileContext): string {
-  const color = safeColor(block.style.color, '#6b7280');
-  const fontSize = px(block.style.font_size, 6, 48, 10);
-  checkContrast(ctx, block, color, safeColor(ctx.canvas.background_color, '#ffffff'), fontSize);
-  // Plain-text field: escape, then keep the user's line breaks.
-  const safe = escapeHtml(block.content).replace(/\r?\n/g, '<br>');
-  const style = inlineStyle({
-    'font-family': fontStack(block.style.font_family),
-    'font-size': `${fontSize}px`,
-    color,
-    'line-height': num(block.style.line_height ?? 1.4, 0.5, 4, 1.4),
-    padding: paddingCss(block.padding),
-  });
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="${style}">${safe}</td></tr></table>`;
+  return compileRichTextCell(
+    block,
+    resolveRichContent(block),
+    block.style,
+    block.padding,
+    ctx,
+    DISCLAIMER_TYPOGRAPHY,
+  );
+}
+
+/**
+ * Normalises a disclaimer in place to the 1.2 storage model: a legacy
+ * plain-text `content` gets its `content_html` twin (escaped, newlines →
+ * `<br>`). Idempotent.
+ */
+export function normaliseDisclaimer(block: DisclaimerBlock): DisclaimerBlock {
+  const html = resolveRichContent(block);
+  return { ...block, content_html: html, content: richTextToPlain(html) };
 }
 
 const definition: BlockDefinition<DisclaimerBlock> = {
@@ -93,24 +133,26 @@ const definition: BlockDefinition<DisclaimerBlock> = {
   description: 'Small print at the bottom of the signature.',
   icon: FileText,
   category: 'content',
-  create: (): DisclaimerBlock => ({
-    id: generateId('dsc'),
-    type: 'disclaimer',
-    content: __(
+  create: (): DisclaimerBlock => {
+    const text = __(
       'This email and any attachments are confidential. If you received it in error, please notify the sender and delete it.',
-    ),
-    style: {
-      font_family: 'Arial, sans-serif',
-      font_size: 10,
-      font_weight: 400,
-      color: '#6b7280',
-      line_height: 1.4,
-    },
-    padding: { top: 8, right: 0, bottom: 0, left: 0 },
-  }),
+    );
+    return {
+      id: generateId('dsc'),
+      type: 'disclaimer',
+      content: text,
+      content_html: `<p>${plainTextToHtml(text)}</p>`,
+      // Family, size and colour follow the canvas (smaller, muted).
+      style: {
+        line_height: 1.4,
+      },
+      padding: { top: 8, right: 0, bottom: 0, left: 0 },
+    };
+  },
   Renderer,
   PropertiesPanel: Properties,
   compile,
+  wrap_in_section: false,
 };
 
 registerBlock(definition);

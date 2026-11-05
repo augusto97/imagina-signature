@@ -18,11 +18,9 @@ const definition: BlockDefinition<TextBlock> = {
     id: generateId('text'),
     type: 'text',
     content: __('Edit me'),
+    // Family, size, weight and colour are left unset: they follow the
+    // canvas defaults until the user overrides them.
     style: {
-      font_family: 'Arial, sans-serif',
-      font_size: 14,
-      font_weight: 400,
-      color: '#111827',
       line_height: 1.4,
       text_align: 'left',
     },
@@ -32,6 +30,8 @@ const definition: BlockDefinition<TextBlock> = {
   Renderer: TextBlockRenderer,
   PropertiesPanel: TextProperties,
   compile: compileText,
+  // The panel is organised in its own PropertySections.
+  wrap_in_section: false,
 };
 
 registerBlock(definition);

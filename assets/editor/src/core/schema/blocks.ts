@@ -3,6 +3,8 @@ import type {
   BorderStyle,
   BoxStyle,
   Padding,
+  TextAlign,
+  TextStyle,
   TypographyStyle,
   VerticalAlign,
 } from './styles';
@@ -40,13 +42,26 @@ export interface BlockBase {
 export interface TextBlock extends BlockBase {
   type: 'text';
   content: string; // HTML produced by Tiptap (email-safe whitelist)
-  style: TypographyStyle;
+  /** Unset family / size / colour inherit the canvas defaults. */
+  style: TextStyle;
 }
 
 export interface HeadingBlock extends BlockBase {
   type: 'heading';
+  /**
+   * Plain-text version of the heading. Before 1.2 this was the only
+   * field; it is still written (derived from `content_html`) so
+   * plain-text export, the Layers panel and older readers keep working.
+   */
   content: string;
-  style: TypographyStyle;
+  /**
+   * Rich-text HTML (single paragraph, email-safe allowlist). Absent on
+   * rows saved before 1.2 — and ignored when `content` was edited
+   * without it — in which case `content` is escaped and used instead
+   * (see `core/blocks/text/richText.ts`).
+   */
+  content_html?: string;
+  style: TextStyle;
 }
 
 export interface ImageBlock extends BlockBase {
@@ -128,8 +143,16 @@ export interface AvatarBlock extends BlockBase {
 
 export interface DividerBlock extends BlockBase {
   type: 'divider';
+  /** Line style, thickness (`width`) and colour. */
   border: BorderStyle;
+  /** Line length as a percentage of the available width (`width_unit` 'percent'). */
   width_percent: number;
+  /** How the line length is expressed. Absent = 'percent'. */
+  width_unit?: 'percent' | 'px';
+  /** Line length in px when `width_unit` is 'px' (clamped to the available width). */
+  width_px?: number;
+  /** Horizontal position of a line shorter than the available width. Absent = left. */
+  align?: TextAlign;
 }
 
 export interface SpacerBlock extends BlockBase {
@@ -223,19 +246,53 @@ export interface ContactRowBlock extends BlockBase {
   rows?: Array<{ icon: 'email' | 'phone' | 'web'; label: string; href: string }>;
 }
 
+/** Visual preset of a button. */
+export type ButtonPreset = 'solid' | 'outline' | 'pill' | 'text';
+
 export interface ButtonCtaBlock extends BlockBase {
   type: 'button_cta';
   label: string;
   href: string;
+  /** Fill colour (`solid` / `pill`); the default border colour of `outline`. */
   background_color: string;
   text_color: string;
   border_radius: number;
+  /*
+   * Button v2 (1.2). Every field is optional: rows saved before keep
+   * the v1 look (solid, 12px × 24px padding, 14px semibold label,
+   * left-aligned, no border).
+   */
+  /** Absent = 'solid'. */
+  preset?: ButtonPreset;
+  /** Horizontal inner padding in px (default 24). */
+  padding_x?: number;
+  /** Vertical inner padding in px (default 12). */
+  padding_y?: number;
+  /** Label typography; `color` is unused (see `text_color`). Unset family / size inherit the canvas. */
+  style?: TextStyle;
+  /** Border thickness in px (default 0; `outline` uses at least 1). */
+  border_width?: number;
+  /** Border colour (default `background_color`). */
+  border_color?: string;
+  /** Stretch the button to the available width. */
+  full_width?: boolean;
+  /** Horizontal position. Absent = left. */
+  align?: TextAlign;
 }
 
 export interface DisclaimerBlock extends BlockBase {
   type: 'disclaimer';
+  /**
+   * Plain-text version (newlines = line breaks). The only field before
+   * 1.2; still written, derived from `content_html`.
+   */
   content: string;
-  style: TypographyStyle;
+  /**
+   * Rich-text HTML (bold / italic / links). Absent on older rows, in
+   * which case `content` is escaped and its newlines become `<br>`.
+   */
+  content_html?: string;
+  style: TextStyle;
 }
 
 /** Maximum number of columns a container can hold. */
@@ -301,6 +358,8 @@ export interface QrCodeBlock extends BlockBase {
   image_url?: string;
   /** `qrContentHash()` of the inputs `image_url` was rendered from. */
   image_hash?: string;
+  /** Horizontal position of the QR (+ caption). Absent = left. */
+  align?: TextAlign;
 }
 
 export interface BannerBlock extends BlockBase {
@@ -353,6 +412,10 @@ export interface VCardBlock extends BlockBase {
   vcf_url?: string;
   /** `vcardContentHash()` of the vCard text `vcf_url` was generated from. */
   vcf_hash?: string;
+  /** Render the link as a button (default) or as a plain text link. */
+  link_style?: 'button' | 'text';
+  /** Horizontal position. Absent = left. */
+  align?: TextAlign;
 }
 
 export type Block =

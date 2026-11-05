@@ -65,6 +65,10 @@ final class HtmlSanitizer {
 	/**
 	 * CSS properties allowed inside rich-text `style` attributes.
 	 *
+	 * Mirrors the editor's `sanitizeEmailHtml()` span allowlist (colour,
+	 * size, tracking, case, weight, style, decoration) plus the
+	 * paragraph-level properties older rows may carry.
+	 *
 	 * @var string[]
 	 */
 	private const RICH_TEXT_STYLE_PROPERTIES = [
@@ -74,6 +78,8 @@ final class HtmlSanitizer {
 		'font-style',
 		'font-size',
 		'font-family',
+		'letter-spacing',
+		'text-transform',
 		'text-decoration',
 		'text-align',
 		'line-height',
@@ -82,6 +88,20 @@ final class HtmlSanitizer {
 		'margin-right',
 		'margin-bottom',
 		'margin-left',
+	];
+
+	/**
+	 * Value patterns for rich-text properties whose values are a closed
+	 * set (a declaration that doesn't match is dropped). Same rules as
+	 * the editor: font sizes and letter spacing in px only.
+	 *
+	 * @var array<string, string>
+	 */
+	private const RICH_TEXT_STYLE_VALUES = [
+		'font-size'      => '/^\d{1,3}(?:\.\d+)?px$/i',
+		'letter-spacing' => '/^(?:normal|-?\d{1,2}(?:\.\d+)?px)$/i',
+		'text-transform' => '/^(?:none|uppercase|lowercase|capitalize)$/i',
+		'font-style'     => '/^(?:normal|italic|oblique)$/i',
 	];
 
 	/**
@@ -245,7 +265,7 @@ final class HtmlSanitizer {
 			return '';
 		}
 
-		return $this->kses( $html, self::RICH_TEXT_TAGS, self::RICH_TEXT_STYLE_PROPERTIES );
+		return $this->kses( $html, self::RICH_TEXT_TAGS, self::RICH_TEXT_STYLE_PROPERTIES, self::RICH_TEXT_STYLE_VALUES );
 	}
 
 	/**
@@ -302,10 +322,11 @@ final class HtmlSanitizer {
 	 * @param string                             $html             Untrusted HTML.
 	 * @param array<string, array<string, bool>> $allowed          Kses tag => attributes map (may list `style`).
 	 * @param string[]                           $style_properties Allowed CSS properties.
+	 * @param array<string, string>              $style_values     Optional property => value regex.
 	 *
 	 * @return string
 	 */
-	private function kses( string $html, array $allowed, array $style_properties ): string {
+	private function kses( string $html, array $allowed, array $style_properties, array $style_values = [] ): string {
 		foreach ( $allowed as $tag => $attributes ) {
 			if ( isset( $attributes['style'] ) ) {
 				unset( $attributes['style'] );
@@ -326,7 +347,7 @@ final class HtmlSanitizer {
 
 		$clean = wp_kses( $html, $allowed, $this->allowed_protocols() );
 
-		return $this->filter_style_attributes( $clean, $style_properties );
+		return $this->filter_style_attributes( $clean, $style_properties, $style_values );
 	}
 
 	/**
@@ -471,17 +492,19 @@ final class HtmlSanitizer {
 	 *
 	 * @since 1.0.40
 	 *
-	 * @param string   $html       Kses-sanitised HTML.
-	 * @param string[] $properties Allowed CSS property names.
+	 * @param string                $html       Kses-sanitised HTML.
+	 * @param string[]              $properties Allowed CSS property names.
+	 * @param array<string, string> $values     Optional property => value regex; a value
+	 *                                          that doesn't match is dropped.
 	 *
 	 * @return string
 	 */
-	private function filter_style_attributes( string $html, array $properties ): string {
+	private function filter_style_attributes( string $html, array $properties, array $values = [] ): string {
 		if ( false === strpos( $html, self::STYLE_CARRIER ) ) {
 			return $html;
 		}
 
-		$rebuild = static function ( array $m ) use ( $properties ): string {
+		$rebuild = static function ( array $m ) use ( $properties, $values ): string {
 			$kept    = [];
 			$dropped = false;
 			foreach ( explode( ';', html_entity_decode( $m[2], ENT_QUOTES, 'UTF-8' ) ) as $declaration ) {
@@ -498,7 +521,8 @@ final class HtmlSanitizer {
 				$property             = strtolower( $property );
 
 				if ( ! in_array( $property, $properties, true ) || '' === $value
-					|| preg_match( '/url\s*\(|expression\s*\(|@import|javascript:|behavior\s*:|\\\\|\/\*|[<>"]/i', $value ) ) {
+					|| preg_match( '/url\s*\(|expression\s*\(|@import|javascript:|behavior\s*:|\\\\|\/\*|[<>"]/i', $value )
+					|| ( isset( $values[ $property ] ) && ! preg_match( $values[ $property ], $value ) ) ) {
 					$dropped = true;
 					continue;
 				}

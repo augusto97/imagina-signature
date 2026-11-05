@@ -1,29 +1,29 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/utils/cn';
 
+/**
+ * One option of a segmented control.
+ *
+ * `label` is what the button shows unless `content` is given (e.g. an
+ * icon); `title` is the tooltip / accessible name, falling back to
+ * `label` when that is plain text.
+ */
 export interface SegmentedOption<T extends string | number> {
   value: T;
-  /** Visible content (text or an icon). */
   label: ReactNode;
-  /** Accessible name / tooltip; required when `label` is an icon. */
   title?: string;
+  content?: ReactNode;
 }
 
 interface Props<T extends string | number> {
-  /** Field label shown above the control (optional). */
   label?: string;
-  /** Accessible name of the group when there is no visible label. */
   ariaLabel?: string;
   value: T | undefined;
   options: ReadonlyArray<SegmentedOption<T>>;
   onChange: (value: T) => void;
 }
 
-/**
- * Compact segmented control (a radio group rendered as joined buttons)
- * for small enumerations: alignment, vertical alignment, column count,
- * border mode…
- */
+/** Compact single-choice button group (alignment, units, presets). */
 export function SegmentedInput<T extends string | number>({
   label,
   ariaLabel,
@@ -41,14 +41,15 @@ export function SegmentedInput<T extends string | number>({
       >
         {options.map((option) => {
           const active = option.value === value;
+          const name = option.title ?? (typeof option.label === 'string' ? option.label : undefined);
           return (
             <button
               key={String(option.value)}
               type="button"
               role="radio"
               aria-checked={active}
-              title={option.title}
-              aria-label={option.title}
+              title={name}
+              aria-label={name}
               onClick={() => onChange(option.value)}
               className={cn(
                 'inline-flex h-6 flex-1 items-center justify-center rounded px-1.5 text-[11px] font-medium transition-colors',
@@ -57,7 +58,7 @@ export function SegmentedInput<T extends string | number>({
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
               )}
             >
-              {option.label}
+              {option.content ?? option.label}
             </button>
           );
         })}

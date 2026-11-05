@@ -1,171 +1,206 @@
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
 import { MousePointer2 } from 'lucide-react';
-import type { ButtonCtaBlock } from '@/core/schema/blocks';
+import type { ButtonCtaBlock, ButtonPreset } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
+import { AlignInput } from '@/editor/sidebar-right/inputs/AlignInput';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
-import {
-  attr,
-  bgcolorAttr,
-  escapeHtml,
-  horizontalPadding,
-  paddingCss,
-  px,
-  safeColor,
-} from '@/core/compiler/css';
-import { markerAttr, report } from '@/core/compiler/issues';
+import { SegmentedInput } from '@/editor/sidebar-right/inputs/SegmentedInput';
+import { ToggleInput } from '@/editor/sidebar-right/inputs/ToggleInput';
+import { TypographySection } from '@/editor/sidebar-right/inputs/TypographySection';
+import { PropertySection } from '@/editor/sidebar-right/sections/PropertySection';
+import { useSchemaStore } from '@/stores/schemaStore';
+import { BUTTON_TYPOGRAPHY, inheritedTypography } from '../text/typography';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
+import { ButtonPreview } from './ButtonPreview';
+import {
+  buttonPreset,
+  compileButton,
+  readableTextColor,
+  resolveButtonSpec,
+  vmlButtonWidth,
+} from './buttonMarkup';
+
+export { vmlButtonWidth };
+
+/**
+ * Button (call to action), v2: presets (solid / outline / pill / text
+ * link), padding, typography (canvas-inherited family / size), border,
+ * radius, full width and alignment. Bullet-proof markup lives in
+ * `buttonMarkup.ts` (shared with the vCard block). Rows saved before
+ * 1.2 have none of the v2 fields and keep the v1 look.
+ */
 
 const Renderer: FC<{ block: ButtonCtaBlock }> = ({ block }) => {
-  const padding = block.padding;
-  const td: React.CSSProperties = {
-    padding: padding ? `${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px` : '0',
-  };
-
-  return (
-    <table role="presentation" cellPadding={0} cellSpacing={0} border={0} style={{ borderCollapse: 'collapse' }}>
-      <tbody>
-        <tr>
-          <td style={td}>
-            {/* Same table-cell button the export ships to non-Outlook
-                clients (Outlook desktop gets the VML version). */}
-            <table
-              role="presentation"
-              cellPadding={0}
-              cellSpacing={0}
-              border={0}
-              style={{ borderCollapse: 'separate' }}
-            >
-              <tbody>
-                <tr>
-                  <td
-                    style={{
-                      background: block.background_color,
-                      borderRadius: `${block.border_radius}px`,
-                      padding: '12px 24px',
-                    }}
-                  >
-                    <a
-                      href={block.href}
-                      style={{
-                        display: 'inline-block',
-                        color: block.text_color,
-                        textDecoration: 'none',
-                        fontFamily: 'Arial, sans-serif',
-                        fontWeight: 600,
-                        fontSize: '14px',
-                        lineHeight: '16px',
-                      }}
-                    >
-                      {block.label}
-                    </a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  );
+  const canvas = useSchemaStore((s) => s.schema.canvas);
+  const spec = useMemo(() => resolveButtonSpec(block, canvas), [block, canvas]);
+  return <ButtonPreview spec={spec} />;
 };
 
 const Properties: FC<{ block: ButtonCtaBlock; onChange: (u: Partial<ButtonCtaBlock>) => void }> = ({
   block,
   onChange,
-}) => (
-  <div className="space-y-3 text-xs">
-    <label className="block">
-      <span className="mb-1 block text-[var(--text-secondary)]">{__('Label')}</span>
-      <input
-        type="text"
-        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
-        value={block.label}
-        onChange={(e) => onChange({ label: e.target.value })}
-      />
-    </label>
-    <label className="block">
-      <span className="mb-1 block text-[var(--text-secondary)]">{__('Link URL')}</span>
-      <input
-        type="url"
-        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-panel)] p-1.5"
-        value={block.href}
-        onChange={(e) => onChange({ href: e.target.value })}
-      />
-    </label>
-    <ColorInput label={__('Background')} value={block.background_color} onChange={(v) => onChange({ background_color: v })} />
-    <ColorInput label={__('Text color')} value={block.text_color} onChange={(v) => onChange({ text_color: v })} />
-    <DimensionInput label={__('Border radius')} value={block.border_radius} onChange={(v) => onChange({ border_radius: v })} min={0} max={32} />
-    <PaddingInput value={block.padding ?? { top: 0, right: 0, bottom: 0, left: 0 }} onChange={(p) => onChange({ padding: p })} />
-  </div>
-);
+}) => {
+  const canvas = useSchemaStore((s) => s.schema.canvas);
+  const preset = buttonPreset(block.preset);
+  const isText = preset === 'text';
+  const isOutline = preset === 'outline';
+  const borderWidth = block.border_width ?? (isOutline ? 2 : 0);
+  const fullWidth = !isText && block.full_width === true;
 
-const BUTTON_HEIGHT = 40;
-const BUTTON_PADDING_X = 24;
-const CHAR_WIDTH = 8.5; // ≈ average advance of 14px Arial semibold
-const MIN_VML_WIDTH = 120;
+  return (
+    <>
+      <PropertySection title={__('Button')}>
+        <div className="space-y-2.5 text-xs">
+          <label className="block">
+            <span className="is-section-label mb-1 block">{__('Label')}</span>
+            <input
+              type="text"
+              value={block.label}
+              onChange={(e) => onChange({ label: e.target.value })}
+            />
+          </label>
+          <label className="block">
+            <span className="is-section-label mb-1 block">{__('Link URL')}</span>
+            <input
+              type="url"
+              value={block.href}
+              onChange={(e) => onChange({ href: e.target.value })}
+            />
+          </label>
+          <SegmentedInput<ButtonPreset>
+            label={__('Style')}
+            value={preset}
+            onChange={(p) => onChange(applyButtonPreset(block, p))}
+            options={[
+              { value: 'solid', label: __('Solid') },
+              { value: 'outline', label: __('Outline') },
+              { value: 'pill', label: __('Pill') },
+              { value: 'text', label: __('Text link') },
+            ]}
+          />
+        </div>
+      </PropertySection>
+
+      <PropertySection title={__('Colors')}>
+        <div className="space-y-2.5">
+          {!isText && !isOutline && (
+            <ColorInput
+              label={__('Background')}
+              value={block.background_color}
+              onChange={(v) => onChange({ background_color: v })}
+            />
+          )}
+          <ColorInput
+            label={__('Text color')}
+            value={block.text_color}
+            onChange={(v) => onChange({ text_color: v })}
+          />
+          {!isText && (
+            <DimensionInput
+              label={__('Border width')}
+              value={borderWidth}
+              onChange={(v) => onChange({ border_width: v })}
+              min={isOutline ? 1 : 0}
+              max={8}
+            />
+          )}
+          {!isText && borderWidth > 0 && (
+            <ColorInput
+              label={__('Border color')}
+              value={block.border_color ?? block.background_color}
+              onChange={(v) => onChange({ border_color: v })}
+            />
+          )}
+        </div>
+      </PropertySection>
+
+      <PropertySection title={__('Layout')}>
+        <div className="space-y-2.5">
+          {!isText && (
+            <div className="grid grid-cols-2 gap-2">
+              <DimensionInput
+                label={__('Padding X')}
+                value={block.padding_x ?? 24}
+                onChange={(v) => onChange({ padding_x: v })}
+                min={0}
+                max={64}
+              />
+              <DimensionInput
+                label={__('Padding Y')}
+                value={block.padding_y ?? 12}
+                onChange={(v) => onChange({ padding_y: v })}
+                min={0}
+                max={40}
+              />
+            </div>
+          )}
+          {!isText && preset !== 'pill' && (
+            <DimensionInput
+              label={__('Border radius')}
+              value={block.border_radius}
+              onChange={(v) => onChange({ border_radius: v })}
+              min={0}
+              max={32}
+            />
+          )}
+          {!isText && (
+            <ToggleInput
+              label={__('Full width')}
+              checked={fullWidth}
+              onChange={(v) => onChange({ full_width: v })}
+            />
+          )}
+          {!fullWidth && (
+            <AlignInput value={block.align} onChange={(v) => onChange({ align: v })} />
+          )}
+        </div>
+      </PropertySection>
+
+      <TypographySection
+        value={block.style ?? {}}
+        onChange={(style) => onChange({ style })}
+        inherited={inheritedTypography(canvas, BUTTON_TYPOGRAPHY)}
+        hide={['color', 'line_height', 'text_align']}
+        sizeRange={[10, 32]}
+        defaultOpen={false}
+      />
+
+      <PropertySection title={__('Spacing')} defaultOpen={false}>
+        <PaddingInput
+          value={block.padding ?? { top: 0, right: 0, bottom: 0, left: 0 }}
+          onChange={(p) => onChange({ padding: p })}
+        />
+      </PropertySection>
+    </>
+  );
+};
 
 /**
- * Pixel width the VML button needs for `label` (≈ chars × 8.5 +
- * horizontal padding, min 120) so long labels don't clip in Outlook.
+ * Store patch for switching `block` to `preset`. Besides the preset it
+ * adjusts the colours that would otherwise make the result unreadable:
+ * a white label on a fill-less button (outline / text link) takes the
+ * button colour, and a label matching the fill when going back to a
+ * filled preset turns white.
  */
-export function vmlButtonWidth(label: string): number {
-  const chars = Array.from(label).length;
-  return Math.max(MIN_VML_WIDTH, Math.round(chars * CHAR_WIDTH + BUTTON_PADDING_X * 2));
+export function applyButtonPreset(
+  block: ButtonCtaBlock,
+  preset: ButtonPreset,
+): Partial<ButtonCtaBlock> {
+  const patch: Partial<ButtonCtaBlock> = { preset };
+  const textColor = readableTextColor(block, preset === 'solid' || preset === 'pill');
+  if (textColor) patch.text_color = textColor;
+  if (preset === 'outline') {
+    if (!block.border_width) patch.border_width = 2;
+    if (!block.border_color) patch.border_color = block.background_color;
+  }
+  return patch;
 }
 
 function compile(block: ButtonCtaBlock, ctx: CompileContext): string {
-  const padding = paddingCss(block.padding);
-  // Central serializer for every interpolated value — label / href
-  // are user-controlled, colours are free-form schema strings.
-  const safeLabel = escapeHtml(block.label);
-  const safeHref = attr(block.href);
-  const safeBg = safeColor(block.background_color, '#1d4ed8');
-  const safeText = safeColor(block.text_color, '#ffffff');
-  const radius = px(block.border_radius, 0, 999, 0);
-  const marker = markerAttr(block);
-
-  // Size the VML shape from the label as the recipient will see it
-  // (variables resolved), capped to the width available here.
-  const resolvedLabel = String(block.label ?? '').replace(
-    /\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g,
-    (m, name: string) => ctx.variables[name] ?? m,
-  );
-  const available = Math.max(MIN_VML_WIDTH, Math.floor(ctx.availableWidth - horizontalPadding(block.padding)));
-  const wanted = vmlButtonWidth(resolvedLabel);
-  if (wanted > available) {
-    report(
-      ctx,
-      'warning',
-      __('Button label is too long to fit on one line in Outlook; shorten it or it may be cut off.'),
-      block,
-      'button-too-wide',
-    );
-  }
-  const vmlWidth = Math.min(wanted, available);
-  const arcsize = Math.min(50, Math.round((radius / BUTTON_HEIGHT) * 100));
-
-  // Bullet-proof button: Outlook desktop (Word's render engine — no
-  // border-radius, no padding on <a>) gets a VML <v:roundrect> sized to
-  // the label. Every other client ignores that conditional and renders
-  // the table-cell button below: the background colour, radius and
-  // padding sit on a <td bgcolor>, so it still looks like a button where
-  // inline-block / padding on <a> are dropped.
-  // Reference: https://www.caniemail.com (round buttons in Outlook).
-  const vmlButton = `<!--[if mso]>
-<v:roundrect${marker} xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${safeHref}" style="height:${BUTTON_HEIGHT}px;v-text-anchor:middle;width:${vmlWidth}px;" arcsize="${arcsize}%" stroke="f" fillcolor="${safeBg}">
-<w:anchorlock/>
-<center style="color:${safeText};font-family:Arial,sans-serif;font-size:14px;font-weight:600;">${safeLabel}</center>
-</v:roundrect>
-<![endif]-->`;
-
-  const cellStyle = `background-color:${safeBg};border-radius:${radius}px;padding:12px ${BUTTON_PADDING_X}px`;
-  const linkStyle = `display:inline-block;color:${safeText};text-decoration:none;font-family:Arial,sans-serif;font-weight:600;font-size:14px;line-height:16px`;
-  const cellButton = `<!--[if !mso]><!-- --><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate"><tr><td${bgcolorAttr(safeBg)} style="${cellStyle}"><a${marker} href="${safeHref}" style="${linkStyle}">${safeLabel}</a></td></tr></table><!--<![endif]-->`;
-
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}">${vmlButton}${cellButton}</td></tr></table>`;
+  return compileButton(resolveButtonSpec(block, ctx.canvas), block, ctx);
 }
 
 const definition: BlockDefinition<ButtonCtaBlock> = {
@@ -182,11 +217,17 @@ const definition: BlockDefinition<ButtonCtaBlock> = {
     background_color: '#1d4ed8',
     text_color: '#ffffff',
     border_radius: 6,
+    preset: 'solid',
+    padding_x: 24,
+    padding_y: 12,
+    align: 'left',
+    // No `style`: the label font family and size follow the canvas.
     padding: { top: 8, right: 0, bottom: 8, left: 0 },
   }),
   Renderer,
   PropertiesPanel: Properties,
   compile,
+  wrap_in_section: false,
 };
 
 registerBlock(definition);
