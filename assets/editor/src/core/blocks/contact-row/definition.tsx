@@ -5,6 +5,7 @@ import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { attr, escapeHtml, fontStack, inlineStyle, paddingCss, px, safeColor } from '@/core/compiler/css';
+import { checkContrast, markerAttr } from '@/core/compiler/issues';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 type RowIcon = 'email' | 'phone' | 'web';
@@ -121,11 +122,13 @@ const ICON_SVG: Record<RowIcon, string> = {
   web: '⌂',
 };
 
-function compile(block: ContactRowBlock, _ctx: CompileContext): string {
+function compile(block: ContactRowBlock, ctx: CompileContext): string {
   const color = safeColor(block.style.color, '#374151');
+  const fontSize = px(block.style.font_size, 6, 48, 14);
+  checkContrast(ctx, block, color, safeColor(ctx.canvas.background_color, '#ffffff'), fontSize);
   const baseStyle = inlineStyle({
     'font-family': fontStack(block.style.font_family),
-    'font-size': `${px(block.style.font_size, 6, 48, 14)}px`,
+    'font-size': `${fontSize}px`,
     color,
     padding: paddingCss(block.padding),
   });
@@ -137,7 +140,7 @@ function compile(block: ContactRowBlock, _ctx: CompileContext): string {
     const safeLabel = escapeHtml(row.label);
     const safeHref = attr(row.href);
     const glyph = ICON_SVG[row.icon] ?? '';
-    return `<tr><td style="${baseStyle}"><span style="margin-right:6px">${glyph}</span><a href="${safeHref}" style="color:${color};text-decoration:none">${safeLabel}</a></td></tr>`;
+    return `<tr><td style="${baseStyle}"><span style="margin-right:6px">${glyph}</span><a${markerAttr(block)} href="${safeHref}" style="color:${color};text-decoration:none">${safeLabel}</a></td></tr>`;
   });
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%">${rows.join('')}</table>`;

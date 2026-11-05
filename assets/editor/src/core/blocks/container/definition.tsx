@@ -10,6 +10,7 @@ import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { px } from '@/core/compiler/css';
+import { report } from '@/core/compiler/issues';
 import {
   registerBlock,
   rendererForBlock,
@@ -503,7 +504,7 @@ function compile(block: ContainerBlock, ctx: CompileContext): string {
   const compileChild = (child: Block): string => {
     const def = rendererForBlock(child);
     if (!def) {
-      ctx.warnings.push(`Unknown nested block type: ${child.type}`);
+      report(ctx, 'warning', __('Unknown block type "%s" was skipped.', String(child.type)), child, 'unknown-block');
       return '';
     }
     return (def.compile as (b: Block, c: CompileContext) => string)(child, ctx);

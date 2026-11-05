@@ -7,6 +7,7 @@ import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
 import { attr, escapeHtml, paddingCss, px, safeColor } from '@/core/compiler/css';
+import { markerAttr } from '@/core/compiler/issues';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: ButtonCtaBlock }> = ({ block }) => {
@@ -90,13 +91,13 @@ function compile(block: ButtonCtaBlock, _ctx: CompileContext): string {
   // Reference: https://www.caniemail.com (round buttons in Outlook).
   const vmlButton =
     `<!--[if mso]>
-<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${safeHref}" style="height:40px;v-text-anchor:middle;width:200px;" arcsize="${Math.min(50, Math.round((radius / 40) * 100))}%" stroke="f" fillcolor="${safeBg}">
+<v:roundrect${markerAttr(block)} xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${safeHref}" style="height:40px;v-text-anchor:middle;width:200px;" arcsize="${Math.min(50, Math.round((radius / 40) * 100))}%" stroke="f" fillcolor="${safeBg}">
 <w:anchorlock/>
 <center style="color:${safeText};font-family:Arial,sans-serif;font-size:14px;font-weight:600;">${safeLabel}</center>
 </v:roundrect>
 <![endif]-->`;
 
-  const cssButton = `<!--[if !mso]><!-- --><a href="${safeHref}" style="display:inline-block;padding:12px 24px;background:${safeBg};color:${safeText};text-decoration:none;border-radius:${radius}px;font-family:Arial,sans-serif;font-weight:600;font-size:14px">${safeLabel}</a><!--<![endif]-->`;
+  const cssButton = `<!--[if !mso]><!-- --><a${markerAttr(block)} href="${safeHref}" style="display:inline-block;padding:12px 24px;background:${safeBg};color:${safeText};text-decoration:none;border-radius:${radius}px;font-family:Arial,sans-serif;font-weight:600;font-size:14px">${safeLabel}</a><!--<![endif]-->`;
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}">${vmlButton}${cssButton}</td></tr></table>`;
 }

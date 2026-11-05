@@ -6,6 +6,7 @@ import { __ } from '@/i18n/helpers';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { attr, escapeHtml, px, safeColor } from '@/core/compiler/css';
+import { markerAttr } from '@/core/compiler/issues';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const PLATFORMS = ['linkedin', 'twitter', 'facebook', 'instagram', 'github', 'youtube'] as const;
@@ -116,7 +117,7 @@ function compile(block: SocialIconsBlock, _ctx: CompileContext): string {
     const initial = (String(net.platform ?? '').charAt(0) || '?').toUpperCase();
     const safeUrl = attr(net.url);
     const safeInitial = escapeHtml(initial);
-    return `<td style="padding-right:${padRight}px"><a href="${safeUrl}" style="text-decoration:none;color:${color}"><span style="display:inline-block;width:${size}px;height:${size}px;line-height:${size}px;text-align:center;font-size:${Math.round(size * 0.45)}px;background:${color};color:#fff;border-radius:50%;font-family:Arial,sans-serif;font-weight:700">${safeInitial}</span></a></td>`;
+    return `<td style="padding-right:${padRight}px"><a${markerAttr(block)} href="${safeUrl}" style="text-decoration:none;color:${color}"><span style="display:inline-block;width:${size}px;height:${size}px;line-height:${size}px;text-align:center;font-size:${Math.round(size * 0.45)}px;background:${color};color:#fff;border-radius:50%;font-family:Arial,sans-serif;font-weight:700">${safeInitial}</span></a></td>`;
   });
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr>${cells.join('')}</tr></table>`;

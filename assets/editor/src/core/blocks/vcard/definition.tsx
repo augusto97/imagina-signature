@@ -6,6 +6,7 @@ import { __ } from '@/i18n/helpers';
 import { ColorInput } from '@/editor/sidebar-right/inputs/ColorInput';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { attr, escapeHtml, paddingCss, px, safeColor } from '@/core/compiler/css';
+import { markerAttr } from '@/core/compiler/issues';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 /**
@@ -207,7 +208,7 @@ function compile(block: VCardBlock, _ctx: CompileContext): string {
     'font-weight:500',
   ].join(';');
 
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><a href="${href}" download="${attr(filename)}" style="${styles}">${label}</a></td></tr></table>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><a${markerAttr(block)} href="${href}" download="${attr(filename)}" style="${styles}">${label}</a></td></tr></table>`;
 }
 
 const definition: BlockDefinition<VCardBlock> = {

@@ -19,6 +19,7 @@ import {
   safeColor,
   textAlign,
 } from '@/core/compiler/css';
+import { checkContrast } from '@/core/compiler/issues';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
 const Renderer: FC<{ block: HeadingBlock }> = ({ block }) => {
@@ -70,12 +71,15 @@ const Properties: FC<{ block: HeadingBlock; onChange: (u: Partial<HeadingBlock>)
   );
 };
 
-function compile(block: HeadingBlock, _ctx: CompileContext): string {
+function compile(block: HeadingBlock, ctx: CompileContext): string {
+  const color = safeColor(block.style.color, '#111827');
+  const fontSize = px(block.style.font_size, 6, 96, 18);
+  checkContrast(ctx, block, color, safeColor(ctx.canvas.background_color, '#ffffff'), fontSize);
   const style = inlineStyle({
     'font-family': fontStack(block.style.font_family),
-    'font-size': `${px(block.style.font_size, 6, 96, 18)}px`,
+    'font-size': `${fontSize}px`,
     'font-weight': fontWeight(block.style.font_weight, 700),
-    color: safeColor(block.style.color, '#111827'),
+    color,
     'line-height': num(block.style.line_height ?? 1.2, 0.5, 4, 1.2),
     'text-align': textAlign(block.style.text_align),
     padding: paddingCss(block.padding),

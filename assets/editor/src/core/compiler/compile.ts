@@ -1,17 +1,29 @@
 import type { SignatureSchema } from '@/core/schema/signature';
 import { rendererForBlock, type CompileContext } from '@/core/blocks/registry';
+import { __ } from '@/i18n/helpers';
 import { wrapInEmailShell } from './table-builder';
 import { applyOutlookFixes } from './outlook-fixes';
 import { minifyHtml } from './minify';
-import { validateEmailHtml } from './validate';
+import { validateEmailOutput } from './validate';
 import { substituteVariables } from './variables';
+import { enforceSafeUrls } from './urls';
+import { report, type CompileIssue } from './issues';
 import { getConfig } from '@/bridge/apiClient';
 import type { AppConfig } from '@/bridge/types';
 import { attr, intPx } from './css';
 
+export type { CompileIssue, CompileIssueLevel } from './issues';
+
 export interface CompileResult {
+  /** Complete HTML document (doctype, head, body). Copy HTML / Download / test-send. */
   html: string;
+  /** Warning-level messages (back-compat: existing callers keep working). */
   warnings: string[];
+  /** Error-level messages: the export is broken for recipients until fixed. */
+  errors: string[];
+  /** Every diagnostic, leveled and (when known) attributed to a block. */
+  issues: CompileIssue[];
+  /** Byte size of `html`. */
   size: number;
 }
 
@@ -24,17 +36,17 @@ export interface CompileResult {
  *      outer table sized to canvas.width).
  *   3. Apply Outlook-specific fixes (mso line-height, conditional
  *      reset).
- *   4. Append the site-wide compliance footer (1.0.13+) if the admin
- *      enabled it — injected just before `</table></td></tr>` so it
- *      sits inside the same outer table as the rest of the
- *      signature, keeping width / centring intact.
+ *   4. Append the campaign banner and the site-wide compliance footer
+ *      (1.0.13+) inside the outer table so they share its width.
  *   5. Substitute variables. Read-only `wp_*` system variables (from
  *      `IMGSIG_EDITOR_CONFIG.systemVariables`) are merged with the
  *      schema's user-defined ones; user-defined variables win on
  *      key conflict so the user can override any auto-merged value.
- *   6. Minify (drop non-conditional comments + inter-tag whitespace).
- *   7. Run validation, returning warnings alongside the HTML so the
- *      Export modal can surface them.
+ *   6. URL safety pass on the substituted document: unsafe hrefs →
+ *      `#`, data: / javascript: / blob: images removed (errors),
+ *      http / local / placeholder images flagged (warnings).
+ *   7. Minify (drop non-conditional comments + structural whitespace).
+ *   8. Validate the final output (size, Gmail length limit, leftovers).
  *
  * Unknown block types contribute nothing to the output but produce
  * a warning so the bug is visible.
@@ -44,6 +56,7 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
   const ctx: CompileContext = {
     variables: merged,
     warnings: [],
+    issues: [],
     canvas: schema.canvas,
   };
 
@@ -59,7 +72,13 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
     }
     const definition = rendererForBlock(block);
     if (!definition) {
-      ctx.warnings.push(`Unknown block type "${block.type}" was skipped.`);
+      report(
+        ctx,
+        'warning',
+        __('Unknown block type "%s" was skipped.', String(block.type)),
+        block,
+        'unknown-block',
+      );
       continue;
     }
     blockChunks.push(definition.compile(block as never, ctx));
@@ -74,19 +93,31 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
   const withCampaign = appendBannerCampaign(withOutlookFixes, schema.canvas.width);
   const withFooter = appendComplianceFooter(withCampaign);
 
-  // Merge: read-only wp_* variables first, then user-defined override.
-  // The bootstrap config is optional in tests / standalone preview —
-  // fall through to schema.variables only.
   const { html: substituted, missing } = substituteVariables(withFooter, merged);
-  const minified = minifyHtml(substituted);
-  const validationWarnings = validateEmailHtml(minified);
-  const variableWarnings = missing.map(
-    (name) => `Variable "{{${name}}}" referenced but not defined; left as literal text.`,
-  );
+  for (const name of missing) {
+    report(
+      ctx,
+      'warning',
+      __('Variable "{{%s}}" referenced but not defined; left as literal text.', name),
+      null,
+      'missing-variable',
+    );
+  }
+
+  const urlSafe = enforceSafeUrls(substituted, ctx);
+  const minified = minifyHtml(urlSafe);
+
+  const issues: CompileIssue[] = [
+    ...ctx.warnings.map((message): CompileIssue => ({ level: 'warning', message })),
+    ...ctx.issues,
+    ...validateEmailOutput(minified),
+  ];
 
   return {
     html: minified,
-    warnings: [...ctx.warnings, ...variableWarnings, ...validationWarnings],
+    warnings: issues.filter((i) => i.level === 'warning').map((i) => i.message),
+    errors: issues.filter((i) => i.level === 'error').map((i) => i.message),
+    issues,
     size: new Blob([minified]).size,
   };
 }

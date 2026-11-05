@@ -11,6 +11,7 @@ import {
   safeColor,
   textAlign,
 } from '@/core/compiler/css';
+import { checkContrast, markerAttr } from '@/core/compiler/issues';
 
 /**
  * JSON → email-safe HTML for a Text block.
@@ -25,11 +26,14 @@ import {
  * stacks with double quotes no longer break the `style` attribute.
  */
 export function compileText(block: TextBlock, ctx: CompileContext): string {
+  const color = safeColor(block.style.color, '#111827');
+  const fontSize = px(block.style.font_size, 6, 96, 14);
+  checkContrast(ctx, block, color, safeColor(ctx.canvas.background_color, '#ffffff'), fontSize);
   const style = inlineStyle({
     'font-family': fontStack(block.style.font_family),
-    'font-size': `${px(block.style.font_size, 6, 96, 14)}px`,
+    'font-size': `${fontSize}px`,
     'font-weight': fontWeight(block.style.font_weight),
-    color: safeColor(block.style.color, '#111827'),
+    color,
     'line-height': num(block.style.line_height ?? 1.4, 0.5, 4, 1.4),
     'text-align': textAlign(block.style.text_align),
     padding: paddingCss(block.padding),
@@ -38,7 +42,10 @@ export function compileText(block: TextBlock, ctx: CompileContext): string {
   // Links pick up the canvas link colour (the sanitiser drops any
   // inline style on <a>); paragraphs get margin:0 so mail clients
   // don't add their ~1em default spacing the canvas never showed.
-  const safeContent = sanitizeEmailHtml(block.content, { linkColor: ctx.canvas.link_color });
+  const safeContent = sanitizeEmailHtml(block.content, { linkColor: ctx.canvas.link_color }).replace(
+    /<a(?=[\s>])/g,
+    `<a${markerAttr(block)}`,
+  );
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;"><tr><td style="${style}">${safeContent}</td></tr></table>`;
 }

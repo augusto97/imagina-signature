@@ -5,6 +5,7 @@ import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { intPx, paddingCss, px } from '@/core/compiler/css';
+import { checkAlt, markerAttr } from '@/core/compiler/issues';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 import { isAnimatedGif, withOutlookFallback } from '../image/definition';
 
@@ -128,7 +129,8 @@ const Properties: FC<{
   </div>
 );
 
-function compile(block: BannerBlock, _ctx: CompileContext): string {
+function compile(block: BannerBlock, ctx: CompileContext): string {
+  checkAlt(ctx, block, block.alt);
   const padding = paddingCss(block.padding);
   const widthAttr = block.width ? ` width="${intPx(block.width, 1, 4000, 600)}"` : '';
   const radius = block.border_radius ? `;border-radius:${px(block.border_radius, 0, 999)}px` : '';
@@ -141,6 +143,7 @@ function compile(block: BannerBlock, _ctx: CompileContext): string {
     widthAttr,
     baseStyle,
     block.link,
+    markerAttr(block),
   );
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%"><tr><td style="padding:${padding};text-align:center">${inner}</td></tr></table>`;

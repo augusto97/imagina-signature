@@ -5,6 +5,7 @@ import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
 import { attr, intPx, paddingCss, px } from '@/core/compiler/css';
+import { checkAlt, markerAttr } from '@/core/compiler/issues';
 import { isUploadEnabled } from '@/bridge/apiClient';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
@@ -154,7 +155,8 @@ const Properties: FC<{ block: ImageBlock; onChange: (updates: Partial<ImageBlock
   );
 };
 
-function compile(block: ImageBlock, _ctx: CompileContext): string {
+function compile(block: ImageBlock, ctx: CompileContext): string {
+  checkAlt(ctx, block, block.alt);
   const padding = paddingCss(block.padding);
   const widthAttr = block.width ? ` width="${intPx(block.width, 1, 4000, 1)}"` : '';
   const heightAttr = block.height ? ` height="${intPx(block.height, 1, 4000, 1)}"` : '';
@@ -168,6 +170,7 @@ function compile(block: ImageBlock, _ctx: CompileContext): string {
     widthAttr + heightAttr,
     baseStyle,
     block.link,
+    markerAttr(block),
   );
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}">${inner}</td></tr></table>`;
@@ -204,6 +207,7 @@ export function withOutlookFallback(
   dimAttrs: string,
   styles: string,
   link: string | undefined,
+  marker = '',
 ): string {
   // Strict attribute-context escaping via the central serializer
   // (`css.ts`) — user-controlled URLs / alt text must never break out
@@ -211,16 +215,16 @@ export function withOutlookFallback(
   const safeSrc = attr(src);
   const safeAlt = attr(alt);
   const safeLink = link ? attr(link) : '';
-  const wrap = (img: string): string => (link ? `<a href="${safeLink}">${img}</a>` : img);
+  const wrap = (img: string): string => (link ? `<a${marker} href="${safeLink}">${img}</a>` : img);
 
   if (!fallback) {
-    const img = `<img src="${safeSrc}" alt="${safeAlt}"${dimAttrs} style="${styles}" />`;
+    const img = `<img${marker} src="${safeSrc}" alt="${safeAlt}"${dimAttrs} style="${styles}" />`;
     return wrap(img);
   }
 
   const safeFallback = attr(fallback);
-  const animated = `<img src="${safeSrc}" alt="${safeAlt}"${dimAttrs} style="${styles}" />`;
-  const staticImg = `<img src="${safeFallback}" alt="${safeAlt}"${dimAttrs} style="${styles}" />`;
+  const animated = `<img${marker} src="${safeSrc}" alt="${safeAlt}"${dimAttrs} style="${styles}" />`;
+  const staticImg = `<img${marker} src="${safeFallback}" alt="${safeAlt}"${dimAttrs} style="${styles}" />`;
   return (
     `<!--[if !mso]><!-->${wrap(animated)}<!--<![endif]-->` +
     `<!--[if mso]>${wrap(staticImg)}<![endif]-->`

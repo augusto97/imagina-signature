@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import type { Block, BlockBase } from '@/core/schema/blocks';
 import type { CanvasConfig } from '@/core/schema/signature';
+import type { CompileIssue } from '@/core/compiler/issues';
 
 /**
  * Block category surfaces the block in the left-sidebar library.
@@ -15,8 +16,15 @@ export type BlockCategory = 'content' | 'layout' | 'social';
 export interface CompileContext {
   /** Variables available for substitution (system `wp_*` + user-defined). */
   variables: Record<string, string>;
-  /** Free-form warning strings (surfaced as warning-level issues). */
+  /**
+   * Free-form warning strings. Still honoured for back-compat — they
+   * are surfaced as warning-level issues. New code should push to
+   * {@link CompileContext.issues} via `report()` from
+   * `@/core/compiler/issues`.
+   */
   warnings: string[];
+  /** Structured, leveled diagnostics (errors + warnings). */
+  issues: CompileIssue[];
   /** Canvas config of the signature being compiled (link colour, fonts…). */
   canvas: CanvasConfig;
 }

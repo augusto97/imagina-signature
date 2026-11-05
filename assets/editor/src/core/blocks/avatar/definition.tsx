@@ -7,6 +7,7 @@ import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
 import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
 import { attr, intPx, paddingCss } from '@/core/compiler/css';
+import { checkAlt, markerAttr } from '@/core/compiler/issues';
 import { isUploadEnabled } from '@/bridge/apiClient';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
@@ -96,14 +97,15 @@ const Properties: FC<{ block: AvatarBlock; onChange: (u: Partial<AvatarBlock>) =
   );
 };
 
-function compile(block: AvatarBlock, _ctx: CompileContext): string {
+function compile(block: AvatarBlock, ctx: CompileContext): string {
+  checkAlt(ctx, block, block.alt);
   const padding = paddingCss(block.padding);
   // Escape EVERY interpolated attribute (src, alt) via the central
   // serializer.
   const safeSrc = attr(block.src);
   const safeAlt = attr(block.alt);
   const size = intPx(block.size, 8, 800, 64);
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><img src="${safeSrc}" alt="${safeAlt}" width="${size}" height="${size}" style="display:block;width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;border:0" /></td></tr></table>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><img${markerAttr(block)} src="${safeSrc}" alt="${safeAlt}" width="${size}" height="${size}" style="display:block;width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;border:0" /></td></tr></table>`;
 }
 
 const definition: BlockDefinition<AvatarBlock> = {
