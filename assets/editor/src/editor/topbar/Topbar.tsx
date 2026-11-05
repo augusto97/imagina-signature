@@ -22,6 +22,7 @@ import { getConfig } from '@/bridge/apiClient';
 import { persistence } from '@/services/persistence';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
+import { CanvasDataToggle } from './CanvasDataToggle';
 import { DeviceSwitcher } from './DeviceSwitcher';
 
 /**
@@ -124,9 +125,10 @@ export const Topbar: FC<{ className?: string }> = ({ className }) => {
         </div>
       </div>
 
-      {/* Center: device switcher + history controls */}
+      {/* Center: device switcher + data/fields toggle + history controls */}
       <div className="flex items-center gap-3">
         <DeviceSwitcher />
+        <CanvasDataToggle />
         <div className="inline-flex items-center gap-0.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-panel)] p-0.5">
           <IconButton title={__('Undo')} onClick={onUndo} disabled={!canUndo}>
             <Undo2 size={16} />
