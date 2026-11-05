@@ -14,6 +14,7 @@ import { TemplatePicker } from './modals/TemplatePicker';
 import { ExportModal } from './modals/ExportModal';
 import { PreviewModal } from './modals/PreviewModal';
 import { SaveAsTemplateModal } from './modals/SaveAsTemplateModal';
+import { BackgroundAssetSync } from './BackgroundAssetSync';
 import { useEditorStore } from '@/stores/editorStore';
 
 /**
@@ -72,6 +73,7 @@ export const EditorShell: FC = () => {
           ) : null}
         </DragOverlay>
       </DndContext>
+      <BackgroundAssetSync />
       <TemplatePicker />
       <ExportModal />
       <PreviewModal />

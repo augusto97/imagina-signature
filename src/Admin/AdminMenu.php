@@ -161,6 +161,18 @@ final class AdminMenu {
 
 		if ( is_string( $editor_hook ) && '' !== $editor_hook ) {
 			( new EditorAssetEnqueuer( $editor_hook ) )->boot();
+
+			// Hidden pages (empty parent) never get a `$title`, so core's
+			// admin-header.php passes null to strip_tags() and logs a PHP
+			// 8.1+ deprecation on every editor load. Give it one.
+			add_action(
+				'load-' . $editor_hook,
+				static function (): void {
+					global $title;
+					// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- core reads it for the <title>.
+					$title = __( 'Edit Signature', 'imagina-signatures' );
+				}
+			);
 		}
 	}
 }
