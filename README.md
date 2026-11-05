@@ -7,9 +7,9 @@ This branch hosts the installable plugin ZIPs. The `main` development branch and
 | Version | URL |
 | ------- | --- |
 | **Latest** | [imagina-signatures-latest.zip](imagina-signatures-latest.zip) |
-| 1.2.0 | [imagina-signatures-1.2.0.zip](imagina-signatures-1.2.0.zip) |
+| 1.3.0 | [imagina-signatures-1.3.0.zip](imagina-signatures-1.3.0.zip) |
 
-Only the current release is kept on this branch; older builds can be rebuilt from their tag on `main` (see below).
+Only the current release is kept on this branch; an older build can be rebuilt from the matching release commit on `main` (see below).
 
 Direct raw URLs (suitable for `wget` / WP-CLI / pasting into WP's Plugins → Upload Plugin):
 
@@ -85,6 +85,9 @@ bash scripts/build-zip.sh
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/augusto97/imagina-signature/blob/main/CHANGELOG.md) on the development branch for the full per-release history.
+
+### 1.3.0
+**Central management and deployment (roadmap Fase 2).** Deploy every employee's signature to Gmail (Google Workspace service account, authorised once by the administrator), to Outlook through a Microsoft 365 add-in (plus an Exchange mail-flow rule generator) or with a personal install link sent by email with reminders. Company-managed signatures: linked templates with block locks and employee modes, employee profile fields, groups / departments and CSV import. New Team console with each person's signature, HTML freshness and deployment status, bulk actions, in-browser recompilation of outdated signatures and editing on someone's behalf. Admin screens fixed (buttons had lost their styling) and Settings regrouped. Fully translated to Spanish. Upgrading from 1.2.0, 1.1.0 or 1.0.x migrates automatically on the next admin page load.
 
 ### 1.2.0
 **Premium design (roadmap Fase 1).** Box styling for every block and containers with 1–4 columns; full typography inherited from the canvas; rich headings and disclaimers; new image, avatar, button, divider, banner, QR and vCard blocks; real hosted icons for social and contact blocks; company brand kit with `{{company_*}}` variables and live data on the canvas; asset library with in-browser image optimisation; 48 templates with a searchable gallery and a guided "Create your signature"; per-client export and install steps, realistic previews with dark mode, contrast and dark-logo checks. The server now keeps each signature's compiled HTML and every user has a primary signature (groundwork for central deployment). Fully translated to Spanish. Upgrading from 1.1.0 or 1.0.x migrates automatically on the next admin page load.
