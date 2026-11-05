@@ -1940,8 +1940,17 @@ GET    /signatures/:id/export           HTML compilado
 GET    /templates                       Lista plantillas
 GET    /templates/:id                   Obtener
 POST   /templates                       [admin] Crear
-PATCH  /templates/:id                   [admin] Editar
-DELETE /templates/:id                   [admin] Borrar
+PATCH  /templates/:id                   [admin] Editar (json_content nuevo → propaga a las firmas vinculadas)
+DELETE /templates/:id                   [admin] Borrar (sus firmas vinculadas pasan a `detached`)
+
+=== Plantillas vinculadas / consola de equipo (1.3.0) ===
+
+POST   /admin/templates/:id/assign            [manage_team] {user_ids?, group_ids?, role?, mode: linked|copy, make_primary, offset?}
+                                              → {processed, created, updated, skipped, failed, total, next_offset|null} (≤ 50 usuarios)
+GET    /admin/templates/:id/propagation       [manage_templates] Progreso de la propagación (opción imgsig_template_propagation)
+GET    /admin/signatures/stale                [manage_team] Firmas con HTML desactualizado (?page&per_page&template_id&after_id)
+GET    /admin/signatures/:id/render-context   [manage_team] json_content + systemVariables del usuario DESTINO + footer + campañas
+POST   /admin/signatures/:id/html             [manage_team] {html, text?, expected_updated_at?} → guarda el HTML compilado (409 si cambió)
 
 === Assets / Upload (user-scoped) ===
 
@@ -2561,6 +2570,7 @@ do_action( 'imgsig/signature/deleted', int $signature_id );
 
 do_action( 'imgsig/template/created', Template $template );
 do_action( 'imgsig/template/deleted', int $template_id );
+do_action( 'imgsig/template/assigned', int $template_id, array $user_ids, string $mode, array $result );
 
 do_action( 'imgsig/asset/uploaded', Asset $asset );
 do_action( 'imgsig/asset/deleted', int $asset_id );

@@ -12,9 +12,12 @@ namespace ImaginaSignatures\Api\Controllers;
 use ImaginaSignatures\Api\BaseController;
 use ImaginaSignatures\Api\Middleware\CapabilityCheck;
 use ImaginaSignatures\Exceptions\ImaginaSignaturesException;
+use ImaginaSignatures\Exceptions\ValidationException;
 use ImaginaSignatures\Repositories\SignatureRepository;
 use ImaginaSignatures\Repositories\TemplateRepository;
 use ImaginaSignatures\Services\SignatureService;
+use ImaginaSignatures\Services\TemplateAssignmentService;
+use ImaginaSignatures\Services\TemplatePropagator;
 use ImaginaSignatures\Services\TemplateService;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 use ImaginaSignatures\Setup\DefaultTemplatesSeeder;
@@ -28,6 +31,17 @@ defined( 'ABSPATH' ) || exit;
  * who can use signatures (`imgsig_use_signatures`). Writes
  * (`POST /templates`, `PATCH /templates/:id`, `DELETE /templates/:id`)
  * are admin-only (`imgsig_manage_templates`).
+ *
+ * 1.3.0 (linked signatures):
+ *  - `PATCH /templates/:id` with a new `json_content` propagates the
+ *    design to every signature linked to the template (synchronously up
+ *    to 100, else WP-Cron batches) and returns `propagation` progress.
+ *  - `GET  /admin/templates/:id/propagation` — that progress.
+ *  - `POST /admin/templates/:id/assign` — creates / updates each target
+ *    user's signature from the template, 50 users per request
+ *    ({@see TemplateAssignmentService}).
+ *  - `POST /admin/templates/:id/apply` (1.1.0 bulk apply) delegates to
+ *    the assignment service in `copy` mode.
  *
  * @since 1.0.0
  */
@@ -54,21 +68,37 @@ final class TemplatesController extends BaseController {
 	private SignatureRepository $signature_repo;
 
 	/**
-	 * @param TemplateService     $service           Template service.
-	 * @param TemplateRepository  $repo              Template repository.
-	 * @param SignatureService    $signature_service Signature service (for bulk-apply).
-	 * @param SignatureRepository $signature_repo    Signature repository (for dedupe).
+	 * @var TemplateAssignmentService
+	 */
+	private TemplateAssignmentService $assignment;
+
+	/**
+	 * @var TemplatePropagator
+	 */
+	private TemplatePropagator $propagator;
+
+	/**
+	 * @param TemplateService                $service           Template service.
+	 * @param TemplateRepository             $repo              Template repository.
+	 * @param SignatureService               $signature_service Signature service.
+	 * @param SignatureRepository            $signature_repo    Signature repository.
+	 * @param TemplateAssignmentService|null $assignment        Assignment service (built from the above when null).
+	 * @param TemplatePropagator|null        $propagator        Propagator (built from the above when null).
 	 */
 	public function __construct(
 		TemplateService $service,
 		TemplateRepository $repo,
 		SignatureService $signature_service,
-		SignatureRepository $signature_repo
+		SignatureRepository $signature_repo,
+		?TemplateAssignmentService $assignment = null,
+		?TemplatePropagator $propagator = null
 	) {
 		$this->service           = $service;
 		$this->repo              = $repo;
 		$this->signature_service = $signature_service;
 		$this->signature_repo    = $signature_repo;
+		$this->assignment        = $assignment ?? new TemplateAssignmentService( $signature_service, $signature_repo );
+		$this->propagator        = $propagator ?? new TemplatePropagator( $signature_repo, $repo );
 	}
 
 	/**
@@ -141,6 +171,58 @@ final class TemplatesController extends BaseController {
 							'default' => true,
 						],
 					],
+				],
+			]
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/admin/templates/(?P<id>\d+)/assign',
+			[
+				[
+					'methods'             => 'POST',
+					'callback'            => [ $this, 'assign' ],
+					'permission_callback' => CapabilityCheck::require_capability( CapabilitiesInstaller::CAP_MANAGE_TEAM ),
+					'args'                => [
+						'user_ids'     => [
+							'type'  => 'array',
+							'items' => [ 'type' => 'integer' ],
+						],
+						'group_ids'    => [
+							'type'  => 'array',
+							'items' => [ 'type' => 'integer' ],
+						],
+						'role'         => [
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_key',
+						],
+						'mode'         => [
+							'type'    => 'string',
+							'enum'    => [ TemplateAssignmentService::MODE_LINKED, TemplateAssignmentService::MODE_COPY ],
+							'default' => TemplateAssignmentService::MODE_LINKED,
+						],
+						'make_primary' => [
+							'type'    => 'boolean',
+							'default' => false,
+						],
+						'offset'       => [
+							'type'    => 'integer',
+							'minimum' => 0,
+							'default' => 0,
+						],
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/admin/templates/(?P<id>\d+)/propagation',
+			[
+				[
+					'methods'             => 'GET',
+					'callback'            => [ $this, 'propagation' ],
+					'permission_callback' => $require_manage,
 				],
 			]
 		);
@@ -271,12 +353,92 @@ final class TemplatesController extends BaseController {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function update( \WP_REST_Request $request ) {
+		$payload = $this->read_payload( $request );
 		try {
-			$template = $this->service->update( (int) $request['id'], $this->read_payload( $request ) );
+			$template = $this->service->update( (int) $request['id'], $payload );
 		} catch ( ImaginaSignaturesException $e ) {
 			return $this->exception_to_wp_error( $e );
 		}
-		return rest_ensure_response( $this->with_notes( DefaultTemplatesSeeder::localize( $template->to_array() ) ) );
+
+		$response = $this->with_notes( DefaultTemplatesSeeder::localize( $template->to_array() ) );
+
+		// A new design reaches every signature linked to the template
+		// (1.3.0). Metadata-only edits (name, roles…) don't touch them.
+		if ( array_key_exists( 'json_content', $payload ) ) {
+			$response['propagation'] = $this->propagator->propagate( $template->id );
+		}
+
+		return rest_ensure_response( $response );
+	}
+
+	/**
+	 * `GET /admin/templates/:id/propagation` — progress of the last
+	 * propagation of this template to its linked signatures.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param \WP_REST_Request $request Inbound.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function propagation( \WP_REST_Request $request ): \WP_REST_Response {
+		$template_id = (int) $request['id'];
+		$progress    = $this->propagator->progress( $template_id );
+
+		return rest_ensure_response(
+			$progress ?? [
+				'template_id' => $template_id,
+				'status'      => 'none',
+				'total'       => $this->signature_repo->count_linked_to_template( $template_id ),
+				'processed'   => 0,
+				'updated'     => 0,
+			]
+		);
+	}
+
+	/**
+	 * `POST /admin/templates/:id/assign` — one chunk (≤ 50 users) of a
+	 * template assignment. The client repeats the call with
+	 * `offset = next_offset` until it is null.
+	 *
+	 * Body: `{ user_ids?: int[], group_ids?: int[], role?: string,
+	 * mode: 'linked'|'copy', make_primary: bool, offset?: int }`.
+	 * Response: `{ template_id, processed, created, updated, skipped,
+	 * failed, total, next_offset }`.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param \WP_REST_Request $request Inbound.
+	 *
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function assign( \WP_REST_Request $request ) {
+		$template = $this->repo->find( (int) $request['id'] );
+		if ( null === $template ) {
+			return new \WP_Error(
+				'imgsig_not_found',
+				__( 'Template not found.', 'imagina-signatures' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		try {
+			$result = $this->assignment->assign(
+				$template,
+				[
+					'user_ids'     => (array) ( $request->get_param( 'user_ids' ) ?? [] ),
+					'group_ids'    => (array) ( $request->get_param( 'group_ids' ) ?? [] ),
+					'role'         => (string) ( $request->get_param( 'role' ) ?? '' ),
+					'mode'         => (string) ( $request->get_param( 'mode' ) ?? TemplateAssignmentService::MODE_LINKED ),
+					'make_primary' => (bool) $request->get_param( 'make_primary' ),
+					'offset'       => max( 0, (int) $request->get_param( 'offset' ) ),
+				]
+			);
+		} catch ( ImaginaSignaturesException $e ) {
+			return $this->exception_to_wp_error( $e );
+		}
+
+		return rest_ensure_response( [ 'template_id' => $template->id ] + $result );
 	}
 
 	/**
@@ -350,21 +512,7 @@ final class TemplatesController extends BaseController {
 		$scope         = (string) $request->get_param( 'scope' );
 		$skip_existing = (bool) $request->get_param( 'skip_existing' );
 
-		$user_ids = self::resolve_scope( $scope );
-		if ( empty( $user_ids ) ) {
-			return new \WP_Error(
-				'imgsig_scope_empty',
-				__( 'No users matched the supplied scope.', 'imagina-signatures' ),
-				[ 'status' => 400 ]
-			);
-		}
-
-		$created = 0;
-		$skipped = 0;
-		$failed  = 0;
-
-		$json_content = json_decode( $template->json_content, true );
-		if ( ! is_array( $json_content ) ) {
+		if ( ! is_array( json_decode( $template->json_content, true ) ) ) {
 			return new \WP_Error(
 				'imgsig_template_corrupt',
 				__( 'This template has invalid json_content; bulk apply aborted.', 'imagina-signatures' ),
@@ -372,103 +520,85 @@ final class TemplatesController extends BaseController {
 			);
 		}
 
-		foreach ( $user_ids as $user_id ) {
-			if ( $skip_existing && $this->signature_repo->user_has_signature_from_template( $user_id, $template->id ) ) {
-				++$skipped;
-				continue;
-			}
+		$targets = self::scope_to_targets( $scope );
+		$totals  = [
+			'targeted' => 0,
+			'created'  => 0,
+			'skipped'  => 0,
+			'failed'   => 0,
+		];
 
+		// 1.3.0: delegates to the assignment service (detached copies),
+		// walking every chunk in this one request as before.
+		$offset = 0;
+		do {
 			try {
-				$this->signature_service->create(
-					$user_id,
-					[
-						// Seeded templates: the name as the admin saw it (translated).
-						'name'         => (string) DefaultTemplatesSeeder::localize( $template->to_array() )['name'],
-						'json_content' => $json_content,
-						'template_id'  => $template->id,
+				$chunk = null === $targets ? null : $this->assignment->assign(
+					$template,
+					$targets + [
+						'mode'          => TemplateAssignmentService::MODE_COPY,
+						'always_create' => ! $skip_existing,
+						'offset'        => $offset,
 					]
 				);
-				++$created;
-			} catch ( ImaginaSignaturesException $e ) {
-				++$failed;
+			} catch ( ValidationException $e ) {
+				$chunk = null;
 			}
-		}
 
-		do_action( 'imgsig/template/bulk_applied', $template->id, $scope, $created, $skipped, $failed );
+			if ( null === $chunk ) {
+				return new \WP_Error(
+					'imgsig_scope_empty',
+					__( 'No users matched the supplied scope.', 'imagina-signatures' ),
+					[ 'status' => 400 ]
+				);
+			}
+
+			$totals['targeted'] = $chunk['total'];
+			$totals['created'] += $chunk['created'];
+			$totals['skipped'] += $chunk['skipped'];
+			$totals['failed']  += $chunk['failed'];
+			$offset             = $chunk['next_offset'];
+		} while ( null !== $offset );
+
+		do_action( 'imgsig/template/bulk_applied', $template->id, $scope, $totals['created'], $totals['skipped'], $totals['failed'] );
 
 		return rest_ensure_response(
 			[
 				'template_id' => $template->id,
 				'scope'       => $scope,
-				'targeted'    => count( $user_ids ),
-				'created'     => $created,
-				'skipped'     => $skipped,
-				'failed'      => $failed,
+				'targeted'    => $totals['targeted'],
+				'created'     => $totals['created'],
+				'skipped'     => $totals['skipped'],
+				'failed'      => $totals['failed'],
 			]
 		);
 	}
 
 	/**
-	 * Resolves a scope string into a deduped array of user ids.
+	 * Turns a bulk-apply scope string into assignment targets.
 	 *
-	 * @since 1.1.0
+	 * @since 1.3.0
 	 *
 	 * @param string $scope `all`, `role:slug`, or `users:1,2,3`.
 	 *
-	 * @return int[]
+	 * @return array<string, mixed>|null Null for an unparseable scope.
 	 */
-	private static function resolve_scope( string $scope ): array {
+	private static function scope_to_targets( string $scope ): ?array {
 		if ( 'all' === $scope ) {
-			$users = get_users(
-				[
-					'capability' => CapabilitiesInstaller::CAP_USE,
-					'fields'     => 'ID',
-				]
-			);
-			return array_map( 'intval', (array) $users );
+			return [ 'all' => true ];
 		}
 
 		if ( 0 === strpos( $scope, 'role:' ) ) {
-			$role  = sanitize_key( substr( $scope, 5 ) );
-			if ( '' === $role ) {
-				return [];
-			}
-			$users = get_users(
-				[
-					'role'   => $role,
-					'fields' => 'ID',
-				]
-			);
-			$ids = array_map( 'intval', (array) $users );
-			// Filter to users who actually hold the cap (a role
-			// without `imgsig_use_signatures` shouldn't get rows).
-			return array_values(
-				array_filter(
-					$ids,
-					static function ( int $id ): bool {
-						return user_can( $id, CapabilitiesInstaller::CAP_USE );
-					}
-				)
-			);
+			$role = sanitize_key( substr( $scope, 5 ) );
+			return '' === $role ? null : [ 'role' => $role ];
 		}
 
 		if ( 0 === strpos( $scope, 'users:' ) ) {
-			$ids = array_filter(
-				array_map( 'intval', explode( ',', substr( $scope, 6 ) ) )
-			);
-			return array_values(
-				array_unique(
-					array_filter(
-						$ids,
-						static function ( int $id ): bool {
-							return user_can( $id, CapabilitiesInstaller::CAP_USE );
-						}
-					)
-				)
-			);
+			$ids = array_values( array_filter( array_map( 'intval', explode( ',', substr( $scope, 6 ) ) ) ) );
+			return [] === $ids ? null : [ 'user_ids' => $ids ];
 		}
 
-		return [];
+		return null;
 	}
 
 	/**

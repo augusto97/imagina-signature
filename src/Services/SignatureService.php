@@ -13,6 +13,7 @@ use ImaginaSignatures\Exceptions\OwnershipException;
 use ImaginaSignatures\Exceptions\ValidationException;
 use ImaginaSignatures\Models\Signature;
 use ImaginaSignatures\Repositories\SignatureRepository;
+use ImaginaSignatures\Repositories\TemplateRepository;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -68,15 +69,25 @@ class SignatureService {
 	private array $last_notes = [];
 
 	/**
-	 * @param SignatureRepository  $repo      Signature repository.
-	 * @param JsonSchemaValidator  $validator Schema validator.
-	 * @param SchemaSanitizer|null $sanitizer Recursive schema sanitizer (defaults to a fresh one).
+	 * Templates, for enforcing a linked signature's design on save
+	 * (1.3.0). Null disables enforcement (unit tests of other flows).
+	 *
+	 * @var TemplateRepository|null
 	 */
-	public function __construct( SignatureRepository $repo, JsonSchemaValidator $validator, ?SchemaSanitizer $sanitizer = null ) {
-		$this->repo      = $repo;
-		$this->validator = $validator;
+	private ?TemplateRepository $templates;
+
+	/**
+	 * @param SignatureRepository     $repo      Signature repository.
+	 * @param JsonSchemaValidator     $validator Schema validator.
+	 * @param SchemaSanitizer|null    $sanitizer Recursive schema sanitizer (defaults to a fresh one).
+	 * @param TemplateRepository|null $templates Template repository (linked-signature enforcement).
+	 */
+	public function __construct( SignatureRepository $repo, JsonSchemaValidator $validator, ?SchemaSanitizer $sanitizer = null, ?TemplateRepository $templates = null ) {
+		$this->repo           = $repo;
+		$this->validator      = $validator;
 		$this->sanitizer      = $sanitizer ?? new SchemaSanitizer( new HtmlSanitizer() );
 		$this->html_sanitizer = new HtmlSanitizer();
+		$this->templates      = $templates;
 	}
 
 	/**
@@ -230,14 +241,19 @@ class SignatureService {
 	 *
 	 * @since 1.0.0
 	 *
+	 * `link_mode: linked` is only honoured for trusted callers (template
+	 * assignment) and for owners who manage templates or the team; an
+	 * employee can't link a signature of their own to a template.
+	 *
 	 * @param int                  $user_id Owner.
-	 * @param array<string, mixed> $data    Field map (`name`, `json_content`, ...).
+	 * @param array<string, mixed> $data    Field map (`name`, `json_content`, `link_mode`, ...).
+	 * @param bool                 $trusted Server-side caller acting for an administrator (1.3.0).
 	 *
 	 * @return Signature
 	 *
 	 * @throws ValidationException When the JSON schema check fails.
 	 */
-	public function create( int $user_id, array $data ): Signature {
+	public function create( int $user_id, array $data, bool $trusted = false ): Signature {
 		// `prepare_for_save()` runs the `imgsig/signature/data_before_save`
 		// filter on the payload. Listeners can normalise / augment fields,
 		// but they must NOT be allowed to set `user_id` — that would let
@@ -247,6 +263,13 @@ class SignatureService {
 		$prepared = $this->prepare_for_save( $data, 'create' );
 		unset( $prepared['user_id'] );
 		$prepared['user_id'] = $user_id;
+
+		if (
+			Signature::LINK_LINKED === ( $prepared['link_mode'] ?? null )
+			&& ( empty( $prepared['template_id'] ) || ( ! $trusted && ! TemplateLink::can_bypass_locks( $user_id ) ) )
+		) {
+			unset( $prepared['link_mode'] );
+		}
 
 		do_action( 'imgsig/signature/before_create', $prepared, $user_id );
 
@@ -281,21 +304,42 @@ class SignatureService {
 	 *
 	 * @since 1.0.0
 	 *
+	 * Linked signatures (1.3.0): unless the caller is trusted or the
+	 * owner manages templates / the team, the template's employee mode
+	 * is enforced — see {@see enforce_link_rules()}.
+	 *
 	 * @param int                  $signature_id Primary key.
 	 * @param int                  $user_id      Caller's user ID.
 	 * @param array<string, mixed> $changes      Partial field map.
+	 * @param bool                 $trusted      Server-side caller acting for an administrator (1.3.0).
 	 *
 	 * @return Signature
 	 *
 	 * @throws OwnershipException When the row is missing or owned by someone else.
 	 */
-	public function update( int $signature_id, int $user_id, array $changes ): Signature {
+	public function update( int $signature_id, int $user_id, array $changes, bool $trusted = false ): Signature {
 		$existing = $this->repo->find_owned_by( $signature_id, $user_id );
 		if ( null === $existing ) {
 			throw new OwnershipException( __( 'Signature not found or not owned by the caller.', 'imagina-signatures' ) );
 		}
 
 		$prepared = $this->prepare_for_save( $changes, 'update' );
+
+		if (
+			! $trusted
+			&& ( $existing->is_linked() || array_key_exists( 'link_mode', $prepared ) )
+			&& ! TemplateLink::can_bypass_locks( $user_id )
+		) {
+			$prepared = $this->enforce_link_rules( $existing, $prepared );
+		}
+
+		// Only a row with a template can follow one.
+		if (
+			Signature::LINK_LINKED === ( $prepared['link_mode'] ?? null )
+			&& empty( $prepared['template_id'] ?? $existing->template_id )
+		) {
+			unset( $prepared['link_mode'] );
+		}
 
 		do_action( 'imgsig/signature/before_update', $existing, $prepared );
 
@@ -317,6 +361,139 @@ class SignatureService {
 		}
 
 		return $updated;
+	}
+
+	/**
+	 * Stores compiled output for any user's signature — the team
+	 * console recompiling stale signatures in the administrator's
+	 * browser (1.3.0). Same sanitising / hashing path as a save from the
+	 * editor; only `html` and `text` are accepted. Callers check the
+	 * administrator's capability.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int                  $signature_id Primary key.
+	 * @param array<string, mixed> $data         `html` (required) and `text`.
+	 *
+	 * @return Signature
+	 *
+	 * @throws OwnershipException  When the signature doesn't exist.
+	 * @throws ValidationException When no HTML is supplied or it is too large.
+	 */
+	public function store_html( int $signature_id, array $data ): Signature {
+		$signature = $this->repo->find( $signature_id );
+		if ( null === $signature ) {
+			throw new OwnershipException( __( 'Signature not found.', 'imagina-signatures' ) );
+		}
+
+		if ( ! isset( $data['html'] ) || ! is_string( $data['html'] ) ) {
+			throw new ValidationException(
+				__( 'No compiled HTML supplied.', 'imagina-signatures' ),
+				[
+					[
+						'path'    => 'html',
+						'message' => __( 'html is required.', 'imagina-signatures' ),
+					],
+				]
+			);
+		}
+
+		$payload = [ 'html' => $data['html'] ];
+		if ( isset( $data['text'] ) && is_string( $data['text'] ) ) {
+			$payload['text'] = $data['text'];
+		}
+
+		return $this->update( $signature->id, $signature->user_id, $payload, true );
+	}
+
+	/**
+	 * Applies the linked-signature rules to an employee's save (1.3.0):
+	 *
+	 *  - a detached signature can't be linked by its owner;
+	 *  - a linked signature keeps its template (`template_id` changes
+	 *    are dropped) and can only be detached when the template's
+	 *    employee mode is `free`;
+	 *  - `fields_only` / `locked_design`: the design is rebuilt from the
+	 *    template ({@see TemplateLink::enforce()}). When that changes
+	 *    what was sent, the HTML compiled from it is not stored (the row
+	 *    becomes stale until it is recompiled from the stored design);
+	 *    an `html` sent without the design it was compiled from is never
+	 *    stored either.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param Signature            $existing Stored row.
+	 * @param array<string, mixed> $prepared Sanitised change set.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @throws ValidationException When detaching isn't allowed.
+	 */
+	private function enforce_link_rules( Signature $existing, array $prepared ): array {
+		$requested = $prepared['link_mode'] ?? null;
+
+		if ( ! $existing->is_linked() ) {
+			if ( Signature::LINK_LINKED === $requested ) {
+				unset( $prepared['link_mode'] );
+			}
+			return $prepared;
+		}
+
+		// The template of a linked signature is chosen by an administrator.
+		unset( $prepared['template_id'] );
+
+		$template        = null !== $this->templates ? $this->templates->find( (int) $existing->template_id ) : null;
+		$template_schema = null !== $template ? json_decode( $template->json_content, true ) : null;
+		if ( ! is_array( $template_schema ) ) {
+			// Orphaned link: nothing to enforce against.
+			return $prepared;
+		}
+		$mode = TemplateLink::employee_mode( $template_schema );
+
+		if ( Signature::LINK_DETACHED === $requested ) {
+			if ( TemplateLink::MODE_FREE !== $mode ) {
+				throw new ValidationException(
+					__( 'This signature follows a company template and cannot be detached from it.', 'imagina-signatures' ),
+					[
+						[
+							'path'    => 'link_mode',
+							'message' => __( 'Ask an administrator to detach it.', 'imagina-signatures' ),
+						],
+					]
+				);
+			}
+			if ( isset( $prepared['json_content'] ) ) {
+				$decoded = json_decode( (string) $prepared['json_content'], true );
+				if ( is_array( $decoded ) ) {
+					$prepared['json_content'] = TemplateLink::encode( TemplateLink::detach( $decoded ) );
+				}
+			}
+			return $prepared;
+		}
+
+		unset( $prepared['link_mode'] );
+
+		if ( TemplateLink::MODE_FREE === $mode ) {
+			return $prepared;
+		}
+
+		if ( ! array_key_exists( 'json_content', $prepared ) ) {
+			unset( $prepared['html_cache'], $prepared['html_hash'], $prepared['html_text'] );
+			return $prepared;
+		}
+
+		$incoming = json_decode( (string) $prepared['json_content'], true );
+		$stored   = json_decode( $existing->json_content, true );
+		$enforced = TemplateLink::enforce( $template_schema, is_array( $incoming ) ? $incoming : [], is_array( $stored ) ? $stored : [] );
+
+		if ( ! TemplateLink::equivalent( $enforced, $incoming ) ) {
+			unset( $prepared['html_cache'], $prepared['html_hash'], $prepared['html_text'] );
+		}
+
+		$prepared['json_content']   = TemplateLink::encode( $enforced );
+		$prepared['schema_version'] = (string) ( $enforced['schema_version'] ?? SchemaMigration::CURRENT_VERSION );
+
+		return $prepared;
 	}
 
 	/**
@@ -467,6 +644,9 @@ class SignatureService {
 				),
 				'json_content'   => $json_content,
 				'template_id'    => $source->template_id,
+				// A copy of a linked signature stays linked (1.3.0) — duplicating
+				// must not be a way around the template's employee mode.
+				'link_mode'      => $source->link_mode,
 				'status'         => Signature::STATUS_DRAFT,
 				'schema_version' => $source->schema_version,
 			]
@@ -518,6 +698,22 @@ class SignatureService {
 
 		if ( array_key_exists( 'template_id', $data ) ) {
 			$prepared['template_id'] = (int) $data['template_id'];
+		}
+
+		if ( array_key_exists( 'link_mode', $data ) ) {
+			$link_mode = (string) $data['link_mode'];
+			if ( ! in_array( $link_mode, Signature::LINK_MODES, true ) ) {
+				throw new ValidationException(
+					__( 'Invalid link mode.', 'imagina-signatures' ),
+					[
+						[
+							'path'    => 'link_mode',
+							'message' => __( 'link_mode must be "linked" or "detached".', 'imagina-signatures' ),
+						],
+					]
+				);
+			}
+			$prepared['link_mode'] = $link_mode;
 		}
 
 		// Compiled output from the editor (1.3.0). The browser is the only

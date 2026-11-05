@@ -15,6 +15,7 @@ use ImaginaSignatures\Api\Controllers\MeController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Api\Controllers\StorageController;
+use ImaginaSignatures\Api\Controllers\TeamSignaturesController;
 use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\Middleware\RateLimiter;
@@ -28,6 +29,8 @@ use ImaginaSignatures\Services\HtmlSanitizer;
 use ImaginaSignatures\Services\JsonSchemaValidator;
 use ImaginaSignatures\Services\SchemaSanitizer;
 use ImaginaSignatures\Services\SignatureService;
+use ImaginaSignatures\Services\TemplateAssignmentService;
+use ImaginaSignatures\Services\TemplatePropagator;
 use ImaginaSignatures\Services\TemplateService;
 use ImaginaSignatures\Storage\StorageManager;
 
@@ -134,7 +137,27 @@ final class ServiceProvider {
 				return new SignatureService(
 					$c->make( SignatureRepository::class ),
 					$c->make( JsonSchemaValidator::class ),
-					$c->make( SchemaSanitizer::class )
+					$c->make( SchemaSanitizer::class ),
+					$c->make( TemplateRepository::class )
+				);
+			}
+		);
+		// Linked signatures (1.3.0).
+		$container->singleton(
+			TemplatePropagator::class,
+			static function ( Container $c ): TemplatePropagator {
+				return new TemplatePropagator(
+					$c->make( SignatureRepository::class ),
+					$c->make( TemplateRepository::class )
+				);
+			}
+		);
+		$container->singleton(
+			TemplateAssignmentService::class,
+			static function ( Container $c ): TemplateAssignmentService {
+				return new TemplateAssignmentService(
+					$c->make( SignatureService::class ),
+					$c->make( SignatureRepository::class )
 				);
 			}
 		);
@@ -174,7 +197,18 @@ final class ServiceProvider {
 					$c->make( TemplateService::class ),
 					$c->make( TemplateRepository::class ),
 					$c->make( SignatureService::class ),
-					$c->make( SignatureRepository::class )
+					$c->make( SignatureRepository::class ),
+					$c->make( TemplateAssignmentService::class ),
+					$c->make( TemplatePropagator::class )
+				);
+			}
+		);
+		$container->singleton(
+			TeamSignaturesController::class,
+			static function ( Container $c ): TeamSignaturesController {
+				return new TeamSignaturesController(
+					$c->make( SignatureRepository::class ),
+					$c->make( SignatureService::class )
 				);
 			}
 		);

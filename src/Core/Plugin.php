@@ -21,12 +21,14 @@ use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Api\Controllers\MeController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
 use ImaginaSignatures\Api\Controllers\StorageController;
+use ImaginaSignatures\Api\Controllers\TeamSignaturesController;
 use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\RestRouter;
 use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\SignatureRepository;
+use ImaginaSignatures\Services\TemplatePropagator;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -138,6 +140,9 @@ final class Plugin {
 
 		// WP-Cron handlers (daily rate-limit purge).
 		Cron::boot();
+
+		// Template → linked signatures propagation (cron batches, 1.3.0).
+		$this->container->make( TemplatePropagator::class )->register();
 
 		// Personal-data exporter / eraser + delete_user cleanup.
 		$this->container->make( UserDataManager::class )->register();
@@ -304,6 +309,7 @@ final class Plugin {
 				$this->container->make( AssetsController::class ),
 				$this->container->make( SiteSettingsController::class ),
 				$this->container->make( FrontendAccessController::class ),
+				$this->container->make( TeamSignaturesController::class ),
 			]
 		);
 		$router->register();
