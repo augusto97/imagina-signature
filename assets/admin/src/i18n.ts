@@ -1,11 +1,9 @@
 /**
- * Pass-through translation helper for the admin app.
+ * Admin-app translation helper.
  *
- * Mirrors the editor's `__()` shape so future pipeline plumbing can
- * replace the body without touching call sites.
+ * `__()` looks the msgid up in `IMGSIG_ADMIN_CONFIG.translations`
+ * (injected by PHP for the user's locale), falls back to the msgid,
+ * and substitutes `%s` / `%d` / positional `%1$s` placeholders. Same
+ * implementation as the editor's — see `assets/shared/i18n.ts`.
  */
-export function __(text: string, ...args: Array<string | number>): string {
-  if (args.length === 0) return text;
-  let i = 0;
-  return text.replace(/%s/g, () => String(args[i++] ?? ''));
-}
+export { __, sprintf } from '@shared/i18n';

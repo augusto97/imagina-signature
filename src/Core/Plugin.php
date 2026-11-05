@@ -113,6 +113,10 @@ final class Plugin {
 
 		$this->booted = true;
 
+		// Translations: text domain on `init` (with the es_* → es_ES
+		// fallback) and user-locale REST responses. See I18n.
+		I18n::boot();
+
 		// Register core service bindings (Encryption, StorageManager,
 		// repositories, services, controllers).
 		ServiceProvider::register( $this->container );

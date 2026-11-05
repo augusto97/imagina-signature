@@ -139,6 +139,19 @@ if ( ! class_exists( 'WP_REST_Request' ) ) {
 			return $this->files;
 		}
 
+		/**
+		 * @var string
+		 */
+		private string $route = '';
+
+		public function get_route(): string {
+			return $this->route;
+		}
+
+		public function set_route( string $route ): void {
+			$this->route = $route;
+		}
+
 		// ArrayAccess.
 
 		public function offsetExists( $offset ): bool {

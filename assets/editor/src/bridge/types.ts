@@ -39,6 +39,11 @@ export interface AppConfig {
   ajaxUrl?: string;
   /** WP locale code (e.g. `en_US`, `es_ES`). */
   locale: string;
+  /**
+   * `{ msgid: msgstr }` for the user's locale (empty for English).
+   * Read by `__()` — see `assets/shared/i18n.ts`.
+   */
+  translations?: Record<string, string>;
   /** Plugin URL for static asset references. */
   pluginUrl: string;
   /** wp-admin URL of the signatures listing — used by the editor's back arrow. */

@@ -26,6 +26,11 @@ export interface AdminConfig {
   ajaxUrl?: string;
   /** WP locale code. */
   locale: string;
+  /**
+   * `{ msgid: msgstr }` for the user's locale (empty for English).
+   * Read by `__()` — see `assets/shared/i18n.ts`.
+   */
+  translations?: Record<string, string>;
   /** URL of the wp-admin home (so the breadcrumb back-link goes somewhere sensible). */
   wpAdminUrl: string;
   /**

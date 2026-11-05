@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace ImaginaSignatures\Admin;
 
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
+use ImaginaSignatures\Core\I18n;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 
 defined( 'ABSPATH' ) || exit;
@@ -160,6 +161,8 @@ final class EditorAssetEnqueuer {
 			// `admin-ajax.php?action=rest-nonce`.
 			'ajaxUrl'          => esc_url_raw( admin_url( 'admin-ajax.php' ) ),
 			'locale'           => get_user_locale( $user_id ),
+			// `{ msgid: msgstr }` for the user's locale ({} for English).
+			'translations'     => I18n::js_translations( get_user_locale( $user_id ) ),
 			'pluginUrl'        => esc_url_raw( plugins_url( '', IMGSIG_FILE ) ),
 			'signaturesUrl'    => esc_url_raw( admin_url( 'admin.php?page=imagina-signatures' ) ),
 			'capabilities'     => [
