@@ -24,7 +24,7 @@ import {
  * Every style value goes through the central serializer so font
  * stacks with double quotes no longer break the `style` attribute.
  */
-export function compileText(block: TextBlock, _ctx: CompileContext): string {
+export function compileText(block: TextBlock, ctx: CompileContext): string {
   const style = inlineStyle({
     'font-family': fontStack(block.style.font_family),
     'font-size': `${px(block.style.font_size, 6, 96, 14)}px`,
@@ -35,7 +35,10 @@ export function compileText(block: TextBlock, _ctx: CompileContext): string {
     padding: paddingCss(block.padding),
   });
 
-  const safeContent = sanitizeEmailHtml(block.content);
+  // Links pick up the canvas link colour (the sanitiser drops any
+  // inline style on <a>); paragraphs get margin:0 so mail clients
+  // don't add their ~1em default spacing the canvas never showed.
+  const safeContent = sanitizeEmailHtml(block.content, { linkColor: ctx.canvas.link_color });
 
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;"><tr><td style="${style}">${safeContent}</td></tr></table>`;
 }

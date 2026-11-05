@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import type { Block, BlockBase } from '@/core/schema/blocks';
+import type { CanvasConfig } from '@/core/schema/signature';
 
 /**
  * Block category surfaces the block in the left-sidebar library.
@@ -8,15 +9,16 @@ import type { Block, BlockBase } from '@/core/schema/blocks';
 export type BlockCategory = 'content' | 'layout' | 'social';
 
 /**
- * Compile context handed to each block's `compile()` function.
- *
- * The real {@link CompileContext} arrives in Sprint 9 — for now it
- * carries enough state for the canvas-mode renderers to short-circuit
- * the email-safe compile path when not actually exporting.
+ * Compile context handed to each block's `compile()` function
+ * (CLAUDE.md §9.2).
  */
 export interface CompileContext {
+  /** Variables available for substitution (system `wp_*` + user-defined). */
   variables: Record<string, string>;
+  /** Free-form warning strings (surfaced as warning-level issues). */
   warnings: string[];
+  /** Canvas config of the signature being compiled (link colour, fonts…). */
+  canvas: CanvasConfig;
 }
 
 /**

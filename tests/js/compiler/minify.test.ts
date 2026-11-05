@@ -79,7 +79,7 @@ describe('minifyHtml', () => {
   });
 
   it('keeps a literal non-breaking space', () => {
-    expect(minifyHtml('<td>a b</td>')).toBe('<td>a b</td>');
+    expect(minifyHtml('<td>a\u00a0b</td>')).toBe('<td>a\u00a0b</td>');
   });
 
   it('keeps a multi-line conditional byte-identical next to collapsed markup', () => {

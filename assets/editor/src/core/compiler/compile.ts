@@ -40,9 +40,11 @@ export interface CompileResult {
  * a warning so the bug is visible.
  */
 export function compileSignature(schema: SignatureSchema): CompileResult {
+  const merged = mergedVariables(schema.variables);
   const ctx: CompileContext = {
-    variables: schema.variables,
+    variables: merged,
     warnings: [],
+    canvas: schema.canvas,
   };
 
   const blockChunks: string[] = [];
@@ -75,7 +77,6 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
   // Merge: read-only wp_* variables first, then user-defined override.
   // The bootstrap config is optional in tests / standalone preview —
   // fall through to schema.variables only.
-  const merged = mergedVariables(schema.variables);
   const { html: substituted, missing } = substituteVariables(withFooter, merged);
   const minified = minifyHtml(substituted);
   const validationWarnings = validateEmailHtml(minified);

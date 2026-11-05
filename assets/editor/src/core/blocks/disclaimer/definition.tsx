@@ -25,6 +25,8 @@ const Renderer: FC<{ block: DisclaimerBlock }> = ({ block }) => {
     fontSize: `${block.style.font_size}px`,
     color: block.style.color,
     lineHeight: block.style.line_height ?? 1.4,
+    // The export turns newlines into <br>; mirror that on the canvas.
+    whiteSpace: 'pre-line',
   };
 
   return (
@@ -69,7 +71,8 @@ const Properties: FC<{ block: DisclaimerBlock; onChange: (u: Partial<DisclaimerB
 );
 
 function compile(block: DisclaimerBlock, _ctx: CompileContext): string {
-  const safe = escapeHtml(block.content);
+  // Plain-text field: escape, then keep the user's line breaks.
+  const safe = escapeHtml(block.content).replace(/\r?\n/g, '<br>');
   const style = inlineStyle({
     'font-family': fontStack(block.style.font_family),
     'font-size': `${px(block.style.font_size, 6, 48, 10)}px`,

@@ -1,6 +1,7 @@
 import { useMemo, type FC } from 'react';
 import type { TextBlock as TextBlockType } from '@/core/schema/blocks';
 import { sanitizeEmailHtml } from '@/core/compiler/sanitize';
+import { useSchemaStore } from '@/stores/schemaStore';
 
 interface Props {
   block: TextBlockType;
@@ -33,7 +34,13 @@ export const TextBlock: FC<Props> = ({ block }) => {
       : '0',
   };
 
-  const safeContent = useMemo(() => sanitizeEmailHtml(block.content), [block.content]);
+  // Same sanitiser + link colour as the compile path so links look the
+  // same on the canvas as in the recipient's inbox (WYSIWYG).
+  const linkColor = useSchemaStore((s) => s.schema.canvas.link_color);
+  const safeContent = useMemo(
+    () => sanitizeEmailHtml(block.content, { linkColor }),
+    [block.content, linkColor],
+  );
 
   return (
     <table
