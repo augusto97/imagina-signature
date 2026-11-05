@@ -29,6 +29,7 @@ use ImaginaSignatures\Api\Controllers\MeController;
 use ImaginaSignatures\Api\Controllers\OutlookController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
 use ImaginaSignatures\Api\Controllers\StorageController;
+use ImaginaSignatures\Api\Controllers\TeamConsoleController;
 use ImaginaSignatures\Api\Controllers\TeamSignaturesController;
 use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
@@ -355,6 +356,7 @@ final class Plugin {
 				$this->container->make( InstallController::class ),
 				$this->container->make( DeployInvitationsController::class ),
 				$this->container->make( TeamSignaturesController::class ),
+				$this->container->make( TeamConsoleController::class ),
 			]
 		);
 		$router->register();
