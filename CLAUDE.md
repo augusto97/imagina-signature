@@ -1945,7 +1945,7 @@ DELETE /templates/:id                   [admin] Borrar (sus firmas vinculadas pa
 
 === Plantillas vinculadas / consola de equipo (1.3.0) ===
 
-POST   /admin/templates/:id/assign            [manage_team] {user_ids?, group_ids?, role?, mode: linked|copy, make_primary, offset?}
+POST   /admin/templates/:id/assign            [manage_team] {user_ids?, group_ids?, role?, all?, mode: linked|copy, make_primary, offset?}
                                               → {processed, created, updated, skipped, failed, total, next_offset|null} (≤ 50 usuarios)
 GET    /admin/templates/:id/propagation       [manage_templates] Progreso de la propagación (opción imgsig_template_propagation)
 GET    /admin/signatures/stale                [manage_team] Firmas con HTML desactualizado (?page&per_page&template_id&after_id)

@@ -336,6 +336,25 @@ final class TemplateAssignTest extends TestCase {
 		);
 	}
 
+	public function test_all_targets_every_signature_user(): void {
+		Functions\expect( 'get_users' )->once()->with(
+			[
+				'capability' => 'imgsig_use_signatures',
+				'fields'     => 'ID',
+			]
+		)->andReturn( [ '9', '3' ] );
+
+		$result = $this->assign(
+			[
+				'all'  => true,
+				'mode' => 'copy',
+			]
+		);
+
+		$this->assertSame( 2, $result['total'] );
+		$this->assertSame( [ 3, 9 ], array_map( 'intval', array_column( $this->inserted, 'user_id' ) ) );
+	}
+
 	public function test_groups_are_ignored_when_the_taxonomy_does_not_exist(): void {
 		Functions\when( 'taxonomy_exists' )->justReturn( false );
 		Functions\expect( 'get_objects_in_term' )->never();

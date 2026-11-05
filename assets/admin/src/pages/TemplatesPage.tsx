@@ -8,7 +8,7 @@ import { Modal } from '@admin/components/Modal';
 import { apiCall, ApiError, getConfig } from '@admin/api';
 import { __ } from '@admin/i18n';
 import { cn } from '@admin/utils/cn';
-import type { BulkApplyResult, TemplateRow } from '@admin/types';
+import type { AssignResult, EmployeeMode, PropagationProgress, TemplateRow } from '@admin/types';
 import { templateCategoryLabel } from '@shared/templateCategories';
 
 /**
@@ -25,6 +25,34 @@ const WP_ROLES: Array<{ slug: string; label: () => string }> = [
   { slug: 'subscriber', label: () => __('Subscriber') },
 ];
 
+/** Employee modes of a template (1.3.0); labels translate at render time. */
+const EMPLOYEE_MODES: Array<{ value: EmployeeMode; label: () => string; hint: () => string }> = [
+  {
+    value: 'free',
+    label: () => __('Free'),
+    hint: () => __('Employees can change everything except locked blocks.'),
+  },
+  {
+    value: 'locked_design',
+    label: () => __('Locked design'),
+    hint: () =>
+      __('Employees can only change the text of unlocked text blocks. Layout and styles are fixed.'),
+  },
+  {
+    value: 'fields_only',
+    label: () => __('Fields only'),
+    hint: () => __('Employees only fill in their details (variables and profile). No canvas editing.'),
+  },
+];
+
+/** The employee mode stored in a template's `settings`. */
+function employeeModeOf(template: TemplateRow): EmployeeMode {
+  const settings = (template.json_content as { settings?: { employee_mode?: unknown } } | null)
+    ?.settings;
+  const mode = settings?.employee_mode;
+  return mode === 'locked_design' || mode === 'fields_only' ? mode : 'free';
+}
+
 /** Translated name of a standard role; custom role slugs are shown as-is. */
 function roleLabel(slug: string): string {
   const role = WP_ROLES.find((r) => r.slug === slug);
@@ -37,7 +65,7 @@ function roleLabel(slug: string): string {
  *
  * Admins (`imgsig_manage_templates`) get three actions per template:
  *  - Edit metadata (name / category / description / role visibility)
- *  - Apply in bulk (creates a signature for every user in scope)
+ *  - Apply (assigns the template — linked or as a copy — to users in scope)
  *  - The "New template" CTA in the topbar (creates an empty shell)
  */
 export const TemplatesPage: FC = () => {
@@ -140,7 +168,14 @@ export const TemplatesPage: FC = () => {
                 </p>
                 <div className="mt-auto flex items-center justify-between gap-2">
                   <span className="is-section-label">{templateCategoryLabel(row.category)}</span>
-                  <RoleChips roles={row.visible_to_roles} />
+                  <span className="flex items-center gap-1">
+                    {employeeModeOf(row) !== 'free' && (
+                      <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-amber-700 ring-1 ring-inset ring-amber-200">
+                        {EMPLOYEE_MODES.find((m) => m.value === employeeModeOf(row))?.label()}
+                      </span>
+                    )}
+                    <RoleChips roles={row.visible_to_roles} />
+                  </span>
                 </div>
                 {canManage && (
                   <div className="mt-3 flex items-center gap-2 border-t border-[var(--border-default)] pt-3">
@@ -182,8 +217,8 @@ export const TemplatesPage: FC = () => {
             open={editing !== null}
             template={editing}
             onClose={() => setEditing(null)}
-            onSaved={(row) => {
-              setEditing(null);
+            onSaved={(row, close = true) => {
+              if (close) setEditing(null);
               setItems((prev) =>
                 prev ? prev.map((t) => (t.id === row.id ? row : t)) : prev,
               );
@@ -367,7 +402,8 @@ interface EditTemplateModalProps {
   open: boolean;
   template: TemplateRow | null;
   onClose: () => void;
-  onSaved: (row: TemplateRow) => void;
+  /** `close` false keeps the dialog open to show the propagation summary. */
+  onSaved: (row: TemplateRow, close?: boolean) => void;
 }
 
 const EditTemplateModal: FC<EditTemplateModalProps> = ({ open, template, onClose, onSaved }) => {
@@ -375,8 +411,10 @@ const EditTemplateModal: FC<EditTemplateModalProps> = ({ open, template, onClose
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [roles, setRoles] = useState<string[]>([]);
+  const [employeeMode, setEmployeeMode] = useState<EmployeeMode>('free');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [propagation, setPropagation] = useState<PropagationProgress | null>(null);
 
   useEffect(() => {
     if (open && template) {
@@ -384,8 +422,10 @@ const EditTemplateModal: FC<EditTemplateModalProps> = ({ open, template, onClose
       setCategory(template.category);
       setDescription(template.description ?? '');
       setRoles(template.visible_to_roles ?? []);
+      setEmployeeMode(employeeModeOf(template));
       setFormError(null);
       setSubmitting(false);
+      setPropagation(null);
     }
   }, [open, template]);
 
@@ -400,16 +440,40 @@ const EditTemplateModal: FC<EditTemplateModalProps> = ({ open, template, onClose
     setSubmitting(true);
     setFormError(null);
 
+    // A new employee mode changes the design JSON, which the server
+    // propagates to every signature linked to the template.
+    const modeChanged = employeeMode !== employeeModeOf(template);
+    const json = template.json_content as Record<string, unknown> | null;
+
     try {
-      const next = await apiCall<TemplateRow>(`/templates/${template.id}`, {
-        method: 'PATCH',
-        body: {
-          name: name.trim(),
-          category: category.trim() || 'general',
-          description: description.trim(),
-          visible_to_roles: roles,
+      const next = await apiCall<TemplateRow & { propagation?: PropagationProgress }>(
+        `/templates/${template.id}`,
+        {
+          method: 'PATCH',
+          body: {
+            name: name.trim(),
+            category: category.trim() || 'general',
+            description: description.trim(),
+            visible_to_roles: roles,
+            ...(modeChanged && json && typeof json === 'object'
+              ? {
+                  json_content: {
+                    ...json,
+                    settings: {
+                      ...((json.settings as Record<string, unknown> | undefined) ?? {}),
+                      employee_mode: employeeMode,
+                    },
+                  },
+                }
+              : {}),
+          },
         },
-      });
+      );
+      if (next.propagation && next.propagation.total > 0) {
+        setPropagation(next.propagation);
+        onSaved(next, false);
+        return;
+      }
       onSaved(next);
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : (err as Error).message);
@@ -492,6 +556,31 @@ const EditTemplateModal: FC<EditTemplateModalProps> = ({ open, template, onClose
           </div>
         </Field>
 
+        <Field
+          label={__('Employee mode')}
+          hint={EMPLOYEE_MODES.find((m) => m.value === employeeMode)?.hint()}
+        >
+          <select
+            value={employeeMode}
+            onChange={(e) => setEmployeeMode(e.target.value as EmployeeMode)}
+            disabled={submitting}
+          >
+            {EMPLOYEE_MODES.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label()}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        {propagation && (
+          <div className="rounded-md bg-[var(--bg-selected)] px-3 py-2 text-[12px] text-[var(--text-secondary)]">
+            {propagation.status === 'done'
+              ? __('Saved. %s linked signatures were updated.', String(propagation.updated))
+              : __('Saved. %s linked signatures are being updated in the background.', String(propagation.total))}
+          </div>
+        )}
+
         {formError && (
           <div className="rounded-md border border-[var(--danger)] bg-red-50 px-3 py-2 text-[12px] text-[var(--danger)]">
             {formError}
@@ -503,7 +592,7 @@ const EditTemplateModal: FC<EditTemplateModalProps> = ({ open, template, onClose
 };
 
 // ---------------------------------------------------------------------------
-// Apply in bulk — scope picker + result summary
+// Apply — assign the template to users (linked or copy), in chunks
 // ---------------------------------------------------------------------------
 
 type Scope =
@@ -511,134 +600,158 @@ type Scope =
   | { kind: 'role'; role: string }
   | { kind: 'users'; ids: string };
 
+type AssignMode = 'linked' | 'copy';
+
+interface AssignTotals {
+  total: number;
+  processed: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+}
+
+const EMPTY_TOTALS: AssignTotals = {
+  total: 0,
+  processed: 0,
+  created: 0,
+  updated: 0,
+  skipped: 0,
+  failed: 0,
+};
+
 interface ApplyTemplateModalProps {
   open: boolean;
   template: TemplateRow | null;
   onClose: () => void;
 }
 
+/**
+ * Assigns the template to every user in scope through
+ * `POST /admin/templates/:id/assign` (1.3.0), which processes 50 users
+ * per request: the dialog repeats the call with `next_offset` and shows
+ * a progress bar.
+ *
+ *  - Linked: each user's signature follows the template — later edits
+ *    of the template reach it; employees keep their details and text.
+ *  - Copy: each user gets an independent copy (users who already have
+ *    one from this template are skipped).
+ */
 const ApplyTemplateModal: FC<ApplyTemplateModalProps> = ({ open, template, onClose }) => {
   const [scope, setScope] = useState<Scope>({ kind: 'all' });
-  const [skipExisting, setSkipExisting] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [mode, setMode] = useState<AssignMode>('linked');
+  const [makePrimary, setMakePrimary] = useState(true);
+  const [running, setRunning] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [result, setResult] = useState<BulkApplyResult | null>(null);
+  const [totals, setTotals] = useState<AssignTotals | null>(null);
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
     if (open) {
       setScope({ kind: 'all' });
-      setSkipExisting(true);
-      setSubmitting(false);
+      setMode('linked');
+      setMakePrimary(true);
+      setRunning(false);
       setFormError(null);
-      setResult(null);
+      setTotals(null);
+      setDone(false);
     }
   }, [open]);
 
-  const submit = async (): Promise<void> => {
-    if (!template || submitting) return;
-
-    setSubmitting(true);
-    setFormError(null);
-    setResult(null);
-
-    let scopeStr = 'all';
+  const targets = (): Record<string, unknown> | null => {
+    if (scope.kind === 'all') return { all: true };
     if (scope.kind === 'role') {
       if (!scope.role) {
         setFormError(__('Pick a role.'));
-        setSubmitting(false);
-        return;
+        return null;
       }
-      scopeStr = `role:${scope.role}`;
-    } else if (scope.kind === 'users') {
-      const ids = scope.ids
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-      if (ids.length === 0) {
-        setFormError(__('Provide at least one user ID.'));
-        setSubmitting(false);
-        return;
-      }
-      scopeStr = `users:${ids.join(',')}`;
+      return { role: scope.role };
     }
+    const ids = scope.ids
+      .split(',')
+      .map((s) => Number.parseInt(s.trim(), 10))
+      .filter((n) => Number.isInteger(n) && n > 0);
+    if (ids.length === 0) {
+      setFormError(__('Provide at least one user ID.'));
+      return null;
+    }
+    return { user_ids: ids };
+  };
+
+  const submit = async (): Promise<void> => {
+    if (!template || running) return;
+    setFormError(null);
+    const body = targets();
+    if (!body) return;
+
+    setRunning(true);
+    setDone(false);
+    let sum: AssignTotals = { ...EMPTY_TOTALS };
+    setTotals(sum);
 
     try {
-      const next = await apiCall<BulkApplyResult>(
-        `/admin/templates/${template.id}/apply`,
-        {
-          method: 'POST',
-          body: { scope: scopeStr, skip_existing: skipExisting },
-        },
-      );
-      setResult(next);
+      let offset: number | null = 0;
+      while (offset !== null) {
+        const chunk: AssignResult = await apiCall<AssignResult>(
+          `/admin/templates/${template.id}/assign`,
+          {
+            method: 'POST',
+            body: { ...body, mode, make_primary: makePrimary, offset },
+          },
+        );
+        sum = {
+          total: chunk.total,
+          processed: sum.processed + chunk.processed,
+          created: sum.created + chunk.created,
+          updated: sum.updated + chunk.updated,
+          skipped: sum.skipped + chunk.skipped,
+          failed: sum.failed + chunk.failed,
+        };
+        setTotals(sum);
+        offset = chunk.next_offset;
+      }
+      setDone(true);
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : (err as Error).message);
     } finally {
-      setSubmitting(false);
+      setRunning(false);
     }
   };
+
+  const percent =
+    totals && totals.total > 0 ? Math.round((totals.processed / totals.total) * 100) : 0;
 
   return (
     <Modal
       open={open}
-      title={template ? __('Apply “%s” in bulk', template.name) : __('Apply template')}
-      onClose={submitting ? () => {} : onClose}
+      title={template ? __('Apply “%s”', template.name) : __('Apply template')}
+      onClose={running ? () => {} : onClose}
       footer={
-        result ? (
+        done ? (
           <Button variant="primary" size="sm" onClick={onClose}>
             {__('Done')}
           </Button>
         ) : (
           <>
-            <Button variant="ghost" size="sm" onClick={onClose} disabled={submitting}>
+            <Button variant="ghost" size="sm" onClick={onClose} disabled={running}>
               {__('Cancel')}
             </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={submit}
-              disabled={submitting}
-            >
-              {submitting ? __('Applying…') : __('Apply')}
+            <Button variant="primary" size="sm" onClick={() => void submit()} disabled={running}>
+              {running ? __('Applying…') : __('Apply')}
             </Button>
           </>
         )
       }
     >
-      {result ? (
-        <div className="flex flex-col gap-3 text-[13px]">
-          <p>
-            {__('Applied to %s users', String(result.targeted))} —{' '}
-            <strong>{result.created}</strong> {__('created')},{' '}
-            <strong>{result.skipped}</strong> {__('skipped')}
-            {result.failed > 0 && (
-              <>
-                , <strong className="text-[var(--danger)]">{result.failed}</strong>{' '}
-                {__('failed')}
-              </>
-            )}
-            .
-          </p>
-          {result.skipped > 0 && (
-            <p className="text-[11.5px] text-[var(--text-muted)]">
-              {__('Skipped users already had a signature seeded from this template.')}
-            </p>
-          )}
-        </div>
-      ) : (
-        <form
-          className="flex flex-col gap-3 text-[13px]"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit();
-          }}
-        >
-          <p className="rounded-md bg-[var(--bg-panel-soft)] px-3 py-2 text-[11.5px] text-[var(--text-secondary)]">
-            {__(
-              'Creates a new signature for every user in scope, seeded from this template. Existing signatures are NOT modified.',
-            )}
-          </p>
-
+      <form
+        className="flex flex-col gap-3 text-[13px]"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void submit();
+        }}
+      >
+        <fieldset className="flex flex-col gap-2" disabled={running || done}>
+          <span className="text-[12px] font-medium text-[var(--text-primary)]">{__('Users')}</span>
           <ScopeOption
             label={__('All eligible users')}
             description={__('Everyone with the “Use signatures” capability.')}
@@ -682,26 +795,74 @@ const ApplyTemplateModal: FC<ApplyTemplateModalProps> = ({ open, template, onClo
               />
             )}
           </ScopeOption>
+        </fieldset>
 
-          <label className="mt-1 flex cursor-pointer items-center gap-2 text-[12px]">
-            <input
-              type="checkbox"
-              checked={skipExisting}
-              onChange={(e) => setSkipExisting(e.target.checked)}
-              className="!h-4 !w-4 !p-0"
-            />
-            <span className="text-[var(--text-secondary)]">
-              {__('Skip users who already have a signature from this template')}
-            </span>
-          </label>
+        <fieldset className="flex flex-col gap-2" disabled={running || done}>
+          <span className="text-[12px] font-medium text-[var(--text-primary)]">{__('Mode')}</span>
+          <ScopeOption
+            label={__('Linked (recommended)')}
+            description={__('Signatures follow this template: when you edit it, everyone gets the new design. Employees keep their details and text.')}
+            checked={mode === 'linked'}
+            onSelect={() => setMode('linked')}
+          />
+          <ScopeOption
+            label={__('Copy')}
+            description={__('Each user gets an independent copy. Later template changes don’t reach it; users who already have a copy are skipped.')}
+            checked={mode === 'copy'}
+            onSelect={() => setMode('copy')}
+          />
+        </fieldset>
 
-          {formError && (
-            <div className="rounded-md border border-[var(--danger)] bg-red-50 px-3 py-2 text-[12px] text-[var(--danger)]">
-              {formError}
+        <label className="flex cursor-pointer items-center gap-2 text-[12px]">
+          <input
+            type="checkbox"
+            checked={makePrimary}
+            onChange={(e) => setMakePrimary(e.target.checked)}
+            disabled={running || done}
+            className="!h-4 !w-4 !p-0"
+          />
+          <span className="text-[var(--text-secondary)]">
+            {__('Make it each user’s primary signature (the one deployed to Gmail and Outlook)')}
+          </span>
+        </label>
+
+        {totals && (
+          <div className="flex flex-col gap-1.5" aria-live="polite">
+            <div
+              className="h-2 overflow-hidden rounded-full bg-[var(--bg-panel-soft)]"
+              role="progressbar"
+              aria-label={__('Progress')}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={percent}
+            >
+              <div
+                className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-300"
+                style={{ width: `${percent}%` }}
+              />
             </div>
-          )}
-        </form>
-      )}
+            <p className="text-[12px] text-[var(--text-secondary)]">
+              {__('%1$s of %2$s users', String(totals.processed), String(totals.total))} —{' '}
+              <strong>{totals.created}</strong> {__('created')},{' '}
+              <strong>{totals.updated}</strong> {__('updated')},{' '}
+              <strong>{totals.skipped}</strong> {__('skipped')}
+              {totals.failed > 0 && (
+                <>
+                  , <strong className="text-[var(--danger)]">{totals.failed}</strong>{' '}
+                  {__('failed')}
+                </>
+              )}
+              .
+            </p>
+          </div>
+        )}
+
+        {formError && (
+          <div className="rounded-md border border-[var(--danger)] bg-red-50 px-3 py-2 text-[12px] text-[var(--danger)]">
+            {formError}
+          </div>
+        )}
+      </form>
     </Modal>
   );
 };

@@ -196,6 +196,11 @@ final class TemplatesController extends BaseController {
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_key',
 						],
+						// Every user who can use signatures.
+						'all'          => [
+							'type'    => 'boolean',
+							'default' => false,
+						],
 						'mode'         => [
 							'type'    => 'string',
 							'enum'    => [ TemplateAssignmentService::MODE_LINKED, TemplateAssignmentService::MODE_COPY ],
@@ -402,7 +407,7 @@ final class TemplatesController extends BaseController {
 	 * `offset = next_offset` until it is null.
 	 *
 	 * Body: `{ user_ids?: int[], group_ids?: int[], role?: string,
-	 * mode: 'linked'|'copy', make_primary: bool, offset?: int }`.
+	 * all?: bool, mode: 'linked'|'copy', make_primary: bool, offset?: int }`.
 	 * Response: `{ template_id, processed, created, updated, skipped,
 	 * failed, total, next_offset }`.
 	 *
@@ -429,6 +434,7 @@ final class TemplatesController extends BaseController {
 					'user_ids'     => (array) ( $request->get_param( 'user_ids' ) ?? [] ),
 					'group_ids'    => (array) ( $request->get_param( 'group_ids' ) ?? [] ),
 					'role'         => (string) ( $request->get_param( 'role' ) ?? '' ),
+					'all'          => (bool) $request->get_param( 'all' ),
 					'mode'         => (string) ( $request->get_param( 'mode' ) ?? TemplateAssignmentService::MODE_LINKED ),
 					'make_primary' => (bool) $request->get_param( 'make_primary' ),
 					'offset'       => max( 0, (int) $request->get_param( 'offset' ) ),
