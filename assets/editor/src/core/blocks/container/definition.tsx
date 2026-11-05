@@ -43,7 +43,7 @@ const DEFAULT_LEFT_WIDTH = 50;
 const MIN_LEFT_WIDTH = 10;
 const MAX_LEFT_WIDTH = 90;
 
-function leftWidth(block: ContainerBlock): number {
+function leftWidth(block: Pick<ContainerBlock, 'left_width'>): number {
   const raw = block.left_width ?? DEFAULT_LEFT_WIDTH;
   return Math.max(MIN_LEFT_WIDTH, Math.min(MAX_LEFT_WIDTH, raw));
 }
@@ -500,29 +500,63 @@ const ColumnWidthControl: FC<{
   );
 };
 
+/**
+ * Pixel geometry of a 2-column container inside `available` px.
+ *
+ * Each cell's OUTER width is its percentage share of the available
+ * width (the two always sum to `available`); its INNER width — what
+ * its children may use — subtracts half the gap, which is applied as
+ * padding on the inner edge of each cell.
+ */
+export function containerCellWidths(
+  block: Pick<ContainerBlock, 'left_width' | 'gap'>,
+  available: number,
+): { leftPct: number; rightPct: number; leftOuter: number; rightOuter: number; leftInner: number; rightInner: number; halfGap: number } {
+  const total = Math.max(1, Math.round(available));
+  const leftPct = leftWidth(block as ContainerBlock);
+  const rightPct = 100 - leftPct;
+  const halfGap = px(block.gap, 0, 200, 0) / 2;
+  const leftOuter = Math.max(1, Math.round((total * leftPct) / 100));
+  const rightOuter = Math.max(1, total - leftOuter);
+  return {
+    leftPct,
+    rightPct,
+    leftOuter,
+    rightOuter,
+    leftInner: Math.max(1, Math.floor(leftOuter - halfGap)),
+    rightInner: Math.max(1, Math.floor(rightOuter - halfGap)),
+    halfGap,
+  };
+}
+
 function compile(block: ContainerBlock, ctx: CompileContext): string {
-  const compileChild = (child: Block): string => {
-    const def = rendererForBlock(child);
-    if (!def) {
-      report(ctx, 'warning', __('Unknown block type "%s" was skipped.', String(child.type)), child, 'unknown-block');
-      return '';
-    }
-    return (def.compile as (b: Block, c: CompileContext) => string)(child, ctx);
+  const compileChildren = (children: Block[], width: number): string => {
+    // Same issue / warning sinks (shared by reference), narrower width.
+    const childCtx: CompileContext = { ...ctx, availableWidth: width };
+    return children
+      .map((child) => {
+        const def = rendererForBlock(child);
+        if (!def) {
+          report(ctx, 'warning', __('Unknown block type "%s" was skipped.', String(child.type)), child, 'unknown-block');
+          return '';
+        }
+        return (def.compile as (b: Block, c: CompileContext) => string)(child, childCtx);
+      })
+      .join('\n');
   };
 
   const visibleLeft = block.children.filter((c) => c.visible !== false);
   const visibleRight = rightChildrenOf(block).filter((c) => c.visible !== false);
 
   if (block.columns === 1) {
-    const inner = visibleLeft.map(compileChild).join('\n');
+    const inner = compileChildren(visibleLeft, ctx.availableWidth);
     return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%"><tr><td style="vertical-align:top">${inner}</td></tr></table>`;
   }
 
-  const leftHtml = visibleLeft.map(compileChild).join('\n') || '&nbsp;';
-  const rightHtml = visibleRight.map(compileChild).join('\n') || '&nbsp;';
-  const leftPct = leftWidth(block);
-  const rightPct = 100 - leftPct;
-  const halfGap = px(block.gap, 0, 200, 0) / 2;
+  const geo = containerCellWidths(block, ctx.availableWidth);
+  const leftHtml = compileChildren(visibleLeft, geo.leftInner) || '&nbsp;';
+  const rightHtml = compileChildren(visibleRight, geo.rightInner) || '&nbsp;';
+  const { leftPct, rightPct, halfGap } = geo;
   const padRight = `padding-right:${halfGap}px`;
   const padLeft = `padding-left:${halfGap}px`;
 
@@ -533,13 +567,15 @@ function compile(block: ContainerBlock, ctx: CompileContext): string {
   // that wraps awkwardly. With fixed layout the percentages are
   // honoured exactly regardless of what the children measure.
   //
-  // We belt-and-suspenders the width on each <td>: the inline
-  // `style="width:N%"` is the modern path; the HTML `width="N%"`
-  // attribute is what Outlook on Windows looks at when its CSS
-  // engine gets selective. `mso-table-lspace/rspace` zero out
-  // Outlook's invisible default padding around tables so the gap
-  // we compute is the gap the user sees.
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;table-layout:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt"><tr><td width="${leftPct}%" style="vertical-align:top;width:${leftPct}%;${padRight}">${leftHtml}</td><td width="${rightPct}%" style="vertical-align:top;width:${rightPct}%;${padLeft}">${rightHtml}</td></tr></table>`;
+  // Fixed layout means a child wider than its cell overflows instead
+  // of widening the cell, so every child is compiled against the
+  // cell's INNER pixel width (images clamp to it). Each <td> carries
+  // its outer pixel width as an HTML `width` attribute (what Outlook
+  // on Windows reads) plus the `width:N%` style for everyone else.
+  // `mso-table-lspace/rspace` zero out Outlook's invisible default
+  // padding around tables so the gap we compute is the gap the user
+  // sees.
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;table-layout:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt"><tr><td width="${geo.leftOuter}" style="vertical-align:top;width:${leftPct}%;${padRight}">${leftHtml}</td><td width="${geo.rightOuter}" style="vertical-align:top;width:${rightPct}%;${padLeft}">${rightHtml}</td></tr></table>`;
 }
 
 const definition: BlockDefinition<ContainerBlock> = {

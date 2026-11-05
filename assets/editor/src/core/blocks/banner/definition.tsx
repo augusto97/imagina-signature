@@ -4,8 +4,8 @@ import type { BannerBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
-import { intPx, paddingCss, px } from '@/core/compiler/css';
-import { checkAlt, markerAttr } from '@/core/compiler/issues';
+import { horizontalPadding, intPx, paddingCss, px } from '@/core/compiler/css';
+import { checkAlt, clampToAvailable, markerAttr } from '@/core/compiler/issues';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 import { isAnimatedGif, withOutlookFallback } from '../image/definition';
 
@@ -132,7 +132,11 @@ const Properties: FC<{
 function compile(block: BannerBlock, ctx: CompileContext): string {
   checkAlt(ctx, block, block.alt);
   const padding = paddingCss(block.padding);
-  const widthAttr = block.width ? ` width="${intPx(block.width, 1, 4000, 600)}"` : '';
+  // "Capped to the canvas width at compile time" (schema contract) —
+  // more precisely to the width available where the banner sits.
+  const available = ctx.availableWidth - horizontalPadding(block.padding);
+  const width = clampToAvailable(ctx, block, intPx(block.width || available, 1, 4000, available), available);
+  const widthAttr = ` width="${width}"`;
   const radius = block.border_radius ? `;border-radius:${px(block.border_radius, 0, 999)}px` : '';
   const baseStyle = `display:block;max-width:100%;height:auto;border:0;margin:0 auto${radius}`;
 

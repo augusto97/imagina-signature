@@ -4,8 +4,8 @@ import type { ImageBlock } from '@/core/schema/blocks';
 import { generateId } from '@/utils/idGenerator';
 import { __ } from '@/i18n/helpers';
 import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
-import { attr, intPx, paddingCss, px } from '@/core/compiler/css';
-import { checkAlt, markerAttr } from '@/core/compiler/issues';
+import { attr, horizontalPadding, intPx, paddingCss, px } from '@/core/compiler/css';
+import { checkAlt, clampToAvailable, markerAttr } from '@/core/compiler/issues';
 import { isUploadEnabled } from '@/bridge/apiClient';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
@@ -158,8 +158,16 @@ const Properties: FC<{ block: ImageBlock; onChange: (updates: Partial<ImageBlock
 function compile(block: ImageBlock, ctx: CompileContext): string {
   checkAlt(ctx, block, block.alt);
   const padding = paddingCss(block.padding);
-  const widthAttr = block.width ? ` width="${intPx(block.width, 1, 4000, 1)}"` : '';
-  const heightAttr = block.height ? ` height="${intPx(block.height, 1, 4000, 1)}"` : '';
+  const available = ctx.availableWidth - horizontalPadding(block.padding);
+  const requested = block.width ? intPx(block.width, 1, 4000, 1) : 0;
+  const width = requested ? clampToAvailable(ctx, block, requested, available) : 0;
+  // Keep the aspect ratio when the width had to shrink — Outlook uses
+  // the height attribute verbatim and ignores `height:auto`.
+  const height = block.height
+    ? Math.max(1, Math.round((intPx(block.height, 1, 4000, 1) * (width || 1)) / (requested || 1)))
+    : 0;
+  const widthAttr = width ? ` width="${width}"` : '';
+  const heightAttr = height ? ` height="${height}"` : '';
   const radius = block.border_radius ? `;border-radius:${px(block.border_radius, 0, 999)}px` : '';
   const baseStyle = `display:block;max-width:100%;height:auto;border:0${radius}`;
 

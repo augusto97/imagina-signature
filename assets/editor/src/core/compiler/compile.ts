@@ -1,7 +1,7 @@
 import type { SignatureSchema } from '@/core/schema/signature';
 import { rendererForBlock, type CompileContext } from '@/core/blocks/registry';
 import { __ } from '@/i18n/helpers';
-import { wrapInEmailShell } from './table-builder';
+import { canvasWidth, wrapInEmailShell } from './table-builder';
 import { applyOutlookFixes } from './outlook-fixes';
 import { minifyHtml } from './minify';
 import { validateEmailOutput } from './validate';
@@ -58,6 +58,7 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
     warnings: [],
     issues: [],
     canvas: schema.canvas,
+    availableWidth: canvasWidth(schema.canvas),
   };
 
   const blockChunks: string[] = [];
@@ -90,7 +91,7 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
   // Campaign banner first (sits visually right under the user's
   // signature content), THEN the compliance footer (which always
   // wants to be the very last thing the recipient sees).
-  const withCampaign = appendBannerCampaign(withOutlookFixes, schema.canvas.width);
+  const withCampaign = appendBannerCampaign(withOutlookFixes, canvasWidth(schema.canvas));
   const withFooter = appendComplianceFooter(withCampaign);
 
   const { html: substituted, missing } = substituteVariables(withFooter, merged);
@@ -173,7 +174,7 @@ function appendComplianceFooter(html: string): string {
  * Banner is rendered as a centred `<a><img></a>` so it inherits the
  * canvas width but never overflows on narrow clients (`max-width:100%`).
  */
-function appendBannerCampaign(html: string, canvasWidth: number): string {
+function appendBannerCampaign(html: string, maxWidth: number): string {
   let campaigns: AppConfig['bannerCampaigns'];
   try {
     campaigns = getConfig().bannerCampaigns;
@@ -197,7 +198,7 @@ function appendBannerCampaign(html: string, canvasWidth: number): string {
   const idx = html.lastIndexOf(marker);
   if (idx === -1) return html;
 
-  const width = intPx(pick.width || canvasWidth, 100, intPx(canvasWidth, 200, 1200, 600), canvasWidth);
+  const width = intPx(pick.width || maxWidth, 100, maxWidth, maxWidth);
   // Escape EVERY interpolated attribute. Banner image_url / link_url
   // / alt come from admin input that's only loosely sanitised on the
   // server. A `"` in any field would break out of the attribute and

@@ -103,6 +103,25 @@ export function safeColor(value: unknown, fallback = '#000000'): string {
   return fallback;
 }
 
+/**
+ * Colour usable in a legacy `bgcolor` HTML attribute. Only 3/6-digit
+ * hex survives the legacy colour parser intact (`rgb()`, 8-digit hex
+ * and `transparent` are mangled or ignored), so anything else yields
+ * `null` and callers should rely on the inline style alone.
+ */
+export function legacyColor(value: unknown): string | null {
+  const c = safeColor(value, '');
+  if (/^#[0-9a-f]{3}$/.test(c)) return `#${c[1]}${c[1]}${c[2]}${c[2]}${c[3]}${c[3]}`;
+  if (/^#[0-9a-f]{6}$/.test(c)) return c;
+  return null;
+}
+
+/** ` bgcolor="#rrggbb"` (with leading space) or '' — see {@link legacyColor}. */
+export function bgcolorAttr(value: unknown): string {
+  const c = legacyColor(value);
+  return c ? ` bgcolor="${c}"` : '';
+}
+
 /** Like {@link safeColor} but returns `null` instead of a fallback. */
 export function parseColor(value: unknown): string | null {
   const sentinel = '\u0000';

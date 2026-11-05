@@ -6,8 +6,8 @@ import { __ } from '@/i18n/helpers';
 import { DimensionInput } from '@/editor/sidebar-right/inputs/DimensionInput';
 import { PaddingInput } from '@/editor/sidebar-right/inputs/PaddingInput';
 import { ImageCropperModal } from '@/editor/modals/ImageCropperModal';
-import { attr, intPx, paddingCss } from '@/core/compiler/css';
-import { checkAlt, markerAttr } from '@/core/compiler/issues';
+import { attr, horizontalPadding, intPx, paddingCss } from '@/core/compiler/css';
+import { checkAlt, clampToAvailable, markerAttr } from '@/core/compiler/issues';
 import { isUploadEnabled } from '@/bridge/apiClient';
 import { registerBlock, type BlockDefinition, type CompileContext } from '../registry';
 
@@ -104,8 +104,9 @@ function compile(block: AvatarBlock, ctx: CompileContext): string {
   // serializer.
   const safeSrc = attr(block.src);
   const safeAlt = attr(block.alt);
-  const size = intPx(block.size, 8, 800, 64);
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><img${markerAttr(block)} src="${safeSrc}" alt="${safeAlt}" width="${size}" height="${size}" style="display:block;width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;border:0" /></td></tr></table>`;
+  const available = ctx.availableWidth - horizontalPadding(block.padding);
+  const size = clampToAvailable(ctx, block, intPx(block.size, 8, 800, 64), available);
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="padding:${padding}"><img${markerAttr(block)} src="${safeSrc}" alt="${safeAlt}" width="${size}" height="${size}" style="display:block;width:${size}px;max-width:100%;height:auto;border-radius:50%;object-fit:cover;border:0" /></td></tr></table>`;
 }
 
 const definition: BlockDefinition<AvatarBlock> = {

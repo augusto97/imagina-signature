@@ -27,6 +27,13 @@ export interface CompileContext {
   issues: CompileIssue[];
   /** Canvas config of the signature being compiled (link colour, fonts…). */
   canvas: CanvasConfig;
+  /**
+   * Pixel width available to the block being compiled. The root value
+   * is `canvas.width`; a 2-column container compiles each cell's
+   * children with that cell's inner width. Image-like blocks clamp their
+   * `width` attribute to it (minus their own horizontal padding).
+   */
+  availableWidth: number;
 }
 
 /**
