@@ -19,11 +19,13 @@ use ImaginaSignatures\Api\Controllers\AssetsController;
 use ImaginaSignatures\Api\Controllers\FrontendAccessController;
 use ImaginaSignatures\Api\Controllers\SiteSettingsController;
 use ImaginaSignatures\Api\Controllers\MeController;
+use ImaginaSignatures\Api\Controllers\OutlookController;
 use ImaginaSignatures\Api\Controllers\SignaturesController;
 use ImaginaSignatures\Api\Controllers\StorageController;
 use ImaginaSignatures\Api\Controllers\TemplatesController;
 use ImaginaSignatures\Api\Controllers\UploadController;
 use ImaginaSignatures\Api\RestRouter;
+use ImaginaSignatures\Deployment\OutlookWellKnown;
 use ImaginaSignatures\Hooks\Actions;
 use ImaginaSignatures\Privacy\UserDataManager;
 use ImaginaSignatures\Repositories\SignatureRepository;
@@ -147,6 +149,10 @@ final class Plugin {
 		// is disabled (or the URL doesn't match its rewrite) it's a
 		// no-op so the boot cost is one `add_action` call.
 		( new FrontendRouter() )->boot();
+
+		// Outlook add-in: /.well-known/microsoft-officeaddins-allowed.json
+		// (self-gated: a string compare per request, no-op while disabled).
+		( new OutlookWellKnown() )->boot();
 
 		// Admin-only wiring.
 		if ( is_admin() ) {
@@ -304,6 +310,7 @@ final class Plugin {
 				$this->container->make( AssetsController::class ),
 				$this->container->make( SiteSettingsController::class ),
 				$this->container->make( FrontendAccessController::class ),
+				$this->container->make( OutlookController::class ),
 			]
 		);
 		$router->register();
