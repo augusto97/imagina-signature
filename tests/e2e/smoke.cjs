@@ -257,13 +257,15 @@ async function waitSaved(page) {
   await sp.screenshot({ path: path.join(OUT, 'subscriber-editor.png') });
 
   // ---------- Fase 2: profile, groups, install link, Outlook, Gmail ----------
-  const profile = await rest(page, 'PATCH', '/me/profile', { values: { job_title: 'CTO E2E' } });
+  // Unique values: the suite can re-run against the same database.
+  const runTag = Date.now().toString(36);
+  const profile = await rest(page, 'PATCH', '/me/profile', { values: { job_title: `CTO E2E ${runTag}` } });
   check('admin saves their own profile', profile.status === 200, `status=${profile.status}`);
-  const group = await rest(page, 'POST', '/admin/groups', { name: 'Ventas E2E', color: '#0d9488' });
+  const group = await rest(page, 'POST', '/admin/groups', { name: `Ventas E2E ${runTag}`, color: '#0d9488' });
   const groupId = group.json && (group.json.id || group.json.term_id);
   check('admin creates a group', (group.status === 200 || group.status === 201) && !!groupId, `status=${group.status}`);
   const groups = await rest(page, 'GET', '/admin/groups');
-  check('the group is listed', JSON.stringify(groups.json || '').includes('Ventas E2E'));
+  check('the group is listed', JSON.stringify(groups.json || '').includes(`Ventas E2E ${runTag}`));
 
   const link = await rest(page, 'GET', '/me/install-link');
   const installUrl = link.json && link.json.url;
