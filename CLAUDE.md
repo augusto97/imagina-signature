@@ -32,6 +32,7 @@ Varias secciones de este documento describen el diseño original del MVP. Donde 
 - **Límites atómicos.** Tabla `imgsig_rate_limits` (ventanas fijas, `Retry-After`). El autoguardado se pausa ante un 429.
 - **i18n real.** Pipeline `npm run i18n:pot` / `i18n:build` / `i18n:check`; PHP carga el text domain con fallback de cualquier `es_*` a `es_ES`; los bootstraps JS inyectan `translations`.
 - **Pruebas.** Vitest (compilador, sanitizador, stores), PHPUnit con kses real de WordPress, y `tests/e2e/smoke.cjs` (Playwright contra un WordPress vivo).
+- **Complemento de Outlook (1.3.0).** Microsoft no ofrece API de Graph para firmas: el despliegue es un complemento con activación por eventos que el admin del tenant sube una vez (Centro de administración → Configuración → Aplicaciones integradas). `src/Deployment/Outlook*` + `src/Api/Controllers/OutlookController.php` generan el manifiesto XML (`GET /outlook/manifest.xml?key=…`) y sirven `GET /outlook/signature?email=` (cabecera `X-Imgsig-Deploy-Key`, `hash_equals`, límites por IP y por clave, CORS propio sin credenciales) con el `html_cache` fresco de la firma principal. Opción `imgsig_outlook` {enabled, deploy_key, replace_client_signature, add_in_id, revision}; regenerar la clave invalida el manifiesto anterior. El runtime vive en `assets/outlook/` (sin build, se distribuye tal cual): `launchevent.js` (ES2017 plano, también corre en el runtime solo-JavaScript de Outlook clásico) y `commands.html`. **Excepción documentada a la regla "cero CDNs":** `commands.html` carga Office.js desde `https://appsforoffice.microsoft.com/lib/1/hosted/office.js`, porque Office exige la biblioteca alojada por Microsoft; no se carga nada más desde fuera. Office exige HTTPS. Mientras está activo, WordPress sirve `/.well-known/microsoft-officeaddins-allowed.json` (CORS del runtime de Outlook clásico). Hooks: `imgsig/outlook/user_for_email`, `imgsig/outlook/cors_origins`, `imgsig/outlook/client_ip`, `imgsig/outlook/manifest_min_mailbox` (filtros) y `imgsig/outlook/key_regenerated` (acción). La alternativa sin complemento (regla de flujo de correo de Exchange en PowerShell) se genera en el navegador del admin: Ajustes → Microsoft 365.
 
 ### 0.2. Alcance (actualizado con la hoja de ruta de noviembre 2026)
 
@@ -57,7 +58,7 @@ Estos principios guían toda decisión técnica:
 1. **Aislamiento del editor.** El editor monta su propia app React en un contenedor a pantalla completa con estilos acotados (Tailwind sin preflight global sobre wp-admin) y nada de jQuery. Ver §0.1: ya no usa iframe.
 2. **Compatibilidad con hosting compartido.** PHP 7.4+, MySQL 5.7+, sin `exec`, sin Node en servidor, sin extensiones exóticas.
 3. **Sin servidores del autor.** Una vez instalado el plugin, no hay llamadas a servidores del autor. Solo a servicios que el administrador configure: el storage (Media Library o S3) y, desde la Fase 2, Google Workspace / Microsoft 365.
-4. **Cero dependencias en CDNs externos.** Todo el JS/CSS va empaquetado en el plugin. Sin Google Fonts, sin jsDelivr, sin unpkg.
+4. **Cero dependencias en CDNs externos.** Todo el JS/CSS va empaquetado en el plugin. Sin Google Fonts, sin jsDelivr, sin unpkg. Única excepción: Office.js en el runtime del complemento de Outlook (§0.1), porque Office lo exige.
 5. **WYSIWYG real.** El canvas del editor renderiza HTML email-safe (tablas + inline CSS) idéntico al output. Lo que ves es lo que se envía.
 6. **Edición fuera del canvas.** El texto se edita en el sidebar derecho con Tiptap, no en contenteditable directo. Esto elimina los bugs de cursor/selección típicos de editores email.
 7. **Inmutabilidad del schema.** Cada operación produce un nuevo árbol completo. Undo/redo es trivial. Tests son fáciles.
@@ -1965,6 +1966,14 @@ POST   /admin/storage/migrate           Iniciar migración
 === Editor iframe ===
 
 GET    /editor/iframe?token=...         Sirve HTML del editor
+
+=== Outlook add-in (1.3.0; públicas, protegidas por la clave de despliegue) ===
+
+GET    /outlook/manifest.xml?key=...    Manifiesto XML (también /outlook/manifest, &download=1)
+GET    /outlook/signature?email=...     {html, hash, replace_client_signature} — cabecera X-Imgsig-Deploy-Key
+GET    /admin/outlook                   [manage_team] Estado de la integración
+POST   /admin/outlook                   [manage_team] enabled, replace_client_signature
+POST   /admin/outlook/regenerate-key    [manage_team] Nueva clave (invalida el manifiesto anterior)
 ```
 
 ### 16.3. Estructura de Controller
