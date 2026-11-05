@@ -77,16 +77,16 @@ describe('resolveBlockVariables', () => {
 
     expect(out).not.toBe(block);
     expect(out.rows).not.toBe(block.rows);
-    expect(out.rows[0]).not.toBe(block.rows[0]);
+    expect(out.rows?.[0]).not.toBe(block.rows?.[0]);
     expect(out.style).not.toBe(block.style);
     expect(out.padding).not.toBe(block.padding);
-    expect(out.rows[0]).toEqual({
+    expect(out.rows?.[0]).toEqual({
       icon: 'web',
       label: 'https://acme.example',
       href: 'https://acme.example',
     });
     // Unknown key kept verbatim, like the export.
-    expect(out.rows[1]).toEqual({ icon: 'email', label: 'Hi Jane', href: 'mailto:{{wp_email}}' });
+    expect(out.rows?.[1]).toEqual({ icon: 'email', label: 'Hi Jane', href: 'mailto:{{wp_email}}' });
     expect(block).toEqual(before);
   });
 
