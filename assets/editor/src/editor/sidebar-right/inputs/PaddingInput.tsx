@@ -5,6 +5,8 @@ import { __ } from '@/i18n/helpers';
 interface Props {
   value: Padding;
   onChange: (padding: Padding) => void;
+  /** Heading above the grid; defaults to "Padding". */
+  label?: string;
 }
 
 /**
@@ -12,12 +14,12 @@ interface Props {
  * a side abbreviation and a compact number input, mirroring the box
  * model layout used by Framer / Webflow inspectors.
  */
-export const PaddingInput: FC<Props> = ({ value, onChange }) => {
+export const PaddingInput: FC<Props> = ({ value, onChange, label }) => {
   const set = (side: keyof Padding, next: number) => onChange({ ...value, [side]: next });
 
   return (
     <div>
-      <span className="is-section-label mb-1 block">{__('Padding')}</span>
+      <span className="is-section-label mb-1 block">{label ?? __('Padding')}</span>
       <div className="grid grid-cols-2 gap-1.5">
         <Cell label="T" value={value.top} onChange={(v) => set('top', v)} />
         <Cell label="R" value={value.right} onChange={(v) => set('right', v)} />

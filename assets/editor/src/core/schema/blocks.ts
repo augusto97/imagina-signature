@@ -1,4 +1,11 @@
-import type { BorderStyle, Padding, TypographyStyle } from './styles';
+import type {
+  BorderSide,
+  BorderStyle,
+  BoxStyle,
+  Padding,
+  TypographyStyle,
+  VerticalAlign,
+} from './styles';
 
 /**
  * Block type definitions mirroring CLAUDE.md §8.1 / §10.2.
@@ -14,6 +21,14 @@ export interface BlockBase {
   type: string;
   padding?: Padding;
   visible?: boolean;
+  /**
+   * Optional generic box styling (schema 1.1): background, borders,
+   * radius, inner padding, alignment, fixed width. Applied around the
+   * block's own markup by the canvas (`BoxFrame`) and the compiler
+   * (`compileBlock` → `wrapInBox`), so block definitions never need to
+   * know about it.
+   */
+  box?: BoxStyle;
 }
 
 // ---------------------------------------------------------------------------
@@ -106,31 +121,46 @@ export interface DisclaimerBlock extends BlockBase {
   style: TypographyStyle;
 }
 
+/** Maximum number of columns a container can hold. */
+export const MAX_CONTAINER_COLUMNS = 4;
+
+/**
+ * One column of a {@link ContainerBlock} (schema 1.1).
+ */
+export interface ContainerColumn {
+  /** Stable id, unique within the signature (drop-zone ids use it). */
+  id: string;
+  /** Percentage of the row; the columns of a container sum to 100. */
+  width: number;
+  /** Vertical alignment of the column's content. Defaults to `top`. */
+  valign?: VerticalAlign;
+  /** Column-level box (background, border, radius, padding, alignment). */
+  box?: BoxStyle;
+  children: Block[];
+}
+
+/**
+ * Multi-column layout row (schema 1.1, "container v2").
+ *
+ * Replaces the 1.0 shape (`columns: 1 | 2`, `children`,
+ * `right_children`, `left_width`); `migrateSchemaInPlace()` rewrites
+ * older rows on load. One level of nesting is allowed: a container may
+ * sit in a column of a top-level container, but not deeper (see
+ * `MAX_CONTAINER_NESTING` in `core/schema/tree.ts`).
+ */
 export interface ContainerBlock extends BlockBase {
   type: 'container';
-  columns: 1 | 2;
+  /** 1..{@link MAX_CONTAINER_COLUMNS} columns, left to right. */
+  columns: ContainerColumn[];
+  /** Horizontal space between columns, in px. */
   gap: number;
   /**
-   * Percentage width of the LEFT column when `columns === 2`. The
-   * right column gets `100 - left_width`. Optional for back-compat
-   * with rows saved before this field existed — falls back to 50
-   * (even split) at render / compile time.
+   * When true the export uses the hybrid ("spongy") technique so narrow
+   * clients stack the columns; the mobile preview shows them stacked.
    */
-  left_width?: number;
-  /**
-   * Children of the LEFT cell when `columns === 2`. Also the only
-   * cell when `columns === 1`. Always present. Reorderable
-   * independently from `right_children`.
-   */
-  children: Block[];
-  /**
-   * Children of the RIGHT cell when `columns === 2`. Empty / absent
-   * when `columns === 1`. Optional for back-compat with rows saved
-   * before 1.0.31 — older 2-col rows used a single `children` array
-   * the compiler split in half. `migrateContainersInPlace` rewrites
-   * those into explicit left / right arrays on load.
-   */
-  right_children?: Block[];
+  stack_on_mobile?: boolean;
+  /** Optional vertical rule drawn between columns. */
+  divider?: BorderSide;
 }
 
 export interface QrCodeBlock extends BlockBase {

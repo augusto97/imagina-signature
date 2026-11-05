@@ -30,10 +30,11 @@ describe('blocks nested in a container', () => {
     const cnt: ContainerBlock = {
       id: 'cnt',
       type: 'container',
-      columns: 2,
       gap: 16,
-      children: [text('l1', 'Left one'), text('l2', 'Left two')],
-      right_children: [text('r1', 'Right one')],
+      columns: [
+        { id: 'col_l', width: 50, children: [text('l1', 'Left one'), text('l2', 'Left two')] },
+        { id: 'col_r', width: 50, children: [text('r1', 'Right one')] },
+      ],
     };
     schema.blocks.push(text('top', 'Top block'), cnt);
     useSchemaStore.setState({ schema, hasUserEdited: false });
@@ -59,7 +60,7 @@ describe('blocks nested in a container', () => {
     expect(useSelectionStore.getState().hoveredBlockId).toBe('r1');
   });
 
-  it('move up / down work inside a cell and disable at the ends', () => {
+  it('move up / down work inside a column and disable at the ends', () => {
     renderCanvas();
     fireEvent.click(screen.getByText('Left two'));
     const toolbar = screen.getByRole('toolbar');
@@ -67,7 +68,7 @@ describe('blocks nested in a container', () => {
 
     fireEvent.click(within(toolbar).getByLabelText('Move up'));
     const cnt = useSchemaStore.getState().schema.blocks[1] as ContainerBlock;
-    expect(cnt.children.map((c) => c.id)).toEqual(['l2', 'l1']);
+    expect(cnt.columns[0]!.children.map((c) => c.id)).toEqual(['l2', 'l1']);
     expect(within(screen.getByRole('toolbar')).getByLabelText('Move up')).toBeDisabled();
   });
 
@@ -76,11 +77,11 @@ describe('blocks nested in a container', () => {
     fireEvent.click(screen.getByText('Right one'));
     fireEvent.click(within(screen.getByRole('toolbar')).getByLabelText('Duplicate'));
     let cnt = useSchemaStore.getState().schema.blocks[1] as ContainerBlock;
-    expect(cnt.right_children).toHaveLength(2);
+    expect(cnt.columns[1]!.children).toHaveLength(2);
 
     fireEvent.click(within(screen.getByRole('toolbar')).getByLabelText('Delete'));
     cnt = useSchemaStore.getState().schema.blocks[1] as ContainerBlock;
-    expect(cnt.right_children).toHaveLength(1);
+    expect(cnt.columns[1]!.children).toHaveLength(1);
     expect(useSchemaStore.getState().schema.blocks.map((b) => b.id)).toEqual(['top', 'cnt']);
   });
 

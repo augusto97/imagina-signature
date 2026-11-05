@@ -14,9 +14,17 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useDropIndicatorStore } from '@/stores/dropIndicatorStore';
-import { isDescendantOf } from '@/stores/schemaUtils';
+import { useToastStore } from '@/stores/toastStore';
+import {
+  canPlaceAtDepth,
+  findBlock,
+  findColumn,
+  isDescendantOf,
+  locateBlock,
+} from '@/core/schema/tree';
 import { getBlockDefinition } from '@/core/blocks/registry';
 import type { Block } from '@/core/schema/blocks';
+import { __ } from '@/i18n/helpers';
 import {
   CANVAS_ROOT_DROP_ID,
   editorCollisionDetection,
@@ -25,6 +33,7 @@ import {
   parseCellDropId,
   resetDragPointer,
   resolveDropPosition,
+  type CellDropTarget,
   type DropPosition,
 } from '@/editor/canvas/dnd';
 
@@ -36,6 +45,64 @@ interface LibraryDragData {
 function libraryTypeOf(active: Active): string | null {
   const data = active.data.current as LibraryDragData | undefined;
   return data?.source === 'library' && typeof data.blockType === 'string' ? data.blockType : null;
+}
+
+/**
+ * Container levels the dragged thing brings with it: a library card is
+ * judged by a fresh instance of its type; a canvas block by itself.
+ */
+function draggedBlock(active: Active): Block | null {
+  const libraryType = libraryTypeOf(active);
+  if (libraryType) {
+    const definition = getBlockDefinition(libraryType);
+    return definition ? (definition.create() as Block) : null;
+  }
+  return findBlock(useSchemaStore.getState().schema.blocks, String(active.id)) ?? null;
+}
+
+/** Whether the dragged thing may land in the list holding `targetId`. */
+function canDropNextTo(active: Active, targetId: string): boolean {
+  const block = draggedBlock(active);
+  if (!block) return false;
+  const loc = locateBlock(useSchemaStore.getState().schema.blocks, targetId);
+  return canPlaceAtDepth(block, loc ? loc.depth : 0);
+}
+
+/**
+ * True only when a drop on `overId` is refused BECAUSE it would nest
+ * containers deeper than allowed (other refusals — dropping a container
+ * into itself, unknown targets — stay silent no-ops).
+ */
+function isTooDeepDrop(active: Active, overId: string, cell: CellDropTarget | null): boolean {
+  const block = draggedBlock(active);
+  if (!block) return false;
+  const blocks = useSchemaStore.getState().schema.blocks;
+  const activeId = String(active.id);
+  const fromCanvas = libraryTypeOf(active) === null;
+
+  if (cell) {
+    const column = findColumn(blocks, cell.containerId, cell.columnId);
+    if (!column) return false;
+    if (
+      fromCanvas &&
+      (activeId === cell.containerId || isDescendantOf(blocks, activeId, cell.containerId))
+    ) {
+      return false;
+    }
+    return !canPlaceAtDepth(block, column.depth);
+  }
+
+  if (overId === CANVAS_ROOT_DROP_ID || isZoneId(overId) || overId === activeId) return false;
+  const loc = locateBlock(blocks, overId);
+  if (!loc) return false;
+  if (fromCanvas && isDescendantOf(blocks, activeId, overId)) return false;
+  return !canPlaceAtDepth(block, loc.depth);
+}
+
+function warnTooDeep(): void {
+  useToastStore
+    .getState()
+    .show(__('Containers can only be nested one level deep.'), 'error');
 }
 
 /**
@@ -68,6 +135,8 @@ function blockDropTarget(
   ) {
     return null;
   }
+  // Would nest containers too deep: no indicator, no drop.
+  if (!canDropNextTo(active, overId)) return null;
   return { targetId: overId, position: resolveDropPosition(over.rect, dragY(active)) };
 }
 
@@ -81,10 +150,14 @@ function blockDropTarget(
  *
  *   - a block → insert / move BEFORE or AFTER it, depending on which
  *     half of the block the pointer is in (keyboard drags: the dragged
- *     rect's centre). Works at any depth: the store helpers walk both
- *     container cells.
- *   - an empty container cell (`container-cell:{id}:{side}`) → append
- *     to that cell.
+ *     rect's centre). Works at any depth: the store helpers walk every
+ *     container column.
+ *   - a container column zone (`container-cell:{containerId}:{columnId}`)
+ *     → append to that column.
+ *
+ * Containers nest one level at most: a target that would put a
+ * container deeper shows no indicator and the drop is refused with a
+ * toast.
  *   - the canvas root (`canvas-root`, only reported for an empty
  *     canvas — otherwise the collision detection resolves to the
  *     nearest top-level block) → append.
@@ -98,8 +171,8 @@ export function useDragAndDrop() {
   const insertBlockAfter = useSchemaStore((s) => s.insertBlockAfter);
   const insertBlockBefore = useSchemaStore((s) => s.insertBlockBefore);
   const addBlock = useSchemaStore((s) => s.addBlock);
-  const addChildToContainer = useSchemaStore((s) => s.addChildToContainer);
-  const moveBlockToContainerCell = useSchemaStore((s) => s.moveBlockToContainerCell);
+  const addChildToColumn = useSchemaStore((s) => s.addChildToColumn);
+  const moveBlockToColumn = useSchemaStore((s) => s.moveBlockToColumn);
   const select = useSelectionStore((s) => s.select);
   const showIndicator = useDropIndicatorStore((s) => s.show);
   const clearIndicator = useDropIndicatorStore((s) => s.clear);
@@ -149,6 +222,14 @@ export function useDragAndDrop() {
     const overId = String(over.id);
     const cellTarget = parseCellDropId(overId);
     const libraryType = libraryTypeOf(active);
+    const activeId = String(active.id);
+
+    // Dropping a container where it would nest too deep: refuse with
+    // an explanation instead of silently doing nothing.
+    if (isTooDeepDrop(active, overId, cellTarget)) {
+      warnTooDeep();
+      return;
+    }
 
     // ---- Library card → schema -------------------------------------
     if (libraryType) {
@@ -158,41 +239,35 @@ export function useDragAndDrop() {
       // is type-erased; cast back to the discriminated union.
       const fresh = definition.create() as Block;
 
+      let inserted = false;
       if (cellTarget) {
-        addChildToContainer(cellTarget.containerId, fresh, cellTarget.cell);
+        inserted = addChildToColumn(cellTarget.containerId, cellTarget.columnId, fresh);
       } else if (overId === CANVAS_ROOT_DROP_ID) {
-        addBlock(fresh);
+        inserted = addBlock(fresh);
       } else if (target) {
-        if (target.position === 'before') {
-          insertBlockBefore(target.targetId, fresh);
-        } else {
-          insertBlockAfter(target.targetId, fresh);
-        }
-      } else {
-        return;
+        inserted =
+          target.position === 'before'
+            ? insertBlockBefore(target.targetId, fresh)
+            : insertBlockAfter(target.targetId, fresh);
       }
-      select(fresh.id);
+      if (inserted) select(fresh.id);
       return;
     }
 
     // ---- Canvas block → schema -------------------------------------
-    const activeId = String(active.id);
     if (activeId === overId) return;
 
     if (cellTarget) {
-      // Empty cell (or a container dropped onto its own cell, which
-      // the store rejects): append to that cell.
-      if (cellTarget.containerId === activeId) return;
-      if (isDescendantOf(useSchemaStore.getState().schema.blocks, activeId, cellTarget.containerId)) {
-        return;
-      }
-      moveBlockToContainerCell(activeId, cellTarget.containerId, cellTarget.cell);
+      // Column zone (empty column, or the gap below its last child):
+      // append. The store refuses a container dropped into its own
+      // column and anything that would nest too deep.
+      moveBlockToColumn(activeId, cellTarget.containerId, cellTarget.columnId);
       return;
     }
 
     if (!target) return;
-    // `moveBlock` walks both cells of every container, so this works
-    // for top-level AND nested / cross-cell drags.
+    // `moveBlock` walks every container column, so this works for
+    // top-level AND nested / cross-column drags.
     moveBlock(activeId, target.targetId, target.position);
   };
 

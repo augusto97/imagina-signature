@@ -21,6 +21,11 @@ defined( 'ABSPATH' ) || exit;
  * pre-existing slugs. System rows are stamped `is_system = 1` so
  * the {@see TemplateService} refuses deletion (CLAUDE.md §27).
  *
+ * Template files may use any supported schema version (1.0 or 1.1,
+ * see {@see \ImaginaSignatures\Services\JsonSchemaValidator::SUPPORTED_VERSIONS});
+ * the row's `schema_version` column records the file's version and
+ * defaults to 1.0 for files that predate the field.
+ *
  * Sprint 10 ships with two templates (`minimal-modern`,
  * `corporate-classic`); the remaining eight from §27 are queued
  * to land before public release.
@@ -98,10 +103,10 @@ final class DefaultTemplatesSeeder {
 			'sort_order'  => 100,
 			'description' => 'Shop CTA + social icons for storefront teams.',
 		],
-		// Multi-column templates added in 1.0.32. Each one uses the
-		// ContainerBlock left/right cells (1.0.31 schema) so the user
-		// can place a different number of elements on each side
-		// without the legacy half-by-half split rule fighting them.
+		// Multi-column templates added in 1.0.32. They are stored in
+		// schema 1.0 (container `children` / `right_children`); the
+		// editor migrates them to 1.1 `columns` when a template is
+		// applied or previewed, and the validator accepts both versions.
 		'logo-left'         => [
 			'name'        => 'Logo + info (2-column)',
 			'category'    => 'multi-column',

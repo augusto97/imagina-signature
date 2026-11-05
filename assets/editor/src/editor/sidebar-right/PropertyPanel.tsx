@@ -3,6 +3,7 @@ import type { Block } from '@/core/schema/blocks';
 import { rendererForBlock } from '@/core/blocks/registry';
 import { useSchemaStore } from '@/stores/schemaStore';
 import { __ } from '@/i18n/helpers';
+import { BoxStyleSection } from './sections/BoxStyleSection';
 
 interface Props {
   block: Block;
@@ -18,6 +19,8 @@ interface Props {
  * use sections fall through here and we render their content with
  * a uniform 12px padding so the visual rhythm matches the canvas
  * properties view without an empty "Properties" wrapper.
+ *
+ * A shared {@link BoxStyleSection} is appended for every block.
  */
 export const PropertyPanel: FC<Props> = ({ block }) => {
   const updateBlock = useSchemaStore((s) => s.updateBlock);
@@ -44,8 +47,20 @@ export const PropertyPanel: FC<Props> = ({ block }) => {
   // controls without an empty "Properties" wrapper section.
   const ownsLayout = definition.wrap_in_section === false;
 
-  if (ownsLayout) {
-    return body;
-  }
-  return <div className="px-3 py-3">{body}</div>;
+  // Every block gets the generic Box section (background, border,
+  // radius, inner padding, alignment, width) — block definitions don't
+  // need to know about it; the canvas and the compiler apply `box`
+  // around any block.
+  const boxSection = (
+    <div className="border-t border-[var(--border-subtle)]">
+      <BoxStyleSection value={block.box} onChange={(box) => updateBlock(block.id, { box })} />
+    </div>
+  );
+
+  return (
+    <>
+      {ownsLayout ? body : <div className="px-3 py-3">{body}</div>}
+      {boxSection}
+    </>
+  );
 };

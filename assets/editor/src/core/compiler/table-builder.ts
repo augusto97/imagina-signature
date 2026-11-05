@@ -18,24 +18,41 @@ export function canvasWidth(canvas: CanvasConfig): number {
  *
  * It always ends with `</td></tr>\n</table>`: the campaign banner and
  * compliance footer are inserted right before that marker.
+ *
+ * `fluid` (used when a container stacks its columns on mobile) makes
+ * the table `width:100%;max-width:Wpx` so narrow clients really are
+ * narrower than the columns; Outlook desktop, which ignores
+ * `max-width`, gets a fixed-width ghost table around it.
  */
-export function buildShellTable(content: string, canvas: CanvasConfig): string {
+export function buildShellTable(
+  content: string,
+  canvas: CanvasConfig,
+  options: ShellOptions = {},
+): string {
   const width = canvasWidth(canvas);
   const bg = safeColor(canvas.background_color, '#ffffff');
   const tableStyle = inlineStyle({
     'border-collapse': 'collapse',
-    width: `${width}px`,
+    width: options.fluid ? '100%' : `${width}px`,
+    'max-width': options.fluid ? `${width}px` : undefined,
     'background-color': bg,
     'font-family': fontStack(canvas.font_family),
     color: safeColor(canvas.text_color, '#111827'),
   });
   const cellStyle = inlineStyle({ 'background-color': bg });
 
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${width}"${bgcolorAttr(bg)} style="${tableStyle}">
+  const table = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${width}"${bgcolorAttr(bg)} style="${tableStyle}">
 <tr><td${bgcolorAttr(bg)} style="${cellStyle}">
 ${content}
 </td></tr>
 </table>`;
+  if (!options.fluid) return table;
+  return `<!--[if mso]><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${width}"><tr><td><![endif]-->${table}<!--[if mso]></td></tr></table><![endif]-->`;
+}
+
+export interface ShellOptions {
+  /** Fluid width up to the canvas width (see {@link buildShellTable}). */
+  fluid?: boolean;
 }
 
 /**
@@ -69,6 +86,10 @@ ${shellTable}
 }
 
 /** Shell table + document in one go (kept for existing callers). */
-export function wrapInEmailShell(content: string, canvas: CanvasConfig): string {
-  return wrapDocument(buildShellTable(content, canvas), canvas);
+export function wrapInEmailShell(
+  content: string,
+  canvas: CanvasConfig,
+  options: ShellOptions = {},
+): string {
+  return wrapDocument(buildShellTable(content, canvas, options), canvas);
 }

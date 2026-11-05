@@ -58,10 +58,11 @@ beforeEach(() => {
   const row: ContainerBlock = {
     id: 'row',
     type: 'container',
-    columns: 2,
     gap: 16,
-    children: [avatar],
-    right_children: [logo],
+    columns: [
+      { id: 'col_l', width: 50, children: [avatar] },
+      { id: 'col_r', width: 50, children: [logo] },
+    ],
   };
   const schema = createEmptySchema();
   schema.blocks = [row, card];
@@ -92,8 +93,8 @@ describe('Export → Fix embedded images', () => {
 
     const { schema } = useSchemaStore.getState();
     const row = schema.blocks[0] as ContainerBlock;
-    expect((row.children[0] as AvatarBlock).src).toMatch(/^https:\/\/site\.example\/u\//);
-    expect((row.right_children![0] as ImageBlock).src).toMatch(/^https:\/\/site\.example\/u\//);
+    expect((row.columns[0]!.children[0] as AvatarBlock).src).toMatch(/^https:\/\/site\.example\/u\//);
+    expect((row.columns[1]!.children[0] as ImageBlock).src).toMatch(/^https:\/\/site\.example\/u\//);
     expect((schema.blocks[1] as VCardBlock).vcf_url).toMatch(/^https:\/\/site\.example\/u\//);
 
     const result = compileSignature(schema);

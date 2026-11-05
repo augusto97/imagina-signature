@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { compileSignature, type CompileIssue } from '@/core/compiler/compile';
 import type { Block, QrCodeBlock, VCardBlock } from '@/core/schema/blocks';
+import { childLists } from '@/core/schema/tree';
 import { findBlockByIdDeep, useSchemaStore } from '@/stores/schemaStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { apiCall, ApiError, isUploadEnabled } from '@/bridge/apiClient';
@@ -445,7 +446,7 @@ type EmbeddedAsset =
   | { kind: 'vcard'; blockId: string };
 
 /**
- * Walks every block — including both cells of 2-column containers — and
+ * Walks every block — including every container column — and
  * lists what still has to be hosted: data: images (src and the Outlook
  * static fallback of Image / Avatar / Banner), QR codes without an
  * up-to-date uploaded PNG and vCards without an up-to-date .vcf file.
@@ -480,8 +481,7 @@ function findEmbeddedAssets(blocks: Block[]): EmbeddedAsset[] {
           }
           break;
         case 'container':
-          walk(block.children);
-          walk(block.right_children);
+          for (const children of childLists(block)) walk(children);
           break;
         default:
           break;

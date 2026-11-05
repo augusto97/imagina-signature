@@ -8,7 +8,18 @@ import type { Block } from './blocks';
  * controls the migration path when newer versions ship.
  */
 
-export type SchemaVersion = '1.0';
+/**
+ * Schema versions the editor can read. `1.0` rows are migrated to the
+ * current version on load (see `core/schema/migrate.ts`); everything
+ * the editor writes is {@link CURRENT_SCHEMA_VERSION}.
+ *
+ *  - 1.0 — containers: `columns: 1 | 2`, `children`, `right_children`.
+ *  - 1.1 — `block.box` styling; containers hold `columns: ContainerColumn[]`.
+ */
+export type SchemaVersion = '1.0' | '1.1';
+
+/** Version stamped on new and migrated signatures. */
+export const CURRENT_SCHEMA_VERSION = '1.1' satisfies SchemaVersion;
 
 export interface SignatureMeta {
   /** ISO 8601 UTC. */
@@ -42,7 +53,7 @@ export interface SignatureSchema {
 export function createEmptySchema(): SignatureSchema {
   const now = new Date().toISOString();
   return {
-    schema_version: '1.0',
+    schema_version: CURRENT_SCHEMA_VERSION,
     meta: {
       created_at: now,
       updated_at: now,

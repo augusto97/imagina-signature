@@ -20,14 +20,17 @@ defined( 'ABSPATH' ) || exit;
  * (CLAUDE.md §8.2). Until then this class enforces the bare-minimum
  * invariants that prevent garbage rows in `imgsig_signatures`:
  *
- *  - `schema_version` matches the supported version.
+ *  - `schema_version` is one of the supported versions (1.0, 1.1).
  *  - `meta`, `canvas`, `blocks`, `variables` keys exist with the
  *    right top-level type.
- *  - Every block — at any nesting depth, including container
- *    `children` / `right_children` — carries an `id` and a known
- *    `type` string.
+ *  - Every block — at any nesting depth, including schema 1.1
+ *    container `columns[].children` and the 1.0 `children` /
+ *    `right_children` lists — carries an `id` and a known `type`
+ *    string. A container holds at most {@see self::MAX_COLUMNS}
+ *    columns.
  *  - Size limits: encoded JSON ≤ 256 KB, block nesting depth ≤ 4,
  *    ≤ 200 blocks in total (filterable via `imgsig/schema/limits`).
+ *    Columns are not blocks: they add no depth and are not counted.
  *
  * Anything finer (block-specific field shapes, range checks, format
  * constraints) lands in Sprint 5 alongside the TypeScript validator
@@ -39,9 +42,23 @@ defined( 'ABSPATH' ) || exit;
 final class JsonSchemaValidator {
 
 	/**
-	 * Schema version this validator understands.
+	 * Current schema version (what the editor writes).
 	 */
-	public const SUPPORTED_VERSION = '1.0';
+	public const SUPPORTED_VERSION = '1.1';
+
+	/**
+	 * Every schema version accepted on save. 1.0 rows (2-column
+	 * containers with `children` / `right_children`) are migrated to
+	 * 1.1 by the editor when they are loaded.
+	 *
+	 * @var string[]
+	 */
+	public const SUPPORTED_VERSIONS = [ '1.0', '1.1' ];
+
+	/**
+	 * Maximum number of columns in one container (schema 1.1).
+	 */
+	public const MAX_COLUMNS = 4;
 
 	/**
 	 * Maximum encoded size of `json_content`, in bytes (256 KB).
@@ -59,7 +76,9 @@ final class JsonSchemaValidator {
 	public const MAX_BLOCKS = 200;
 
 	/**
-	 * Keys holding nested block arrays.
+	 * Keys holding nested block arrays directly on a block (schema 1.0
+	 * containers). Schema 1.1 containers nest blocks in
+	 * `columns[].children` instead.
 	 *
 	 * @var string[]
 	 */
@@ -179,13 +198,16 @@ final class JsonSchemaValidator {
 			}
 		}
 
-		if ( isset( $data['schema_version'] ) && self::SUPPORTED_VERSION !== (string) $data['schema_version'] ) {
+		if (
+			isset( $data['schema_version'] )
+			&& ( ! is_scalar( $data['schema_version'] ) || ! in_array( (string) $data['schema_version'], self::SUPPORTED_VERSIONS, true ) )
+		) {
 			$errors[] = [
 				'path'    => 'schema_version',
 				'message' => sprintf(
-					'Unsupported schema version "%s" (expected "%s").',
-					(string) $data['schema_version'],
-					self::SUPPORTED_VERSION
+					'Unsupported schema version "%s" (expected one of "%s").',
+					is_scalar( $data['schema_version'] ) ? (string) $data['schema_version'] : gettype( $data['schema_version'] ),
+					implode( '", "', self::SUPPORTED_VERSIONS )
 				),
 			];
 		}
@@ -296,9 +318,10 @@ final class JsonSchemaValidator {
 	 *
 	 * @since 1.0.0
 	 *
-	 * Recurses into `children` / `right_children` so nested blocks get
-	 * the same id / type checks as top-level ones, and tracks the
-	 * running block count and nesting depth for the limits.
+	 * Recurses into 1.1 `columns[].children` and 1.0 `children` /
+	 * `right_children` so nested blocks get the same id / type checks
+	 * as top-level ones, and tracks the running block count and nesting
+	 * depth for the limits.
 	 *
 	 * @param mixed  $block Block candidate (anything from the array).
 	 * @param string $path  JSON path of the block (e.g. `blocks[0].children[1]`).
@@ -365,30 +388,115 @@ final class JsonSchemaValidator {
 			return $errors;
 		}
 
+		// Schema 1.0: block lists directly on the container.
 		foreach ( self::CHILD_KEYS as $child_key ) {
 			if ( ! array_key_exists( $child_key, $block ) || null === $block[ $child_key ] ) {
 				continue;
 			}
+			$errors = array_merge(
+				$errors,
+				$this->validate_child_list( $block[ $child_key ], $path . '.' . $child_key, $depth + 1 )
+			);
+		}
 
-			if ( ! is_array( $block[ $child_key ] ) ) {
+		// Schema 1.1: `columns` is a list of column objects, each with
+		// its own `children` (in 1.0 `columns` is the integer 1 or 2).
+		if ( isset( $block['columns'] ) && is_array( $block['columns'] ) ) {
+			$errors = array_merge( $errors, $this->validate_columns( $block['columns'], $path . '.columns', $depth ) );
+		}
+
+		return $errors;
+	}
+
+	/**
+	 * Validates a schema 1.1 container's `columns` list.
+	 *
+	 * Columns are not blocks: their children sit one level below the
+	 * container (`$depth + 1`), like 1.0 `children`.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param array<int|string, mixed> $columns Column candidates.
+	 * @param string                   $path    JSON path of the list.
+	 * @param int                      $depth   Depth of the owning container.
+	 *
+	 * @return array<int, array{path: string, message: string, code?: string}>
+	 */
+	private function validate_columns( array $columns, string $path, int $depth ): array {
+		$errors = [];
+
+		if ( count( $columns ) > self::MAX_COLUMNS ) {
+			$errors[] = [
+				'path'    => $path,
+				'message' => sprintf( 'A container holds at most %d columns (%d given).', self::MAX_COLUMNS, count( $columns ) ),
+			];
+		}
+
+		foreach ( $columns as $index => $column ) {
+			$column_path = $path . '[' . $index . ']';
+
+			if ( ! is_array( $column ) ) {
 				$errors[] = [
-					'path'    => $path . '.' . $child_key,
-					'message' => sprintf( '%s must be an array of blocks.', $child_key ),
+					'path'    => $column_path,
+					'message' => 'Column must be an object.',
 				];
 				continue;
 			}
 
-			foreach ( $block[ $child_key ] as $child_index => $child ) {
-				// Stop walking once the count limit is blown; the count
-				// error is reported once by validate().
-				if ( $this->block_count > $this->limits['max_blocks'] ) {
-					break 2;
-				}
-				$errors = array_merge(
-					$errors,
-					$this->validate_block( $child, $path . '.' . $child_key . '[' . $child_index . ']', $depth + 1 )
-				);
+			if ( isset( $column['width'] ) && ! is_int( $column['width'] ) && ! is_float( $column['width'] ) ) {
+				$errors[] = [
+					'path'    => $column_path . '.width',
+					'message' => 'Column width must be a number.',
+				];
 			}
+
+			if ( ! array_key_exists( 'children', $column ) || null === $column['children'] ) {
+				continue;
+			}
+
+			$errors = array_merge(
+				$errors,
+				$this->validate_child_list( $column['children'], $column_path . '.children', $depth + 1 )
+			);
+
+			if ( $this->block_count > $this->limits['max_blocks'] ) {
+				break;
+			}
+		}
+
+		return $errors;
+	}
+
+	/**
+	 * Validates a nested list of blocks.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param mixed  $list  Candidate list.
+	 * @param string $path  JSON path of the list.
+	 * @param int    $depth Depth of the blocks in the list.
+	 *
+	 * @return array<int, array{path: string, message: string, code?: string}>
+	 */
+	private function validate_child_list( $list, string $path, int $depth ): array {
+		if ( ! is_array( $list ) ) {
+			$segments = explode( '.', $path );
+			return [
+				[
+					'path'    => $path,
+					'message' => sprintf( '%s must be an array of blocks.', (string) end( $segments ) ),
+				],
+			];
+		}
+
+		$errors = [];
+		foreach ( $list as $index => $child ) {
+			// Stop walking once the count limit is blown; the count
+			// error is reported once by validate().
+			if ( $this->block_count > $this->limits['max_blocks'] ) {
+				break;
+			}
+			$errors = array_merge( $errors, $this->validate_block( $child, $path . '[' . $index . ']', $depth ) );
 		}
 
 		return $errors;

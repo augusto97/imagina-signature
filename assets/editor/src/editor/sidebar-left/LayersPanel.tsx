@@ -18,86 +18,59 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useSchemaStore, type ContainerCell } from '@/stores/schemaStore';
+import { useSchemaStore } from '@/stores/schemaStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { rendererForBlock } from '@/core/blocks/registry';
 import type { Block, ContainerBlock } from '@/core/schema/blocks';
+import { childLists, collectBlockIds, columnsOf } from '@/core/schema/tree';
 import { __ } from '@/i18n/helpers';
 import { cn } from '@/utils/cn';
 
 /**
  * Layers panel — hierarchical view of every block on the canvas.
  *
- * 1.0.31 added drag-and-drop: every layer row is a dnd-kit
- * sortable, and Container rows expose two "drop zone" rows (one
- * per cell, only one in 1-col mode) so the user can drag a top-
- * level block INTO a specific cell. The panel hosts its own
- * `<DndContext>` independent of the canvas DnD; that keeps the two
- * UIs from racing on collision detection (each context has its own
- * pointer sensor and ID space).
+ * Every layer row is a dnd-kit sortable, and container rows expose one
+ * "drop zone" row per column so the user can drag a block INTO a
+ * specific column. The panel hosts its own `<DndContext>` independent
+ * of the canvas DnD; that keeps the two UIs from racing on collision
+ * detection (each context has its own pointer sensor and ID space).
  *
  * Drop semantics inside the panel:
  *   - Drop on a regular block row    → move next to that row's block
- *     (uses `moveBlock` which walks both Container cells via
- *     `findParentAndIndex`). The rows shift out of the way while
- *     dragging (sortable list), so the side matches what the user
- *     sees: dragging DOWN lands after the target, dragging UP lands
- *     before it — which is what makes "drag to the very top" work.
- *   - Drop on a "Left cell" / "Right cell" zone of a Container →
- *     append to that cell.
+ *     (uses `moveBlock`, which walks every container column). The rows
+ *     shift out of the way while dragging (sortable list), so the side
+ *     matches what the user sees: dragging DOWN lands after the target,
+ *     dragging UP lands before it — which is what makes "drag to the
+ *     very top" work.
+ *   - Drop on a column zone of a container → append to that column.
  *
- * The chevron + eye + trash buttons stay around — drag is not
- * always faster than a one-click "move up" when the next row is
- * adjacent, and chevrons are accessible to keyboard users by
- * default.
+ * The store refuses moves that would nest containers more than one
+ * level deep. The chevron + eye + trash buttons stay around — drag is
+ * not always faster than a one-click "move up" when the next row is
+ * adjacent, and chevrons are accessible to keyboard users by default.
  */
 const CELL_DROP_PREFIX = 'layers-cell:';
-function layersCellDropId(containerId: string, cell: ContainerCell): string {
-  return `${CELL_DROP_PREFIX}${containerId}:${cell}`;
+function layersCellDropId(containerId: string, columnId: string): string {
+  return `${CELL_DROP_PREFIX}${containerId}:${columnId}`;
 }
 
-function parseLayersCellDropId(id: string): {
-  containerId: string;
-  cell: ContainerCell;
-} | null {
+function parseLayersCellDropId(id: string): { containerId: string; columnId: string } | null {
   if (!id.startsWith(CELL_DROP_PREFIX)) return null;
-  const parts = id.substring(CELL_DROP_PREFIX.length).split(':');
-  if (parts.length !== 2) return null;
-  const cell = parts[1];
-  if (cell !== 'left' && cell !== 'right') return null;
-  return { containerId: parts[0] ?? '', cell };
+  const rest = id.substring(CELL_DROP_PREFIX.length);
+  const sep = rest.lastIndexOf(':');
+  if (sep <= 0 || sep === rest.length - 1) return null;
+  return { containerId: rest.slice(0, sep), columnId: rest.slice(sep + 1) };
 }
 
-/**
- * Walks the schema tree and emits every block id in pre-order
- * (top-level, then each Container's left children, then its
- * right children). Used to build a single flat `SortableContext`
- * `items` array — dnd-kit needs to know about every sortable id
- * that participates in the same context.
- */
 function sortableIndexOf(data: unknown): number | null {
   const index = (data as { sortable?: { index?: unknown } } | undefined)?.sortable?.index;
   return typeof index === 'number' ? index : null;
 }
 
-function flattenBlockIds(blocks: Block[]): string[] {
-  const ids: string[] = [];
-  for (const block of blocks) {
-    ids.push(block.id);
-    if (block.type === 'container') {
-      ids.push(...flattenBlockIds(block.children));
-      if (Array.isArray(block.right_children)) {
-        ids.push(...flattenBlockIds(block.right_children));
-      }
-    }
-  }
-  return ids;
-}
-
 export const LayersPanel: FC = () => {
   const blocks = useSchemaStore((s) => s.schema.blocks);
   const moveBlock = useSchemaStore((s) => s.moveBlock);
-  const moveBlockToContainerCell = useSchemaStore((s) => s.moveBlockToContainerCell);
+  const moveBlockToColumn = useSchemaStore((s) => s.moveBlockToColumn);
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -118,18 +91,18 @@ export const LayersPanel: FC = () => {
     const overId = String(over.id);
     if (activeId === overId) return;
 
-    // Drop on a cell zone → move to that cell.
+    // Drop on a column zone → move to that column.
     const cellTarget = parseLayersCellDropId(overId);
     if (cellTarget) {
-      moveBlockToContainerCell(activeId, cellTarget.containerId, cellTarget.cell);
+      moveBlockToColumn(activeId, cellTarget.containerId, cellTarget.columnId);
       return;
     }
 
     // Drop on another block row → reorder next to it. Rows live in
     // one flat SortableContext (pre-order), so comparing sortable
     // indices tells whether the drag went down (→ after) or up
-    // (→ before). `moveBlock` walks both cells of every container, so
-    // this works for top-level AND cross-cell drags.
+    // (→ before). `moveBlock` walks every container column, so this
+    // works for top-level AND cross-column drags.
     const activeIndex = sortableIndexOf(active.data.current);
     const overIndex = sortableIndexOf(over.data.current);
     const position =
@@ -153,7 +126,9 @@ export const LayersPanel: FC = () => {
     );
   }
 
-  const allIds = flattenBlockIds(blocks);
+  // One flat SortableContext over every block id (pre-order): dnd-kit
+  // must know every sortable that participates in the context.
+  const allIds = collectBlockIds(blocks);
 
   return (
     <DndContext
@@ -299,47 +274,39 @@ const LayerRow: FC<LayerRowProps> = ({ block, depth, index, siblingsCount, dragg
         </RowAction>
       </div>
 
-      {/* Container children — rendered once per cell so the user
+      {/* Container children — rendered once per column so the user
           can drop a layer into an explicit column. */}
-      {container && (
-        <CellGroup
-          containerId={container.id}
-          cell="left"
-          label={container.columns === 2 ? __('Left cell') : undefined}
-          items={container.children}
-          depth={depth + 1}
-          draggingId={draggingId}
-        />
-      )}
-      {container && container.columns === 2 && (
-        <CellGroup
-          containerId={container.id}
-          cell="right"
-          label={__('Right cell')}
-          items={Array.isArray(container.right_children) ? container.right_children : []}
-          depth={depth + 1}
-          draggingId={draggingId}
-        />
-      )}
+      {container &&
+        columnsOf(container).map((column, columnIndex, columns) => (
+          <CellGroup
+            key={column.id}
+            containerId={container.id}
+            columnId={column.id}
+            label={columns.length > 1 ? __('Column %s', String(columnIndex + 1)) : undefined}
+            items={column.children}
+            depth={depth + 1}
+            draggingId={draggingId}
+          />
+        ))}
     </li>
   );
 };
 
 /**
- * Render one cell of a container as an indented sub-list with its
- * own drop target. Empty cells still render the dashed drop zone so
+ * Render one column of a container as an indented sub-list with its
+ * own drop target. Empty columns still render the dashed drop zone so
  * the user has somewhere to release a dragged layer.
  */
 const CellGroup: FC<{
   containerId: string;
-  cell: ContainerCell;
+  columnId: string;
   label: string | undefined;
   items: Block[];
   depth: number;
   draggingId: string | null;
-}> = ({ containerId, cell, label, items, depth, draggingId }) => {
-  const dropId = layersCellDropId(containerId, cell);
-  const { setNodeRef, isOver } = useDroppable({ id: dropId, data: { containerId, cell } });
+}> = ({ containerId, columnId, label, items, depth, draggingId }) => {
+  const dropId = layersCellDropId(containerId, columnId);
+  const { setNodeRef, isOver } = useDroppable({ id: dropId, data: { containerId, columnId } });
   // Highlight the drop zone whenever a drag is active and the
   // dragged block isn't already a direct child of this cell — that
   // tells the user "yes, you can drop here".
@@ -379,7 +346,7 @@ const CellGroup: FC<{
         )}
       >
         {showDropTarget
-          ? __('Drop into this cell')
+          ? __('Drop into this column')
           : items.length === 0
             ? __('Empty')
             : ''}
@@ -459,11 +426,12 @@ function labelForBlock(block: Block): string {
     }
     case 'container': {
       const c = block as ContainerBlock;
-      const total = c.children.length + (Array.isArray(c.right_children) ? c.right_children.length : 0);
+      const total = childLists(c).reduce((sum, children) => sum + children.length, 0);
+      const count = String(columnsOf(c).length);
       raw =
         total === 1
-          ? __('%s-col, 1 item', String(c.columns))
-          : __('%s-col, %s items', String(c.columns), String(total));
+          ? __('%s-col, 1 item', count)
+          : __('%s-col, %s items', count, String(total));
       break;
     }
     default:

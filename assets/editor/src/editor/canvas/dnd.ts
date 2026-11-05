@@ -7,15 +7,14 @@ import {
   type UniqueIdentifier,
 } from '@dnd-kit/core';
 import type { SortingStrategy } from '@dnd-kit/sortable';
-import type { ContainerCell } from '@/stores/schemaStore';
 
 /**
  * Canvas drag-and-drop primitives shared by the Canvas, SortableBlock,
- * the Container cells and {@link useDragAndDrop}.
+ * the container columns and {@link useDragAndDrop}.
  *
  * Model: every canvas block is a sortable droppable that lives in a
- * "zone" — either the canvas root or one container cell. Zones are
- * droppables too, so empty areas (the empty canvas, an empty cell)
+ * "zone" — either the canvas root or one container column. Zones are
+ * droppables too, so empty areas (the empty canvas, an empty column)
  * accept drops. A drop on a block lands before or after it depending
  * on which half of the block the pointer is in; a drop on a zone
  * resolves to the nearest block in that zone, or appends when the
@@ -25,29 +24,43 @@ import type { ContainerCell } from '@/stores/schemaStore';
 /** Droppable id of the canvas root (the zone holding top-level blocks). */
 export const CANVAS_ROOT_DROP_ID = 'canvas-root';
 
-/** Prefix of container-cell zone ids — see `cellDropId()` in the container block. */
+/** Prefix of container-column zone ids — see {@link cellDropId}. */
 const CELL_DROP_PREFIX = 'container-cell:';
 
 /** Data every canvas SortableBlock registers with dnd-kit. */
 export interface BlockDragData {
   kind: 'block';
-  /** Droppable id of the zone (canvas root or cell) the block lives in. */
+  /** Droppable id of the zone (canvas root or column) the block lives in. */
   zone: string;
 }
 
 export type DropPosition = 'before' | 'after';
 
+/** A decoded column drop-zone id. */
+export interface CellDropTarget {
+  containerId: string;
+  columnId: string;
+}
+
 /**
- * Decode a `container-cell:{containerId}:{left|right}` drop-target id
- * back into the container id + cell side. Returns null for any other id.
+ * Droppable id of a container column: `container-cell:{containerId}:{columnId}`.
+ * Column ids never contain `:` (they are generated), so the LAST `:`
+ * separates the two even if a hand-edited container id contains one.
  */
-export function parseCellDropId(id: string): { containerId: string; cell: ContainerCell } | null {
+export function cellDropId(containerId: string, columnId: string): string {
+  return `${CELL_DROP_PREFIX}${containerId}:${columnId}`;
+}
+
+/**
+ * Decode a {@link cellDropId} back into container + column ids.
+ * Returns null for any other id.
+ */
+export function parseCellDropId(id: string): CellDropTarget | null {
   if (!id.startsWith(CELL_DROP_PREFIX)) return null;
-  const parts = id.split(':');
-  if (parts.length !== 3) return null;
-  const cell = parts[2];
-  if (cell !== 'left' && cell !== 'right') return null;
-  return { containerId: parts[1] ?? '', cell };
+  const rest = id.slice(CELL_DROP_PREFIX.length);
+  const sep = rest.lastIndexOf(':');
+  if (sep <= 0 || sep === rest.length - 1) return null;
+  return { containerId: rest.slice(0, sep), columnId: rest.slice(sep + 1) };
 }
 
 /** Whether a droppable id is a zone (canvas root / container cell) rather than a block. */

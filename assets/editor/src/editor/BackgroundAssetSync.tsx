@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { Block, QrCodeBlock, VCardBlock } from '@/core/schema/blocks';
+import { walkBlocks } from '@/core/schema/tree';
 import { useSchemaStore, findBlockByIdDeep } from '@/stores/schemaStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { isUploadEnabled } from '@/bridge/apiClient';
@@ -70,38 +71,32 @@ export function BackgroundAssetSync(): null {
 
 function collectPending(blocks: Block[], selectedId: string | null): PendingAsset[] {
   const out: PendingAsset[] = [];
-  const visit = (list: Block[]): void => {
-    for (const block of list) {
-      if (block.id !== selectedId) {
-        if (block.type === 'qr_code') {
-          const qr = block as QrCodeBlock;
-          const hash = qrContentHash(qr);
-          if (qr.data && !(qr.image_url && qr.image_hash === hash)) {
-            out.push({
-              id: qr.id,
-              hash,
-              upload: () => uploadQrImage(qr),
-              hashOf: (b) => (b.type === 'qr_code' ? qrContentHash(b as QrCodeBlock) : null),
-            });
-          }
-        } else if (block.type === 'vcard') {
-          const card = block as VCardBlock;
-          const hash = vcardContentHash(card);
-          if (vcardHasDetails(card) && !(card.vcf_url && card.vcf_hash === hash)) {
-            out.push({
-              id: card.id,
-              hash,
-              upload: () => uploadVCardFile(card),
-              hashOf: (b) => (b.type === 'vcard' ? vcardContentHash(b as VCardBlock) : null),
-            });
-          }
-        }
+  // Every block at every depth (all container columns).
+  walkBlocks(blocks, (block) => {
+    if (block.id === selectedId) return;
+    if (block.type === 'qr_code') {
+      const qr = block as QrCodeBlock;
+      const hash = qrContentHash(qr);
+      if (qr.data && !(qr.image_url && qr.image_hash === hash)) {
+        out.push({
+          id: qr.id,
+          hash,
+          upload: () => uploadQrImage(qr),
+          hashOf: (b) => (b.type === 'qr_code' ? qrContentHash(b as QrCodeBlock) : null),
+        });
       }
-      const nested = block as { children?: Block[]; right_children?: Block[] };
-      if (Array.isArray(nested.children)) visit(nested.children);
-      if (Array.isArray(nested.right_children)) visit(nested.right_children);
+    } else if (block.type === 'vcard') {
+      const card = block as VCardBlock;
+      const hash = vcardContentHash(card);
+      if (vcardHasDetails(card) && !(card.vcf_url && card.vcf_hash === hash)) {
+        out.push({
+          id: card.id,
+          hash,
+          upload: () => uploadVCardFile(card),
+          hashOf: (b) => (b.type === 'vcard' ? vcardContentHash(b as VCardBlock) : null),
+        });
+      }
     }
-  };
-  visit(blocks);
+  });
   return out;
 }

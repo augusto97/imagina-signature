@@ -1,7 +1,10 @@
 import type { SignatureSchema } from '@/core/schema/signature';
-import { rendererForBlock, type CompileContext } from '@/core/blocks/registry';
+import { migrateSchema, schemaNeedsMigration } from '@/core/schema/migrate';
+import { walkBlocks } from '@/core/schema/tree';
+import type { CompileContext } from '@/core/blocks/registry';
 import { __ } from '@/i18n/helpers';
 import { canvasWidth, wrapInEmailShell } from './table-builder';
+import { compileBlocks } from './compile-block';
 import { applyOutlookFixes } from './outlook-fixes';
 import { minifyHtml } from './minify';
 import { validateEmailOutput } from './validate';
@@ -14,6 +17,7 @@ import type { AppConfig } from '@/bridge/types';
 import { attr, intPx } from './css';
 
 export type { CompileIssue, CompileIssueLevel } from './issues';
+export { compileBlock, compileBlocks } from './compile-block';
 
 export interface CompileResult {
   /** Complete HTML document (doctype, head, body). Copy HTML / Download / test-send. */
@@ -58,8 +62,13 @@ export interface CompileResult {
  *
  * Unknown block types contribute nothing to the output but produce
  * a warning so the bug is visible.
+ *
+ * Accepts any supported schema version: older input (raw 1.0 template
+ * JSON in the picker thumbnails, the template harness…) is cloned and
+ * migrated first — the caller's object is never mutated.
  */
-export function compileSignature(schema: SignatureSchema): CompileResult {
+export function compileSignature(input: SignatureSchema): CompileResult {
+  const schema = schemaNeedsMigration(input) ? migrateSchema(input) : input;
   const merged = mergedVariables(schema.variables);
   const ctx: CompileContext = {
     variables: merged,
@@ -69,32 +78,14 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
     availableWidth: canvasWidth(schema.canvas),
   };
 
-  const blockChunks: string[] = [];
-  for (const block of schema.blocks) {
-    // Hidden blocks (Layers panel "eye" toggle flips `block.visible`
-    // to false) must NOT ship in the exported HTML. Until 1.0.24 the
-    // visible flag was honored on the canvas only — the user thought
-    // they had hidden a banner / disclaimer, hit Export, and the
-    // recipient still saw it. Compile-time skip closes that gap.
-    if (block.visible === false) {
-      continue;
-    }
-    const definition = rendererForBlock(block);
-    if (!definition) {
-      report(
-        ctx,
-        'warning',
-        __('Unknown block type "%s" was skipped.', String(block.type)),
-        block,
-        'unknown-block',
-      );
-      continue;
-    }
-    blockChunks.push(definition.compile(block as never, ctx));
-  }
-
-  const concatenated = blockChunks.join('\n');
-  const shelled = wrapInEmailShell(concatenated, schema.canvas);
+  // Every block — top-level and nested — goes through compileBlock():
+  // hidden blocks (Layers panel "eye") are skipped, unknown types warn,
+  // `block.box` is applied. Until 1.0.24 the visible flag was honoured
+  // on the canvas only, so "hidden" banners still reached recipients.
+  const concatenated = compileBlocks(schema.blocks, ctx);
+  const shelled = wrapInEmailShell(concatenated, schema.canvas, {
+    fluid: usesStackedColumns(schema),
+  });
   const withOutlookFixes = applyOutlookFixes(shelled);
   // Campaign banner first (sits visually right under the user's
   // signature content), THEN the compliance footer (which always
@@ -132,6 +123,21 @@ export function compileSignature(schema: SignatureSchema): CompileResult {
     issues,
     size: new Blob([minified]).size,
   };
+}
+
+/**
+ * Whether any visible container asks for stacking on narrow screens.
+ * Those signatures get a fluid shell (`width:100%;max-width:Wpx`) so a
+ * narrow client actually has less room than the columns need.
+ */
+function usesStackedColumns(schema: SignatureSchema): boolean {
+  let found = false;
+  walkBlocks(schema.blocks, (block) => {
+    if (found || block.visible === false) return false;
+    if (block.type === 'container' && block.stack_on_mobile === true) found = true;
+    return !found;
+  });
+  return found;
 }
 
 /**

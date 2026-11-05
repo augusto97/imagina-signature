@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSignature } from '@/core/compiler/compile';
 import { createEmptySchema } from '@/core/schema/signature';
 import type { Block, ContainerBlock, ImageBlock } from '@/core/schema/blocks';
-import { containerCellWidths } from '@/core/blocks/container/definition';
+import { containerGeometry } from '@/core/blocks/container/definition';
 import '@/core/blocks';
 
 function compile(blocks: Block[], width = 600, bg = '#ffffff') {
@@ -30,12 +30,18 @@ const img = (id: string, width: number, height?: number): ImageBlock => ({
 const container = (left: Block[], right: Block[], leftWidth = 25, gap = 16): ContainerBlock => ({
   id: 'row',
   type: 'container',
-  columns: 2,
   gap,
-  left_width: leftWidth,
-  children: left,
-  right_children: right,
+  columns: [
+    { id: 'col_l', width: leftWidth, children: left },
+    { id: 'col_r', width: 100 - leftWidth, children: right },
+  ],
 });
+
+const geo = (leftWidth: number, gap: number, available: number) =>
+  containerGeometry(container([], [], leftWidth, gap), available).map((g) => ({
+    outer: g.outer,
+    inner: g.inner,
+  }));
 
 describe('canvas background', () => {
   it('reaches the shell table and cell (not only <body>)', () => {
@@ -59,16 +65,11 @@ describe('canvas background', () => {
 
 describe('container pixel widths', () => {
   it('splits the available width into outer px widths and inner widths', () => {
-    expect(containerCellWidths({ left_width: 25, gap: 16 }, 600)).toMatchObject({
-      leftOuter: 150,
-      rightOuter: 450,
-      leftInner: 142,
-      rightInner: 442,
-    });
-    expect(containerCellWidths({ left_width: 33, gap: 0 }, 601)).toMatchObject({
-      leftOuter: 198,
-      rightOuter: 403,
-    });
+    expect(geo(25, 16, 600)).toEqual([
+      { outer: 150, inner: 142 },
+      { outer: 450, inner: 442 },
+    ]);
+    expect(geo(33, 0, 601).map((g) => g.outer)).toEqual([198, 403]);
   });
 
   it('emits width="<px>" on each cell and keeps the % style', () => {

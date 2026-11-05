@@ -81,7 +81,8 @@ function scrollBlockIntoView(id: string): void {
  *  - Cmd/Ctrl + Shift + Z, Cmd/Ctrl + Y — redo
  *  - Cmd/Ctrl + D                       — duplicate selected block
  *  - Cmd/Ctrl + C                       — copy selected block (internal clipboard)
- *  - Cmd/Ctrl + V                       — paste block after the selection (or at the end)
+ *  - Cmd/Ctrl + V                       — paste block after the selection (or at the end);
+ *                                         refused when it would nest containers too deep
  *  - Backspace / Delete                 — delete selected block
  *  - ArrowUp / ArrowDown                — select previous / next sibling block
  *  - Esc                                — clear selection
@@ -172,6 +173,14 @@ export function useKeyboardShortcuts(): void {
         const after =
           selectedId && findParentAndIndex(schema.schema.blocks, selectedId) ? selectedId : null;
         const pastedId = schema.pasteBlock(copied, after);
+        if (!pastedId) {
+          // Pasting a container next to a block nested in another
+          // container would nest containers two levels deep.
+          useToastStore
+            .getState()
+            .show(__('Containers can only be nested one level deep.'), 'error');
+          return;
+        }
         selection.select(pastedId);
         scrollBlockIntoView(pastedId);
         return;
