@@ -14,8 +14,8 @@ use ImaginaSignatures\Api\Middleware\CapabilityCheck;
 use ImaginaSignatures\Exceptions\ImaginaSignaturesException;
 use ImaginaSignatures\Models\Signature;
 use ImaginaSignatures\Repositories\SignatureRepository;
+use ImaginaSignatures\Services\RenderInputs;
 use ImaginaSignatures\Services\SignatureService;
-use ImaginaSignatures\Settings\SystemVariables;
 use ImaginaSignatures\Setup\CapabilitiesInstaller;
 
 defined( 'ABSPATH' ) || exit;
@@ -35,13 +35,20 @@ defined( 'ABSPATH' ) || exit;
  *  - `GET  /admin/signatures/:id/render-context`
  *        → `{ id, user_id, name, template_id, link_mode, updated_at,
  *          compiled_at, locale, json_content, systemVariables,
- *          complianceFooter, bannerCampaigns }` — `systemVariables` are
- *          the TARGET user's (not the administrator's).
- *  - `POST /admin/signatures/:id/html` `{ html, text?, expected_updated_at? }`
+ *          complianceFooter, bannerCampaigns, profileFields, pluginUrl,
+ *          inputs_hash }` — the variables, footer (group override) and
+ *          campaigns (group targeting) are the TARGET user's, never the
+ *          administrator's ({@see RenderInputs}).
+ *  - `POST /admin/signatures/:id/html`
+ *        `{ html, text?, expected_updated_at?, expected_inputs_hash? }`
  *        → `{ id, user_id, compiled_at, updated_at, html_stale }`. With
- *          `expected_updated_at` (the render context's `updated_at`), a
- *          signature edited in between answers 409 instead of storing
- *          HTML compiled from an older design.
+ *          `expected_updated_at` / `expected_inputs_hash` (from the render
+ *          context), a signature whose design or inputs changed in
+ *          between answers 409 (`imgsig_conflict`) instead of storing
+ *          HTML compiled from older data. A stored recompile of a
+ *          primary signature whose HTML changed fires
+ *          `imgsig/deploy/primary_html_changed` (Gmail auto-push, install
+ *          "outdated") through {@see SignatureService::store_html()}.
  *
  * @since 1.3.0
  */
@@ -130,14 +137,18 @@ final class TeamSignaturesController extends BaseController {
 					'callback'            => [ $this, 'store_html' ],
 					'permission_callback' => $require_team,
 					'args'                => [
-						'html'                => [
+						'html'                 => [
 							'type'     => 'string',
 							'required' => true,
 						],
-						'text'                => [
+						'text'                 => [
 							'type' => 'string',
 						],
-						'expected_updated_at' => [
+						'expected_updated_at'  => [
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'expected_inputs_hash' => [
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
 						],
@@ -200,8 +211,10 @@ final class TeamSignaturesController extends BaseController {
 			return $this->not_found();
 		}
 
-		$site    = SiteSettingsController::current_settings();
 		$payload = $signature->to_array();
+		// The owner's wp_* / company_* / profile values, group footer and
+		// targeted campaigns — never the administrator's own.
+		$inputs = RenderInputs::for_user( $owner );
 
 		return rest_ensure_response(
 			[
@@ -212,13 +225,15 @@ final class TeamSignaturesController extends BaseController {
 				'link_mode'        => $signature->link_mode,
 				'updated_at'       => $signature->updated_at,
 				'compiled_at'      => $signature->compiled_at,
-				'locale'           => get_user_locale( $owner->ID ),
+				'locale'           => $inputs['locale'],
 				'json_content'     => $payload['json_content'],
-				// The owner's wp_* / company_* / profile values — never the
-				// administrator's own.
-				'systemVariables'  => SystemVariables::for_user( $owner, $site['brand_kit'] ?? null ),
-				'complianceFooter' => $site['compliance_footer'],
-				'bannerCampaigns'  => SiteSettingsController::active_banner_campaigns(),
+				'systemVariables'  => $inputs['systemVariables'],
+				'complianceFooter' => $inputs['complianceFooter'],
+				'bannerCampaigns'  => $inputs['bannerCampaigns'],
+				'profileFields'    => $inputs['profileFields'],
+				// Hosted icons resolve against it, as in the editor.
+				'pluginUrl'        => defined( 'IMGSIG_FILE' ) ? esc_url_raw( plugins_url( '', IMGSIG_FILE ) ) : '',
+				'inputs_hash'      => RenderInputs::fingerprint( $inputs ),
 			]
 		);
 	}
@@ -248,6 +263,22 @@ final class TeamSignaturesController extends BaseController {
 					'updated_at' => $signature->updated_at,
 				]
 			);
+		}
+
+		$expected_inputs = $request->get_param( 'expected_inputs_hash' );
+		if ( is_string( $expected_inputs ) && '' !== $expected_inputs ) {
+			$owner = get_userdata( $signature->user_id );
+			if ( $owner instanceof \WP_User && ! hash_equals( RenderInputs::fingerprint( RenderInputs::for_user( $owner ) ), $expected_inputs ) ) {
+				return new \WP_Error(
+					'imgsig_conflict',
+					__( "The owner's details or the company settings changed while the signature was being compiled. Load it again and recompile.", 'imagina-signatures' ),
+					[
+						'status'     => 409,
+						'reason'     => 'inputs_changed',
+						'updated_at' => $signature->updated_at,
+					]
+				);
+			}
 		}
 
 		$data = [ 'html' => (string) $request->get_param( 'html' ) ];
