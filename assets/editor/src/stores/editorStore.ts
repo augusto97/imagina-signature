@@ -6,7 +6,14 @@ import { create } from 'zustand';
  * the document dirty.
  */
 type LeftSidebarTab = 'blocks' | 'layers';
-type Modal = 'preview' | 'export' | 'template-picker' | 'save-as-template' | null;
+type Modal =
+  | 'preview'
+  | 'export'
+  | 'template-picker'
+  | 'save-as-template'
+  | 'onboarding'
+  | 'your-details'
+  | null;
 
 interface EditorState {
   leftSidebarOpen: boolean;

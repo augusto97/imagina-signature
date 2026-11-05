@@ -15,6 +15,9 @@ import { ExportModal } from './modals/ExportModal';
 import { PreviewModal } from './modals/PreviewModal';
 import { SaveAsTemplateModal } from './modals/SaveAsTemplateModal';
 import { BackgroundAssetSync } from './BackgroundAssetSync';
+import { OnboardingHost } from './onboarding/OnboardingHost';
+import { OnboardingModal } from './onboarding/OnboardingModal';
+import { YourDetailsModal } from './onboarding/YourDetailsModal';
 import { useEditorStore } from '@/stores/editorStore';
 
 /**
@@ -76,6 +79,9 @@ export const EditorShell: FC = () => {
       </DndContext>
       <BackgroundAssetSync />
       <TemplatePicker />
+      <OnboardingHost />
+      <OnboardingModal />
+      <YourDetailsModal />
       <ExportModal />
       <PreviewModal />
       <SaveAsTemplateModalHost />

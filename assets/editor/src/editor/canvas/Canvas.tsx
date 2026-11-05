@@ -1,8 +1,9 @@
 import type { FC } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext } from '@dnd-kit/sortable';
-import { Plus } from 'lucide-react';
+import { LayoutTemplate, Plus } from 'lucide-react';
 import { useSchemaStore } from '@/stores/schemaStore';
+import { useEditorStore } from '@/stores/editorStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useDeviceStore } from '@/stores/deviceStore';
 import { __ } from '@/i18n/helpers';
@@ -32,6 +33,7 @@ const MOBILE_WIDTH = 360;
 export const Canvas: FC = () => {
   const schema = useSchemaStore((s) => s.schema);
   const clearSelection = useSelectionStore((s) => s.clearSelection);
+  const openModal = useEditorStore((s) => s.openModal);
   const device = useDeviceStore((s) => s.device);
   const { setNodeRef, isOver } = useDroppable({ id: CANVAS_ROOT_DROP_ID });
   const isEmpty = schema.blocks.length === 0;
@@ -90,6 +92,14 @@ export const Canvas: FC = () => {
             <p className="max-w-xs text-[12px] text-[var(--text-muted)]">
               {__('Drag a block from the left sidebar, or click one to drop it here.')}
             </p>
+            <button
+              type="button"
+              onClick={() => openModal('onboarding')}
+              className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--accent)] px-3 text-[12.5px] font-medium text-white shadow-[var(--shadow-xs)] hover:bg-[var(--accent-hover)]"
+            >
+              <LayoutTemplate size={14} />
+              {__('Start from a template')}
+            </button>
           </div>
         ) : (
           <SortableContext
