@@ -6,6 +6,8 @@
  * see `bridge/apiClient.ts`.
  */
 
+import type { BrandKit } from '@shared/brandKit';
+
 /**
  * Editor bootstrap config — injected by `EditorAssetEnqueuer` PHP
  * as `window.IMGSIG_EDITOR_CONFIG` (CLAUDE.md §14.2).
@@ -63,14 +65,21 @@ export interface AppConfig {
    */
   uploadEnabled?: boolean;
   /**
-   * Read-only `wp_*` variables auto-populated from the current
-   * WP user record (display_name, email, first_name, last_name,
-   * url) plus any extras a host plugin added via the
+   * Read-only variables: `wp_*` auto-populated from the current WP
+   * user record (display_name, email, first_name, last_name, url),
+   * `company_*` from the site-wide brand kit (always present, '' when
+   * blank), plus any extras a host plugin added via the
    * `imgsig/editor/system_variables` filter. Surfaced in the
    * Variables editor as immutable rows; merged into the substitution
-   * pass at compile time (user-defined variables win on conflict).
+   * pass at compile time and on the canvas in "Show data" mode
+   * (user-defined variables win on conflict).
    */
   systemVariables?: Record<string, string>;
+  /**
+   * Public company brand kit (Settings → Brand kit). New signatures
+   * start from its typography. Optional for back-compat.
+   */
+  brandKit?: BrandKit;
   /**
    * Site-wide brand colour swatches, shown in every ColorInput as
    * quick-pick buttons. Configured in admin Settings.
