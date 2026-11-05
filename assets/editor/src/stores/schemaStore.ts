@@ -5,6 +5,12 @@ import type { CanvasConfig, SignatureSchema } from '@/core/schema/signature';
 import { createEmptySchema } from '@/core/schema/signature';
 import { migrateContainersInPlace } from '@/core/schema/migrate';
 import { useHistoryStore } from './historyStore';
+import {
+  cloneBlockWithFreshIds,
+  cloneSchema,
+  containerCellArrays,
+  findParentAndIndex,
+} from './schemaUtils';
 
 /**
  * Identifier for the cell side inside a 2-column container. The
@@ -30,18 +36,40 @@ function cellChildren(container: ContainerBlock, cell: ContainerCell): Block[] {
 }
 
 /**
+ * Idle gap (ms) after which the next property edit opens a new undo
+ * step. Edits to the same field closer together than this collapse
+ * into one step — typing a sentence or dragging a colour picker is a
+ * single Ctrl+Z.
+ */
+export const HISTORY_COALESCE_MS = 500;
+
+export interface ReplaceSchemaOptions {
+  /**
+   * `true` (default) pushes the current schema to history first so
+   * Ctrl+Z restores it. `false` clears history instead.
+   */
+  undoable?: boolean;
+}
+
+/**
  * Schema store — the canonical source of truth for the signature
  * being edited (CLAUDE.md §13.1).
  *
  * Mutations go through immer so writes look mutational but
- * produce new state. Structural changes (add / delete / move /
- * duplicate) push a snapshot to {@link useHistoryStore} BEFORE
- * applying so undo lands on the pre-change state. Per-keystroke
- * field edits (e.g. text content typing) intentionally do NOT
- * push — that would flood the stack; the autosave debounce will
- * push periodically when persistence captures.
+ * produce new state.
+ *
+ * History:
+ *   - Structural changes (add / delete / move / duplicate / paste /
+ *     template apply) push a snapshot to {@link useHistoryStore}
+ *     BEFORE applying, so undo lands on the pre-change state.
+ *   - Property edits (`updateBlock`, `updateCanvas`, `setVariable`)
+ *     push a *coalesced* snapshot: only the first change of an "edit
+ *     burst" pushes. A burst ends when the user pauses for
+ *     {@link HISTORY_COALESCE_MS}, edits a different block / field,
+ *     performs a structural change, or undoes / redoes.
+ *   - No-op edits (same value written back) neither push history nor
+ *     mark the document dirty.
  */
-
 interface SchemaState {
   schema: SignatureSchema;
 
@@ -56,8 +84,21 @@ interface SchemaState {
    */
   hasUserEdited: boolean;
 
-  /** Replace the entire schema (e.g. after loading from REST). */
+  /**
+   * Replace the entire schema after LOADING it (e.g. from REST).
+   * Clears history and `hasUserEdited`. Do not use for user actions —
+   * use {@link SchemaState.replaceSchema} instead.
+   */
   setSchema: (schema: SignatureSchema) => void;
+
+  /**
+   * Replace the whole schema as a USER action (e.g. applying a
+   * template). Marks the document edited so autosave persists it and,
+   * with `{ undoable: true }` (the default), pushes the current schema
+   * to history so a single Ctrl+Z brings it back. The input is cloned
+   * and never mutated.
+   */
+  replaceSchema: (schema: SignatureSchema, options?: ReplaceSchemaOptions) => void;
 
   /**
    * Replace the schema during undo / redo replay.
@@ -71,8 +112,16 @@ interface SchemaState {
    *      permanently disabled).
    *   2. Does NOT clear `hasUserEdited` — undo IS a user edit
    *      (autosave should persist the result).
+   * Also closes the current edit burst so the next property edit
+   * starts a fresh undo step.
    */
   replaceSchemaForHistory: (schema: SignatureSchema) => void;
+
+  /** Undo one step. Returns false when there is nothing to undo. */
+  undo: () => boolean;
+
+  /** Redo one step. Returns false when there is nothing to redo. */
+  redo: () => boolean;
 
   addBlock: (block: Block, position?: number) => void;
   insertBlockBefore: (target_id: string, block: Block) => void;
@@ -81,6 +130,13 @@ interface SchemaState {
   deleteBlock: (id: string) => void;
   moveBlock: (id: string, target_id: string, position: 'before' | 'after') => void;
   duplicateBlock: (id: string) => void;
+
+  /**
+   * Insert a copy of `block` (ids regenerated recursively) right after
+   * `after_id`, or at the end of the top level when `after_id` is
+   * null / not found. Returns the inserted copy's id.
+   */
+  pasteBlock: (block: Block, after_id: string | null) => string;
 
   /**
    * Append a block to a Container cell. The optional `cell` argument
@@ -136,17 +192,6 @@ function markEdited(state: { schema: SignatureSchema; hasUserEdited: boolean }):
 }
 
 /**
- * Returns both child arrays of a container as a single flat list of
- * arrays to walk. Order is left, right — used by the recursive
- * helpers below so they don't have to special-case each call site.
- */
-function containerCellArrays(c: ContainerBlock): Block[][] {
-  const arrays: Block[][] = [c.children];
-  if (Array.isArray(c.right_children)) arrays.push(c.right_children);
-  return arrays;
-}
-
-/**
  * Recursive lookup — walks into Container children so nested blocks
  * are reachable by id without callers needing to know the parent.
  * Walks BOTH the left cell (`children`) and the right cell
@@ -185,58 +230,79 @@ function removeBlockByIdDeep(blocks: Block[], id: string): boolean {
   return false;
 }
 
-/**
- * Locate the array a block lives in (top-level or any container cell)
- * along with its index. Used by sibling-swap actions, the canvas drag-
- * and-drop reorder, and the Layers panel.
- */
-function findParentAndIndex(
-  blocks: Block[],
-  id: string,
-): { parent: Block[]; index: number } | null {
-  const topIdx = blocks.findIndex((b) => b.id === id);
-  if (topIdx >= 0) return { parent: blocks, index: topIdx };
+// ---------------------------------------------------------------------------
+// History plumbing
+// ---------------------------------------------------------------------------
 
-  for (const block of blocks) {
-    if (block.type === 'container') {
-      for (const cell of containerCellArrays(block)) {
-        const idx = cell.findIndex((c) => c.id === id);
-        if (idx >= 0) return { parent: cell, index: idx };
-        // Recurse into nested containers (defence — UI doesn't expose
-        // nesting but a hand-edited or imported template might).
-        const inner = findParentAndIndex(cell, id);
-        if (inner) return inner;
-      }
-    }
-  }
-  return null;
+/**
+ * The edit burst currently being coalesced into a single undo step.
+ * `key` identifies the edited target + fields (e.g.
+ * `block:b1:style.color`); `at` is the timestamp of the latest edit
+ * in the burst. Module-level because it is transient UI bookkeeping,
+ * not document state.
+ */
+let editBurst: { key: string; at: number } | null = null;
+
+/** Close the current edit burst; the next property edit opens a new undo step. */
+export function endHistoryBurst(): void {
+  editBurst = null;
 }
 
+/** Snapshot for structural changes: always pushes, and ends any burst. */
 function pushSnapshot(): void {
+  editBurst = null;
   useHistoryStore.getState().push(useSchemaStore.getState().schema);
 }
 
 /**
- * Recursively assign fresh ids to every block in a sub-tree. Used by
- * `duplicateBlock` when cloning a Container so the duplicate's
- * children don't share ids with the original's children (id
- * collisions break React keys, dnd-kit, and selection).
+ * Snapshot for property edits: pushes only when this edit starts a
+ * new burst (different key, or idle ≥ {@link HISTORY_COALESCE_MS}).
  */
-function reidNestedBlocks(blocks: Block[]): void {
-  const stamp = Date.now().toString(36);
-  for (const block of blocks) {
-    block.id = `${block.id}_copy_${stamp}_${Math.random().toString(36).slice(2, 6)}`;
-    if (block.type === 'container') {
-      reidNestedBlocks(block.children);
-      if (Array.isArray(block.right_children)) {
-        reidNestedBlocks(block.right_children);
+function pushCoalescedSnapshot(key: string): void {
+  const now = Date.now();
+  if (editBurst && editBurst.key === key && now - editBurst.at < HISTORY_COALESCE_MS) {
+    editBurst.at = now;
+    return;
+  }
+  useHistoryStore.getState().push(useSchemaStore.getState().schema);
+  editBurst = { key, at: now };
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function sameValue(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/**
+ * Lists the fields `updates` would actually change on `current`, one
+ * level deep into plain objects (`style.color`, `padding.top`) so
+ * consecutive edits of two different style properties land in two
+ * undo steps even though both arrive as a whole `style` object.
+ */
+function changedFields(current: object, updates: object): string[] {
+  const before = current as Record<string, unknown>;
+  const changed: string[] = [];
+  for (const [key, next] of Object.entries(updates)) {
+    const prev = before[key];
+    if (isPlainObject(prev) && isPlainObject(next)) {
+      const subKeys = new Set([...Object.keys(prev), ...Object.keys(next)]);
+      for (const sub of subKeys) {
+        if (!sameValue(prev[sub], next[sub])) changed.push(`${key}.${sub}`);
       }
+    } else if (!sameValue(prev, next)) {
+      changed.push(key);
     }
   }
+  return changed.sort();
 }
 
 export const useSchemaStore = create<SchemaState>()(
-  immer((set) => ({
+  immer((set, get) => ({
     schema: createEmptySchema(),
     hasUserEdited: false,
 
@@ -253,19 +319,53 @@ export const useSchemaStore = create<SchemaState>()(
         // doesn't immediately fire a POST/PATCH for the loaded data.
         state.hasUserEdited = false;
       });
+      editBurst = null;
       useHistoryStore.getState().clear();
+    },
+
+    replaceSchema: (schema, options = {}) => {
+      const undoable = options.undoable ?? true;
+      // Clone so we never migrate / freeze an object the caller still
+      // holds (e.g. the template row cached in the picker).
+      const next = cloneSchema(schema);
+      migrateContainersInPlace(next);
+      if (undoable) {
+        pushSnapshot();
+      } else {
+        editBurst = null;
+        useHistoryStore.getState().clear();
+      }
+      set((state) => {
+        state.schema = next;
+        markEdited(state);
+      });
     },
 
     replaceSchemaForHistory: (schema) => {
       // Used by undo / redo paths. Preserves both history stacks AND
       // hasUserEdited so the autosave still fires for the replayed
       // state. See comment on the interface declaration above.
+      editBurst = null;
       migrateContainersInPlace(schema);
       set((state) => {
         state.schema = schema;
         state.hasUserEdited = true;
         state.schema.meta.updated_at = new Date().toISOString();
       });
+    },
+
+    undo: () => {
+      const previous = useHistoryStore.getState().undo(get().schema);
+      if (!previous) return false;
+      get().replaceSchemaForHistory(previous);
+      return true;
+    },
+
+    redo: () => {
+      const next = useHistoryStore.getState().redo(get().schema);
+      if (!next) return false;
+      get().replaceSchemaForHistory(next);
+      return true;
     },
 
     addBlock: (block, position) => {
@@ -311,9 +411,13 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     updateBlock: (id, updates) => {
-      // No snapshot for per-field edits — autosave captures periodically.
       // Recurses into Container children so nested blocks are
       // editable through the same selection-driven property panel.
+      const current = findBlockByIdDeep(get().schema.blocks, id);
+      if (!current) return;
+      const fields = changedFields(current, updates);
+      if (fields.length === 0) return; // no-op write — nothing to undo or save
+      pushCoalescedSnapshot(`block:${id}:${fields.join('|')}`);
       set((state) => {
         const block = findBlockByIdDeep(state.schema.blocks, id);
         if (block) {
@@ -324,6 +428,7 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     deleteBlock: (id) => {
+      if (!findBlockByIdDeep(get().schema.blocks, id)) return;
       pushSnapshot();
       set((state) => {
         removeBlockByIdDeep(state.schema.blocks, id);
@@ -332,14 +437,17 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     addChildToContainer: (parent_id, child, cell = 'left') => {
+      const parent = findBlockByIdDeep(get().schema.blocks, parent_id);
+      if (!parent || parent.type !== 'container') return;
       pushSnapshot();
       set((state) => {
-        const parent = findBlockByIdDeep(state.schema.blocks, parent_id);
-        if (parent && parent.type === 'container') {
+        const target = findBlockByIdDeep(state.schema.blocks, parent_id);
+        if (target && target.type === 'container') {
           // 1-col containers ignore `cell` — there's only one cell.
           // 2-col containers route to the requested cell.
-          const target = parent.columns === 2 ? cellChildren(parent as ContainerBlock, cell) : parent.children;
-          target.push(child);
+          const list =
+            target.columns === 2 ? cellChildren(target as ContainerBlock, cell) : target.children;
+          list.push(child);
           markEdited(state);
         }
       });
@@ -347,6 +455,9 @@ export const useSchemaStore = create<SchemaState>()(
 
     moveBlockToContainerCell: (block_id, parent_id, cell, position) => {
       if (block_id === parent_id) return;
+      const blocks = get().schema.blocks;
+      const dest = findBlockByIdDeep(blocks, parent_id);
+      if (!dest || dest.type !== 'container' || !findParentAndIndex(blocks, block_id)) return;
       pushSnapshot();
       set((state) => {
         // Resolve the destination FIRST so we know it's reachable
@@ -379,6 +490,8 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     setContainerColumns: (container_id, columns) => {
+      const existing = findBlockByIdDeep(get().schema.blocks, container_id);
+      if (!existing || existing.type !== 'container' || existing.columns === columns) return;
       pushSnapshot();
       set((state) => {
         const container = findBlockByIdDeep(state.schema.blocks, container_id);
@@ -410,11 +523,13 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     moveBlockUp: (id) => {
+      const found = findParentAndIndex(get().schema.blocks, id);
+      if (!found || found.index === 0) return;
       pushSnapshot();
       set((state) => {
-        const found = findParentAndIndex(state.schema.blocks, id);
-        if (!found || found.index === 0) return;
-        const { parent, index } = found;
+        const loc = findParentAndIndex(state.schema.blocks, id);
+        if (!loc || loc.index === 0) return;
+        const { parent, index } = loc;
         const above = parent[index - 1];
         const current = parent[index];
         if (above === undefined || current === undefined) return;
@@ -425,11 +540,13 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     moveBlockDown: (id) => {
+      const found = findParentAndIndex(get().schema.blocks, id);
+      if (!found || found.index >= found.parent.length - 1) return;
       pushSnapshot();
       set((state) => {
-        const found = findParentAndIndex(state.schema.blocks, id);
-        if (!found) return;
-        const { parent, index } = found;
+        const loc = findParentAndIndex(state.schema.blocks, id);
+        if (!loc) return;
+        const { parent, index } = loc;
         if (index >= parent.length - 1) return;
         const below = parent[index + 1];
         const current = parent[index];
@@ -442,6 +559,8 @@ export const useSchemaStore = create<SchemaState>()(
 
     moveBlock: (id, target_id, position) => {
       if (id === target_id) return;
+      const blocks = get().schema.blocks;
+      if (!findParentAndIndex(blocks, id) || !findParentAndIndex(blocks, target_id)) return;
       pushSnapshot();
       set((state) => {
         // Walk into Container children for BOTH the source and target
@@ -475,30 +594,46 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     duplicateBlock: (id) => {
+      const found = findParentAndIndex(get().schema.blocks, id);
+      const original = found ? found.parent[found.index] : undefined;
+      if (!original) return;
+      // Recursively re-id the clone AND every nested block in both
+      // container cells — a copy sharing ids with the original makes
+      // edits to the copy land on the original (and breaks React keys
+      // / dnd-kit). Built outside the producer so the clone is a plain
+      // object, not a draft.
+      const cloned = cloneBlockWithFreshIds(original);
       pushSnapshot();
       set((state) => {
         // Walk into Container children so duplicating a nested block
         // inserts the copy next to the original instead of silently
         // no-opping (which is what the flat lookup did before 1.0.25).
-        const found = findParentAndIndex(state.schema.blocks, id);
-        if (!found) return;
-        const original = found.parent[found.index];
-        if (!original) return;
-        const cloned = JSON.parse(JSON.stringify(original)) as Block;
-        // Recursively re-id every nested block inside the clone too —
-        // otherwise duplicating a Container produces children whose
-        // ids match the original's children, and React keys / dnd-kit
-        // both break on the resulting collisions.
-        cloned.id = `${original.id}_copy_${Date.now().toString(36)}`;
-        if (cloned.type === 'container') {
-          reidNestedBlocks(cloned.children);
-        }
-        found.parent.splice(found.index + 1, 0, cloned);
+        const loc = findParentAndIndex(state.schema.blocks, id);
+        if (!loc) return;
+        loc.parent.splice(loc.index + 1, 0, cloned);
         markEdited(state);
       });
     },
 
+    pasteBlock: (block, after_id) => {
+      const copy = cloneBlockWithFreshIds(block);
+      pushSnapshot();
+      set((state) => {
+        const loc = after_id ? findParentAndIndex(state.schema.blocks, after_id) : null;
+        if (loc) {
+          loc.parent.splice(loc.index + 1, 0, copy);
+        } else {
+          state.schema.blocks.push(copy);
+        }
+        markEdited(state);
+      });
+      return copy.id;
+    },
+
     updateCanvas: (updates) => {
+      const fields = changedFields(get().schema.canvas, updates);
+      if (fields.length === 0) return;
+      pushCoalescedSnapshot(`canvas:${fields.join('|')}`);
       set((state) => {
         Object.assign(state.schema.canvas, updates);
         markEdited(state);
@@ -506,6 +641,9 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     setVariable: (key, value) => {
+      const variables = get().schema.variables;
+      if (Object.prototype.hasOwnProperty.call(variables, key) && variables[key] === value) return;
+      pushCoalescedSnapshot(`var:${key}`);
       set((state) => {
         state.schema.variables[key] = value;
         markEdited(state);
@@ -513,6 +651,8 @@ export const useSchemaStore = create<SchemaState>()(
     },
 
     removeVariable: (key) => {
+      if (!Object.prototype.hasOwnProperty.call(get().schema.variables, key)) return;
+      pushSnapshot();
       set((state) => {
         delete state.schema.variables[key];
         markEdited(state);
@@ -521,6 +661,8 @@ export const useSchemaStore = create<SchemaState>()(
 
     renameVariable: (old_key, new_key) => {
       if (old_key === new_key || !new_key) return;
+      if (!Object.prototype.hasOwnProperty.call(get().schema.variables, old_key)) return;
+      pushSnapshot();
       set((state) => {
         if (!(old_key in state.schema.variables)) return;
         const value = state.schema.variables[old_key];

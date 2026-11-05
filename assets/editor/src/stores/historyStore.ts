@@ -6,8 +6,10 @@ import type { SignatureSchema } from '@/core/schema/signature';
  *
  * History stores immutable schema snapshots; the schema store
  * pushes a snapshot before structural mutations (add/delete/move)
- * and consumes the latest one on undo. Capped at 50 entries to
- * keep memory bounded — older entries fall off the back of `past`.
+ * and at the start of every property-edit burst (see
+ * `HISTORY_COALESCE_MS` in schemaStore), and consumes the latest one
+ * on undo. Capped at 50 entries to keep memory bounded — older
+ * entries fall off the back of `past`.
  */
 const MAX_DEPTH = 50;
 
